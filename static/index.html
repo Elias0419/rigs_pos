@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>POS System</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+
+</head>
+<body>
+    <h1>Point of Sale System</h1>
+    <input type="text" id="barcode-input" placeholder="Enter Barcode" autofocus>
+    <button onclick="addItem()">Add Item</button>
+    <button onclick="checkout()">Checkout</button>
+    <div id="order-details"></div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
