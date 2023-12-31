@@ -19,8 +19,7 @@ class BarcodeScanner:
         if self.last_key_time is not None:
             time_diff = current_time - self.last_key_time
 
-            if time_diff >= 0.05:  # Adjust this threshold as needed
-                # If the time difference is too large, consider starting a new barcode
+            if time_diff >= 0.05:  # assume a human can't type this fast
                 self.current_barcode = ''
 
         self.last_key_time = current_time
@@ -35,10 +34,9 @@ class BarcodeScanner:
         print("DEBUG barcode_scanner on_release")
 
         if key == Key.enter:
-            # Consider checking if the barcode has a minimum length
-            if len(self.current_barcode) > 6:  # Example minimum length
+            if len(self.current_barcode) > 6:
                 self.barcode_ready.set()
-                self.on_barcode_scanned(self.current_barcode)
+                #self.on_barcode_scanned(self.current_barcode) # part of flask integration
             self.current_barcode = ''
 
     def read_barcode(self):
@@ -53,12 +51,12 @@ class BarcodeScanner:
     def on_barcode_scanned(self, barcode):
         print("DEBUG barcode_scanner on_barcode_scanned")
 
-        url = 'http://localhost:5000/barcode-scanned'
-        data = {'barcode': barcode}
-        try:
-            requests.post(url, json=data)
-        except requests.RequestException as e:
-            print(f"Error sending barcode to server: {e}")
+        # url = 'http://localhost:5000/barcode-scanned' # part of flask integration TODO
+        # data = {'barcode': barcode}
+        # try:
+        #     requests.post(url, json=data)
+        # except requests.RequestException as e:
+        #     print(f"Error sending barcode to server: {e}")
 
     def close(self):
         self.listener.stop()

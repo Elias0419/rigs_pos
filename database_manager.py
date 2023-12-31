@@ -42,7 +42,8 @@ class DatabaseManager:
         
         pass
 
-    def close(self):
+    def close_connection(self):
+        print("DEBUG DatabaseManager close_connection")
         conn = self._get_connection()
         if conn:
             conn.close()

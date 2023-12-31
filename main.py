@@ -4,24 +4,79 @@ import termios
 import tty
 import threading
 import os
+import logging
 from pynput.keyboard import Listener
 from barcode_scanner import BarcodeScanner
 from mock_barcode_scanner import MockBarcodeScanner
 from database_manager import DatabaseManager
 from order_manager import OrderManager
-from flask_backend import run_flask_app
+from open_cash_drawer import open_cash_drawer
+# from flask_backend import run_flask_app
 
+# Initialize logging
+logging.basicConfig(level=logging.INFO)
 
 def flush_input():
-    termios.tcflush(sys.stdin, termios.TCIOFLUSH)
+    try:
+        termios.tcflush(sys.stdin, termios.TCIOFLUSH)
+    except Exception as e:
+        logging.error(f"Error flushing input: {e}")
 
+def setup_scanner():
+    try:
+        return BarcodeScanner()
+    except Exception as e:
+        logging.error(f"Error setting up scanner: {e}")
+        sys.exit(1)
+
+def setup_database_manager():
+    try:
+        return DatabaseManager('my_items_database.db')
+    except Exception as e:
+        logging.error(f"Error setting up database manager: {e}")
+        sys.exit(1)
+
+def setup_order_manager():
+    try:
+        return OrderManager(tax_rate=0.08)
+    except Exception as e:
+        logging.error(f"Error setting up order manager: {e}")
+        sys.exit(1)
+
+def restart_scanner_listener(scanner):
+    try:
+        scanner.listener.stop()
+        time.sleep(0.5)
+        flush_input()
+        scanner.listener = Listener(on_press=scanner.on_press, on_release=scanner.on_release)
+        scanner.listener.start()
+    except Exception as e:
+        logging.error(f"Error restarting scanner listener: {e}")
+
+def process_checkout(scanner, order_manager):
+    try:
+        total = order_manager.calculate_total_with_tax()
+        print(f"Total amount with tax: ${total:.2f}")
+        amount_paid = float(input("Enter amount paid: "))
+        change = order_manager.process_payment(amount_paid)
+        print(f"Change to give back: ${change:.2f}")
+        order_manager.clear_order()
+    except Exception as e:
+        logging.error(f"Error processing checkout: {e}")
+
+def add_item_to_database(db_manager, barcode):
+    try:
+        name = input("Enter item name: ")
+        price = float(input("Enter item price: "))
+        if db_manager.add_item(barcode, name, price):
+            print(f"Item '{name}' added to the database.")
+    except Exception as e:
+        logging.error(f"Error adding item to database: {e}")
 
 def main():
-    scanner = BarcodeScanner()
-    # mock scanner
-    #scanner = MockBarcodeScanner()
-    db_manager = DatabaseManager('my_items_database.db')
-    order_manager = OrderManager(tax_rate=0.08)
+    scanner = setup_scanner()
+    db_manager = setup_database_manager()
+    order_manager = setup_order_manager()
 
     try:
         while True:
@@ -29,42 +84,25 @@ def main():
             barcode = scanner.read_barcode()
 
             if barcode and barcode.lower() == 'checkout':
-                scanner.listener.stop()
-                time.sleep(0.5)
-                flush_input()
-
-                total = order_manager.calculate_total_with_tax()
-                print(f"Total amount with tax: ${total:.2f}")
-                amount_paid = float(input("Enter amount paid: "))
-                change = order_manager.process_payment(amount_paid)
-                print(f"Change to give back: ${change:.2f}")
-                order_manager.clear_order()
-
-                scanner.listener = Listener(on_press=scanner.on_press, on_release=scanner.on_release)
-                scanner.listener.start()
+                process_checkout(scanner, order_manager)
+                restart_scanner_listener(scanner)
                 continue
 
             if barcode:
-                item_details = db_manager.get_item_details(barcode)
+                try:
+                    item_details = db_manager.get_item_details(barcode)
+                except Exception as e:
+                    logging.error(f"Error retrieving item details: {e}")
+                    continue
+
                 if item_details:
                     item = {'name': item_details[0], 'price': item_details[1]}
                     order_manager.add_item(item)
                     print(f"Added to order: {item['name']} for ${item['price']:.2f}")
                 else:
                     print("Item not found in the database.")
-
-                    scanner.listener.stop()
-                    time.sleep(0.5)
-                    flush_input()
-
-                    name = input("Enter item name: ")
-                    price = float(input("Enter item price: "))
-
-                    if db_manager.add_item(barcode, name, price):
-                        print(f"Item '{name}' added to the database.")
-
-                    scanner.listener = Listener(on_press=scanner.on_press, on_release=scanner.on_release)
-                    scanner.listener.start()
+                    restart_scanner_listener(scanner)
+                    add_item_to_database(db_manager, barcode)
                 scanner.current_barcode = ''
             else:
                 print("No barcode scanned.")
@@ -72,11 +110,17 @@ def main():
     except KeyboardInterrupt:
         print("\nExiting main application.")
     finally:
-        scanner.close()
-        db_manager.close()
+        # Stop the barcode scanner listener if it's running
+        if scanner and scanner.listener:
+            scanner.listener.stop()
 
+        # Close any open database connections
+        if db_manager:
+            db_manager.close_connection()
 
+        # Log the application shutdown
+        logging.info("Application shutdown gracefully.")
 if __name__ == "__main__":
-    flask_thread = threading.Thread(target=run_flask_app)
-    flask_thread.start()
+    #flask_thread = threading.Thread(target=run_flask_app)
+    #flask_thread.start()
     main()
