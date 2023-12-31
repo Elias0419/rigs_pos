@@ -112,7 +112,7 @@ def enter_command_mode(scanner, order_manager, db_manager, order_details):
 
     while True:
         flush_input()
-        command = input("Hit 'C' to checkout, 'H' for history, 'p' to print the current order, 'e' to return to the barcode scanner: ").lower()
+        command = input("'c' to checkout, 'h' for history, 'p' to print current order, 'm' for manual transaction, 'e' return to barcode scanner: ").lower()
         if command == 'c':
             process_checkout(scanner, order_manager, db_manager, order_details)
             break
@@ -122,6 +122,11 @@ def enter_command_mode(scanner, order_manager, db_manager, order_details):
             updated_order_details = order_manager.get_order_details()
             print(updated_order_details)
             updated_order_details = None
+        elif command == 'm':
+            item_name = input("Enter item name: ")
+            item_price = float(input("Enter item price: "))
+            order_manager.add_manual_item(item_name, item_price)
+            print(f"Added {item_name} for ${item_price:.2f} to the order.")
         elif command == 'e': # this is the string E TODO consider listeners here
             print("DEBUG main pressed escape to exit command mode")
             restart_scanner_listener(scanner)
