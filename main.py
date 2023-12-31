@@ -69,10 +69,12 @@ def process_checkout(scanner, order_manager):
                     continue  # Prompt again for the correct amount
                 change = amount_paid - total_with_tax
                 print(f"Change to give back: ${change:.2f}")
+                open_cash_drawer()
                 break  # Break the loop once a valid amount is entered
 
         elif payment_method == "card":
             print("Processing card payment. Please put the receipt in the register.")
+            open_cash_drawer()
             # Additional logic for credit card processing can be added here
 
         order_manager.clear_order()
@@ -92,6 +94,8 @@ def add_item_to_database(db_manager, barcode):
             print(f"Item '{name}' added to the database.")
     except Exception as e:
         logging.error(f"Error adding item to database: {e}")
+    finally:
+        pass
 
 def on_press(key):
     if key == Key.esc:
