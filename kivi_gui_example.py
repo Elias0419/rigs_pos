@@ -5,6 +5,11 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
 from open_cash_drawer import open_cash_drawer
+import threading
+from kivy.clock import Clock
+from kivy.app import App
+from barcode_scanner import BarcodeScanner
+from database_manager import DatabaseManager
 
 class CashRegisterApp(App):
     def build(self):
@@ -30,7 +35,28 @@ class CashRegisterApp(App):
         for button in buttons:
             button_layout.add_widget(Button(text=button, on_press=self.on_button_press))
 
+        self.barcode_scanner = BarcodeScanner()
+        self.database_manager = DatabaseManager()
+        Clock.schedule_interval(self.check_for_scanned_barcode, 0.1)
+
         return main_layout
+
+    def check_for_scanned_barcode(self, dt):
+        # Check if a barcode has been scanned
+        if self.barcode_scanner.is_barcode_ready():
+            barcode = self.barcode_scanner.read_barcode()
+            self.handle_scanned_barcode(barcode)
+
+    def handle_scanned_barcode(self, barcode):
+        # Process the scanned barcode (e.g., lookup item details and update display)
+        # This is where you'd integrate with your order management logic
+        item_details = db_manager.get_item_details(barcode)
+        self.display.text += f"\nScanned item: {item_details['name']} - ${item_details['price']}"
+
+    # def get_item_details(self, barcode):
+    #     # Fetch item details based on barcode
+    #     # Placeholder for your database lookup logic
+    #     return {'name': 'Sample Item', 'price': 1.99}
 
     def on_button_press(self, instance):
         current = self.display.text
