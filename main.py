@@ -126,6 +126,7 @@ def main():
     scanner = setup_scanner()
     db_manager = setup_database_manager()
     order_manager = setup_order_manager()
+    order_details = order_manager.get_order_details()
 
     try:
         while True:
@@ -133,7 +134,7 @@ def main():
 
             if scanner.command_mode:
                 print("DEBUG main command mod check #1")
-                enter_command_mode(scanner, order_manager, db_manager)
+                enter_command_mode(scanner, order_manager, db_manager, order_details)
                 print("DEBUG: Exiting command mode")
                 scanner.command_mode = False  # Reset the command mode flag
                 restart_scanner_listener(scanner)
