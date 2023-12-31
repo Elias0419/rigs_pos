@@ -28,7 +28,7 @@ class CashRegisterApp(App):
         buttons = [
             '1', '2', '3', 'Manual Entry',
             '4', '5', '6', 'Clear Item',
-            '7', '8', '9', 'Print Receipt',
+            '7', '8', '9', 'Open Register',
             'Clear Order', '0', 'Enter', 'Inventory'
         ]
 
