@@ -107,7 +107,7 @@ def on_press(key):
     if key == Key.esc:
         return False  # Stop listener
 
-def enter_command_mode(scanner, order_manager):
+def enter_command_mode(scanner, order_manager, db_manager):
     print("DEBUG main entered command mode function")
     while True:
         command = input("Hit 'C' to checkout, 'H' for help, 'e' to return to the barcode scanner: ").lower()
