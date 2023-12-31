@@ -82,7 +82,7 @@ def process_checkout(scanner, order_manager, db_manager):
     except ValueError as e:
         print(f"Invalid input: {e}")
     except Exception as e:
-        logging.error(f"Error processing checkout: {e}")
+        logging.error(f"Error processing checkout: {str(e)}")
 
 def send_order_to_history_database(order_details, order_manager, db_manager):
     db_manager.add_order_history(order_details['order_id'], json.dumps(order_details['items']),order_manager.tax_rate,
