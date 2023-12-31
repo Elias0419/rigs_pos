@@ -73,6 +73,22 @@ def add_item_to_database(db_manager, barcode):
     except Exception as e:
         logging.error(f"Error adding item to database: {e}")
 
+def on_press(key):
+    if key == Key.esc:
+        return False  # Stop listener
+
+def enter_command_mode():
+    print("DEBUG main entered command mode function")
+    while True:
+        command = input("Hit 'C' to checkout, 'H' for help, 'esc' to return to the barcode scanner: ").lower()
+        if command == 'c':
+            process_checkout(scanner, order_manager)
+            break
+        elif command == 'h':
+            print("Help: [Your help instructions here]")
+        elif command == 'esc':
+            break
+
 def main():
     scanner = setup_scanner()
     db_manager = setup_database_manager()
@@ -80,38 +96,51 @@ def main():
 
     try:
         while True:
-            print("Scan a barcode or type 'checkout' to finalize the order...")
-            barcode = scanner.read_barcode()
-
-            if barcode and barcode.lower() == 'checkout':
-                process_checkout(scanner, order_manager)
-                restart_scanner_listener(scanner)
+            print("Scan a barcode or press 'esc' to enter commands.")
+            print("DEBUG main loop scanner.command_mode ", scanner.command_mode)
+            # Check if command mode was activated before waiting for barcode
+            if scanner.command_mode:
+                print("DEBUG main command mod check #1")
+                enter_command_mode()
+                scanner.command_mode = False  # Reset the command mode flag
                 continue
 
-            if barcode:
-                try:
-                    item_details = db_manager.get_item_details(barcode)
-                except Exception as e:
-                    logging.error(f"Error retrieving item details: {e}")
-                    continue
+            if scanner.is_barcode_ready():
+                barcode = scanner.read_barcode()
 
-                if item_details:
-                    item = {'name': item_details[0], 'price': item_details[1]}
-                    order_manager.add_item(item)
-                    print(f"Added to order: {item['name']} for ${item['price']:.2f}")
-                else:
-                    print("Item not found in the database.")
-                    restart_scanner_listener(scanner)
-                    add_item_to_database(db_manager, barcode)
-                scanner.current_barcode = ''
-            else:
-                print("No barcode scanned.")
+                if barcode:
+                    try:
+                        item_details = db_manager.get_item_details(barcode)
+                    except Exception as e:
+                        logging.error(f"Error retrieving item details: {e}")
+                        continue
+
+                    if item_details:
+                        item = {'name': item_details[0], 'price': item_details[1]}
+                        order_manager.add_item(item)
+                        print(f"Added to order: {item['name']} for ${item['price']:.2f}")
+                    else:
+                        print("Item not found in the database.")
+                        restart_scanner_listener(scanner)
+                        add_item_to_database(db_manager, barcode)
+                    scanner.current_barcode = ''
+            # if scanner.command_mode:
+            #     print("DEBUG main command mod check #2")
+            #     enter_command_mode()
+            #     scanner.command_mode = False
+            #     continue
+
+            # Handle case where no barcode is scanned
+            print("No barcode scanned.")
+            time.sleep(0.1)
 
     except KeyboardInterrupt:
         print("\nExiting main application.")
     finally:
+        ("DEBUG main inside the finally loop")
         # Stop the barcode scanner listener if it's running
         if scanner and scanner.listener:
+            ("DEBUG main scanner stopping")
             scanner.listener.stop()
 
         # Close any open database connections

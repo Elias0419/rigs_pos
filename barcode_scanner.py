@@ -10,15 +10,20 @@ class BarcodeScanner:
         self.barcode_ready = threading.Event()
         self.listener = Listener(on_press=self.on_press, on_release=self.on_release)
         self.listener.start()
+        self.command_mode = False
+
+    def is_barcode_ready(self):
+        return self.barcode_ready.is_set()
 
     def on_press(self, key):
         print("DEBUG barcode_scanner on_press")
+
+
 
         current_time = time.time()
 
         if self.last_key_time is not None:
             time_diff = current_time - self.last_key_time
-
             if time_diff >= 0.05:  # assume a human can't type this fast
                 self.current_barcode = ''
 
@@ -30,14 +35,26 @@ class BarcodeScanner:
         except AttributeError:
             pass
 
+
+
+
     def on_release(self, key):
         print("DEBUG barcode_scanner on_release")
 
         if key == Key.enter:
+            print("DEBUG barcode_scanner enter key detected")
             if len(self.current_barcode) > 6:
                 self.barcode_ready.set()
                 #self.on_barcode_scanned(self.current_barcode) # part of flask integration
             self.current_barcode = ''
+        if key == Key.esc:
+            print("DEBUG barcode_scanner escape key detected")
+            if self.command_mode == False:
+                self.command_mode = True
+            else:
+                self.command_mode = False
+            print("DEBUG barcode_scanner command mode set to", self.command_mode)
+            #return
 
     def read_barcode(self):
         print("DEBUG barcode_scanner read_barcode")
