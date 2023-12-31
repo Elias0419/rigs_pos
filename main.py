@@ -38,7 +38,7 @@ def setup_database_manager():
 
 def setup_order_manager():
     try:
-        return OrderManager(tax_rate=0.08)
+        return OrderManager(tax_rate=0.07)
     except Exception as e:
         logging.error(f"Error setting up order manager: {e}")
         sys.exit(1)

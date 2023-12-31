@@ -2,6 +2,14 @@ from pynput.keyboard import Key, Listener
 import threading
 import requests
 import time
+from order_manager import OrderManager
+
+def setup_order_manager():
+    try:
+        return OrderManager(tax_rate=0.08)
+    except Exception as e:
+        logging.error(f"Error setting up order manager: {e}")
+        sys.exit(1)
 
 class BarcodeScanner:
     def __init__(self):
@@ -39,6 +47,7 @@ class BarcodeScanner:
 
 
     def on_release(self, key):
+        order_manager = setup_order_manager()
        # print("DEBUG barcode_scanner on_release")
         if len(self.current_barcode) == 12:
             self.barcode_ready.set()
@@ -55,6 +64,8 @@ class BarcodeScanner:
                 self.command_mode = True
             else:
                 self.command_mode = False
+                order_manager.clear_order()
+
             print("DEBUG barcode_scanner command mode set to", self.command_mode)
             #return
 
