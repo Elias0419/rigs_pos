@@ -24,7 +24,7 @@ class BarcodeScanner:
 
         if self.last_key_time is not None:
             time_diff = current_time - self.last_key_time
-            if time_diff >= 0.05:  # assume a human can't type this fast
+            if time_diff >= 0.1:  # assume a human can't type this fast
                 self.current_barcode = ''
 
         self.last_key_time = current_time
