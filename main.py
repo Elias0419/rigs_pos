@@ -55,14 +55,34 @@ def restart_scanner_listener(scanner):
 
 def process_checkout(scanner, order_manager):
     try:
-        total = order_manager.calculate_total_with_tax()
-        print(f"Total amount with tax: ${total:.2f}")
-        amount_paid = float(input("Enter amount paid: "))
-        change = order_manager.process_payment(amount_paid)
-        print(f"Change to give back: ${change:.2f}")
+        total_with_tax = order_manager.calculate_total_with_tax()
+        print(f"Total amount with tax: ${total_with_tax:.2f}")
+
+        # Ask for payment method
+        payment_method = input("Enter payment method (cash/card): ").lower()
+
+        if payment_method == "cash":
+            while True:  # Keep asking until a valid amount is provided
+                amount_paid = float(input("Enter amount paid in cash: "))
+                if amount_paid < total_with_tax:
+                    print("Insufficient amount paid. Please enter a valid amount.")
+                    continue  # Prompt again for the correct amount
+                change = amount_paid - total_with_tax
+                print(f"Change to give back: ${change:.2f}")
+                break  # Break the loop once a valid amount is entered
+
+        elif payment_method == "card":
+            print("Processing card payment. Please put the receipt in the register.")
+            # Additional logic for credit card processing can be added here
+
         order_manager.clear_order()
+    except ValueError as e:
+        print(f"Invalid input: {e}")
     except Exception as e:
         logging.error(f"Error processing checkout: {e}")
+
+
+
 
 def add_item_to_database(db_manager, barcode):
     try:

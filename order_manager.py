@@ -11,6 +11,10 @@ class OrderManager:
     def _update_total_with_tax(self):
         self._total_with_tax = self.total * (1 + self.tax_rate)
 
+    def calculate_total_with_tax(self):
+        self._update_total_with_tax()
+        return self._total_with_tax
+
     def add_item(self, item):
         print("DEBUG order_manager add_item", item)
         self.items.append(item)
