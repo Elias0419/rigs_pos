@@ -2,12 +2,31 @@ import sqlite3
 class DatabaseManager:
     def __init__(self, db_path):
         self.db_path = db_path
-        #self.conn = None
+        self.ensure_tables_exist()
 
     def _get_connection(self):
-        print("DEBUG DatabaseManager get_conncetion")
-
+        print("DEBUG DatabaseManager get_connection")
         return sqlite3.connect(self.db_path)
+
+    def ensure_tables_exist(self):
+        self.create_items_table()
+        self.create_order_history_table()
+
+    def create_items_table(self):
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''CREATE TABLE IF NOT EXISTS items (
+                                barcode TEXT PRIMARY KEY,
+                                name TEXT,
+                                price REAL
+                              )''')
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Error creating items table: {e}")
+        finally:
+            conn.close()
+
 
     def create_order_history_table(self):
         conn = self._get_connection()
@@ -27,6 +46,7 @@ class DatabaseManager:
             conn.close()
 
     def add_order_history(self, order_id, items, total_with_tax, total):
+        self.create_order_history_table()
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
@@ -52,6 +72,7 @@ class DatabaseManager:
         return item
 
     def add_item(self, barcode, name, price):
+        self.create_items_table()
         print("DEBUG DatabaseManager add_item")
 
         conn = self._get_connection()
