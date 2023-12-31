@@ -26,7 +26,7 @@ class DatabaseManager:
         finally:
             conn.close()
 
-    def add_order_history(self, order_id, items, total, payment_method):
+    def add_order_history(self, order_id, items, total_with_tax, payment_method):
         conn = self._get_connection()
         try:
             cursor = conn.cursor()

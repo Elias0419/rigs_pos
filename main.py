@@ -85,8 +85,7 @@ def process_checkout(scanner, order_manager, db_manager):
         logging.error(f"Error processing checkout: {e}")
 
 def send_order_to_history_database(order_details, order_manager, db_manager):
-    db_manager.add_order_history(order_details['order_id'], json.dumps(order_details['items']),
-                                 order_details['total'], order_manager.tax_rate,
+    db_manager.add_order_history(order_details['order_id'], json.dumps(order_details['items']),order_manager.tax_rate,
                                  order_details['total_with_tax'])
 
 
@@ -184,6 +183,7 @@ def main():
         # Log the application shutdown
         logging.info("Application shutdown gracefully.")
 if __name__ == "__main__":
+    db_manager = DatabaseManager()
     #flask_thread = threading.Thread(target=run_flask_app)
     #flask_thread.start()
     main()
