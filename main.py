@@ -106,6 +106,7 @@ def main():
                 continue
 
             if scanner.is_barcode_ready():
+                print("DEBUG main is_barcode_ready")
                 barcode = scanner.read_barcode()
 
                 if barcode:
