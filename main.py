@@ -110,12 +110,15 @@ def on_press(key):
 def enter_command_mode(scanner, order_manager, db_manager, order_details):
     print("DEBUG main entered command mode function")
     while True:
-        command = input("Hit 'C' to checkout, 'H' for help, 'e' to return to the barcode scanner: ").lower()
+
+        command = input("Hit 'C' to checkout, 'H' for history, 'p' to print the current order, 'e' to return to the barcode scanner: ").lower()
         if command == 'c':
             process_checkout(scanner, order_manager, db_manager, order_details)
             break
         elif command == 'h':
             print("Help: [Your help instructions here]")
+        elif command == 'p':
+            print(order_details)
         elif command == 'e': # this is the string E TODO consider listeners here
             print("DEBUG main pressed escape to exit command mode")
             restart_scanner_listener(scanner)
