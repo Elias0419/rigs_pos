@@ -56,7 +56,7 @@ def restart_scanner_listener(scanner):
 
 def process_checkout(scanner, order_manager, db_manager, order_details):
     try:
-        total = order_details['Total']
+        total = order_details['total']
         total_with_tax = order_manager.calculate_total_with_tax()
         print(f"Total amount with tax: ${total_with_tax:.2f}")
 
@@ -87,7 +87,7 @@ def process_checkout(scanner, order_manager, db_manager, order_details):
 
 def send_order_to_history_database(order_details, order_manager, db_manager):
     db_manager.add_order_history(order_details['order_id'], json.dumps(order_details['items']),order_manager.tax_rate,
-                                 order_details['total_with_tax'],order_details['Total'])
+                                 order_details['total_with_tax'],order_details['total'])
 
 
 
