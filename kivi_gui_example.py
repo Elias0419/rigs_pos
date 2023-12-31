@@ -50,7 +50,7 @@ class CashRegisterApp(App):
     def handle_scanned_barcode(self, barcode):
         # Process the scanned barcode (e.g., lookup item details and update display)
         # This is where you'd integrate with your order management logic
-        item_details = db_manager.get_item_details(barcode)
+        item_details = self.db_manager.get_item_details(barcode)
         self.display.text += f"\nScanned item: {item_details['name']} - ${item_details['price']}"
 
     # def get_item_details(self, barcode):
