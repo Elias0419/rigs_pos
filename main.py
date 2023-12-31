@@ -77,7 +77,7 @@ def on_press(key):
     if key == Key.esc:
         return False  # Stop listener
 
-def enter_command_mode():
+def enter_command_mode(scanner, order_manager):
     print("DEBUG main entered command mode function")
     while True:
         command = input("Hit 'C' to checkout, 'H' for help, 'esc' to return to the barcode scanner: ").lower()
@@ -88,6 +88,7 @@ def enter_command_mode():
             print("Help: [Your help instructions here]")
         elif command == 'esc':
             break
+
 
 def main():
     scanner = setup_scanner()
@@ -101,7 +102,7 @@ def main():
             # Check if command mode was activated before waiting for barcode
             if scanner.command_mode:
                 print("DEBUG main command mod check #1")
-                enter_command_mode()
+                enter_command_mode(scanner, order_manager)
                 scanner.command_mode = False  # Reset the command mode flag
                 continue
 
