@@ -133,7 +133,7 @@ def main():
 
             if scanner.command_mode:
                 print("DEBUG main command mod check #1")
-                enter_command_mode(scanner, order_manager, db_manager)
+                enter_command_mode(scanner, order_manager)
                 print("DEBUG: Exiting command mode")
                 scanner.command_mode = False  # Reset the command mode flag
                 restart_scanner_listener(scanner)
