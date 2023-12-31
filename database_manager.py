@@ -26,13 +26,13 @@ class DatabaseManager:
         finally:
             conn.close()
 
-    def add_order_history(self, order_id, items, total_with_tax, payment_method):
+    def add_order_history(self, order_id, items, total_with_tax, total):
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
             # Assuming 'items' is a JSON string for simplicity
-            cursor.execute('INSERT INTO order_history (order_id, items, total, payment_method) VALUES (?, ?, ?, ?)',
-                           (order_id, items, total, payment_method))
+            cursor.execute('INSERT INTO order_history (order_id, items, total, total_with_tax) VALUES (?, ?, ?, ?)',
+                           (order_id, items, total, total_with_tax))
             conn.commit()
         except sqlite3.Error as e:
             print(f"Error adding order history: {e}")
