@@ -42,21 +42,23 @@ class CashRegisterApp(App):
         return main_layout
 
     def check_for_scanned_barcode(self, dt):
-        # Check if a barcode has been scanned
+        print("Checking for scanned barcode...")  # Debug print
         if self.barcode_scanner.is_barcode_ready():
             barcode = self.barcode_scanner.read_barcode()
+            print(f"Barcode scanned: {barcode}")  # Debug print
             self.handle_scanned_barcode(barcode)
 
     def handle_scanned_barcode(self, barcode):
-        # Process the scanned barcode (e.g., lookup item details and update display)
-        # This is where you'd integrate with your order management logic
-        item_details = self.db_manager.get_item_details(barcode)
-        self.display.text += f"\nScanned item: {item_details['name']} - ${item_details['price']}"
+        print(f"Handling scanned barcode: {barcode}")  # Debug print
+        try:
+            item_details = self.db_manager.get_item_details(barcode)
+            if item_details:
+                self.display.text += f"\nScanned item: {item_details['name']} - ${item_details['price']}"
+            else:
+                print(f"No details found for barcode: {barcode}")  # Debug print
+        except Exception as e:
+            print(f"Error handling scanned barcode: {e}")  # Error handling
 
-    # def get_item_details(self, barcode):
-    #     # Fetch item details based on barcode
-    #     # Placeholder for your database lookup logic
-    #     return {'name': 'Sample Item', 'price': 1.99}
 
     def on_button_press(self, instance):
         current = self.display.text
