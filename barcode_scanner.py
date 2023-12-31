@@ -40,7 +40,7 @@ class BarcodeScanner:
 
     def on_release(self, key):
        # print("DEBUG barcode_scanner on_release")
-        if len(self.current_barcode) > 6:
+        if len(self.current_barcode) == 12:
             self.barcode_ready.set()
 
         # if key == Key.enter:
