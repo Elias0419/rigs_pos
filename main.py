@@ -70,11 +70,13 @@ def process_checkout(scanner, order_manager):
                 change = amount_paid - total_with_tax
                 print(f"Change to give back: ${change:.2f}")
                 open_cash_drawer()
+                order_manager.clear_order()
                 break  # Break the loop once a valid amount is entered
 
         elif payment_method == "card":
             print("Processing card payment. Please put the receipt in the register.")
             open_cash_drawer()
+            order_manager.clear_order()
             # Additional logic for credit card processing can be added here
 
         order_manager.clear_order()
