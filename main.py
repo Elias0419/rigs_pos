@@ -130,6 +130,7 @@ def main():
                 print("DEBUG main command mod check #1")
                 enter_command_mode(scanner, order_manager)
                 scanner.command_mode = False  # Reset the command mode flag
+                restart_scanner_listener(scanner)
                 continue
 
             if scanner.is_barcode_ready():
