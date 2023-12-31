@@ -17,7 +17,7 @@ class DatabaseManager:
                                 order_id TEXT PRIMARY KEY,
                                 items TEXT,
                                 total REAL,
-                                payment_method TEXT,
+                                total_with_tax REAL,
                                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                             )''')
             conn.commit()
