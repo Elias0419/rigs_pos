@@ -62,7 +62,7 @@ class CashRegisterApp(App):
             print(f"Error handling scanned barcode: {e}")  # Error handling
 
 
-
+#
     def on_button_press(self, instance):
         current = self.display.text
         button_text = instance.text
