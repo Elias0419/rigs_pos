@@ -118,7 +118,7 @@ def enter_command_mode(scanner, order_manager, db_manager, order_details):
         elif command == 'h':
             print("Help: [Your help instructions here]")
         elif command == 'p':
-            updated_order_details = db_manager.get_order_details()
+            updated_order_details = order_manager.get_order_details()
             print(updated_order_details)
             updated_order_details = None
         elif command == 'e': # this is the string E TODO consider listeners here
