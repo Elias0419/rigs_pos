@@ -64,7 +64,7 @@ class BarcodeScanner:
                 self.command_mode = True
             else:
                 self.command_mode = False
-                order_manager.clear_order()
+
 
             print("DEBUG barcode_scanner command mode set to", self.command_mode)
             #return
