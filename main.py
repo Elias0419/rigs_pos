@@ -54,8 +54,9 @@ def restart_scanner_listener(scanner):
     except Exception as e:
         logging.error(f"Error restarting scanner listener: {e}")
 
-def process_checkout(scanner, order_manager, db_manager):
+def process_checkout(scanner, order_manager, db_manager, order_details):
     try:
+        total = order_details['Total']
         total_with_tax = order_manager.calculate_total_with_tax()
         print(f"Total amount with tax: ${total_with_tax:.2f}")
 
@@ -106,12 +107,12 @@ def on_press(key):
     if key == Key.esc:
         return False  # Stop listener
 
-def enter_command_mode(scanner, order_manager, db_manager):
+def enter_command_mode(scanner, order_manager, db_manager, order_details):
     print("DEBUG main entered command mode function")
     while True:
         command = input("Hit 'C' to checkout, 'H' for help, 'e' to return to the barcode scanner: ").lower()
         if command == 'c':
-            process_checkout(scanner, order_manager, db_manager)
+            process_checkout(scanner, order_manager, db_manager, order_details)
             break
         elif command == 'h':
             print("Help: [Your help instructions here]")
