@@ -86,7 +86,7 @@ def process_checkout(scanner, order_manager, db_manager):
 
 def send_order_to_history_database(order_details, order_manager, db_manager):
     db_manager.add_order_history(order_details['order_id'], json.dumps(order_details['items']),order_manager.tax_rate,
-                                 order_details['total_with_tax'])
+                                 order_details['total_with_tax'],order_details['Total'])
 
 
 
