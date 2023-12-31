@@ -126,7 +126,7 @@ def enter_command_mode(scanner, order_manager, db_manager, order_details):
             print("DEBUG main pressed escape to exit command mode")
             restart_scanner_listener(scanner)
             break
-        sleep(0.1)
+        time.sleep(0.1)
 
 
 def main():
