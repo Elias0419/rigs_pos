@@ -183,7 +183,7 @@ def main():
         # Log the application shutdown
         logging.info("Application shutdown gracefully.")
 if __name__ == "__main__":
-    db_manager = DatabaseManager()
+    db_manager = DatabaseManager('order_history')
     #flask_thread = threading.Thread(target=run_flask_app)
     #flask_thread.start()
     main()
