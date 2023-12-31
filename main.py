@@ -96,7 +96,7 @@ def main():
 
     try:
         while True:
-            print("Scan a barcode or press 'esc' to enter commands.")
+           # print("Scan a barcode or press 'esc' to enter commands.")
             print("DEBUG main loop scanner.command_mode ", scanner.command_mode)
             # Check if command mode was activated before waiting for barcode
             if scanner.command_mode:
@@ -131,7 +131,7 @@ def main():
             #     continue
 
             # Handle case where no barcode is scanned
-            print("No barcode scanned.")
+           # print("No barcode scanned.")
             time.sleep(0.1)
 
     except KeyboardInterrupt:
