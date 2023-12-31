@@ -42,7 +42,7 @@ class CashRegisterApp(App):
         return main_layout
 
     def check_for_scanned_barcode(self, dt):
-        print("Checking for scanned barcode...")  # Debug print
+        #print("Checking for scanned barcode...")  # Debug print
         if self.barcode_scanner.is_barcode_ready():
             barcode = self.barcode_scanner.read_barcode()
             print(f"Barcode scanned: {barcode}")  # Debug print
