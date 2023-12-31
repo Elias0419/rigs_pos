@@ -36,7 +36,7 @@ class CashRegisterApp(App):
             button_layout.add_widget(Button(text=button, on_press=self.on_button_press))
 
         self.barcode_scanner = BarcodeScanner()
-        self.database_manager = DatabaseManager("my_items_database.db")
+        self.db_manager = DatabaseManager("my_items_database.db")
         Clock.schedule_interval(self.check_for_scanned_barcode, 0.1)
 
         return main_layout
