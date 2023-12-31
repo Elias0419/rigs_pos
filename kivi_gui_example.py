@@ -53,11 +53,14 @@ class CashRegisterApp(App):
         try:
             item_details = self.db_manager.get_item_details(barcode)
             if item_details:
-                self.display.text += f"\nScanned item: {item_details['name']} - ${item_details['price']}"
+                # Assuming item_details is a tuple like (name, price)
+                item_name, item_price = item_details
+                self.display.text += f"\nScanned item: {item_name} - ${item_price}"
             else:
                 print(f"No details found for barcode: {barcode}")  # Debug print
         except Exception as e:
             print(f"Error handling scanned barcode: {e}")  # Error handling
+
 
 
     def on_button_press(self, instance):
