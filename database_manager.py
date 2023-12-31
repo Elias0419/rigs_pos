@@ -9,6 +9,38 @@ class DatabaseManager:
 
         return sqlite3.connect(self.db_path)
 
+    def create_order_history_table(self):
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute('''CREATE TABLE IF NOT EXISTS order_history (
+                                order_id TEXT PRIMARY KEY,
+                                items TEXT,
+                                total REAL,
+                                payment_method TEXT,
+                                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                            )''')
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Error creating order history table: {e}")
+        finally:
+            conn.close()
+
+    def add_order_history(self, order_id, items, total, payment_method):
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            # Assuming 'items' is a JSON string for simplicity
+            cursor.execute('INSERT INTO order_history (order_id, items, total, payment_method) VALUES (?, ?, ?, ?)',
+                           (order_id, items, total, payment_method))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Error adding order history: {e}")
+            return False
+        finally:
+            conn.close()
+        return True
+
     def get_item_details(self, barcode):
         print("DEBUG DatabaseManager get_item_details")
 

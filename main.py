@@ -5,6 +5,7 @@ import tty
 import threading
 import os
 import logging
+import json
 from pynput.keyboard import Listener
 from barcode_scanner import BarcodeScanner
 from mock_barcode_scanner import MockBarcodeScanner
@@ -53,37 +54,40 @@ def restart_scanner_listener(scanner):
     except Exception as e:
         logging.error(f"Error restarting scanner listener: {e}")
 
-def process_checkout(scanner, order_manager):
+def process_checkout(scanner, order_manager, db_manager):
     try:
         total_with_tax = order_manager.calculate_total_with_tax()
         print(f"Total amount with tax: ${total_with_tax:.2f}")
 
-        # Ask for payment method
         payment_method = input("Enter payment method (cash/card): ").lower()
 
         if payment_method == "cash":
-            while True:  # Keep asking until a valid amount is provided
+            while True:
                 amount_paid = float(input("Enter amount paid in cash: "))
                 if amount_paid < total_with_tax:
                     print("Insufficient amount paid. Please enter a valid amount.")
-                    continue  # Prompt again for the correct amount
+                    continue
                 change = amount_paid - total_with_tax
                 print(f"Change to give back: ${change:.2f}")
-                open_cash_drawer()
-                order_manager.clear_order()
-                break  # Break the loop once a valid amount is entered
+                break
 
         elif payment_method == "card":
             print("Processing card payment. Please put the receipt in the register.")
-            open_cash_drawer()
-            order_manager.clear_order()
-            # Additional logic for credit card processing can be added here
 
+        open_cash_drawer()
+        order_details = order_manager.get_order_details()
+        send_order_to_history_database(order_details, order_manager, db_manager)
         order_manager.clear_order()
+
     except ValueError as e:
         print(f"Invalid input: {e}")
     except Exception as e:
         logging.error(f"Error processing checkout: {e}")
+
+def send_order_to_history_database(order_details, order_manager, db_manager):
+    db_manager.add_order_history(order_details['order_id'], json.dumps(order_details['items']),
+                                 order_details['total'], order_manager.tax_rate,
+                                 order_details['total_with_tax'])
 
 
 
@@ -106,13 +110,13 @@ def on_press(key):
 def enter_command_mode(scanner, order_manager):
     print("DEBUG main entered command mode function")
     while True:
-        command = input("Hit 'C' to checkout, 'H' for help, 'esc' to return to the barcode scanner: ").lower()
+        command = input("Hit 'C' to checkout, 'H' for help, 'e' to return to the barcode scanner: ").lower()
         if command == 'c':
             process_checkout(scanner, order_manager)
             break
         elif command == 'h':
             print("Help: [Your help instructions here]")
-        elif command == 'esc':
+        elif command == 'e': # this is the string E TODO consider listeners here
             print("DEBUG main pressed escape to exit command mode")
             restart_scanner_listener(scanner)
             break
@@ -183,3 +187,4 @@ if __name__ == "__main__":
     #flask_thread = threading.Thread(target=run_flask_app)
     #flask_thread.start()
     main()
+    db_manager.create_order_history_table()
