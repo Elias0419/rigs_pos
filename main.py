@@ -97,7 +97,7 @@ def main():
     try:
         while True:
            # print("Scan a barcode or press 'esc' to enter commands.")
-            print("DEBUG main loop scanner.command_mode ", scanner.command_mode)
+            #print("DEBUG main loop scanner.command_mode ", scanner.command_mode)
             # Check if command mode was activated before waiting for barcode
             if scanner.command_mode:
                 print("DEBUG main command mod check #1")
