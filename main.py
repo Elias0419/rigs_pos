@@ -120,6 +120,7 @@ def enter_command_mode(scanner, order_manager, db_manager, order_details):
         elif command == 'p':
             updated_order_details = db_manager.get_order_details()
             print(updated_order_details)
+            updated_order_details = None
         elif command == 'e': # this is the string E TODO consider listeners here
             print("DEBUG main pressed escape to exit command mode")
             restart_scanner_listener(scanner)
