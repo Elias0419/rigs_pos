@@ -16,7 +16,7 @@ class BarcodeScanner:
         return self.barcode_ready.is_set()
 
     def on_press(self, key):
-        print("DEBUG barcode_scanner on_press")
+        # print("DEBUG barcode_scanner on_press")
 
 
 
@@ -39,14 +39,14 @@ class BarcodeScanner:
 
 
     def on_release(self, key):
-        print("DEBUG barcode_scanner on_release")
+       # print("DEBUG barcode_scanner on_release")
 
-        if key == Key.enter:
-            print("DEBUG barcode_scanner enter key detected")
-            if len(self.current_barcode) > 6:
-                self.barcode_ready.set()
-                #self.on_barcode_scanned(self.current_barcode) # part of flask integration
-            self.current_barcode = ''
+        # if key == Key.enter:
+        #     print("DEBUG barcode_scanner enter key detected")
+        #     if len(self.current_barcode) > 6:
+        #         self.barcode_ready.set()
+        #         #self.on_barcode_scanned(self.current_barcode) # part of flask integration
+        #     self.current_barcode = ''
         if key == Key.esc:
             print("DEBUG barcode_scanner escape key detected")
             if self.command_mode == False:
