@@ -112,7 +112,7 @@ def enter_command_mode(scanner, order_manager):
     while True:
         command = input("Hit 'C' to checkout, 'H' for help, 'e' to return to the barcode scanner: ").lower()
         if command == 'c':
-            process_checkout(scanner, order_manager)
+            process_checkout(scanner, order_manager, db_manager)
             break
         elif command == 'h':
             print("Help: [Your help instructions here]")
@@ -133,7 +133,7 @@ def main():
 
             if scanner.command_mode:
                 print("DEBUG main command mod check #1")
-                enter_command_mode(scanner, order_manager)
+                enter_command_mode(scanner, order_manager, db_manager)
                 print("DEBUG: Exiting command mode")
                 scanner.command_mode = False  # Reset the command mode flag
                 restart_scanner_listener(scanner)
