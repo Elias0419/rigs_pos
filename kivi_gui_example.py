@@ -13,18 +13,14 @@ from database_manager import DatabaseManager
 
 class CashRegisterApp(App):
     def build(self):
-        # Main layout is a vertical box layout
         main_layout = BoxLayout(orientation='vertical')
 
-        # Display for showing current order and input/output
         self.display = TextInput(text='', multiline=True, readonly=True, halign='right', font_size=30)
         main_layout.add_widget(self.display)
 
-        # Grid layout for buttons
         button_layout = GridLayout(cols=4)
         main_layout.add_widget(button_layout)
 
-        # Buttons for the cash register
         buttons = [
             '1', '2', '3', 'Manual Entry',
             '4', '5', '6', 'Clear Item',
@@ -53,7 +49,6 @@ class CashRegisterApp(App):
         try:
             item_details = self.db_manager.get_item_details(barcode)
             if item_details:
-                # Assuming item_details is a tuple like (name, price)
                 item_name, item_price = item_details
                 self.display.text += f"\nScanned item: {item_name} - ${item_price}"
             else:
@@ -67,7 +62,6 @@ class CashRegisterApp(App):
         current = self.display.text
         button_text = instance.text
 
-        # Handling different button actions
         if button_text == 'Clear Order':
             self.display.text = ''
         elif button_text == 'Enter':
