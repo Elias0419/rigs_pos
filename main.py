@@ -33,7 +33,7 @@ def setup_scanner():
 
 def setup_database_manager():
     try:
-        return DatabaseManager('my_items_database.db')
+        return DatabaseManager('inventory.db')
     except Exception as e:
         logging.error(f"Error setting up database manager: {e}")
         sys.exit(1)

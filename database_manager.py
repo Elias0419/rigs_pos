@@ -71,6 +71,22 @@ class DatabaseManager:
         conn.close()
         return item
 
+    def get_all_items(self):
+        print("DEBUG DatabaseManager get_all_items")
+
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('SELECT barcode, name, price FROM items')
+            items = cursor.fetchall()
+        except sqlite3.Error as e:
+            print(f"Error retrieving all items: {e}")
+            items = []
+        finally:
+            conn.close()
+
+        return items
+
     def add_item(self, barcode, name, price):
         self.create_items_table()
         print("DEBUG DatabaseManager add_item")
@@ -88,11 +104,11 @@ class DatabaseManager:
         return True
 
     def update_item(self, barcode, updated_info):
-        
+
         pass
 
     def delete_item(self, barcode):
-        
+
         pass
 
     def close_connection(self):
@@ -105,7 +121,7 @@ class DatabaseManager:
 if __name__ == "__main__":
     db_manager = DatabaseManager('my_items_database.db')
     try:
-        
+
         barcode = '123456789012'
         item = db_manager.get_item_details(barcode)
         if item:
