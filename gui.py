@@ -15,7 +15,7 @@ from kivy.clock import Clock
 from kivy.metrics import dp
 from kivy.uix.popup import Popup
 from kivy.core.window import Window
-Window.keyboard_anim_args = {"d":.2,"t":"linear"}
+# Window.keyboard_anim_args = {"d":.2,"t":"linear"}
 Window.softinput_mode = "below_target"
 from kivy.uix.scrollview import ScrollView
 import json
