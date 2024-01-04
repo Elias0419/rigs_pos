@@ -1,7 +1,7 @@
 # Kivy Imports
 from kivy.config import Config
 Config.set('kivy', 'keyboard_mode', 'systemanddock')
-#Config.set('kivy', 'softinput_mode', 'scale')
+
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.recycleview import RecycleView
@@ -15,10 +15,9 @@ from kivy.clock import Clock
 from kivy.metrics import dp
 from kivy.uix.popup import Popup
 from kivy.core.window import Window
-# Window.keyboard_anim_args = {"d":.2,"t":"linear"}
-#Window.softinput_mode = "below_target"
 from kivy.uix.scrollview import ScrollView
 import json
+from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.popup import Popup
