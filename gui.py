@@ -1,7 +1,7 @@
 # Kivy Imports
 from kivy.config import Config
 Config.set('kivy', 'keyboard_mode', 'systemanddock')
-#Config.set('kivy', 'softinput_mode', 'below_target')
+Config.set('kivy', 'softinput_mode', 'below_target')
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.recycleview import RecycleView
@@ -19,7 +19,6 @@ from kivy.core.window import Window
 #Window.softinput_mode = "below_target"
 from kivy.uix.scrollview import ScrollView
 import json
-from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.popup import Popup
@@ -122,7 +121,8 @@ class CashRegisterApp(App):
                 self.order_manager.items.append((item_name, item_price))
                 self.order_manager.total += item_price
                 self.display.text += f"{item_name}  ${item_price}\n"
-            else:
+            else:from kivy.app import App
+
                 self.show_add_or_bypass_popup(barcode)
         except Exception as e:
             print(f"Error handling scanned barcode: {e}")
