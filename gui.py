@@ -121,8 +121,7 @@ class CashRegisterApp(App):
                 self.order_manager.items.append((item_name, item_price))
                 self.order_manager.total += item_price
                 self.display.text += f"{item_name}  ${item_price}\n"
-            else:from kivy.app import App
-
+            else:
                 self.show_add_or_bypass_popup(barcode)
         except Exception as e:
             print(f"Error handling scanned barcode: {e}")
