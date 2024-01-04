@@ -354,84 +354,34 @@ class CashRegisterApp(App):
 
 
    # This version is for touchscreens
-    # def show_add_to_database_popup(self, barcode):
-    #     # Create the layout
-    #     popup_layout = BoxLayout(orientation="vertical", spacing=10)
-    #
-    #     # Create text inputs
-    #     barcode_input = TextInput(
-    #         text=barcode, multiline=False, size_hint_y=None, height=50
-    #     )
-    #     name_input = TextInput(
-    #         hint_text="Name", multiline=False, size_hint_y=None, height=50
-    #     )
-    #     price_input = TextInput(
-    #         hint_text="Price",
-    #         multiline=False,
-    #         size_hint_y=None,
-    #         height=50,
-    #         input_filter="float",
-    #     )
-    #
-    #     # Add text inputs to layout
-    #     popup_layout.add_widget(barcode_input)
-    #     popup_layout.add_widget(name_input)
-    #     popup_layout.add_widget(price_input)
-    #
-    #     # Create buttons
-    #     cancel_button = Button(text="Cancel", size_hint_y=None, height=50)
-    #     confirm_button = Button(text="Confirm", size_hint_y=None, height=50)
-    #
-    #     # Placeholder functions for buttons
-    #     cancel_button.bind(on_press=lambda x: self.placeholder_cancel())
-    #     confirm_button.bind(on_press=lambda x: self.placeholder_confirm())
-    #
-    #     # Add buttons to layout
-    #     popup_layout.add_widget(cancel_button)
-    #     popup_layout.add_widget(confirm_button)
-    #
-    #     # Create the popup
-    #     self.add_to_db_popup = Popup(
-    #         title="Add to Database",
-    #         content=popup_layout,
-    #         size_hint=(0.8, 0.8),
-    #         auto_dismiss=False,
-    #     )
-    #
-    #     # Open the popup
-    #     self.add_to_db_popup.open()
-    #
-    #     # Request keyboard
-    #     Window.request_keyboard(self._keyboard_closed, self)
-    #     self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
-    #     self._keyboard.bind(on_key_down=self._on_keyboard_down)
-    # def _keyboard_closed(self):
-    #     self._keyboard.unbind(on_key_down=self._on_keyboard_down)
-    #     self._keyboard = None
-    #
-    # def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
-    #     # Logic for handling key press events
-    #     pass
-
-
     def show_add_to_database_popup(self, barcode):
+        # Create the layout
+        popup_layout = BoxLayout(orientation="vertical", spacing=10)
 
-        popup_layout = BoxLayout(orientation='vertical', spacing=10)
+        # Create text inputs
+        barcode_input = TextInput(
+            text=barcode, multiline=False, size_hint_y=None, height=50
+        )
+        name_input = TextInput(
+            hint_text="Name", multiline=False, size_hint_y=None, height=50
+        )
+        price_input = TextInput(
+            hint_text="Price",
+            multiline=False,
+            size_hint_y=None,
+            height=50,
+            input_filter="float",
+        )
 
-
-        barcode_input = TextInput(text=barcode, multiline=False, size_hint_y=None, height=50)
-        name_input = TextInput(hint_text='Name', multiline=False, size_hint_y=None, height=50)
-        price_input = TextInput(hint_text='Price', multiline=False, size_hint_y=None, height=50, input_filter='float')
-
-
+        # Add text inputs to layout
         popup_layout.add_widget(barcode_input)
         popup_layout.add_widget(name_input)
         popup_layout.add_widget(price_input)
 
-
-        cancel_button = Button(text='Cancel', size_hint_y=None, height=50, on_press=self.close_add_to_database_popup)
+        # Create buttons
+        cancel_button = Button(text="Cancel", size_hint_y=None, height=50, on_press=self.close_add_to_database_popup)
         confirm_button = Button(
-            text='Confirm',
+            text="Confirm",
             size_hint_y=None,
             height=50,
             on_press=lambda instance: (
@@ -440,23 +390,79 @@ class CashRegisterApp(App):
             )
         )
 
-
-
-        # cancel_button.bind(on_press=lambda x: self.close_add_to_database_popup)
-        #confirm_button.bind(on_press=lambda x: self.placeholder_confirm())
-
-
+        # Add buttons to layout
         popup_layout.add_widget(cancel_button)
         popup_layout.add_widget(confirm_button)
 
-
-        self.add_to_db_popup = Popup(title="Add to Database",
-                                    content=popup_layout,
-                                    size_hint=(0.8, 0.8),
-                                    auto_dismiss=False)
+        # Create the popup
+        self.add_to_db_popup = Popup(
+            title="Add to Database",
+            content=popup_layout,
+            size_hint=(0.8, 0.8),
+            auto_dismiss=False,
+        )
 
         # Open the popup
         self.add_to_db_popup.open()
+
+        # Request keyboard (revised to request it only once)
+        self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
+        self._keyboard.bind(on_key_down=self._on_keyboard_down)
+
+    def _keyboard_closed(self):
+        if self._keyboard is not None:
+            self._keyboard.unbind(on_key_down=self._on_keyboard_down)
+        self._keyboard = None
+
+    def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        # Logic for handling key press events
+        pass
+
+
+    # this version is for keyboards
+    # def show_add_to_database_popup(self, barcode):
+    #
+    #     popup_layout = BoxLayout(orientation='vertical', spacing=10)
+    #
+    #
+    #     barcode_input = TextInput(text=barcode, multiline=False, size_hint_y=None, height=50)
+    #     name_input = TextInput(hint_text='Name', multiline=False, size_hint_y=None, height=50)
+    #     price_input = TextInput(hint_text='Price', multiline=False, size_hint_y=None, height=50, input_filter='float')
+    #
+    #
+    #     popup_layout.add_widget(barcode_input)
+    #     popup_layout.add_widget(name_input)
+    #     popup_layout.add_widget(price_input)
+    #
+    #
+    #     cancel_button = Button(text='Cancel', size_hint_y=None, height=50, on_press=self.close_add_to_database_popup)
+    #     confirm_button = Button(
+    #         text='Confirm',
+    #         size_hint_y=None,
+    #         height=50,
+    #         on_press=lambda instance: (
+    #             self.add_item_to_database(barcode, name_input.text, price_input.text),
+    #             self.close_add_to_database_popup(instance)
+    #         )
+    #     )
+    #
+    #
+    #
+    #     # cancel_button.bind(on_press=lambda x: self.close_add_to_database_popup)
+    #     #confirm_button.bind(on_press=lambda x: self.placeholder_confirm())
+    #
+    #
+    #     popup_layout.add_widget(cancel_button)
+    #     popup_layout.add_widget(confirm_button)
+    #
+    #
+    #     self.add_to_db_popup = Popup(title="Add to Database",
+    #                                 content=popup_layout,
+    #                                 size_hint=(0.8, 0.8),
+    #                                 auto_dismiss=False)
+    #
+    #     # Open the popup
+    #     self.add_to_db_popup.open()
 
     def close_add_to_database_popup(self, instance):
         self.add_to_db_popup.dismiss()
