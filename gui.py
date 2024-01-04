@@ -1,7 +1,7 @@
 # Kivy Imports
 from kivy.config import Config
 Config.set('kivy', 'keyboard_mode', 'systemanddock')
-
+Config.set('kivy', 'softinput_mode', 'below_target')
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.recycleview import RecycleView
