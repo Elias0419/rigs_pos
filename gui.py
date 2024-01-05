@@ -21,8 +21,8 @@ from kivy.lang import Builder
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.popup import Popup
 # External Imports
-#from barcode_scanner import BarcodeScanner
-from mock_barcode_scanner import BarcodeScanner
+from barcode_scanner import BarcodeScanner
+#from mock_barcode_scanner import BarcodeScanner
 from database_manager import DatabaseManager
 from order_manager import OrderManager
 
