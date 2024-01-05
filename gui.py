@@ -199,23 +199,23 @@ class CashRegisterApp(App):
         print(total_with_tax)
         order_summary = f"Order Summary:\n{self.display.text}\nTotal with Tax: ${total_with_tax:.2f}"
         self.show_order_popup(order_summary)
-#################
-"""
 
-    def handle_scanned_barcode(self, barcode):
-        try:
-            item_details = self.db_manager.get_item_details(barcode)
-            if item_details:
-                print(item_details)
-                item_name, item_price = item_details
-                self.order_manager.items.append((item_name, item_price))
-                self.order_manager.total += item_price
-                self.display.text += f"{item_name}  ${item_price}\n"
-            else:
-                self.show_add_or_bypass_popup(barcode)
-        except Exception as e:
-            print(f"Error handling scanned barcode: {e}")
-"""
+    """
+
+        def handle_scanned_barcode(self, barcode):
+            try:
+                item_details = self.db_manager.get_item_details(barcode)
+                if item_details:
+                    print(item_details)
+                    item_name, item_price = item_details
+                    self.order_manager.items.append((item_name, item_price))
+                    self.order_manager.total += item_price
+                    self.display.text += f"{item_name}  ${item_price}\n"
+                else:
+                    self.show_add_or_bypass_popup(barcode)
+            except Exception as e:
+                print(f"Error handling scanned barcode: {e}")
+    """
 
     def on_button_press(self, instance, item_details):
         current = self.display.text
