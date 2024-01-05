@@ -24,6 +24,7 @@ class OrderManager:
         print("DEBUG order_manager add_item", item)
         self.items.append(item)
         self.total += item['price']
+        print(item)
         self._update_total_with_tax()
 
     def remove_item(self, item_id):
