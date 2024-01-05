@@ -120,6 +120,7 @@ class CashRegisterApp(App):
                 self.order_manager.items.append((item_name, item_price))
                 self.order_manager.total += item_price
                 self.display.text += f"{item_name}  ${item_price}\n"
+                return item_details
             else:
                 self.show_add_or_bypass_popup(barcode)
         except Exception as e:
@@ -198,8 +199,25 @@ class CashRegisterApp(App):
         print(total_with_tax)
         order_summary = f"Order Summary:\n{self.display.text}\nTotal with Tax: ${total_with_tax:.2f}"
         self.show_order_popup(order_summary)
+#################
+"""
 
-    def on_button_press(self, instance):
+    def handle_scanned_barcode(self, barcode):
+        try:
+            item_details = self.db_manager.get_item_details(barcode)
+            if item_details:
+                print(item_details)
+                item_name, item_price = item_details
+                self.order_manager.items.append((item_name, item_price))
+                self.order_manager.total += item_price
+                self.display.text += f"{item_name}  ${item_price}\n"
+            else:
+                self.show_add_or_bypass_popup(barcode)
+        except Exception as e:
+            print(f"Error handling scanned barcode: {e}")
+"""
+
+    def on_button_press(self, instance, item_details):
         current = self.display.text
         button_text = instance.text
 
@@ -211,7 +229,14 @@ class CashRegisterApp(App):
         elif button_text == "Custom Item":
             self.show_custom_item_popup(barcode="1234567890")
         elif button_text == "Clear Item":
-            self.order_manager.remove_item()
+            item_name, item_price = item_details
+            item_string = f"{item_name}  ${item_price}\n"
+
+            if item_string in self.display.text:
+                self.display.text = self.display.text.replace(item_string, '', 1)
+                self.order_manager.items.remove((item_name, item_price))
+                self.order_manager.total -= item_price
+
         elif button_text == "Open Register":
             open_cash_drawer()
         elif button_text == "Inventory":
