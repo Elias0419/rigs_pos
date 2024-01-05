@@ -205,13 +205,13 @@ class CashRegisterApp(App):
 
         if button_text == "Clear Order":
             self.display.text = ""
+            OrderManager.clear_order()
         elif button_text == "Pay":
             self.finalize_order()
         elif button_text == "Custom Item":
             self.show_custom_item_popup(barcode="1234567890")
         elif button_text == "Clear Item":
-            # Clear the last item from the order
-            pass
+            OrderManager.remove_item()
         elif button_text == "Open Register":
             open_cash_drawer()
         elif button_text == "Inventory":
