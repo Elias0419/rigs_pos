@@ -37,27 +37,47 @@ class BarcodeScanner:
     #     if len(self.current_barcode) == 12:
     #         self.barcode_ready.set()
 
+    # def on_press(self, key):
+    #     current_time = time.time()
+    #     if self.last_key_time is not None:
+    #         time_diff = current_time - self.last_key_time
+    #         if time_diff >= self.scan_timeout:
+    #             self.current_barcode = ''
+    #     self.last_key_time = current_time
+    #
+    #     try:
+    #         if key.char is not None:
+    #             self.current_barcode += key.char
+    #     except AttributeError:
+    #         pass
+    #
+    # def on_release(self, key):
+    #     if self.is_valid_barcode(self.current_barcode):
+    #         self.barcode_ready.set()
+    #
+    # def is_valid_barcode(self, barcode):
+    #     return re.match(r'^\d{12}$', barcode) is not None
+    #
     def on_press(self, key):
-        current_time = time.time()
-        if self.last_key_time is not None:
-            time_diff = current_time - self.last_key_time
-            if time_diff >= self.scan_timeout:
-                self.current_barcode = ''
-        self.last_key_time = current_time
-
         try:
             if key.char is not None:
+                # Append the character to the current barcode
                 self.current_barcode += key.char
+
+                # If newline character is detected, check for valid barcode
+                if key.char == '\n':
+                    if self.is_valid_barcode(self.current_barcode.strip()):
+                        self.barcode_ready.set()
+                        self.current_barcode = ''  # Reset barcode
+                    else:
+                        # Handle invalid barcode if necessary
+                        self.current_barcode = ''  # Reset barcode
         except AttributeError:
             pass
 
-    def on_release(self, key):
-        if self.is_valid_barcode(self.current_barcode):
-            self.barcode_ready.set()
-
     def is_valid_barcode(self, barcode):
-        return re.match(r'^\d{12}$', barcode) is not None
-
+        # Adjust this regex to match your barcode formats
+        return re.match(r'^\d{8,12,13}$', barcode) is not None
 
     def read_barcode(self):
         self.barcode_ready.wait()
