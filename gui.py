@@ -259,8 +259,8 @@ class CashRegisterApp(App):
         elif button_text == "Custom Item":
             self.show_custom_item_popup(barcode="1234567890")
         elif button_text == "Tools":
-            self.show_add_to_database_popup("12321321414") ##################TEST REMOVE ME
-            #self.show_tools_popup()
+            #self.show_add_to_database_popup("12321321414") ##################TEST REMOVE ME
+            self.show_tools_popup()
         elif button_text == "Clear Item"and self.last_scanned_item:
             item_name, item_price = self.last_scanned_item
             item_tuple = (item_name, item_price)
