@@ -253,6 +253,7 @@ class CashRegisterApp(App):
 
     def show_guard_screen(self):
         if not self.is_guard_screen_displayed:
+            print("Guard screen triggered", time.time.now())
             guard_layout = BoxLayout()
             guard_popup = Popup(
                 title="Guard Screen",
@@ -265,6 +266,8 @@ class CashRegisterApp(App):
 
     def show_lock_screen(self):
         if not self.is_lock_screen_displayed:
+            print("Lock screen triggered", time.time.now())
+
             lock_layout = BoxLayout(orientation="vertical")
             keypad_layout = GridLayout(cols=3)
 
