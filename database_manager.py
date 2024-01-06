@@ -50,7 +50,7 @@ class DatabaseManager:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            # Assuming 'items' is a JSON string for simplicity
+
             cursor.execute('INSERT INTO order_history (order_id, items, total, total_with_tax) VALUES (?, ?, ?, ?)',
                            (order_id, items, total, total_with_tax))
             conn.commit()
@@ -118,15 +118,4 @@ class DatabaseManager:
             conn.close()
 
 
-if __name__ == "__main__":
-    db_manager = DatabaseManager('my_items_database.db')
-    try:
 
-        barcode = '123456789012'
-        item = db_manager.get_item_details(barcode)
-        if item:
-            print(f"Item: {item[0]}, Price: {item[1]}")
-        else:
-            print("Item not found.")
-    finally:
-        db_manager.close()
