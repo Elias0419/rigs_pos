@@ -426,6 +426,9 @@ class CashRegisterApp(App):
         name_input = TextInput(hint_text='Name', multiline=False, size_hint_y=None, height=50)
         price_input = TextInput(hint_text='Price', multiline=False, size_hint_y=None, height=50, input_filter='float')
 
+        for text_input in [barcode_input, name_input, price_input]:
+            text_input.bind(focus=self.on_input_focus)
+
 
         popup_layout.add_widget(barcode_input)
         popup_layout.add_widget(name_input)
@@ -461,6 +464,15 @@ class CashRegisterApp(App):
 
         # Open the popup
         self.add_to_db_popup.open()
+
+    def on_input_focus(self, instance, value):
+        if value:
+            # If the TextInput is focused, show the keyboard
+            instance.keyboard_mode = 'managed'
+            instance.show_keyboard()
+        else:
+            # If the TextInput loses focus, hide the keyboard
+            instance.hide_keyboard()
 
     def close_add_to_database_popup(self, instance):
         self.add_to_db_popup.dismiss()
