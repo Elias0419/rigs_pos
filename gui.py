@@ -1,6 +1,6 @@
 from kivy.config import Config
 
-Config.set('kivy', 'keyboard_mode', 'systemanddock')
+Config.set("kivy", "keyboard_mode", "systemanddock")
 import json
 
 from kivy.app import App
@@ -20,16 +20,18 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.textinput import TextInput
 
 from barcode_scanner import BarcodeScanner
+
 # from mock_barcode_scanner import BarcodeScanner
 from database_manager import DatabaseManager
 from order_manager import OrderManager
+
 # from open_cash_drawer import open_cash_drawer
 from mock_open_cash_drawer import open_cash_drawer
 
 
-
 class InventoryRow(BoxLayout):
     pass
+
 
 kv = """
 <InventoryRow>:
@@ -63,10 +65,13 @@ kv = """
 
 Builder.load_string(kv)
 
-class InventoryView(BoxLayout):
 
+class InventoryView(BoxLayout):
     def show_inventory(self, inventory_items):
-        self.rv.data = [{'barcode': str(item[0]), 'name': item[1], 'price': str(item[2])} for item in inventory_items]
+        self.rv.data = [
+            {"barcode": str(item[0]), "name": item[1], "price": str(item[2])}
+            for item in inventory_items
+        ]
 
 
 class CashRegisterApp(App):
@@ -77,16 +82,22 @@ class CashRegisterApp(App):
     def build(self):
         self.barcode_scanner = BarcodeScanner()
         self.db_manager = DatabaseManager("inventory.db")
-
         self.order_manager = OrderManager()
         main_layout = BoxLayout(orientation="vertical")
-        button_layout = GridLayout(cols=2, size_hint_y=1/3)
+        button_layout = GridLayout(cols=2, size_hint_y=1 / 3)
 
         self.display = TextInput(
-            text="", multiline=True, readonly=True, halign="left", font_size=30, size_hint_y=2/3
+            text="",
+            multiline=True,
+            readonly=True,
+            halign="left",
+            font_size=30,
+            size_hint_y=2 / 3,
         )
+
         main_layout.add_widget(self.display)
         main_layout.add_widget(button_layout)
+
         buttons = [
             "Custom Item",
             "Clear Item",
@@ -98,18 +109,17 @@ class CashRegisterApp(App):
             button_layout.add_widget(Button(text=button, on_press=self.on_button_press))
 
         Clock.schedule_interval(self.check_for_scanned_barcode, 0.1)
-
         return main_layout
+
+    """
+    Barcode functions
+    """
 
     def check_for_scanned_barcode(self, dt):
         if self.barcode_scanner.is_barcode_ready():
             barcode = self.barcode_scanner.read_barcode()
             print(f"Barcode scanned: {barcode}")  # Debug print
             self.handle_scanned_barcode(barcode)
-
-    """
-    Barcode functions
-    """
 
     def handle_scanned_barcode(self, barcode):
         try:
@@ -120,10 +130,8 @@ class CashRegisterApp(App):
                 item_name, item_price = item_details
                 self.order_manager.items.append((item_name, item_price))
                 self.order_manager.total += item_price
-                # self.display.text += f"{item_name}  ${item_price}\n"
-                # subtotal_with_tax = self.order_manager.calculate_total_with_tax()
-                # self.display.text += f"Subtotal with tax: {subtotal_with_tax}\n"
                 self.update_display()
+
                 return item_details
             else:
                 self.show_add_or_bypass_popup(barcode)
@@ -194,16 +202,12 @@ class CashRegisterApp(App):
         )
         self.custom_item_popup.open()
 
-
     def update_display(self):
-        # Clear the current display
-        self.display.text = ''
+        self.display.text = ""
 
-        # Add all items to the display
         for item_name, item_price in self.order_manager.items:
             self.display.text += f"{item_name}  ${item_price:.2f}\n"
 
-        # Calculate and display the subtotal with tax
         subtotal_with_tax = self.order_manager.calculate_total_with_tax()
         if subtotal_with_tax > 0:
             self.display.text += f"\nSubtotal with tax: ${subtotal_with_tax:.2f}"
@@ -219,9 +223,7 @@ class CashRegisterApp(App):
             tools_layout.add_widget(btn)
 
         self.tools_popup = Popup(
-            title="Tools",
-            content=tools_layout,
-            size_hint=(0.5, 0.5)
+            title="Tools", content=tools_layout, size_hint=(0.5, 0.5)
         )
         self.tools_popup.open()
 
@@ -245,8 +247,6 @@ class CashRegisterApp(App):
         order_summary = f"Order Summary:\n{self.display.text}\nTotal with Tax: ${total_with_tax:.2f}"
         self.show_order_popup(order_summary)
 
-
-
     def on_button_press(self, instance):
         current = self.display.text
         button_text = instance.text
@@ -259,29 +259,18 @@ class CashRegisterApp(App):
         elif button_text == "Custom Item":
             self.show_custom_item_popup(barcode="1234567890")
         elif button_text == "Tools":
-            #self.show_add_to_database_popup("12321321414") ##################TEST REMOVE ME
+            # self.show_add_to_database_popup("12321321414") ##################TEST REMOVE ME
             self.show_tools_popup()
-        elif button_text == "Clear Item"and self.last_scanned_item:
+        elif button_text == "Clear Item" and self.last_scanned_item:
             item_name, item_price = self.last_scanned_item
             item_tuple = (item_name, item_price)
 
-            # Check if the item is in the order before attempting to remove it
             if item_tuple in self.order_manager.items:
                 self.order_manager.items.remove(item_tuple)
                 self.order_manager.total -= item_price
                 self.update_display()
             else:
                 print("nothing to remove")
-            # if item_string in self.display.text:
-            #     self.display.text = self.display.text.replace(item_string, '', 1)
-            #     self.order_manager.items.remove((item_name, item_price))
-            #     self.order_manager.total -= item_price
-
-        #
-        # elif button_text == "Open Register":
-        #     open_cash_drawer()
-        # elif button_text == "Inventory":
-        #     self.show_inventory()
         else:
             self.display.text = current + button_text
 
@@ -293,17 +282,14 @@ class CashRegisterApp(App):
             order_details["total"],
         )
 
-    ########
     def add_item_to_database(self, barcode, name, price):
         try:
-
             if self.db_manager.add_item(barcode, name, price):
                 print(f"Item '{name}' added to the database.")
         except Exception as e:
             print(f"Error adding item to database: {e}")
         finally:
             pass
-
 
     def on_done_button_press(self, instance):
         order_details = self.order_manager.get_order_details()
@@ -410,7 +396,6 @@ class CashRegisterApp(App):
         )
         self.change_popup.open()
 
-
     def show_inventory(self):
         inventory = self.db_manager.get_all_items()
         inventory_view = InventoryView()
@@ -418,78 +403,68 @@ class CashRegisterApp(App):
         popup = Popup(title="Inventory", content=inventory_view, size_hint=(0.9, 0.9))
         popup.open()
 
-
     def show_add_to_database_popup(self, barcode):
+        popup_layout = BoxLayout(orientation="vertical", spacing=10)
 
-        popup_layout = BoxLayout(orientation='vertical', spacing=10)
-
-
-        barcode_input = TextInput(text=barcode, multiline=False, size_hint_y=None, height=50)
-        name_input = TextInput(hint_text='Name', multiline=False, size_hint_y=None, height=50)
-        price_input = TextInput(hint_text='Price', multiline=False, size_hint_y=None, height=50, input_filter='float')
+        barcode_input = TextInput(
+            text=barcode, multiline=False, size_hint_y=None, height=50
+        )
+        name_input = TextInput(
+            hint_text="Name", multiline=False, size_hint_y=None, height=50
+        )
+        price_input = TextInput(
+            hint_text="Price",
+            multiline=False,
+            size_hint_y=None,
+            height=50,
+            input_filter="float",
+        )
 
         for text_input in [barcode_input, name_input, price_input]:
             text_input.bind(focus=self.on_input_focus)
-
 
         popup_layout.add_widget(barcode_input)
         popup_layout.add_widget(name_input)
         popup_layout.add_widget(price_input)
 
-
-        cancel_button = Button(text='Cancel', size_hint_y=None, height=50, on_press=self.close_add_to_database_popup)
+        cancel_button = Button(
+            text="Cancel",
+            size_hint_y=None,
+            height=50,
+            on_press=self.close_add_to_database_popup,
+        )
         confirm_button = Button(
-            text='Confirm',
+            text="Confirm",
             size_hint_y=None,
             height=50,
             on_press=lambda instance: (
                 self.add_item_to_database(barcode, name_input.text, price_input.text),
-                self.close_add_to_database_popup(instance)
-            )
+                self.close_add_to_database_popup(instance),
+            ),
         )
-
-
-
-        # cancel_button.bind(on_press=lambda x: self.close_add_to_database_popup)
-        #confirm_button.bind(on_press=lambda x: self.placeholder_confirm())
-
 
         popup_layout.add_widget(cancel_button)
         popup_layout.add_widget(confirm_button)
 
+        self.add_to_db_popup = Popup(
+            title="Add to Database",
+            content=popup_layout,
+            size_hint=(0.8, 0.4),
+            auto_dismiss=False,
+            pos_hint={"top": 1},
+        )
 
-        self.add_to_db_popup = Popup(title="Add to Database",
-                                    content=popup_layout,
-                                    size_hint=(0.8, 0.4),
-                                    auto_dismiss=False,
-                                    pos_hint={'top': 1})
-
-        # Open the popup
         self.add_to_db_popup.open()
-    #     self._keyboard = Window.request_keyboard(self._keyboard_closed, self.add_to_db_popup)
-    #     self._keyboard.bind(on_key_down=self._on_keyboard_down)
-    #
-    # def _keyboard_closed(self):
-    #     if self._keyboard:
-    #         self._keyboard.unbind(on_key_down=self._on_keyboard_down)
-    #         self._keyboard = None
-    #
-    # def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
-    #     # Logic for handling key press events
-    #     pass
-    #
+
     def on_input_focus(self, instance, value):
         if value:
-            # If the TextInput is focused, show the keyboard
-            #instance.keyboard_mode = 'managed'
+            # instance.keyboard_mode = 'managed'
             instance.show_keyboard()
         else:
-            # If the TextInput loses focus, hide the keyboard
             instance.hide_keyboard()
 
     def close_add_to_database_popup(self, instance):
         self.add_to_db_popup.dismiss()
-
 
     """
     Payment functions
@@ -519,7 +494,6 @@ class CashRegisterApp(App):
         cents = int(new_input)
         dollars = cents // 100
         remaining_cents = cents % 100
-
         self.cash_input.text = f"{dollars}.{remaining_cents:02d}"
 
     def on_cash_cancel(self, instance):
@@ -537,93 +511,19 @@ class CashRegisterApp(App):
         try:
             price = float(price)
         except ValueError:
-            # Handle invalid price input
             return
 
         custom_item_name = "Custom Item"
-
         self.order_manager.items.append((custom_item_name, price))
         self.order_manager.total += price
         item_details = custom_item_name, price
         self.last_scanned_item = item_details
-        # self.display.text += f"{custom_item_name}  ${price:.2f}\n"
-        # subtotal_with_tax = self.order_manager.calculate_total_with_tax()
-        # self.display.text += f"Subtotal with tax: {subtotal_with_tax}\n"
         self.update_display()
         self.custom_item_popup.dismiss()
 
     def on_custom_item_cancel(self, instance):
         self.custom_item_popup.dismiss()
 
-    #
-
 
 if __name__ == "__main__":
     CashRegisterApp().run()
-
-
-
-
-     # ....
-
-
-
-   # This version is for touchscreens
-    # def show_add_to_database_popup(self, barcode):
-    #     # Create the layout
-    #     popup_layout = BoxLayout(orientation="vertical", spacing=10)
-    #
-    #     # Create text inputs
-    #     barcode_input = TextInput(
-    #         text=barcode, multiline=False, size_hint_y=None, height=50
-    #     )
-    #     name_input = TextInput(
-    #         hint_text="Name", multiline=False, size_hint_y=None, height=50
-    #     )
-    #     price_input = TextInput(
-    #         hint_text="Price",
-    #         multiline=False,
-    #         size_hint_y=None,
-    #         height=50,
-    #         input_filter="float",
-    #     )
-    #
-    #     # Add text inputs to layout
-    #     popup_layout.add_widget(barcode_input)
-    #     popup_layout.add_widget(name_input)
-    #     popup_layout.add_widget(price_input)
-    #
-    #     # Create buttons
-    #     cancel_button = Button(text="Cancel", size_hint_y=None, height=50)
-    #     confirm_button = Button(text="Confirm", size_hint_y=None, height=50)
-    #
-    #     # Placeholder functions for buttons
-    #     cancel_button.bind(on_press=lambda x: self.placeholder_cancel())
-    #     confirm_button.bind(on_press=lambda x: self.placeholder_confirm())
-    #
-    #     # Add buttons to layout
-    #     popup_layout.add_widget(cancel_button)
-    #     popup_layout.add_widget(confirm_button)
-    #
-    #     # Create the popup
-    #     self.add_to_db_popup = Popup(
-    #         title="Add to Database",
-    #         content=popup_layout,
-    #         size_hint=(0.8, 0.8),
-    #         auto_dismiss=False,
-    #     )
-    #
-    #     # Open the popup
-    #     self.add_to_db_popup.open()
-    #
-    #     # Request keyboard
-    #     Window.request_keyboard(self._keyboard_closed, self)
-    #     self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
-    #     self._keyboard.bind(on_key_down=self._on_keyboard_down)
-    # def _keyboard_closed(self):
-    #     self._keyboard.unbind(on_key_down=self._on_keyboard_down)
-    #     self._keyboard = None
-    #
-    # def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
-    #     # Logic for handling key press events
-    #     pass
