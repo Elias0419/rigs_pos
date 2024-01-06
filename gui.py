@@ -464,6 +464,17 @@ class CashRegisterApp(App):
 
         # Open the popup
         self.add_to_db_popup.open()
+        self._keyboard = Window.request_keyboard(self._keyboard_closed, self.add_to_db_popup)
+        self._keyboard.bind(on_key_down=self._on_keyboard_down)
+
+    def _keyboard_closed(self):
+        if self._keyboard:
+            self._keyboard.unbind(on_key_down=self._on_keyboard_down)
+            self._keyboard = None
+
+    def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        # Logic for handling key press events
+        pass
 
     def on_input_focus(self, instance, value):
         if value:
