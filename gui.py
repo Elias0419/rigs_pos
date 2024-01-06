@@ -380,7 +380,7 @@ class CashRegisterApp(App):
 
     def show_payment_confirmation_popup(self):
         confirmation_layout = BoxLayout(orientation="vertical", spacing=10)
-        order_summary = f"Order Summary:\n{self.display.text}\nPaid with card"
+        order_summary = f"Order Complete:\n{self.display.text}\nOrder saved to the history database."
         confirmation_layout.add_widget(Label(text=order_summary))
 
         done_button = Button(
