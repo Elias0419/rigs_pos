@@ -24,7 +24,7 @@ from order_manager import OrderManager
 # from open_cash_drawer import open_cash_drawer
 from mock_open_cash_drawer import open_cash_drawer
 
-Config.set('kivy', 'keyboard_mode', 'system')
+Config.set('kivy', 'keyboard_mode', 'dock')
 
 class InventoryRow(BoxLayout):
     pass
