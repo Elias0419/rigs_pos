@@ -2,6 +2,7 @@ from kivy.config import Config
 
 Config.set("kivy", "keyboard_mode", "systemanddock")
 import json
+import time
 
 from kivy.app import App
 from kivy.clock import Clock
@@ -32,38 +33,8 @@ from open_cash_drawer import open_cash_drawer
 class InventoryRow(BoxLayout):
     pass
 
-
-kv = """
-<InventoryRow>:
-    barcode: barcode
-    name: name
-    price: price
-
-    Label:
-        id: barcode
-        text: str(root.barcode)
-    Label:
-        id: name
-        text: str(root.name)
-    Label:
-        id: price
-        text: str(root.price)
-
-<InventoryView>:
-    orientation: 'vertical'
-    rv: rv
-    RecycleView:
-        id: rv
-        viewclass: 'InventoryRow'
-        RecycleBoxLayout:
-            default_size: None, dp(56)
-            default_size_hint: 1, None
-            size_hint_y: None
-            height: self.minimum_height
-            orientation: 'vertical'
-"""
-
-Builder.load_string(kv)
+class HistoryRow(BoxLayout):
+    pass
 
 
 class InventoryView(BoxLayout):
@@ -73,6 +44,16 @@ class InventoryView(BoxLayout):
             for item in inventory_items
         ]
 
+class HistoryView(BoxLayout):
+    def show_reporting_popup(self, order_history):
+        # self.rv.data = [
+        #     {"order_id": str(order[0]), "items":str(order[1]), "total":str(order[2]), "tax":str(order[3]), "total_with_tax":str(order[4]), "timestamp":str(order[5])} # TODO look in truncating or wrapping
+        #     for order in order_history
+        # ]
+        self.rv.data = [
+            {"items":str(order[1]), "total":str(order[2]), "tax":str(order[3]), "total_with_tax":str(order[4]), "timestamp":str(order[5])}
+            for order in order_history
+        ]
 
 class CashRegisterApp(App):
     def __init__(self, **kwargs):
@@ -187,6 +168,8 @@ class CashRegisterApp(App):
             open_cash_drawer()
         elif instance.text == "Inventory":
             self.show_inventory()
+        elif instance.text == "Reporting":
+            self.show_reporting_popup()
         self.tools_popup.dismiss()
 
     def on_button_press(self, instance):
@@ -230,9 +213,23 @@ class CashRegisterApp(App):
     Popup display functions
     """
 
+    def show_inventory(self):
+        inventory = self.db_manager.get_all_items()
+        inventory_view = InventoryView()
+        inventory_view.show_inventory(inventory)
+        popup = Popup(title="Inventory", content=inventory_view, size_hint=(0.9, 0.9))
+        popup.open()
+
+    def show_reporting_popup(self):
+        order_history = self.db_manager.get_order_history()
+        history_view = HistoryView()
+        history_view.show_reporting_popup(order_history)
+        popup = Popup(title="Order History", content=history_view, size_hint=(0.9, 0.9))
+        popup.open()
+
     def show_tools_popup(self):
         tools_layout = BoxLayout(orientation="vertical", spacing=10)
-        tool_buttons = ["Clear Order", "Open Register", "Inventory"]
+        tool_buttons = ["Clear Order", "Open Register", "Inventory", "Reporting"]
 
         for tool in tool_buttons:
             btn = Button(text=tool, on_press=self.on_tool_button_press)
@@ -378,12 +375,7 @@ class CashRegisterApp(App):
         )
         self.change_popup.open()
 
-    def show_inventory(self):
-        inventory = self.db_manager.get_all_items()
-        inventory_view = InventoryView()
-        inventory_view.show_inventory(inventory)
-        popup = Popup(title="Inventory", content=inventory_view, size_hint=(0.9, 0.9))
-        popup.open()
+
 
     def show_add_to_database_popup(self, barcode):
         popup_layout = BoxLayout(orientation="vertical", spacing=10)
@@ -508,11 +500,16 @@ class CashRegisterApp(App):
         self.custom_item_popup.dismiss()
 
     def send_order_to_history_database(self, order_details, order_manager, db_manager):
+        tax = order_details["total_with_tax"] - order_details["total"]
+        timestamp = time.time()
         db_manager.add_order_history(
             order_details["order_id"],
             json.dumps(order_details["items"]),
-            order_details["total_with_tax"],
             order_details["total"],
+            tax,
+            order_details["total_with_tax"],
+            timestamp
+
         )
 
     def add_item_to_database(self, barcode, name, price):
