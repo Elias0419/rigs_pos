@@ -1,12 +1,12 @@
 import uuid
 
 class OrderManager:
-    def __init__(self, tax_rate=0.07):  # Adjusted tax rate
+    def __init__(self, tax_rate=0.07):
         self.items = []
         self.total = 0.0
         self.tax_rate = tax_rate
         self._total_with_tax = None
-        self.order_id = str(uuid.uuid4())  # Unique order ID
+        self.order_id = str(uuid.uuid4())
 
     def _update_total_with_tax(self):
         self._total_with_tax = self.total * (1 + self.tax_rate)
@@ -51,21 +51,5 @@ class OrderManager:
         self.items = []
         self.total = 0.0
         self._total_with_tax = None
-        self.order_id = str(uuid.uuid4())  # Reset with a new order ID
+        self.order_id = str(uuid.uuid4())
 
-    # def process_payment(self, amount_paid):
-    #     total_with_tax = self.calculate_total_with_tax()
-    #     return max(0, amount_paid - total_with_tax)
-
-
-
-
-if __name__ == "__main__":
-    print("DEBUG order_manager init")
-
-    order_manager = OrderManager(tax_rate=0.08)  
-    order_manager.add_item({'name': 'Item 1', 'price': 10.00})
-    order_manager.add_item({'name': 'Item 2', 'price': 5.00})
-    print("Order details:", order_manager.get_order_details())
-    print("Change given:", order_manager.process_payment(20.00))  
-    order_manager.clear_order()
