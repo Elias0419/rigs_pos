@@ -468,7 +468,7 @@ class CashRegisterApp(App):
 
     def on_change_done(self, instance):
         self.change_popup.dismiss()
-        open_cash_drawer()
+        #open_cash_drawer()
         self.show_payment_confirmation_popup()
 
     def on_cash_cancel(self, instance):
@@ -479,6 +479,7 @@ class CashRegisterApp(App):
         total_with_tax = self.order_manager.calculate_total_with_tax()
         change = amount_tendered - total_with_tax
         self.cash_popup.dismiss()
+        open_cash_drawer()
         self.show_make_change_popup(change)
 
     def add_custom_item(self, instance):
