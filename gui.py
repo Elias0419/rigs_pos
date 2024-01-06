@@ -478,14 +478,14 @@ class CashRegisterApp(App):
     #     # Logic for handling key press events
     #     pass
     #
-    # def on_input_focus(self, instance, value):
-    #     if value:
-    #         # If the TextInput is focused, show the keyboard
-    #         instance.keyboard_mode = 'managed'
-    #         instance.show_keyboard()
-    #     else:
-    #         # If the TextInput loses focus, hide the keyboard
-    #         instance.hide_keyboard()
+    def on_input_focus(self, instance, value):
+        if value:
+            # If the TextInput is focused, show the keyboard
+            #instance.keyboard_mode = 'managed'
+            instance.show_keyboard()
+        else:
+            # If the TextInput loses focus, hide the keyboard
+            instance.hide_keyboard()
 
     def close_add_to_database_popup(self, instance):
         self.add_to_db_popup.dismiss()
