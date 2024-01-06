@@ -1,8 +1,10 @@
+from kivy.config import Config
+
+Config.set('kivy', 'keyboard_mode', 'systemanddock')
 import json
 
 from kivy.app import App
 from kivy.clock import Clock
-from kivy.config import Config
 from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.metrics import dp
@@ -24,7 +26,7 @@ from order_manager import OrderManager
 # from open_cash_drawer import open_cash_drawer
 from mock_open_cash_drawer import open_cash_drawer
 
-Config.set('kivy', 'keyboard_mode', '')
+
 
 class InventoryRow(BoxLayout):
     pass
