@@ -62,6 +62,8 @@ class CashRegisterApp(App):
         self.last_scanned_item = None
         self.correct_pin = "1234"  # Set your desired PIN here
         self.entered_pin = ""
+        self.is_guard_screen_displayed = False
+        self.is_lock_screen_displayed = False
 
     def build(self):
         self.barcode_scanner = BarcodeScanner()
@@ -247,33 +249,35 @@ class CashRegisterApp(App):
     """
 
     def show_guard_screen(self):
-        guard_layout = BoxLayout()
-        guard_popup = Popup(
-            title="Guard Screen",
-            content=guard_layout,
-            size_hint=(1, 1),
-            auto_dismiss=False
-        )
-        guard_popup.bind(on_touch_down=lambda instance, touch: guard_popup.dismiss())
-        guard_popup.open()
+        if not self.is_guard_screen_displayed:
+            guard_layout = BoxLayout()
+            guard_popup = Popup(
+                title="Guard Screen",
+                content=guard_layout,
+                size_hint=(1, 1),
+                auto_dismiss=False
+            )
+            guard_popup.bind(on_touch_down=lambda instance, touch: guard_popup.dismiss())
+            guard_popup.open()
 
     def show_lock_screen(self):
-        lock_layout = BoxLayout(orientation="vertical")
-        keypad_layout = GridLayout(cols=3)
+        if not self.is_lock_screen_displayed:
+            lock_layout = BoxLayout(orientation="vertical")
+            keypad_layout = GridLayout(cols=3)
 
-        numeric_buttons = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"]
-        for button in numeric_buttons:
-            btn = Button(text=button, on_press=self.on_lock_screen_button_press)
-            keypad_layout.add_widget(btn)
+            numeric_buttons = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"]
+            for button in numeric_buttons:
+                btn = Button(text=button, on_press=self.on_lock_screen_button_press)
+                keypad_layout.add_widget(btn)
 
-        lock_layout.add_widget(keypad_layout)
-        self.lock_popup = Popup(
-            title="Lock Screen",
-            content=lock_layout,
-            size_hint=(1, 1),
-            auto_dismiss=False
-        )
-        self.lock_popup.open()
+            lock_layout.add_widget(keypad_layout)
+            self.lock_popup = Popup(
+                title="Lock Screen",
+                content=lock_layout,
+                size_hint=(1, 1),
+                auto_dismiss=False
+            )
+            self.lock_popup.open()
 
     def on_lock_screen_button_press(self, instance):
         # Append the pressed button's text to the entered PIN
