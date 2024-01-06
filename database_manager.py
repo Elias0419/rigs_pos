@@ -36,6 +36,7 @@ class DatabaseManager:
                                 order_id TEXT PRIMARY KEY,
                                 items TEXT,
                                 total REAL,
+                                tax REAL,
                                 total_with_tax REAL,
                                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                             )''')
@@ -45,14 +46,30 @@ class DatabaseManager:
         finally:
             conn.close()
 
-    def add_order_history(self, order_id, items, total_with_tax, total):
+    def add_item(self, barcode, name, price):
+        self.create_items_table()
+        print("DEBUG DatabaseManager add_item")
+
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute('INSERT INTO items (barcode, name, price) VALUES (?, ?, ?)', (barcode, name, price))
+            conn.commit()
+        except sqlite3.IntegrityError:
+            print(f"Item with barcode {barcode} already exists.")
+            conn.close()
+            return False
+        conn.close()
+        return True
+
+    def add_order_history(self, order_id, items, total, tax, total_with_tax, timestamp):
         self.create_order_history_table()
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
 
-            cursor.execute('INSERT INTO order_history (order_id, items, total, total_with_tax) VALUES (?, ?, ?, ?)',
-                           (order_id, items, total, total_with_tax))
+            cursor.execute('INSERT INTO order_history (order_id, items, total, tax, total_with_tax, timestamp) VALUES (?, ?, ?, ?, ?, ?)',
+                           (order_id, items, total, tax, total_with_tax, timestamp))
             conn.commit()
         except sqlite3.Error as e:
             print(f"Error adding order history: {e}")
@@ -60,6 +77,14 @@ class DatabaseManager:
         finally:
             conn.close()
         return True
+
+    def get_order_history(self):
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT order_id, items, total, tax, total_with_tax, timestamp FROM order_history')
+        order_history = cursor.fetchall()
+        conn.close()
+        return order_history
 
     def get_item_details(self, barcode):
         print("DEBUG DatabaseManager get_item_details")
@@ -87,21 +112,7 @@ class DatabaseManager:
 
         return items
 
-    def add_item(self, barcode, name, price):
-        self.create_items_table()
-        print("DEBUG DatabaseManager add_item")
 
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute('INSERT INTO items (barcode, name, price) VALUES (?, ?, ?)', (barcode, name, price))
-            conn.commit()
-        except sqlite3.IntegrityError:
-            print(f"Item with barcode {barcode} already exists.")
-            conn.close()
-            return False
-        conn.close()
-        return True
 
     def update_item(self, barcode, updated_info):
 

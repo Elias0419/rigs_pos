@@ -2,7 +2,7 @@ from pynput.keyboard import Key, Listener
 import threading
 import requests
 import time
-
+import re
 
 
 class BarcodeScanner:
