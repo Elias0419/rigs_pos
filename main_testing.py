@@ -60,6 +60,8 @@ class CashRegisterApp(App):
     def __init__(self, **kwargs):
         super(CashRegisterApp, self).__init__(**kwargs)
         self.last_scanned_item = None
+        self.correct_pin = "1234"  # Set your desired PIN here
+        self.entered_pin = ""
 
     def build(self):
         self.barcode_scanner = BarcodeScanner()
@@ -109,6 +111,19 @@ class CashRegisterApp(App):
         if self.is_monitor_off():
             self.show_lock_screen()
             self.show_guard_screen()
+    def on_lock_screen_button_press(self, instance):
+        # Append the pressed button's text to the entered PIN
+        self.entered_pin += instance.text
+
+        # Check if the entered PIN has the required number of digits (e.g., 4)
+        if len(self.entered_pin) == 4:
+            if self.entered_pin == self.correct_pin:
+                self.lock_popup.dismiss()  # Dismiss the lock screen if PIN is correct
+                self.entered_pin = ""  # Reset entered PIN
+            else:
+                # Optionally, show an error message or clear the entered PIN
+                self.entered_pin = ""  # Reset entered PIN for a new attempt
+
 
     """
     Barcode functions
@@ -252,18 +267,27 @@ class CashRegisterApp(App):
             keypad_layout.add_widget(btn)
 
         lock_layout.add_widget(keypad_layout)
-        lock_popup = Popup(
+        self.lock_popup = Popup(
             title="Lock Screen",
             content=lock_layout,
             size_hint=(1, 1),
             auto_dismiss=False
         )
-        lock_popup.open()
+        self.lock_popup.open()
 
     def on_lock_screen_button_press(self, instance):
-        # Here, you can add the logic for what happens when a keypad button is pressed.
-        # For example, updating a text input or checking the entered code.
-        pass
+        # Append the pressed button's text to the entered PIN
+        self.entered_pin += instance.text
+
+        # Check if the entered PIN has the required number of digits (e.g., 4)
+        if len(self.entered_pin) == 4:
+            if self.entered_pin == self.correct_pin:
+                self.lock_popup.dismiss()  # Dismiss the lock screen if PIN is correct
+                self.entered_pin = ""  # Reset entered PIN
+            else:
+                # Optionally, show an error message or clear the entered PIN
+                self.entered_pin = ""  # Reset entered PIN for a new attempt
+
 
 
     def show_inventory(self):
