@@ -56,7 +56,7 @@ class BarcodeScanner:
             self.barcode_ready.set()
 
     def is_valid_barcode(self, barcode):
-        return re.match(r'^\d{6,8,12,13}$', barcode) is not None
+        return re.match(r'^\d{12,13}\s*$', barcode) is not None
 
 
     def read_barcode(self):
