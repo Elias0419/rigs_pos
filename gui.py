@@ -460,7 +460,7 @@ class CashRegisterApp(App):
 
         self.add_to_db_popup = Popup(title="Add to Database",
                                     content=popup_layout,
-                                    size_hint=(0.8, 0.5),
+                                    size_hint=(0.8, 0.4),
                                     auto_dismiss=False,
                                     pos_hint={'top': 1})
 
