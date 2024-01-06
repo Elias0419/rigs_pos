@@ -25,8 +25,8 @@ from barcode_scanner import BarcodeScanner
 from database_manager import DatabaseManager
 from order_manager import OrderManager
 
-# from open_cash_drawer import open_cash_drawer
-from mock_open_cash_drawer import open_cash_drawer
+from open_cash_drawer import open_cash_drawer
+# from mock_open_cash_drawer import open_cash_drawer
 
 
 class InventoryRow(BoxLayout):
