@@ -51,9 +51,9 @@ class BarcodeScanner:
     #     except AttributeError:
     #         pass
     #
-    # def on_release(self, key):
-    #     if self.is_valid_barcode(self.current_barcode):
-    #         self.barcode_ready.set()
+    def on_release(self, key):
+        if self.is_valid_barcode(self.current_barcode):
+            self.barcode_ready.set()
     #
     # def is_valid_barcode(self, barcode):
     #     return re.match(r'^\d{12}$', barcode) is not None
