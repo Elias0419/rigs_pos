@@ -1,34 +1,30 @@
-# Kivy Imports
-from kivy.config import Config
-Config.set('kivy', 'keyboard_mode', 'system')
+import json
+
 from kivy.app import App
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.recycleview import RecycleView
-from kivy.uix.textinput import TextInput
-from kivy.uix.recycleview.views import RecycleDataViewBehavior
-from kivy.uix.label import Label
+from kivy.clock import Clock
+from kivy.config import Config
+from kivy.core.window import Window
+from kivy.lang import Builder
+from kivy.metrics import dp
 from kivy.properties import StringProperty, ListProperty
+from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
-from kivy.clock import Clock
-from kivy.metrics import dp
+from kivy.uix.label import Label
 from kivy.uix.popup import Popup
-from kivy.core.window import Window
+from kivy.uix.recycleview import RecycleView
+from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.uix.scrollview import ScrollView
-import json
-from kivy.app import App
-from kivy.lang import Builder
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.popup import Popup
-# External Imports
+from kivy.uix.textinput import TextInput
+
 from barcode_scanner import BarcodeScanner
-#from mock_barcode_scanner import BarcodeScanner
+# from mock_barcode_scanner import BarcodeScanner
 from database_manager import DatabaseManager
 from order_manager import OrderManager
-
 # from open_cash_drawer import open_cash_drawer
 from mock_open_cash_drawer import open_cash_drawer
 
+Config.set('kivy', 'keyboard_mode', 'system')
 
 class InventoryRow(BoxLayout):
     pass
@@ -265,10 +261,15 @@ class CashRegisterApp(App):
             #self.show_tools_popup()
         elif button_text == "Clear Item"and self.last_scanned_item:
             item_name, item_price = self.last_scanned_item
-            item_string = f"{item_name}  ${item_price}\n"
-            self.order_manager.items.remove((item_name, item_price))
-            self.order_manager.total -= item_price
-            self.update_display()
+            item_tuple = (item_name, item_price)
+
+            # Check if the item is in the order before attempting to remove it
+            if item_tuple in self.order_manager.items:
+                self.order_manager.items.remove(item_tuple)
+                self.order_manager.total -= item_price
+                self.update_display()
+            else:
+                print("nothing to remove")
             # if item_string in self.display.text:
             #     self.display.text = self.display.text.replace(item_string, '', 1)
             #     self.order_manager.items.remove((item_name, item_price))
