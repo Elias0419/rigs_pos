@@ -110,9 +110,12 @@ class CashRegisterApp(App):
             print(f"Error checking monitor status: {e}")
             return False
     def check_monitor_status(self, dt):
-        if self.is_monitor_off():
-            self.show_lock_screen()
-            self.show_guard_screen()
+        if not self.is_guard_screen_displayed and not self.is_lock_screen_displayed:
+            if self.is_monitor_off():
+                self.show_lock_screen()
+                self.show_guard_screen()
+                return 10  # Delay next check for 10 seconds
+        return 1  # Check every second otherwise
     # def on_lock_screen_button_press(self, instance):
     #     # Append the pressed button's text to the entered PIN
     #     self.entered_pin += instance.text
