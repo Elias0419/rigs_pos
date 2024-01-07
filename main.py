@@ -3,7 +3,7 @@ from kivy.config import Config
 Config.set("kivy", "keyboard_mode", "systemanddock")
 import json
 import time
-
+import subprocess
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.core.window import Window
@@ -59,6 +59,10 @@ class CashRegisterApp(App):
     def __init__(self, **kwargs):
         super(CashRegisterApp, self).__init__(**kwargs)
         self.last_scanned_item = None
+        self.correct_pin = "1234"  # Set your desired PIN here
+        self.entered_pin = ""
+        self.is_guard_screen_displayed = False
+        self.is_lock_screen_displayed = False
 
     def build(self):
         self.barcode_scanner = BarcodeScanner()
@@ -90,6 +94,11 @@ class CashRegisterApp(App):
             button_layout.add_widget(Button(text=button, on_press=self.on_button_press))
 
         Clock.schedule_interval(self.check_for_scanned_barcode, 0.1)
+
+        if not hasattr(self, 'monitor_check_scheduled'):
+            Clock.schedule_interval(self.check_monitor_status, 5)
+            self.monitor_check_scheduled = True
+
         return main_layout
 
     """
@@ -212,6 +221,56 @@ class CashRegisterApp(App):
     """
     Popup display functions
     """
+
+    def show_guard_screen(self):
+        if not self.is_guard_screen_displayed:
+            print("Guard screen triggered", datetime.datetime.now())
+            guard_layout = BoxLayout()
+            guard_popup = Popup(
+                title="Guard Screen",
+                content=guard_layout,
+                size_hint=(1, 1),
+                auto_dismiss=False
+            )
+            guard_popup.bind(on_touch_down=lambda instance, touch: guard_popup.dismiss())
+            self.is_guard_screen_displayed = True
+            guard_popup.bind(on_dismiss=lambda instance: setattr(self, 'is_guard_screen_displayed', False))
+            guard_popup.open()
+
+    def show_lock_screen(self):
+        if not self.is_lock_screen_displayed:
+            print("Lock screen triggered", datetime.datetime.now())
+
+            lock_layout = BoxLayout(orientation="vertical")
+            keypad_layout = GridLayout(cols=3)
+
+            numeric_buttons = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"]
+            for button in numeric_buttons:
+                btn = Button(text=button, on_press=self.on_lock_screen_button_press)
+                keypad_layout.add_widget(btn)
+
+            lock_layout.add_widget(keypad_layout)
+            self.lock_popup = Popup(
+                title="Lock Screen",
+                content=lock_layout,
+                size_hint=(1, 1),
+                auto_dismiss=False
+            )
+            self.is_lock_screen_displayed = True
+            self.lock_popup.bind(on_dismiss=lambda instance: setattr(self, 'is_lock_screen_displayed', False))
+            self.lock_popup.open()
+
+    def on_lock_screen_button_press(self, instance):
+
+        self.entered_pin += instance.text
+
+        if len(self.entered_pin) == 4:
+            if self.entered_pin == self.correct_pin:
+
+                self.lock_popup.dismiss()
+                self.entered_pin = ""
+            else:
+                self.entered_pin = ""
 
     def show_inventory(self):
         inventory = self.db_manager.get_all_items()
@@ -443,6 +502,25 @@ class CashRegisterApp(App):
     """
     Accessory functions
     """
+
+    def is_monitor_off(self):
+        try:
+            result = subprocess.run(['xset', '-q'], stdout=subprocess.PIPE)
+            output = result.stdout.decode('utf-8')
+            return "Monitor is Off" in output
+        except Exception as e:
+            print(f"Error checking monitor status: {e}")
+            return False
+
+    def check_monitor_status(self, dt):
+        if self.is_monitor_off():
+            if not self.is_guard_screen_displayed and not self.is_lock_screen_displayed:
+                self.show_lock_screen()
+                self.show_guard_screen()
+        else:
+            # Reset flags if the monitor is on
+            self.is_guard_screen_displayed = False
+            self.is_lock_screen_displayed = False
 
     def finalize_order(self):
         total_with_tax = self.order_manager.calculate_total_with_tax()
