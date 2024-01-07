@@ -632,6 +632,13 @@ class CashRegisterApp(App):
         self.display.text = ""
 
         for item_name, item_price in self.order_manager.items:
+            try:
+                item_price = float(item_price)  # Convert to float if it's a string
+            except ValueError:
+                # Handle the exception if the conversion fails
+                print(f"Invalid item price: {item_price}")
+                continue
+
             self.display.text += f"{item_name}  ${item_price:.2f}\n"
 
         subtotal_with_tax = self.order_manager.calculate_total_with_tax()
@@ -639,6 +646,7 @@ class CashRegisterApp(App):
             self.display.text += f"\nSubtotal with tax: ${subtotal_with_tax:.2f}"
         else:
             self.display.text = ""
+
 
     def handle_card_payment(self):
         open_cash_drawer()
