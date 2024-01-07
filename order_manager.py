@@ -20,12 +20,11 @@ class OrderManager:
         self.items.append(item)
         self.total += price
 
-    def add_item(self, item):
-        print("DEBUG order_manager add_item", item)
-        self.items.append(item)
-        self.total += item['price']
-        print(item)
+    def add_item(self, item, price):
+        self.items.append({'name': item, 'price': float(price)})
+        self.total += float(price)
         self._update_total_with_tax()
+
 
     def remove_item(self, item_id):
         print("DEBUG order_manager remove_item", item_id)
