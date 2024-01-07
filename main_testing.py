@@ -39,12 +39,14 @@ class InventoryRow(BoxLayout):
     price = StringProperty()
     order_manager = ObjectProperty()
 
-    def __init__(self, order_manager, **kwargs):
+    def __init__(self, **kwargs):
         super(InventoryRow, self).__init__(**kwargs)
-        self.order_manager = order_manager
+        self.order_manager = OrderManager()
 
     def add_to_order(self):
         print(f"Adding {self.name} to order")
+        print(self.price)
+        print(type(self.price))
         self.order_manager.add_item(self.name, self.price)
         app = App.get_running_app()
         app.update_display()
@@ -160,18 +162,16 @@ class CashRegisterApp(App):
         try:
             item_details = self.db_manager.get_item_details(barcode)
             if item_details:
-                self.last_scanned_item = item_details
-                print(item_details)
                 item_name, item_price = item_details
-                self.order_manager.items.append((item_name, item_price))
+                self.order_manager.items.append({'name': item_name, 'price': item_price})
                 self.order_manager.total += item_price
                 self.update_display()
-
                 return item_details
             else:
                 self.show_add_or_bypass_popup(barcode)
         except Exception as e:
             print(f"Error handling scanned barcode: {e}")
+
 
     def show_add_or_bypass_popup(self, barcode):
         popup_layout = BoxLayout(orientation="vertical", spacing=10)
@@ -691,11 +691,12 @@ class CashRegisterApp(App):
     def update_display(self):
         self.order_layout.clear_widgets()
 
-        for item_name, item_price in self.order_manager.items:
+        for item in self.order_manager.items:
+            item_name = item['name']
             try:
-                item_price = float(item_price)
+                item_price = float(item['price'])  # item['price'] is already a string representing a float
             except ValueError:
-                print(f"Invalid item price: {item_price}")
+                print(f"Invalid item price for {item_name}: {item['price']}")
                 continue
 
             item_button = Button(text=f"{item_name}  ${item_price:.2f}", size_hint_y=None, height=40)
@@ -706,8 +707,7 @@ class CashRegisterApp(App):
         if subtotal_with_tax > 0:
             subtotal_label = Label(text=f"\nSubtotal with tax: ${subtotal_with_tax:.2f}", size_hint_y=None, height=40)
             self.order_layout.add_widget(subtotal_label)
-        else:
-            pass
+
 
 
     def handle_card_payment(self):
@@ -741,12 +741,11 @@ class CashRegisterApp(App):
             return
 
         custom_item_name = "Custom Item"
-        self.order_manager.items.append((custom_item_name, price))
+        self.order_manager.items.append({'name': custom_item_name, 'price': price})
         self.order_manager.total += price
-        item_details = custom_item_name, price
-        self.last_scanned_item = item_details
         self.update_display()
         self.custom_item_popup.dismiss()
+
 
     def on_custom_item_cancel(self, instance):
         self.custom_item_popup.dismiss()

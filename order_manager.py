@@ -54,13 +54,14 @@ class OrderManager:
 
     def update_item_price(self, name, new_price):
         for i, item in enumerate(self.items):
-            if item[0] == name:  # item[0] is the item's name
-                old_price = item[1]
+            if item.get('name') == name:
+                old_price = item.get('price', 0)
                 self.total -= old_price  # Subtract the old price
-                self.items[i] = (name, new_price)  # Replace the tuple with a new one
+                self.items[i] = {'name': name, 'price': new_price}  # Update the dictionary
                 self.total += new_price  # Add the new price
                 self._update_total_with_tax()
                 return  # Exit the method after updating the item
 
         print(f"Item named '{name}' not found in the order.")
+
 
