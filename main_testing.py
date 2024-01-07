@@ -614,12 +614,24 @@ class CashRegisterApp(App):
         order_summary = f"Order Summary:\n{self.display.text}\nTotal with Tax: ${total_with_tax:.2f}"
         self.show_order_popup(order_summary)
 
+    # def update_display(self): ######################################
+    #     self.display.text = ""
+    #
+    #     for item in self.order_manager.items:
+    #         item_name = item.get('name', 'Unknown Item')
+    #         item_price = item.get('price', 0)
+    #         self.display.text += f"{item_name}  ${item_price:.2f}\n"
+    #
+    #     subtotal_with_tax = self.order_manager.calculate_total_with_tax()
+    #     if subtotal_with_tax > 0:
+    #         self.display.text += f"\nSubtotal with tax: ${subtotal_with_tax:.2f}"
+    #     else:
+    #         self.display.text = ""
+
     def update_display(self):
         self.display.text = ""
 
-        for item in self.order_manager.items:
-            item_name = item.get('name', 'Unknown Item')
-            item_price = item.get('price', 0)
+        for item_name, item_price in self.order_manager.items:
             self.display.text += f"{item_name}  ${item_price:.2f}\n"
 
         subtotal_with_tax = self.order_manager.calculate_total_with_tax()
