@@ -3,6 +3,7 @@ from kivy.config import Config
 Config.set("kivy", "keyboard_mode", "systemanddock")
 import json
 import time
+import datetime
 import subprocess
 from kivy.app import App
 from kivy.clock import Clock
