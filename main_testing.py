@@ -39,9 +39,9 @@ class InventoryRow(BoxLayout):
     price = StringProperty()
     order_manager = ObjectProperty()
 
-    def __init__(self, **kwargs):
+    def __init__(self, order_manager, **kwargs):
         super(InventoryRow, self).__init__(**kwargs)
-        self.order_manager = OrderManager()
+        self.order_manager = order_manager
 
     def add_to_order(self):
         print(f"Adding {self.name} to order")
@@ -651,7 +651,7 @@ class CashRegisterApp(App):
         adjusted_price = target_amount / (1 + tax_rate)
 
         # Update the specific item's price
-        self.order_manager.update_item_price(self.current_item_name, adjusted_price)  # Assuming such a method exists
+        self.order_manager.update_item_price(self.current_item_name, adjusted_price)
         self.update_display()
         self.adjust_price_popup.dismiss()
 
