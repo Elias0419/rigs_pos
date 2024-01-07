@@ -52,3 +52,15 @@ class OrderManager:
         self._total_with_tax = None
         self.order_id = str(uuid.uuid4())
 
+    def update_item_price(self, name, new_price):
+        for i, item in enumerate(self.items):
+            if item[0] == name:  # item[0] is the item's name
+                old_price = item[1]
+                self.total -= old_price  # Subtract the old price
+                self.items[i] = (name, new_price)  # Replace the tuple with a new one
+                self.total += new_price  # Add the new price
+                self._update_total_with_tax()
+                return  # Exit the method after updating the item
+
+        print(f"Item named '{name}' not found in the order.")
+
