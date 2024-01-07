@@ -4,7 +4,6 @@ Config.set("kivy", "keyboard_mode", "systemanddock")
 import json
 import time
 import subprocess
-import datetime
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.core.window import Window
@@ -60,7 +59,7 @@ class CashRegisterApp(App):
     def __init__(self, **kwargs):
         super(CashRegisterApp, self).__init__(**kwargs)
         self.last_scanned_item = None
-        self.correct_pin = "1234"  # Set your desired PIN here
+        self.correct_pin = "1234"
         self.entered_pin = ""
         self.is_guard_screen_displayed = False
         self.is_lock_screen_displayed = False
@@ -95,40 +94,12 @@ class CashRegisterApp(App):
             button_layout.add_widget(Button(text=button, on_press=self.on_button_press))
 
         Clock.schedule_interval(self.check_for_scanned_barcode, 0.1)
-        Clock.schedule_interval(self.check_monitor_status, 5)
+
+        if not hasattr(self, 'monitor_check_scheduled'):
+            Clock.schedule_interval(self.check_monitor_status, 5)
+            self.monitor_check_scheduled = True
 
         return main_layout
-
-    def is_monitor_off(self):
-        try:
-            result = subprocess.run(['xset', '-q'], stdout=subprocess.PIPE)
-            output = result.stdout.decode('utf-8')
-
-            # Check if "Monitor is Off" is in the command output
-            return "Monitor is Off" in output
-        except Exception as e:
-            print(f"Error checking monitor status: {e}")
-            return False
-    def check_monitor_status(self, dt):
-        if not self.is_guard_screen_displayed and not self.is_lock_screen_displayed:
-            if self.is_monitor_off():
-                self.show_lock_screen()
-                self.show_guard_screen()
-                return 10  # Delay next check for 10 seconds
-        return 1  # Check every second otherwise
-    # def on_lock_screen_button_press(self, instance):
-    #     # Append the pressed button's text to the entered PIN
-    #     self.entered_pin += instance.text
-    #
-    #     # Check if the entered PIN has the required number of digits (e.g., 4)
-    #     if len(self.entered_pin) == 4:
-    #         if self.entered_pin == self.correct_pin:
-    #             self.lock_popup.dismiss()  # Dismiss the lock screen if PIN is correct
-    #             self.entered_pin = ""  # Reset entered PIN
-    #         else:
-    #             # Optionally, show an error message or clear the entered PIN
-    #             self.entered_pin = ""  # Reset entered PIN for a new attempt
-
 
     """
     Barcode functions
@@ -208,6 +179,8 @@ class CashRegisterApp(App):
             self.show_inventory()
         elif instance.text == "Reporting":
             self.show_reporting_popup()
+        elif instance.text == "Tax Adjustment":
+            self.show_adjust_price_popup()
         self.tools_popup.dismiss()
 
     def on_button_press(self, instance):
@@ -251,6 +224,33 @@ class CashRegisterApp(App):
     Popup display functions
     """
 
+    def show_adjust_price_popup(self):
+        self.adjust_price_popup_layout = BoxLayout(orientation="vertical", spacing=10)
+        self.target_amount_input = TextInput(
+            text="",
+            multiline=False,
+            input_filter="float",
+            font_size=30,
+            size_hint_y=None,
+            height=50,
+
+        )
+        self.adjust_price_popup_layout.add_widget(self.target_amount_input)
+
+        confirm_button = Button(text="Confirm", on_press=self.add_adjusted_price_item)
+        self.adjust_price_popup_layout.add_widget(confirm_button)
+
+        cancel_button = Button(text="Cancel", on_press=self.on_adjust_price_cancel)
+        self.adjust_price_popup_layout.add_widget(cancel_button)
+
+        self.adjust_price_popup = Popup(
+            title="Enter Target Amount",
+            content=self.adjust_price_popup_layout,
+            size_hint=(0.8, 0.4),
+            pos_hint={"top": 1},
+        )
+        self.adjust_price_popup.open()
+
     def show_guard_screen(self):
         if not self.is_guard_screen_displayed:
             print("Guard screen triggered", datetime.datetime.now())
@@ -262,6 +262,8 @@ class CashRegisterApp(App):
                 auto_dismiss=False
             )
             guard_popup.bind(on_touch_down=lambda instance, touch: guard_popup.dismiss())
+            self.is_guard_screen_displayed = True
+            guard_popup.bind(on_dismiss=lambda instance: setattr(self, 'is_guard_screen_displayed', False))
             guard_popup.open()
 
     def show_lock_screen(self):
@@ -283,22 +285,21 @@ class CashRegisterApp(App):
                 size_hint=(1, 1),
                 auto_dismiss=False
             )
+            self.is_lock_screen_displayed = True
+            self.lock_popup.bind(on_dismiss=lambda instance: setattr(self, 'is_lock_screen_displayed', False))
             self.lock_popup.open()
 
     def on_lock_screen_button_press(self, instance):
-        # Append the pressed button's text to the entered PIN
+
         self.entered_pin += instance.text
 
-        # Check if the entered PIN has the required number of digits (e.g., 4)
         if len(self.entered_pin) == 4:
             if self.entered_pin == self.correct_pin:
-                self.lock_popup.dismiss()  # Dismiss the lock screen if PIN is correct
-                self.entered_pin = ""  # Reset entered PIN
+
+                self.lock_popup.dismiss()
+                self.entered_pin = ""
             else:
-                # Optionally, show an error message or clear the entered PIN
-                self.entered_pin = ""  # Reset entered PIN for a new attempt
-
-
+                self.entered_pin = ""
 
     def show_inventory(self):
         inventory = self.db_manager.get_all_items()
@@ -316,7 +317,7 @@ class CashRegisterApp(App):
 
     def show_tools_popup(self):
         tools_layout = BoxLayout(orientation="vertical", spacing=10)
-        tool_buttons = ["Clear Order", "Open Register", "Inventory", "Reporting"]
+        tool_buttons = ["Clear Order", "Open Register", "Inventory", "Reporting", "Tax Adjustment"]
 
         for tool in tool_buttons:
             btn = Button(text=tool, on_press=self.on_tool_button_press)
@@ -357,7 +358,7 @@ class CashRegisterApp(App):
             btn = Button(text=button, on_press=self.on_numeric_button_press)
             keypad_layout.add_widget(btn)
 
-        confirm_button = Button(text="Confirm", on_press=self.add_custom_item)
+        confirm_button = Button(text="Confirm", on_press=self.add_custom_item)  ############
         keypad_layout.add_widget(confirm_button)
 
         cancel_button = Button(text="Cancel", on_press=self.on_custom_item_cancel)
@@ -365,7 +366,7 @@ class CashRegisterApp(App):
 
         self.custom_item_popup_layout.add_widget(keypad_layout)
         self.custom_item_popup = Popup(
-            title="Enter Cash Amount",
+            title="Custom Item",
             content=self.custom_item_popup_layout,
             size_hint=(0.8, 0.8),
         )
@@ -531,6 +532,42 @@ class CashRegisterApp(App):
     Accessory functions
     """
 
+    def add_adjusted_price_item(self, instance):
+        target_amount = self.target_amount_input.text
+        try:
+            target_amount = float(target_amount)
+        except ValueError:
+            return
+
+        tax_rate = 0.07
+        adjusted_price = target_amount / (1 + tax_rate)
+
+        custom_item_name = "Adjusted Price Item"
+        self.order_manager.items.append((custom_item_name, adjusted_price))
+        self.order_manager.total += adjusted_price
+        item_details = custom_item_name, adjusted_price
+        self.last_scanned_item = item_details
+        self.update_display()
+        self.adjust_price_popup.dismiss()
+
+    def is_monitor_off(self):
+        try:
+            result = subprocess.run(['xset', '-q'], stdout=subprocess.PIPE)
+            output = result.stdout.decode('utf-8')
+            return "Monitor is Off" in output
+        except Exception as e:
+            print(f"Error checking monitor status: {e}")
+            return False
+
+    def check_monitor_status(self, dt):
+        if self.is_monitor_off():
+            if not self.is_guard_screen_displayed and not self.is_lock_screen_displayed:
+                self.show_lock_screen()
+                self.show_guard_screen()
+        else:
+            self.is_guard_screen_displayed = False
+            self.is_lock_screen_displayed = False
+
     def finalize_order(self):
         total_with_tax = self.order_manager.calculate_total_with_tax()
         print(total_with_tax)
@@ -560,6 +597,9 @@ class CashRegisterApp(App):
 
     def on_cash_cancel(self, instance):
         self.cash_popup.dismiss()
+
+    def on_adjust_price_cancel(self, instance):
+        self.adjust_price_popup.dismiss()
 
     def on_cash_confirm(self, instance):
         amount_tendered = float(self.cash_input.text)
