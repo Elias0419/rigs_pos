@@ -1,16 +1,17 @@
 from kivy.config import Config
 
 Config.set("kivy", "keyboard_mode", "systemanddock")
+
 import json
-import time
 import datetime
 import subprocess
+
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.metrics import dp
-from kivy.properties import StringProperty, ListProperty
+from kivy.properties import StringProperty, ListProperty, ObjectProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
@@ -26,35 +27,79 @@ from barcode_scanner import BarcodeScanner
 # from mock_barcode_scanner import BarcodeScanner
 from database_manager import DatabaseManager
 from order_manager import OrderManager
-
 from open_cash_drawer import open_cash_drawer
+
 # from mock_open_cash_drawer import open_cash_drawer
 
 
 class InventoryRow(BoxLayout):
-    pass
+    barcode = StringProperty()
+    name = StringProperty()
+    price = StringProperty()
+    order_manager = ObjectProperty()
+
+    def __init__(self, **kwargs):
+        super(InventoryRow, self).__init__(**kwargs)
+        self.order_manager = OrderManager()
+
+    def add_to_order(self):
+        print(f"Adding {self.name} to order")
+        self.order_manager.add_item(self.name, self.price)
+        app = App.get_running_app()
+        app.update_display()
+
 
 class HistoryRow(BoxLayout):
     pass
 
 
 class InventoryView(BoxLayout):
+    def __init__(self, order_manager, **kwargs):
+        super(InventoryView, self).__init__(**kwargs)
+        self.order_manager = order_manager
+
     def show_inventory(self, inventory_items):
-        self.rv.data = [
-            {"barcode": str(item[0]), "name": item[1], "price": str(item[2])}
-            for item in inventory_items
+        self.full_inventory = inventory_items
+        data = self.generate_data_for_rv(inventory_items)
+        for item in data:
+            item["order_manager"] = self.order_manager
+        self.rv.data = data
+
+    def generate_data_for_rv(self, items):
+        return [
+            {
+                "barcode": str(item[0]),
+                "name": item[1],
+                "price": str(item[2]),
+                "order_manager": self.order_manager,
+            }
+            for item in items
         ]
+
+    def filter_inventory(self, query):
+        if query:
+            query = query.lower()
+            filtered_items = [
+                item for item in self.full_inventory if query in item[1].lower()
+            ]
+        else:
+            filtered_items = self.full_inventory
+        self.rv.data = self.generate_data_for_rv(filtered_items)
+
 
 class HistoryView(BoxLayout):
     def show_reporting_popup(self, order_history):
-        # self.rv.data = [
-        #     {"order_id": str(order[0]), "items":str(order[1]), "total":str(order[2]), "tax":str(order[3]), "total_with_tax":str(order[4]), "timestamp":str(order[5])} # TODO look in truncating or wrapping
-        #     for order in order_history
-        # ]
         self.rv.data = [
-            {"items":str(order[1]), "total":str(order[2]), "tax":str(order[3]), "total_with_tax":str(order[4]), "timestamp":str(order[5])}
+            {
+                "items": str(order[1]),
+                "total": str(order[2]),
+                "tax": str(order[3]),
+                "total_with_tax": str(order[4]),
+                "timestamp": str(order[5]),
+            }  # TODO look in truncating/wrapping/collapsing items
             for order in order_history
         ]
+
 
 class CashRegisterApp(App):
     def __init__(self, **kwargs):
@@ -86,7 +131,7 @@ class CashRegisterApp(App):
 
         buttons = [
             "Custom Item",
-            "Clear Item",
+            "Inventory",
             "Pay",
             "Tools",
         ]
@@ -96,7 +141,7 @@ class CashRegisterApp(App):
 
         Clock.schedule_interval(self.check_for_scanned_barcode, 0.1)
 
-        if not hasattr(self, 'monitor_check_scheduled'):
+        if not hasattr(self, "monitor_check_scheduled"):
             Clock.schedule_interval(self.check_monitor_status, 5)
             self.monitor_check_scheduled = True
 
@@ -176,8 +221,8 @@ class CashRegisterApp(App):
             self.order_manager.clear_order()
         elif instance.text == "Open Register":
             open_cash_drawer()
-        elif instance.text == "Inventory":
-            self.show_inventory()
+        # elif instance.text == "Inventory":
+        #     self.show_inventory()
         elif instance.text == "Reporting":
             self.show_reporting_popup()
         elif instance.text == "Tax Adjustment":
@@ -196,20 +241,9 @@ class CashRegisterApp(App):
         elif button_text == "Custom Item":
             self.show_custom_item_popup(barcode="1234567890")
         elif button_text == "Tools":
-            # self.show_add_to_database_popup("12321321414") ##################TEST REMOVE ME
             self.show_tools_popup()
-        elif button_text == "Clear Item" and self.last_scanned_item:
-            item_name, item_price = self.last_scanned_item
-            item_tuple = (item_name, item_price)
-
-            if item_tuple in self.order_manager.items:
-                self.order_manager.items.remove(item_tuple)
-                self.order_manager.total -= item_price
-                self.update_display()
-            else:
-                print("nothing to remove")
-        else:
-            self.display.text = current + button_text
+        elif button_text == "Inventory":
+            self.show_inventory()
 
     def on_done_button_press(self, instance):
         order_details = self.order_manager.get_order_details()
@@ -234,7 +268,6 @@ class CashRegisterApp(App):
             font_size=30,
             size_hint_y=None,
             height=50,
-
         )
         self.adjust_price_popup_layout.add_widget(self.target_amount_input)
 
@@ -252,7 +285,6 @@ class CashRegisterApp(App):
         )
         self.adjust_price_popup.open()
 
-
     def show_guard_screen(self):
         if not self.is_guard_screen_displayed:
             print("Guard screen triggered", datetime.datetime.now())
@@ -261,11 +293,17 @@ class CashRegisterApp(App):
                 title="Guard Screen",
                 content=guard_layout,
                 size_hint=(1, 1),
-                auto_dismiss=False
+                auto_dismiss=False,
             )
-            guard_popup.bind(on_touch_down=lambda instance, touch: guard_popup.dismiss())
+            guard_popup.bind(
+                on_touch_down=lambda instance, touch: guard_popup.dismiss()
+            )
             self.is_guard_screen_displayed = True
-            guard_popup.bind(on_dismiss=lambda instance: setattr(self, 'is_guard_screen_displayed', False))
+            guard_popup.bind(
+                on_dismiss=lambda instance: setattr(
+                    self, "is_guard_screen_displayed", False
+                )
+            )
             guard_popup.open()
 
     def show_lock_screen(self):
@@ -275,7 +313,20 @@ class CashRegisterApp(App):
             lock_layout = BoxLayout(orientation="vertical")
             keypad_layout = GridLayout(cols=3)
 
-            numeric_buttons = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"]
+            numeric_buttons = [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "9",
+                "*",
+                "0",
+                "#",
+            ]
             for button in numeric_buttons:
                 btn = Button(text=button, on_press=self.on_lock_screen_button_press)
                 keypad_layout.add_widget(btn)
@@ -285,19 +336,21 @@ class CashRegisterApp(App):
                 title="Lock Screen",
                 content=lock_layout,
                 size_hint=(1, 1),
-                auto_dismiss=False
+                auto_dismiss=False,
             )
             self.is_lock_screen_displayed = True
-            self.lock_popup.bind(on_dismiss=lambda instance: setattr(self, 'is_lock_screen_displayed', False))
+            self.lock_popup.bind(
+                on_dismiss=lambda instance: setattr(
+                    self, "is_lock_screen_displayed", False
+                )
+            )
             self.lock_popup.open()
 
     def on_lock_screen_button_press(self, instance):
-
         self.entered_pin += instance.text
 
         if len(self.entered_pin) == 4:
             if self.entered_pin == self.correct_pin:
-
                 self.lock_popup.dismiss()
                 self.entered_pin = ""
             else:
@@ -305,7 +358,7 @@ class CashRegisterApp(App):
 
     def show_inventory(self):
         inventory = self.db_manager.get_all_items()
-        inventory_view = InventoryView()
+        inventory_view = InventoryView(order_manager=self.order_manager)
         inventory_view.show_inventory(inventory)
         popup = Popup(title="Inventory", content=inventory_view, size_hint=(0.9, 0.9))
         popup.open()
@@ -319,7 +372,13 @@ class CashRegisterApp(App):
 
     def show_tools_popup(self):
         tools_layout = BoxLayout(orientation="vertical", spacing=10)
-        tool_buttons = ["Clear Order", "Open Register", "Inventory", "Reporting", "Tax Adjustment"]
+        tool_buttons = [
+            "Clear Order",
+            "Open Register",
+            "Inventory",
+            "Reporting",
+            "Tax Adjustment",
+        ]
 
         for tool in tool_buttons:
             btn = Button(text=tool, on_press=self.on_tool_button_press)
@@ -360,7 +419,9 @@ class CashRegisterApp(App):
             btn = Button(text=button, on_press=self.on_numeric_button_press)
             keypad_layout.add_widget(btn)
 
-        confirm_button = Button(text="Confirm", on_press=self.add_custom_item)
+        confirm_button = Button(
+            text="Confirm", on_press=self.add_custom_item
+        )  ############
         keypad_layout.add_widget(confirm_button)
 
         cancel_button = Button(text="Cancel", on_press=self.on_custom_item_cancel)
@@ -465,8 +526,6 @@ class CashRegisterApp(App):
         )
         self.change_popup.open()
 
-
-
     def show_add_to_database_popup(self, barcode):
         popup_layout = BoxLayout(orientation="vertical", spacing=10)
 
@@ -552,13 +611,10 @@ class CashRegisterApp(App):
         self.update_display()
         self.adjust_price_popup.dismiss()
 
-    def on_adjust_price_cancel(self, instance):
-        self.adjust_price_popup.dismiss()
-
     def is_monitor_off(self):
         try:
-            result = subprocess.run(['xset', '-q'], stdout=subprocess.PIPE)
-            output = result.stdout.decode('utf-8')
+            result = subprocess.run(["xset", "-q"], stdout=subprocess.PIPE)
+            output = result.stdout.decode("utf-8")
             return "Monitor is Off" in output
         except Exception as e:
             print(f"Error checking monitor status: {e}")
@@ -570,7 +626,6 @@ class CashRegisterApp(App):
                 self.show_lock_screen()
                 self.show_guard_screen()
         else:
-            # Reset flags if the monitor is on
             self.is_guard_screen_displayed = False
             self.is_lock_screen_displayed = False
 
@@ -584,6 +639,13 @@ class CashRegisterApp(App):
         self.display.text = ""
 
         for item_name, item_price in self.order_manager.items:
+            try:
+                item_price = float(item_price)  # Convert to float if it's a string
+            except ValueError:
+                # Handle the exception if the conversion fails
+                print(f"Invalid item price: {item_price}")
+                continue
+
             self.display.text += f"{item_name}  ${item_price:.2f}\n"
 
         subtotal_with_tax = self.order_manager.calculate_total_with_tax()
@@ -598,11 +660,14 @@ class CashRegisterApp(App):
 
     def on_change_done(self, instance):
         self.change_popup.dismiss()
-        #open_cash_drawer()
+        # open_cash_drawer()
         self.show_payment_confirmation_popup()
 
     def on_cash_cancel(self, instance):
         self.cash_popup.dismiss()
+
+    def on_adjust_price_cancel(self, instance):
+        self.adjust_price_popup.dismiss()
 
     def on_cash_confirm(self, instance):
         amount_tendered = float(self.cash_input.text)
@@ -632,15 +697,14 @@ class CashRegisterApp(App):
 
     def send_order_to_history_database(self, order_details, order_manager, db_manager):
         tax = order_details["total_with_tax"] - order_details["total"]
-        timestamp = time.time()
+        timestamp = datetime.datetime.now()
         db_manager.add_order_history(
             order_details["order_id"],
             json.dumps(order_details["items"]),
             order_details["total"],
             tax,
             order_details["total_with_tax"],
-            timestamp
-
+            timestamp,
         )
 
     def add_item_to_database(self, barcode, name, price):
