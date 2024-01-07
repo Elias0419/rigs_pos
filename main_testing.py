@@ -9,7 +9,7 @@ from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.metrics import dp
-from kivy.properties import StringProperty, ListProperty
+from kivy.properties import StringProperty, ListProperty, ObjectProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
@@ -31,18 +31,54 @@ from open_cash_drawer import open_cash_drawer
 
 
 class InventoryRow(BoxLayout):
-    pass
+    barcode = StringProperty()  # Assuming barcode, name, and price are properties
+    name = StringProperty()
+    price = StringProperty()
+    order_manager = ObjectProperty()  # Now a Kivy property
+
+    def __init__(self, **kwargs):
+        super(InventoryRow, self).__init__(**kwargs)
+        self.order_manager = OrderManager()
+
+    def add_to_order(self):
+        print(f"Adding {self.name} to order")
+        self.order_manager.add_item(self.name, self.price)
+        app = App.get_running_app()
+        app.update_display()
+
 
 class HistoryRow(BoxLayout):
     pass
 
 
 class InventoryView(BoxLayout):
+    def __init__(self, order_manager, **kwargs):
+        super(InventoryView, self).__init__(**kwargs)
+        self.order_manager = order_manager
+
+    # def update_order_manager(self):
+    #     for item in self.rv.data:
+    #         item['order_manager'] = self.order_manager
+
+
+
     def show_inventory(self, inventory_items):
-        self.rv.data = [
-            {"barcode": str(item[0]), "name": item[1], "price": str(item[2])}
-            for item in inventory_items
-        ]
+        self.full_inventory = inventory_items
+        data = self.generate_data_for_rv(inventory_items)
+        for item in data:
+            item['order_manager'] = self.order_manager
+        self.rv.data = data
+
+    def generate_data_for_rv(self, items):
+        return [{"barcode": str(item[0]), "name": item[1], "price": str(item[2]), "order_manager": self.order_manager} for item in items]
+
+    def filter_inventory(self, query):
+        if query:
+            query = query.lower()
+            filtered_items = [item for item in self.full_inventory if query in item[1].lower()]
+        else:
+            filtered_items = self.full_inventory
+        self.rv.data = self.generate_data_for_rv(filtered_items)
 
 class HistoryView(BoxLayout):
     def show_reporting_popup(self, order_history):
@@ -85,7 +121,7 @@ class CashRegisterApp(App):
 
         buttons = [
             "Custom Item",
-            "Clear Item",
+            "Inventory",
             "Pay",
             "Tools",
         ]
@@ -175,8 +211,8 @@ class CashRegisterApp(App):
             self.order_manager.clear_order()
         elif instance.text == "Open Register":
             open_cash_drawer()
-        elif instance.text == "Inventory":
-            self.show_inventory()
+        # elif instance.text == "Inventory":
+        #     self.show_inventory()
         elif instance.text == "Reporting":
             self.show_reporting_popup()
         elif instance.text == "Tax Adjustment":
@@ -197,18 +233,22 @@ class CashRegisterApp(App):
         elif button_text == "Tools":
             # self.show_add_to_database_popup("12321321414") ##################TEST REMOVE ME
             self.show_tools_popup()
-        elif button_text == "Clear Item" and self.last_scanned_item:
-            item_name, item_price = self.last_scanned_item
-            item_tuple = (item_name, item_price)
+        elif button_text == "Inventory":
+            self.show_inventory()
 
-            if item_tuple in self.order_manager.items:
-                self.order_manager.items.remove(item_tuple)
-                self.order_manager.total -= item_price
-                self.update_display()
-            else:
-                print("nothing to remove")
-        else:
-            self.display.text = current + button_text
+
+       # elif button_text == "Clear Item" and self.last_scanned_item:
+        #     item_name, item_price = self.last_scanned_item
+        #     item_tuple = (item_name, item_price)
+        #
+        #     if item_tuple in self.order_manager.items:
+        #         self.order_manager.items.remove(item_tuple)
+        #         self.order_manager.total -= item_price
+        #         self.update_display()
+        #     else:
+        #         print("nothing to remove")
+        # else:
+        #     self.display.text = current + button_text
 
     def on_done_button_press(self, instance):
         order_details = self.order_manager.get_order_details()
@@ -303,7 +343,7 @@ class CashRegisterApp(App):
 
     def show_inventory(self):
         inventory = self.db_manager.get_all_items()
-        inventory_view = InventoryView()
+        inventory_view = InventoryView(order_manager=self.order_manager)
         inventory_view.show_inventory(inventory)
         popup = Popup(title="Inventory", content=inventory_view, size_hint=(0.9, 0.9))
         popup.open()
@@ -577,7 +617,9 @@ class CashRegisterApp(App):
     def update_display(self):
         self.display.text = ""
 
-        for item_name, item_price in self.order_manager.items:
+        for item in self.order_manager.items:
+            item_name = item.get('name', 'Unknown Item')
+            item_price = item.get('price', 0)
             self.display.text += f"{item_name}  ${item_price:.2f}\n"
 
         subtotal_with_tax = self.order_manager.calculate_total_with_tax()

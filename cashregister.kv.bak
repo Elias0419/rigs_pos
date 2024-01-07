@@ -1,33 +1,22 @@
+
 <InventoryRow>:
-    barcode: root.barcode
-    name: root.name
-    price: root.price
+    barcode: barcode
+    name: name
+    price: price
 
     Label:
         id: barcode
-        text: root.barcode
+        text: str(root.barcode)
     Label:
         id: name
-        text: root.name
+        text: str(root.name)
     Label:
         id: price
-        text: root.price
-    Button:
-        text: "Add to Order"
-        on_press: root.add_to_order()
+        text: str(root.price)
 
 <InventoryView>:
     orientation: 'vertical'
     rv: rv
-    BoxLayout:
-        size_hint_y: None
-        height: '48dp'
-        TextInput:
-            id: search_input
-            size_hint_x: 0.8
-            hint_text: 'Search'
-            on_text: root.filter_inventory(self.text)
-
     RecycleView:
         id: rv
         viewclass: 'InventoryRow'
