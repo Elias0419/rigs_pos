@@ -6,17 +6,20 @@ import brother_ql
 from brother_ql.conversion import convert
 from brother_ql.backends.helpers import send
 
+
 class LabelPrinter:
     def __init__(self):
         self.print_queue = []
 
     def add_to_queue(self, barcode, name, price, quantity):
-        self.print_queue.append({
-            "barcode": barcode,
-            "name": name,
-            "price": price,
-            "quantity": int(quantity)
-        })
+        self.print_queue.append(
+            {
+                "barcode": barcode,
+                "name": name,
+                "price": price,
+                "quantity": int(quantity),
+            }
+        )
 
     def print_barcode_label(self, barcode_data, item_price, save_path):
         label_width, label_height = 202, 202
@@ -32,13 +35,19 @@ class LabelPrinter:
             print(f"Invalid price format: {item_price}")
             return  # Exit if the price format is wrong
 
-        barcode_img = upc_a(barcode_data, writer=barcode_writer).render(writer_options={"module_height": 15.0})
+        barcode_img = upc_a(barcode_data, writer=barcode_writer).render(
+            writer_options={"module_height": 15.0}
+        )
         barcode_img_width = label_width - 2 * margin
-        barcode_img_height = barcode_img.size[1] * (barcode_img_width / barcode_img.size[0])
+        barcode_img_height = barcode_img.size[1] * (
+            barcode_img_width / barcode_img.size[0]
+        )
 
-        barcode_img = barcode_img.resize((barcode_img_width, int(barcode_img_height)), Image.Resampling.LANCZOS)
+        barcode_img = barcode_img.resize(
+            (barcode_img_width, int(barcode_img_height)), Image.Resampling.LANCZOS
+        )
 
-        label_image = Image.new('L', (label_width, label_height), color=255)
+        label_image = Image.new("L", (label_width, label_height), color=255)
         draw = ImageDraw.Draw(label_image)
         font = ImageFont.truetype(font_path, font_size)
 
@@ -49,7 +58,9 @@ class LabelPrinter:
         price_y_position = margin  # Start at top margin
 
         barcode_x_position = (label_width - barcode_img_width) // 2
-        barcode_y_position = price_y_position + price_text_height + margin  # Add a margin between price and barcode
+        barcode_y_position = (
+            price_y_position + price_text_height + margin
+        )  # Add a margin between price and barcode
 
         draw.text((price_x_position, price_y_position), price_text, font=font, fill=0)
         label_image.paste(barcode_img, (barcode_x_position, barcode_y_position))
@@ -67,6 +78,8 @@ class LabelPrinter:
         for item in self.print_queue:
             print("process_queue", item)
 
-            for _ in range(item['quantity']):
-                self.print_barcode_label(item['barcode'], item['price'], f"{item['name']}_label.png")
+            for _ in range(item["quantity"]):
+                self.print_barcode_label(
+                    item["barcode"], item["price"], f"{item['name']}_label.png"
+                )
         self.print_queue.clear()

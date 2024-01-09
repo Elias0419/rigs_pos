@@ -1,2 +1,2 @@
 def open_cash_drawer():
- print("Cash drawer opened")
+    print("Cash drawer opened")

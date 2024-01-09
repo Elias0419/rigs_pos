@@ -6,6 +6,7 @@ import brother_ql
 from brother_ql.conversion import convert
 from brother_ql.backends.helpers import send
 
+
 def print_barcode_label(barcode_data, item_price, save_path):
     # Constants
     label_width, label_height = 202, 202
@@ -15,14 +16,22 @@ def print_barcode_label(barcode_data, item_price, save_path):
 
     # Generate barcode image
     barcode_writer = ImageWriter()
-    barcode_img = upc_a(barcode_data, writer=barcode_writer).render(writer_options={"module_height": 15.0})
+    barcode_img = upc_a(barcode_data, writer=barcode_writer).render(
+        writer_options={"module_height": 15.0}
+    )
 
     # Resizing barcode to 90% of label width
     barcode_img_width = int(label_width * barcode_scale)
-    barcode_img = barcode_img.resize((barcode_img_width, int(barcode_img.size[1] * (barcode_img_width / barcode_img.size[0]))), Image.Resampling.LANCZOS)
+    barcode_img = barcode_img.resize(
+        (
+            barcode_img_width,
+            int(barcode_img.size[1] * (barcode_img_width / barcode_img.size[0])),
+        ),
+        Image.Resampling.LANCZOS,
+    )
 
     # Create label image
-    label_image = Image.new('L', (label_width, label_height), color=255)
+    label_image = Image.new("L", (label_width, label_height), color=255)
     draw = ImageDraw.Draw(label_image)
     font = ImageFont.truetype(font_path, font_size)
 
@@ -46,6 +55,7 @@ def print_barcode_label(barcode_data, item_price, save_path):
     # qlr.exception_on_warning = True
     # convert(qlr=qlr, images=[label_image], label='23x23')
     # send(instructions=qlr.data, printer_identifier='usb://0x04F9:0x2043', backend_identifier='pyusb')
+
 
 # Example usage
 print_barcode_label("123456789012", 9.99, "barcode_test.png")
