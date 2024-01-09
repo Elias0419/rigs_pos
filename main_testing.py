@@ -5,6 +5,7 @@ Config.set("kivy", "keyboard_mode", "systemanddock")
 import json
 import datetime
 import subprocess
+import time
 
 from kivy.app import App
 from kivy.clock import Clock
@@ -286,7 +287,7 @@ class InventoryRow(BoxLayout):
         self.order_manager.add_item(self.name, self.price)
         app = App.get_running_app()
         app.update_display()
-
+        app.update_financial_summary()
 
 class HistoryRow(BoxLayout):
     pass
@@ -353,35 +354,75 @@ class CashRegisterApp(App):
         self.barcode_scanner = BarcodeScanner()
         self.db_manager = DatabaseManager("inventory.db")
         self.order_manager = OrderManager()
-        main_layout = BoxLayout(orientation="vertical")
-        button_layout = GridLayout(cols=2, size_hint_y=1 / 3)
+
+        main_layout = BoxLayout(orientation='vertical')
+
+        top_area_layout = BoxLayout(orientation='horizontal', size_hint_y=2/3)
 
         self.order_layout = BoxLayout(orientation="vertical", size_hint_y=None)
         self.order_layout.bind(minimum_height=self.order_layout.setter("height"))
-
-        self.scroll_view = ScrollView(size_hint_y=2 / 3)
+        self.scroll_view = ScrollView(size_hint_x=1/3)
         self.scroll_view.add_widget(self.order_layout)
+        top_area_layout.add_widget(self.scroll_view)
 
-        main_layout.add_widget(self.scroll_view)
-        main_layout.add_widget(button_layout)
+        financial_layout = self.create_financial_layout()
+        top_area_layout.add_widget(financial_layout)
 
-        buttons = [
-            "Custom Item",
-            "Inventory",
-            "Pay",
-            "Tools",
-        ]
+        clock_layout = self.create_clock_layout()
+        top_area_layout.add_widget(clock_layout)
 
+        main_layout.add_widget(top_area_layout)
+
+        button_layout = GridLayout(cols=4, size_hint_y=1 / 4, orientation="lr-tb")
+        buttons = ["Pay", "Custom Item", "Inventory", "Tools"]
         for button in buttons:
             button_layout.add_widget(Button(text=button, on_press=self.on_button_press))
+        # Add the button layout to the main layout
+        main_layout.add_widget(button_layout)
 
+        # Clock and monitor check intervals
         Clock.schedule_interval(self.check_for_scanned_barcode, 0.1)
-
         if not hasattr(self, "monitor_check_scheduled"):
             Clock.schedule_interval(self.check_monitor_status, 5)
             self.monitor_check_scheduled = True
 
         return main_layout
+
+    def create_clock_layout(self):
+        clock_layout = BoxLayout(orientation='vertical', size_hint_x=1/3)
+        self.clock_label = Label(text='00:00', size_hint_y=None, height=30)
+        # Schedule a method to update the clock every second
+        Clock.schedule_interval(self.update_clock, 1)
+
+        clock_layout.add_widget(self.clock_label)
+        return clock_layout
+
+    def update_clock(self, *args):
+        self.clock_label.text = time.strftime('%I:%M:%S %p')
+
+
+    def create_financial_layout(self):
+        financial_layout = BoxLayout(orientation='vertical', pos_hint={"top": 1}, size_hint_x=1/3, padding=[0, 0, 0, 0], spacing=0)
+
+        self.subtotal_label = Label(text='Subtotal: $0.00', size_hint_y=None, height=30)
+        self.tax_label = Label(text='Tax: $0.00', size_hint_y=None, height=30)
+        self.total_label = Label(text='Total: $0.00', size_hint_y=None, height=30)
+
+        financial_layout.add_widget(self.subtotal_label)
+        financial_layout.add_widget(self.tax_label)
+        financial_layout.add_widget(self.total_label)
+
+        return financial_layout
+
+    def update_financial_summary(self):
+        subtotal = self.order_manager.total
+        tax = subtotal * self.order_manager.tax_rate
+        total_with_tax = self.order_manager.calculate_total_with_tax()
+
+        self.subtotal_label.text = f'Subtotal: ${subtotal:.2f}'
+        self.tax_label.text = f'Tax: ${tax:.2f}'
+        self.total_label.text = f'Total with Tax: ${total_with_tax:.2f}'
+
 
     """
     Barcode functions
@@ -403,6 +444,7 @@ class CashRegisterApp(App):
                 )
                 self.order_manager.total += item_price
                 self.update_display()
+                self.update_financial_summary()
                 return item_details
             else:
                 self.show_add_or_bypass_popup(barcode)
@@ -454,6 +496,10 @@ class CashRegisterApp(App):
         if instance.text == "Clear Order":
             self.order_layout.clear_widgets()
             self.order_manager.clear_order()
+            self.subtotal_label.text = 'Subtotal: $0.00'  # Update text of existing labels
+            self.tax_label.text = 'Tax: $0.00'
+            self.total_label.text = 'Total: $0.00'
+            self.update_financial_summary()
         elif instance.text == "Open Register":
             open_cash_drawer()
         # elif instance.text == "Inventory":
@@ -915,6 +961,7 @@ class CashRegisterApp(App):
 
         self.order_manager.update_item_price(self.current_item_name, adjusted_price)
         self.update_display()
+        self.update_financial_summary()
         self.adjust_price_popup.dismiss()
 
     def is_monitor_off(self):
@@ -948,6 +995,8 @@ class CashRegisterApp(App):
 
     def update_display(self):
         self.order_layout.clear_widgets()
+        self.order_layout.size_hint_x = None
+        self.order_layout.width = self.calculate_width()
 
         for item in self.order_manager.items:
             item_name = item["name"]
@@ -960,19 +1009,29 @@ class CashRegisterApp(App):
                 continue
 
             item_button = Button(
-                text=f"{item_name}  ${item_price:.2f}", size_hint_y=None, height=40
+                text=f"{item_name}  ${item_price:.2f}",
+                size_hint_y=None, size_hint_x=None,
+                width=400, height=50,  # Set a fixed width
+                halign="center",  # Horizontally align to center
+                valign="middle"   # Vertically align to middle
             )
+            item_button.bind(size=lambda instance, value: setattr(instance, 'text_size', value))
+
             item_button.bind(on_press=self.on_item_click)
             self.order_layout.add_widget(item_button)
 
-        subtotal_with_tax = self.order_manager.calculate_total_with_tax()
-        if subtotal_with_tax > 0:
-            subtotal_label = Label(
-                text=f"\nSubtotal with tax: ${subtotal_with_tax:.2f}",
-                size_hint_y=None,
-                height=40,
-            )
-            self.order_layout.add_widget(subtotal_label)
+        # subtotal_with_tax = self.order_manager.calculate_total_with_tax()
+        # if subtotal_with_tax > 0:
+        #     subtotal_label = Label(
+        #         text=f"\nTotal with tax: ${subtotal_with_tax:.2f}",
+        #         size_hint_y=None,
+        #         height=40,
+        #     )
+        #     self.order_layout.add_widget(subtotal_label)
+
+    def calculate_width(self):
+        # Set this to the width that fits your items best
+        return 400
 
     def handle_card_payment(self):
         open_cash_drawer()
@@ -1008,6 +1067,7 @@ class CashRegisterApp(App):
         self.order_manager.items.append({"name": custom_item_name, "price": price})
         self.order_manager.total += price
         self.update_display()
+        self.update_financial_summary()
         self.custom_item_popup.dismiss()
 
     def on_custom_item_cancel(self, instance):
