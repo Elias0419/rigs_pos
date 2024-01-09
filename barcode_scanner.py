@@ -17,25 +17,6 @@ class BarcodeScanner:
     def is_barcode_ready(self):
         return self.barcode_ready.is_set()
 
-    # def on_press(self, key):
-    #     current_time = time.time()
-    #     if self.last_key_time is not None:
-    #         time_diff = current_time - self.last_key_time
-    #         if time_diff >= 0.1:  # assume a human can't type this fast
-    #             self.current_barcode = ''
-    #
-    #     self.last_key_time = current_time
-    #
-    #     try:
-    #         if key.char is not None:
-    #             self.current_barcode += key.char
-    #     except AttributeError:
-    #         pass
-    #
-    # def on_release(self, key):
-    #
-    #     if len(self.current_barcode) == 12:
-    #         self.barcode_ready.set()
 
     def on_press(self, key):
         current_time = time.time()
