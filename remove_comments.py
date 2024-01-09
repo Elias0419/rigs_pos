@@ -4,9 +4,6 @@ import re
 def remove_comments(source_string):
     
     
-    source_string = re.sub(r'
-
-    
     source_string = re.sub(r'\'\'\'.*?\'\'\'|\"\"\".*?\"\"\"', '', source_string, flags=re.DOTALL)
 
     return source_string
