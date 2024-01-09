@@ -33,6 +33,160 @@ from label_printer import LabelPrinter
 
 # from mock_open_cash_drawer import open_cash_drawer
 
+class InventoryManagementRow(BoxLayout):
+    barcode = StringProperty()
+    name = StringProperty()
+    price = StringProperty()
+
+    def __init__(self, **kwargs):
+        super(InventoryManagementRow, self).__init__(**kwargs)
+        self.database_manager = DatabaseManager("inventory.db")
+
+    def inventory_item_popup(self):
+        content = BoxLayout(orientation="vertical", padding=10)
+        name_input = TextInput(text=self.name)
+        price_input = TextInput(text=self.price, input_filter="float")
+        barcode_input = TextInput(text=self.barcode, input_filter="int")
+
+        content.add_widget(Label(text="Name"))
+        content.add_widget(name_input)
+        content.add_widget(Label(text="Price"))
+        content.add_widget(price_input)
+        content.add_widget(Label(text="Barcode"))
+        content.add_widget(barcode_input)   ### we should be able to capture barcodes here
+
+        button_layout = BoxLayout(orientation="horizontal", size_hint_y=None, height='50dp', spacing=10)
+
+        button_layout.add_widget(
+            Button(
+                text="Confirm",
+                on_press=lambda *args: self.add_item_to_database(name_input, price_input, barcode_input)
+            )
+        )
+        button_layout.add_widget(
+            Button(
+                text="Cancel",
+                on_press=lambda *args: popup.dismiss()
+            )
+        )
+        button_layout.add_widget(
+            Button(
+                text="Generate Barcode",
+                # on_press logic for barcode generation
+            )
+        )
+        button_layout.add_widget(
+            Button(
+                text="Delete Item",
+                # on_press logic for delete item
+            )
+        )
+
+        content.add_widget(button_layout)
+
+        popup = Popup(title="Item details", content=content, size_hint=(0.8, 0.6))  # Adjusted size_hint for better layout
+        popup.open()
+
+
+    def open_inventory_manager(self):
+        self.inventory_item_popup()
+
+    def add_item_to_database(self, barcode_input, name_input, price_input):
+        if barcode_input and name_input and price_input:
+            try:
+                self.database_manager.add_item(barcode_input.text, name_input.text, price_input.text)
+            except Exception as e:
+                print(e)
+                pass
+
+
+class InventoryManagementView(BoxLayout):
+    barcode = StringProperty()
+    name = StringProperty()
+    price = StringProperty()
+    def __init__(self, **kwargs):
+        super(InventoryManagementView, self).__init__(**kwargs)
+
+        self.full_inventory = []
+        self.database_manager = DatabaseManager("inventory.db")
+
+    def show_inventory_for_manager(self, inventory_items):
+        self.full_inventory = inventory_items
+        self.rv.data = self.generate_data_for_rv(inventory_items)
+
+    def add_item_to_database(self):
+        self.database_manager.add_item(self.barcode, self.name, self.price)
+
+    def inventory_item_popup(self):
+        content = BoxLayout(orientation="vertical", padding=10)
+        name_input = TextInput()
+        price_input = TextInput(input_filter="float")
+        barcode_input = TextInput(input_filter="int")
+
+        content.add_widget(Label(text="Name"))
+        content.add_widget(name_input)
+        content.add_widget(Label(text="Price"))
+        content.add_widget(price_input)
+        content.add_widget(Label(text="Barcode"))
+        content.add_widget(barcode_input)   ### we should be able to capture barcodes here
+
+        button_layout = BoxLayout(orientation="horizontal", size_hint_y=None, height='50dp', spacing=10)
+
+        button_layout.add_widget(
+            Button(
+                text="Confirm",
+                on_press=lambda *args: self.add_item_to_database(barcode_input, name_input, price_input)
+            )
+        )
+        button_layout.add_widget(
+            Button(
+                text="Cancel",
+                on_press=lambda *args: popup.dismiss()
+            )
+        )
+        button_layout.add_widget(
+            Button(
+                text="Generate Barcode",
+                # on_press logic for barcode generation
+            )
+        )
+
+        content.add_widget(button_layout)
+
+        popup = Popup(title="Item details", content=content, size_hint=(0.8, 0.6))  # Adjusted size_hint for better layout
+        popup.open()
+
+    def add_item_to_database(self, barcode_input, name_input, price_input):
+        if barcode_input and name_input and price_input:
+            try:
+                self.database_manager.add_item(barcode_input.text, name_input.text, price_input.text)
+            except Exception as e:
+                print(e)
+                pass
+
+    def open_inventory_manager(self):
+        self.inventory_item_popup()
+
+    def generate_data_for_rv(self, items):
+        return [
+            {
+                "barcode": str(item[0]),
+                "name": item[1],
+                "price": str(item[2]),
+
+            }
+            for item in items
+        ]
+
+    def filter_inventory(self, query):
+        if query:
+            query = query.lower()
+            filtered_items = [
+                item for item in self.full_inventory if query in item[1].lower()
+            ]
+        else:
+            filtered_items = self.full_inventory
+        self.rv.data = self.generate_data_for_rv(filtered_items)
 
 class LabelPrintingRow(BoxLayout):
     barcode = StringProperty()
@@ -308,6 +462,8 @@ class CashRegisterApp(App):
             self.show_reporting_popup()
         elif instance.text == "Label Printer":
             self.show_label_printing_view()
+        elif instance.text == "Inventory Management":
+            self.show_inventory_management_view()
         self.tools_popup.dismiss()
 
     def on_button_press(self, instance):
@@ -390,6 +546,15 @@ class CashRegisterApp(App):
         label_printing_view.show_inventory_for_label_printing(inventory)
         popup = Popup(
             title="Label Printing", content=label_printing_view, size_hint=(0.9, 0.9)
+        )
+        popup.open()
+
+    def show_inventory_management_view(self):
+        inventory = self.db_manager.get_all_items()
+        inventory_manager_view = InventoryManagementView()
+        inventory_manager_view.show_inventory_for_manager(inventory)
+        popup = Popup(
+            title="Inventory Management", content=inventory_manager_view, size_hint=(0.9, 0.9)
         )
         popup.open()
 
@@ -511,10 +676,10 @@ class CashRegisterApp(App):
         tool_buttons = [
             "Clear Order",
             "Open Register",
-            "Inventory",
+            #"Inventory",
             "Reporting",
-            "Label Printer"
-            # "Tax Adjustment",
+            "Label Printer",
+            "Inventory Management",
         ]
 
         for tool in tool_buttons:

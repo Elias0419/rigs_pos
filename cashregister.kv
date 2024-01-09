@@ -89,6 +89,59 @@
             height: self.minimum_height
             orientation: 'vertical'
 
+<InventoryManagementRow>:
+    barcode: root.barcode
+    name: root.name
+    price: root.price
+
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint_y: None
+        height: '48dp'
+
+        Label:
+            id: barcode
+            text: root.barcode
+        Label:
+            id: name
+            text: root.name
+        Label:
+            id: price
+            text: root.price
+        Button:
+            text: "Details"
+            on_press: root.open_inventory_manager()
+
+<InventoryManagementView>:
+    orientation: 'vertical'
+    rv: rv
+    BoxLayout:
+        size_hint_y: None
+        height: '48dp'
+        orientation: 'horizontal'
+
+        TextInput:
+            id: search_input
+            size_hint_x: 0.8
+            hint_text: 'Search'
+            on_text: root.filter_inventory(self.text)
+
+        Button:
+            text: "Add Item"
+            size_hint_x: 0.2
+            on_press: root.open_inventory_manager()
+
+
+
+    RecycleView:
+        id: rv
+        viewclass: 'InventoryManagementRow'
+        RecycleBoxLayout:
+            default_size: None, dp(56)
+            default_size_hint: 1, None
+            size_hint_y: None
+            height: self.minimum_height
+            orientation: 'vertical'
 
 <HistoryRow>:
     # order_id: order_id

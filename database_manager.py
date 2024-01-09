@@ -53,7 +53,7 @@ class DatabaseManager:
 
     def add_item(self, barcode, name, price):
         self.create_items_table()
-        print("DEBUG DatabaseManager add_item")
+        print("DEBUG DatabaseManager add_item", barcode, name, price)
 
         conn = self._get_connection()
         try:
