@@ -120,15 +120,14 @@ class CashRegisterApp(App):
         main_layout = BoxLayout(orientation="vertical")
         button_layout = GridLayout(cols=2, size_hint_y=1 / 3)
 
-        self.order_layout = BoxLayout(orientation='vertical', size_hint_y=None)
-        self.order_layout.bind(minimum_height=self.order_layout.setter('height'))
+        self.order_layout = BoxLayout(orientation="vertical", size_hint_y=None)
+        self.order_layout.bind(minimum_height=self.order_layout.setter("height"))
 
         self.scroll_view = ScrollView(size_hint_y=2 / 3)
         self.scroll_view.add_widget(self.order_layout)
 
         main_layout.add_widget(self.scroll_view)
         main_layout.add_widget(button_layout)
-
 
         buttons = [
             "Custom Item",
@@ -163,7 +162,9 @@ class CashRegisterApp(App):
             item_details = self.db_manager.get_item_details(barcode)
             if item_details:
                 item_name, item_price = item_details
-                self.order_manager.items.append({'name': item_name, 'price': item_price})
+                self.order_manager.items.append(
+                    {"name": item_name, "price": item_price}
+                )
                 self.order_manager.total += item_price
                 self.update_display()
                 return item_details
@@ -171,7 +172,6 @@ class CashRegisterApp(App):
                 self.show_add_or_bypass_popup(barcode)
         except Exception as e:
             print(f"Error handling scanned barcode: {e}")
-
 
     def show_add_or_bypass_popup(self, barcode):
         popup_layout = BoxLayout(orientation="vertical", spacing=10)
@@ -256,7 +256,7 @@ class CashRegisterApp(App):
     def on_item_click(self, instance):
         # instance.text will contain the item details
         # Extract item details from the button's text
-        item_details = instance.text.split('  $')
+        item_details = instance.text.split("  $")
         item_name = item_details[0]
         item_price = item_details[1]
 
@@ -266,17 +266,30 @@ class CashRegisterApp(App):
         item_popup_layout.add_widget(Label(text=f"Price: ${item_price}"))
 
         # Add buttons or other widgets for modification options (e.g., remove item)
-        modify_button = Button(text="Modify Item", on_press=lambda x: self.modify_item(item_name, item_price))
+        modify_button = Button(
+            text="Modify Item",
+            on_press=lambda x: self.modify_item(item_name, item_price),
+        )
         item_popup_layout.add_widget(modify_button)
-        adjust_price_button = Button(text="Adjust Price with Tax", on_press=lambda x: self.show_adjust_price_popup(item_name, item_price))
+        adjust_price_button = Button(
+            text="Adjust Price with Tax",
+            on_press=lambda x: self.show_adjust_price_popup(item_name, item_price),
+        )
         item_popup_layout.add_widget(adjust_price_button)
-        remove_button = Button(text="Remove Item", on_press=lambda x: self.remove_item(item_name, item_price))
+        remove_button = Button(
+            text="Remove Item",
+            on_press=lambda x: self.remove_item(item_name, item_price),
+        )
         item_popup_layout.add_widget(remove_button)
 
-        cancel_button = Button(text="Cancel", on_press=lambda x: self.close_item_popup())
+        cancel_button = Button(
+            text="Cancel", on_press=lambda x: self.close_item_popup()
+        )
         item_popup_layout.add_widget(cancel_button)
 
-        self.item_popup = Popup(title="Item Details", content=item_popup_layout, size_hint=(0.6, 0.4))
+        self.item_popup = Popup(
+            title="Item Details", content=item_popup_layout, size_hint=(0.6, 0.4)
+        )
         self.item_popup.open()
 
     def modify_item(self, item_name, item_price):
@@ -291,7 +304,6 @@ class CashRegisterApp(App):
         # Close the item details popup
         if self.item_popup:
             self.item_popup.dismiss()
-
 
     """
     Popup display functions
@@ -417,7 +429,7 @@ class CashRegisterApp(App):
             "Open Register",
             "Inventory",
             "Reporting",
-           # "Tax Adjustment",
+            # "Tax Adjustment",
         ]
 
         for tool in tool_buttons:
@@ -558,7 +570,6 @@ class CashRegisterApp(App):
         self.popup.dismiss()  # Close the previous popup if any
         self.payment_popup.open()
 
-
     def show_make_change_popup(self, change):
         change_layout = BoxLayout(orientation="vertical", spacing=10)
         change_layout.add_widget(Label(text=f"Change to return: ${change:.2f}"))
@@ -655,7 +666,6 @@ class CashRegisterApp(App):
         self.update_display()
         self.adjust_price_popup.dismiss()
 
-
     def is_monitor_off(self):
         try:
             result = subprocess.run(["xset", "-q"], stdout=subprocess.PIPE)
@@ -674,7 +684,6 @@ class CashRegisterApp(App):
             self.is_guard_screen_displayed = False
             self.is_lock_screen_displayed = False
 
-
     def finalize_order(self):
         total_with_tax = self.order_manager.calculate_total_with_tax()
         print(total_with_tax)
@@ -687,28 +696,33 @@ class CashRegisterApp(App):
 
         self.show_order_popup(order_summary)
 
-
     def update_display(self):
         self.order_layout.clear_widgets()
 
         for item in self.order_manager.items:
-            item_name = item['name']
+            item_name = item["name"]
             try:
-                item_price = float(item['price'])  # item['price'] is already a string representing a float
+                item_price = float(
+                    item["price"]
+                )  # item['price'] is already a string representing a float
             except ValueError:
                 print(f"Invalid item price for {item_name}: {item['price']}")
                 continue
 
-            item_button = Button(text=f"{item_name}  ${item_price:.2f}", size_hint_y=None, height=40)
+            item_button = Button(
+                text=f"{item_name}  ${item_price:.2f}", size_hint_y=None, height=40
+            )
             item_button.bind(on_press=self.on_item_click)
             self.order_layout.add_widget(item_button)
 
         subtotal_with_tax = self.order_manager.calculate_total_with_tax()
         if subtotal_with_tax > 0:
-            subtotal_label = Label(text=f"\nSubtotal with tax: ${subtotal_with_tax:.2f}", size_hint_y=None, height=40)
+            subtotal_label = Label(
+                text=f"\nSubtotal with tax: ${subtotal_with_tax:.2f}",
+                size_hint_y=None,
+                height=40,
+            )
             self.order_layout.add_widget(subtotal_label)
-
-
 
     def handle_card_payment(self):
         open_cash_drawer()
@@ -741,11 +755,10 @@ class CashRegisterApp(App):
             return
 
         custom_item_name = "Custom Item"
-        self.order_manager.items.append({'name': custom_item_name, 'price': price})
+        self.order_manager.items.append({"name": custom_item_name, "price": price})
         self.order_manager.total += price
         self.update_display()
         self.custom_item_popup.dismiss()
-
 
     def on_custom_item_cancel(self, instance):
         self.custom_item_popup.dismiss()

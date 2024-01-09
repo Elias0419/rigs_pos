@@ -3,6 +3,8 @@ from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 from kivy.uix.textinput import TextInput
 from kivy.uix.gridlayout import GridLayout
+
+
 class PopupManager:
     current_popup = None
 
@@ -232,21 +234,22 @@ class PopupManager:
     def close_add_to_database_popup():
         add_to_db_popup.dismiss()
 
-
-
     @staticmethod
     def on_done_button_press(order_manager, db_manager, update_display_callback):
         order_details = order_manager.get_order_details()
         # Assuming send_order_to_history_database is a static method or can be called independently
-        PopupManager.send_order_to_history_database(order_details, order_manager, db_manager)
+        PopupManager.send_order_to_history_database(
+            order_details, order_manager, db_manager
+        )
         order_manager.clear_order()
 
         PopupManager.dismiss_current_popup()
         update_display_callback("")
 
-
     @staticmethod
-    def on_payment_button_press(instance, show_cash_payment_callback, handle_card_payment_callback):
+    def on_payment_button_press(
+        instance, show_cash_payment_callback, handle_card_payment_callback
+    ):
         if instance.text == "Pay Cash":
             show_cash_payment_callback()
         elif instance.text == "Pay Card":
