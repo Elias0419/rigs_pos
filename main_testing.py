@@ -29,9 +29,81 @@ from barcode_scanner import BarcodeScanner
 from database_manager import DatabaseManager
 from order_manager import OrderManager
 from open_cash_drawer import open_cash_drawer
-
+from label_printer import LabelPrinter
 # from mock_open_cash_drawer import open_cash_drawer
 
+class LabelPrintingRow(BoxLayout):
+    barcode = StringProperty()
+    name = StringProperty()
+    price = StringProperty()
+    label_printer = ObjectProperty()
+    def add_to_print_queue(self):
+        print(f"Adding {self.name} to print queue")
+        self.show_label_popup()
+
+    def show_label_popup(self):
+        content = BoxLayout(orientation='vertical', padding=10)
+        quantity_input = TextInput(text='1', input_filter='int')
+        content.add_widget(Label(text=f"Enter quantity for {self.name}"))
+        content.add_widget(quantity_input)
+        content.add_widget(Button(text="Add", on_press=lambda *args: self.add_quantity_to_queue(quantity_input.text)))
+        popup = Popup(title="Label Quantity", content=content, size_hint=(0.8, 0.4))
+        popup.open()
+
+    def add_quantity_to_queue(self, quantity):
+        self.label_printer.add_to_queue(self.barcode, self.name, self.price, quantity)
+
+class LabelPrintingView(BoxLayout):
+    def __init__(self, **kwargs):
+        super(LabelPrintingView, self).__init__(**kwargs)
+        self.full_inventory = []
+        self.label_printer = LabelPrinter()
+
+    def show_inventory_for_label_printing(self, inventory_items):
+        self.full_inventory = inventory_items
+        self.rv.data = self.generate_data_for_rv(inventory_items)
+
+    def show_print_queue(self):
+        content = BoxLayout(orientation='vertical', spacing=10)
+        for item in self.label_printer.print_queue:
+            content.add_widget(Label(text=f"{item['name']} x {item['quantity']}"))
+
+        content.add_widget(Button(text="Print Now", on_press=self.print_now))
+        content.add_widget(Button(text="Cancel", on_press=self.cancel_print))
+
+        self.print_queue_popup = Popup(title="Print Queue", content=content, size_hint=(0.8, 0.6))
+        self.print_queue_popup.open()
+
+    def print_now(self, instance):
+        print("we are inside print now")
+        self.label_printer.process_queue()
+        self.print_queue_popup.dismiss()
+
+    def cancel_print(self, instance):
+
+        self.print_queue_popup.dismiss()
+
+
+    def generate_data_for_rv(self, items):
+        return [
+            {
+                "barcode": str(item[0]),
+                "name": item[1],
+                "price": str(item[2]),
+                "label_printer": self.label_printer,
+            }
+            for item in items
+        ]
+
+    def filter_inventory(self, query):
+        if query:
+            query = query.lower()
+            filtered_items = [
+                item for item in self.full_inventory if query in item[1].lower()
+            ]
+        else:
+            filtered_items = self.full_inventory
+        self.rv.data = self.generate_data_for_rv(filtered_items)
 
 class InventoryRow(BoxLayout):
     barcode = StringProperty()
@@ -224,8 +296,8 @@ class CashRegisterApp(App):
         #     self.show_inventory()
         elif instance.text == "Reporting":
             self.show_reporting_popup()
-        # elif instance.text == "Tax Adjustment":
-        #     self.show_adjust_price_popup()
+        elif instance.text == "Label Printer":
+            self.show_label_printing_view()
         self.tools_popup.dismiss()
 
     def on_button_press(self, instance):
@@ -254,18 +326,15 @@ class CashRegisterApp(App):
         self.order_layout.clear_widgets()
 
     def on_item_click(self, instance):
-        # instance.text will contain the item details
-        # Extract item details from the button's text
+
         item_details = instance.text.split('  $')
         item_name = item_details[0]
         item_price = item_details[1]
 
-        # Create a popup to show item details and modification options
         item_popup_layout = BoxLayout(orientation="vertical", spacing=10)
         item_popup_layout.add_widget(Label(text=f"Name: {item_name}"))
         item_popup_layout.add_widget(Label(text=f"Price: ${item_price}"))
 
-        # Add buttons or other widgets for modification options (e.g., remove item)
         modify_button = Button(text="Modify Item", on_press=lambda x: self.modify_item(item_name, item_price))
         item_popup_layout.add_widget(modify_button)
         adjust_price_button = Button(text="Adjust Price with Tax", on_press=lambda x: self.show_adjust_price_popup(item_name, item_price))
@@ -280,15 +349,12 @@ class CashRegisterApp(App):
         self.item_popup.open()
 
     def modify_item(self, item_name, item_price):
-        # Logic to modify the selected item
         pass
 
     def remove_item(self, item_name, item_price):
-        # Logic to remove the selected item
         pass
 
     def close_item_popup(self):
-        # Close the item details popup
         if self.item_popup:
             self.item_popup.dismiss()
 
@@ -296,6 +362,13 @@ class CashRegisterApp(App):
     """
     Popup display functions
     """
+
+    def show_label_printing_view(self):
+        inventory = self.db_manager.get_all_items()
+        label_printing_view = LabelPrintingView()
+        label_printing_view.show_inventory_for_label_printing(inventory)
+        popup = Popup(title="Label Printing", content=label_printing_view, size_hint=(0.9, 0.9))
+        popup.open()
 
     def show_adjust_price_popup(self, item_name, item_price):
         self.current_item_name = item_name
@@ -417,6 +490,7 @@ class CashRegisterApp(App):
             "Open Register",
             "Inventory",
             "Reporting",
+            "Label Printer"
            # "Tax Adjustment",
         ]
 
@@ -537,7 +611,6 @@ class CashRegisterApp(App):
     def show_payment_confirmation_popup(self):
         confirmation_layout = BoxLayout(orientation="vertical", spacing=10)
 
-        # Generate the order summary from the order_manager
         order_summary = "Order Complete:\n"
         for item_name, item_price in self.order_manager.items:
             order_summary += f"{item_name}  ${item_price:.2f}\n"
@@ -555,7 +628,7 @@ class CashRegisterApp(App):
             content=confirmation_layout,
             size_hint=(0.8, 0.5),
         )
-        self.popup.dismiss()  # Close the previous popup if any
+        self.popup.dismiss()
         self.payment_popup.open()
 
 
@@ -640,6 +713,9 @@ class CashRegisterApp(App):
     Accessory functions
     """
 
+    def add_item_to_label_printing_queue(self):
+        pass
+
     def add_adjusted_price_item(self, instance):
         target_amount = self.target_amount_input.text
         try:
@@ -650,7 +726,6 @@ class CashRegisterApp(App):
         tax_rate = 0.07
         adjusted_price = target_amount / (1 + tax_rate)
 
-        # Update the specific item's price
         self.order_manager.update_item_price(self.current_item_name, adjusted_price)
         self.update_display()
         self.adjust_price_popup.dismiss()
@@ -679,7 +754,6 @@ class CashRegisterApp(App):
         total_with_tax = self.order_manager.calculate_total_with_tax()
         print(total_with_tax)
 
-        # Generate the order summary from the order_manager
         order_summary = "Order Summary:\n"
         for item_name, item_price in self.order_manager.items:
             order_summary += f"{item_name}  ${item_price:.2f}\n"
