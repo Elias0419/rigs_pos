@@ -34,6 +34,30 @@ from label_printer import LabelPrinter
 
 # from mock_open_cash_drawer import open_cash_drawer
 
+
+
+class FinancialSummaryWidget(Button):
+    def __init__(self, **kwargs):
+        super(FinancialSummaryWidget, self).__init__(**kwargs)
+        self.size_hint_y = None
+        self.height = 80
+        self.orientation = "vertical"
+
+    def update_summary(self, subtotal, tax, total_with_tax):
+        self.text = f"Subtotal: ${subtotal:.2f}\nTax: ${tax:.2f}\nTotal: ${total_with_tax:.2f}"
+
+    def on_press(self):
+        self.open_order_modification_popup()
+
+    def open_order_modification_popup(self):
+        popup = Popup(title='Modify Order',
+                      content=Label(text='Modify your order here'),
+                      size_hint=(None, None), size=(400, 400))
+        popup.open()
+
+
+
+
 class InventoryManagementRow(BoxLayout):
     barcode = StringProperty()
     name = StringProperty()
@@ -207,11 +231,15 @@ class LabelPrintingRow(BoxLayout):
         content.add_widget(
             Button(
                 text="Add",
-                on_press=lambda *args: self.add_quantity_to_queue(quantity_input.text),
+                on_press=lambda *args: self.on_add_button_press(quantity_input, popup)
             )
         )
         popup = Popup(title="Label Quantity", content=content, size_hint=(0.8, 0.4))
         popup.open()
+
+    def on_add_button_press(self, quantity_input, popup):
+        self.add_quantity_to_queue(quantity_input.text)
+        popup.dismiss()
 
     def add_quantity_to_queue(self, quantity):
         self.label_printer.add_to_queue(self.barcode, self.name, self.price, quantity)
@@ -377,10 +405,8 @@ class CashRegisterApp(App):
         buttons = ["Pay", "Custom Item", "Inventory", "Tools"]
         for button in buttons:
             button_layout.add_widget(Button(text=button, on_press=self.on_button_press))
-        # Add the button layout to the main layout
         main_layout.add_widget(button_layout)
 
-        # Clock and monitor check intervals
         Clock.schedule_interval(self.check_for_scanned_barcode, 0.1)
         if not hasattr(self, "monitor_check_scheduled"):
             Clock.schedule_interval(self.check_monitor_status, 5)
@@ -391,7 +417,6 @@ class CashRegisterApp(App):
     def create_clock_layout(self):
         clock_layout = BoxLayout(orientation='vertical', size_hint_x=1/3)
         self.clock_label = Label(text='00:00', size_hint_y=None, height=30)
-        # Schedule a method to update the clock every second
         Clock.schedule_interval(self.update_clock, 1)
 
         clock_layout.add_widget(self.clock_label)
@@ -402,26 +427,21 @@ class CashRegisterApp(App):
 
 
     def create_financial_layout(self):
-        financial_layout = BoxLayout(orientation='vertical', pos_hint={"top": 1}, size_hint_x=1/3, padding=[0, 0, 0, 0], spacing=0)
+        financial_layout = ScrollView(size_hint_x=1/3)
 
-        self.subtotal_label = Label(text='Subtotal: $0.00', size_hint_y=None, height=30)
-        self.tax_label = Label(text='Tax: $0.00', size_hint_y=None, height=30)
-        self.total_label = Label(text='Total: $0.00', size_hint_y=None, height=30)
-
-        financial_layout.add_widget(self.subtotal_label)
-        financial_layout.add_widget(self.tax_label)
-        financial_layout.add_widget(self.total_label)
+        self.financial_summary_widget = FinancialSummaryWidget()
+        financial_layout.add_widget(self.financial_summary_widget)
 
         return financial_layout
+
 
     def update_financial_summary(self):
         subtotal = self.order_manager.total
         tax = subtotal * self.order_manager.tax_rate
         total_with_tax = self.order_manager.calculate_total_with_tax()
 
-        self.subtotal_label.text = f'Subtotal: ${subtotal:.2f}'
-        self.tax_label.text = f'Tax: ${tax:.2f}'
-        self.total_label.text = f'Total with Tax: ${total_with_tax:.2f}'
+        self.financial_summary_widget.update_summary(subtotal, tax, total_with_tax)
+
 
 
     """
@@ -496,7 +516,7 @@ class CashRegisterApp(App):
         if instance.text == "Clear Order":
             self.order_layout.clear_widgets()
             self.order_manager.clear_order()
-            self.subtotal_label.text = 'Subtotal: $0.00'  # Update text of existing labels
+            self.subtotal_label.text = 'Subtotal: $0.00'
             self.tax_label.text = 'Tax: $0.00'
             self.total_label.text = 'Total: $0.00'
             self.update_financial_summary()
@@ -844,11 +864,21 @@ class CashRegisterApp(App):
 
     def show_payment_confirmation_popup(self):
         confirmation_layout = BoxLayout(orientation="vertical", spacing=10)
-
+        total_with_tax = self.order_manager.calculate_total_with_tax()
         order_summary = "Order Complete:\n"
-        for item_name, item_price in self.order_manager.items:
-            order_summary += f"{item_name}  ${item_price:.2f}\n"
-        order_summary += "Order saved to the history database."
+        for item in self.order_manager.items:
+            item_name = item.get('name', 'Unknown Item')
+            item_price = item.get('price', 0)
+
+
+            try:
+                item_price_float = float(item_price)
+            except ValueError:
+                print(f"Error: Item price for {item_name} is not a valid number.")
+                continue
+
+            order_summary += f"{item_name}  ${item_price_float:.2f}\n"
+        order_summary += f"Total with Tax: ${total_with_tax:.2f}"
 
         confirmation_layout.add_widget(Label(text=order_summary))
 
@@ -984,14 +1014,28 @@ class CashRegisterApp(App):
 
     def finalize_order(self):
         total_with_tax = self.order_manager.calculate_total_with_tax()
-        print(total_with_tax)
+
 
         order_summary = "Order Summary:\n"
-        for item_name, item_price in self.order_manager.items:
-            order_summary += f"{item_name}  ${item_price:.2f}\n"
+        for item in self.order_manager.items:
+            item_name = item.get('name', 'Unknown Item')
+            item_price = item.get('price', 0)
+
+
+
+            try:
+                item_price_float = float(item_price)
+            except ValueError:
+                print(f"Error: Item price for {item_name} is not a valid number.")
+                continue
+
+            order_summary += f"{item_name}  ${item_price_float:.2f}\n"
         order_summary += f"Total with Tax: ${total_with_tax:.2f}"
 
         self.show_order_popup(order_summary)
+
+
+
 
     def update_display(self):
         self.order_layout.clear_widgets()
@@ -1003,7 +1047,7 @@ class CashRegisterApp(App):
             try:
                 item_price = float(
                     item["price"]
-                )  # item['price'] is already a string representing a float
+                )  #
             except ValueError:
                 print(f"Invalid item price for {item_name}: {item['price']}")
                 continue
@@ -1011,9 +1055,9 @@ class CashRegisterApp(App):
             item_button = Button(
                 text=f"{item_name}  ${item_price:.2f}",
                 size_hint_y=None, size_hint_x=None,
-                width=400, height=50,  # Set a fixed width
-                halign="center",  # Horizontally align to center
-                valign="middle"   # Vertically align to middle
+                width=400, height=50,
+                halign="center",
+                valign="middle"
             )
             item_button.bind(size=lambda instance, value: setattr(instance, 'text_size', value))
 
