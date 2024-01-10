@@ -541,9 +541,9 @@ class CashRegisterApp(MDApp):
         if instance.text == "Clear Order":
             self.order_layout.clear_widgets()
             self.order_manager.clear_order()
-            self.subtotal_label.text = 'Subtotal: $0.00'
-            self.tax_label.text = 'Tax: $0.00'
-            self.total_label.text = 'Total: $0.00'
+            # self.subtotal_label.text = 'Subtotal: $0.00'
+            # self.tax_label.text = 'Tax: $0.00'
+            # self.total_label.text = 'Total: $0.00'
             self.update_financial_summary()
         elif instance.text == "Open Register":
             open_cash_drawer()
