@@ -97,19 +97,17 @@ class InventoryManagementRow(BoxLayout):
         button_layout.add_widget(
             Button(
                 text="Generate Barcode",
-                # on_press logic for barcode generation
             )
         )
         button_layout.add_widget(
             Button(
                 text="Delete Item",
-                # on_press logic for delete item
             )
         )
 
         content.add_widget(button_layout)
 
-        popup = Popup(title="Item details", content=content, size_hint=(0.8, 0.6))  # Adjusted size_hint for better layout
+        popup = Popup(title="Item details", content=content, size_hint=(0.8, 0.6))
         popup.open()
 
 
@@ -172,7 +170,6 @@ class InventoryManagementView(BoxLayout):
         button_layout.add_widget(
             Button(
                 text="Generate Barcode",
-                # on_press logic for barcode generation
             )
         )
 
@@ -451,7 +448,7 @@ class CashRegisterApp(App):
     def check_for_scanned_barcode(self, dt):
         if self.barcode_scanner.is_barcode_ready():
             barcode = self.barcode_scanner.read_barcode()
-            print(f"Barcode scanned: {barcode}")  # Debug print
+            print(f"Barcode scanned: {barcode}")
             self.handle_scanned_barcode(barcode)
 
     def handle_scanned_barcode(self, barcode):
@@ -1074,7 +1071,6 @@ class CashRegisterApp(App):
         #     self.order_layout.add_widget(subtotal_label)
 
     def calculate_width(self):
-        # Set this to the width that fits your items best
         return 400
 
     def handle_card_payment(self):

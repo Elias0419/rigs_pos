@@ -116,19 +116,17 @@ class InventoryManagementRow(BoxLayout):
         button_layout.add_widget(
             MDRaisedButton(
                 text="Generate Barcode",
-                # on_press logic for barcode generation
             )
         )
         button_layout.add_widget(
             MDRaisedButton(
                 text="Delete Item",
-                # on_press logic for delete item
             )
         )
 
         content.add_widget(button_layout)
 
-        popup = Popup(title="Item details", content=content, size_hint=(0.8, 0.6))  # Adjusted size_hint for better layout
+        popup = Popup(title="Item details", content=content, size_hint=(0.8, 0.6))
         popup.open()
 
 
@@ -191,13 +189,12 @@ class InventoryManagementView(BoxLayout):
         button_layout.add_widget(
             MDRaisedButton(
                 text="Generate Barcode",
-                # on_press logic for barcode generation
             )
         )
 
         content.add_widget(button_layout)
 
-        popup = Popup(title="Item details", content=content, size_hint=(0.8, 0.6))  # Adjusted size_hint for better layout
+        popup = Popup(title="Item details", content=content, size_hint=(0.8, 0.6))
         popup.open()
 
     def add_item_to_database(self, barcode_input, name_input, price_input):
@@ -1117,7 +1114,6 @@ class CashRegisterApp(MDApp):
         #     self.order_layout.add_widget(subtotal_label)
 
     def calculate_width(self):
-        # Set this to the width that fits your items best
         return 400
 
     def handle_card_payment(self):
