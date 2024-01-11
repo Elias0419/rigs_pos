@@ -7,7 +7,8 @@ import json
 import datetime
 import subprocess
 import time
-
+import re
+#####
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.core.window import Window
@@ -352,7 +353,12 @@ class InventoryRow(BoxLayout):
         print(f"Adding {self.name} to order")
         print(self.price)
         print(type(self.price))
-        self.order_manager.add_item(self.name, self.price)
+        try:
+            price_float = float(self.price)
+        except ValueError as e:
+            print(e)
+            pass
+        self.order_manager.add_item(self.name, price_float)
         app = App.get_running_app()
         app.update_display()
         app.update_financial_summary()
@@ -649,9 +655,21 @@ class CashRegisterApp(MDApp):
         self.order_layout.clear_widgets()
 
     def on_item_click(self, instance):
-        item_details = instance.text.split("  $")
-        item_name = item_details[0]
-        item_price = item_details[1]
+        try:
+            item_details = instance.text.split(" x")
+            item_name_quantity = item_details[0]
+            item_price_quantity = item_details[1]
+            name_quantity_split = re.match(r"^(.+) (\d+)$", item_name_quantity)
+            if name_quantity_split:
+                item_name = name_quantity_split.group(1)
+                item_quantity = int(name_quantity_split.group(2))
+        except IndexError:
+            print("expected index error in on item click")
+            item_details = instance.text.split(" $")
+            item_name = item_details[0]
+            item_price_quantity = item_details[1]
+
+        item_price = item_price_quantity.split("$")[-1]
 
         item_popup_layout = BoxLayout(orientation="vertical", spacing=10)
         item_popup_layout.add_widget(Label(text=f"Name: {item_name}"))
@@ -1260,11 +1278,24 @@ class CashRegisterApp(MDApp):
 
     def update_display(self):
         self.order_layout.clear_widgets()
-        for item_name, item_info in self.order_manager.items.items():
+        for item_key, item_info in self.order_manager.items.items():
             item_quantity = item_info['quantity']
             item_total_price = item_info['total_price']
+
+            match = re.match(r"^(.+)_(\d+(\.\d+)?)$", item_key)
+            if match:
+                item_name = match.group(1)
+                item_price = float(match.group(2))
+                if item_quantity > 1:
+                    item_display_text = f"{item_name} x{item_quantity} ${item_total_price:.2f}"
+                else:
+                    item_display_text = f"{item_name} ${item_total_price:.2f}"
+
+
+            print(item_key)
+            print(item_info)
             item_button = MDRaisedButton(
-                text=f"{item_name} x{item_quantity} ${item_total_price:.2f}",
+                text=item_display_text,
                 size_hint=(0.1, 0.1),
                 halign="center",
                 valign="center",
@@ -1274,6 +1305,7 @@ class CashRegisterApp(MDApp):
 
             for widget in self.order_layout.children:
                 print(f"Widget size: {widget.size}, pos: {widget.pos}")
+
 
     def calculate_width(self):
         return 400
