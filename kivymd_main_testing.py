@@ -872,8 +872,8 @@ class CashRegisterApp(MDApp):
             ]
             for button in numeric_buttons:
                 btn = MDFlatButton(
-                    text=button, text_color=(0,0,0,1),
-                    font_style="Button",
+                    text=button, text_color="white",
+                    font_style="H6",
                     size_hint=(0.8, 0.8),
                     on_press=self.on_lock_screen_button_press
                 )
