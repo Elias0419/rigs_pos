@@ -47,7 +47,8 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.dialog import MDDialog
 
 from kivymd.uix.textfield import MDTextField, MDTextFieldRect
-
+from kivymd.uix.selectioncontrol import MDSwitch
+from kivymd.uix.menu.menu import MDDropdownMenu
 from kivymd.app import MDApp
 from kivymd.theming import ThemeManager
 from kivymd.uix.boxlayout import BoxLayout
@@ -447,19 +448,19 @@ class CashRegisterApp(MDApp):
 
         main_layout.add_widget(top_area_layout)
 
-        button_layout = GridLayout(cols=4, size_hint_y=1 / 4, orientation="lr-tb")
+        button_layout = GridLayout(cols=4, size_hint_y=1 / 8, orientation="lr-tb")
 
         btn_pay = MDRaisedButton(
-            text="Pay", size_hint=(8, 8), on_press=self.on_button_press
+            text="Pay", font_style="H6", size_hint=(8, 8), on_press=self.on_button_press
         )
         btn_custom_item = MDRaisedButton(
-            text="Custom Item", size_hint=(8, 8), on_press=self.on_button_press
+            text="Custom",font_style="H6", size_hint=(8, 8), on_press=self.on_button_press
         )
         btn_inventory = MDRaisedButton(
-            text="Inventory", size_hint=(8, 8), on_press=self.on_button_press
+            text="Search",font_style="H6", size_hint=(8, 8), on_press=self.on_button_press
         )
         btn_tools = MDRaisedButton(
-            text="Tools", size_hint=(8, 8), on_press=self.on_button_press
+            text="Tools",font_style="H6", size_hint=(8, 8), on_press=self.on_button_press
         )
         button_layout.add_widget(btn_pay)
         button_layout.add_widget(btn_custom_item)
@@ -476,8 +477,13 @@ class CashRegisterApp(MDApp):
 
     def create_clock_layout(self):
         clock_layout = BoxLayout(orientation="vertical", size_hint_x=1 / 3)
-        self.clock_label = Label(
-            text="00:00", size_hint_y=None, height=30, color=(0, 0, 0, 1)
+        self.clock_label = MDLabel(
+            text="Loading...",
+            size_hint_y=None,
+            font_style="H6",
+            height=80,
+            color=(0, 0, 0, 1),
+            halign="right"
         )
 
         Clock.schedule_interval(self.update_clock, 1)
@@ -486,7 +492,7 @@ class CashRegisterApp(MDApp):
         return clock_layout
 
     def update_clock(self, *args):
-        self.clock_label.text = time.strftime("%I:%M:%S %p")
+        self.clock_label.text = time.strftime("%I:%M %p\n%A\n%B %d, %Y\n")
 
     def create_financial_layout(self):
         financial_layout = ScrollView(size_hint_x=1 / 3)
@@ -603,7 +609,18 @@ class CashRegisterApp(MDApp):
             self.show_label_printing_view()
         elif instance.text == "Inventory Management":
             self.show_inventory_management_view()
+        elif instance.text == "System":
+            self.show_system_popup()
         self.tools_popup.dismiss()
+
+    def on_system_button_press(self, instance):
+        if instance.text == "Reboot System":
+            self.reboot_are_you_sure()
+        elif instance.text == "Restart App":
+            pass
+        elif instance.text == "Change Theme":
+            self.show_theme_change_popup()
+        self.system_popup.dismiss()
 
     def on_button_press(self, instance):
         button_text = instance.text
@@ -613,11 +630,11 @@ class CashRegisterApp(MDApp):
             self.order_manager.clear_order()
         elif button_text == "Pay":
             self.finalize_order()
-        elif button_text == "Custom Item":
+        elif button_text == "Custom":
             self.show_custom_item_popup(barcode="1234567890")
         elif button_text == "Tools":
             self.show_tools_popup()
-        elif button_text == "Inventory":
+        elif button_text == "Search":
             self.show_inventory()
 
     def on_done_button_press(self, instance):
@@ -678,6 +695,96 @@ class CashRegisterApp(MDApp):
     """
     Popup display functions
     """
+    def show_theme_change_popup(self):
+        # Create the layout
+        layout = FloatLayout()
+
+        # Dropdown for colors
+        # Example, populate with actual color options
+        color_menu_items = [{"text": f"Color {i}"} for i in range(5)]
+        color_dropdown = MDDropdownMenu(
+
+            items=color_menu_items,
+            position="center",
+        )
+
+        # Toggle for Light/Dark Mode
+        theme_switch = MDSwitch(
+            pos_hint={"center_x": 0.5, "center_y": 0.5},
+            on_active=self.toggle_theme_style,
+        )
+        layout.add_widget(color_dropdown)
+        layout.add_widget(theme_switch)
+
+        # Create and open popup
+        self.theme_change_popup = Popup(title="Change Theme", content=layout)
+        self.theme_change_popup.open()
+
+    def set_primary_color(self, instance):
+        self.theme_cls.primary_palette = instance.text
+
+    def toggle_theme_style(self, instance, value):
+        self.theme_cls.theme_style = "Light" if value else "Dark"
+
+
+    def show_system_popup(self):
+        float_layout = FloatLayout()
+
+        system_buttons = [
+            "Change Theme",
+            "Reboot System",
+            "Restart App",
+        ]
+
+        for index, tool in enumerate(system_buttons):
+            btn = MDRaisedButton(
+                text=tool,
+                size_hint=(0.4, 0.1),
+                pos_hint={"center_x": 0.5, "center_y": 1 - 0.2 * index},
+                on_press=self.on_system_button_press,
+            )
+            float_layout.add_widget(btn)
+
+
+        self.system_popup = Popup(
+            content=float_layout,
+            size_hint=(0.6, 0.6),
+            title="",
+            background="transparent.png",
+            background_color=(0, 0, 0, 0),
+            separator_height=0,
+        )
+        self.system_popup.open()
+
+    def reboot_are_you_sure(self):
+        arys_layout = BoxLayout()
+
+        btn = MDRaisedButton(
+                text="Yes!",
+                size_hint=(0.9, 0.9),
+
+                on_press=self.reboot,
+            )
+        btn2 = MDRaisedButton(
+                text="No!",
+                size_hint=(0.9, 0.9),
+
+                 on_press=lambda x: popup.dismiss()
+            )
+        arys_layout.add_widget(Label(text=f"Are you sure?"))
+        arys_layout.add_widget(btn)
+        arys_layout.add_widget(btn2)
+        popup = Popup(
+        title="Reboot",
+        content=arys_layout,
+        size_hint=(0.9, 0.2),
+        pos_hint={"top": 1},
+        background_color=[1, 0, 0, 1],
+    )
+
+
+        popup.open()
+
 
     def show_label_printing_view(self):
         inventory = self.db_manager.get_all_items()
@@ -827,6 +934,7 @@ class CashRegisterApp(MDApp):
             "Reporting",
             "Label Printer",
             "Inventory Management",
+            "System",
         ]
 
         for index, tool in enumerate(tool_buttons):
@@ -1237,6 +1345,25 @@ class CashRegisterApp(MDApp):
         finally:
             pass
 
+    def reboot(self, instance):
+        subprocess.run(["echo", "test"])
+
+    def save_settings(self):
+        settings = {
+            "primary_palette": self.theme_cls.primary_palette,
+            "theme_style": self.theme_cls.theme_style,
+        }
+        with open("settings.json", "w") as f:
+            json.dump(settings, f)
+
+    def load_settings(self):
+        try:
+            with open("settings.json", "r") as f:
+                settings = json.load(f)
+                self.theme_cls.primary_palette = settings.get("primary_palette", "Brown")
+                self.theme_cls.theme_style = settings.get("theme_style", "Light")
+        except FileNotFoundError:
+            pass
 
 if __name__ == "__main__":
     CashRegisterApp().run()
