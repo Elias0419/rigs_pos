@@ -12,7 +12,7 @@
     Label:
         id: price
         text: root.price
-    Button:
+    MDRaisedButton:
         text: "Add to Order"
         on_press: root.add_to_order()
 
@@ -56,7 +56,7 @@
         Label:
             id: price
             text: root.price
-        Button:
+        MDRaisedButton:
             text: "Add to Queue"
             on_press: root.add_to_print_queue()
 
@@ -74,7 +74,7 @@
             hint_text: 'Search'
             on_text: root.filter_inventory(self.text)
 
-        Button:
+        MDRaisedButton:
             text: "Show Print Queue"
             size_hint_x: 0.2
             on_press: root.show_print_queue()
@@ -108,7 +108,7 @@
         Label:
             id: price
             text: root.price
-        Button:
+        MDRaisedButton:
             text: "Details"
             on_press: root.open_inventory_manager()
 
@@ -126,7 +126,7 @@
             hint_text: 'Search'
             on_text: root.filter_inventory(self.text)
 
-        Button:
+        MDRaisedButton:
             text: "Add Item"
             size_hint_x: 0.2
             on_press: root.open_inventory_manager()
