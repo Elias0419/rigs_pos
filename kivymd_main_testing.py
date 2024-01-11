@@ -872,7 +872,10 @@ class CashRegisterApp(MDApp):
             ]
             for button in numeric_buttons:
                 btn = MDFlatButton(
-                    text=button, size_hint=(0.8, 0.8), on_press=self.on_lock_screen_button_press
+                    text=button, text_color=(0,0,0,1),
+                    font_style="Button",
+                    size_hint=(0.8, 0.8),
+                    on_press=self.on_lock_screen_button_press
                 )
                 keypad_layout.add_widget(btn)
 
