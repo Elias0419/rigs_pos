@@ -522,12 +522,17 @@ class CashRegisterApp(MDApp):
     def handle_scanned_barcode(self, barcode):
         try:
             item_details = self.db_manager.get_item_details(barcode)
+            # if item_details:
+            #     item_name, item_price = item_details
+            #     self.order_manager.items.append(
+            #         {"name": item_name, "price": item_price}
+            #     )
+            #     self.order_manager.total += item_price
+            #     self.update_display()
+            #     self.update_financial_summary()
             if item_details:
                 item_name, item_price = item_details
-                self.order_manager.items.append(
-                    {"name": item_name, "price": item_price}
-                )
-                self.order_manager.total += item_price
+                self.order_manager.add_item(item_name, item_price)
                 self.update_display()
                 self.update_financial_summary()
                 return item_details
@@ -640,6 +645,7 @@ class CashRegisterApp(MDApp):
         self.order_manager.clear_order()
 
         self.payment_popup.dismiss()
+        self.update_financial_summary()
         self.order_layout.clear_widgets()
 
     def on_item_click(self, instance):
@@ -1074,17 +1080,19 @@ class CashRegisterApp(MDApp):
         confirmation_layout = BoxLayout(orientation="vertical", spacing=10)
         total_with_tax = self.order_manager.calculate_total_with_tax()
         order_summary = "Order Complete:\n"
-        for item in self.order_manager.items:
-            item_name = item.get("name", "Unknown Item")
-            item_price = item.get("price", 0)
+
+        for item_name, item_details in self.order_manager.items.items():
+            quantity = item_details['quantity']
+            total_price_for_item = item_details['total_price']
 
             try:
-                item_price_float = float(item_price)
+                total_price_float = float(total_price_for_item)
             except ValueError:
-                print(f"Error: Item price for {item_name} is not a valid number.")
+                print(f"Error: Total price for {item_name} is not a valid number.")
                 continue
 
-            order_summary += f"{item_name}  ${item_price_float:.2f}\n"
+            order_summary += f"{item_name} x{quantity}  ${total_price_float:.2f}\n"
+
         order_summary += f"Total with Tax: ${total_with_tax:.2f}"
 
         confirmation_layout.add_widget(Label(text=order_summary))
@@ -1101,6 +1109,7 @@ class CashRegisterApp(MDApp):
         )
         self.popup.dismiss()
         self.payment_popup.open()
+
 
     def show_make_change_popup(self, change):
         change_layout = BoxLayout(orientation="vertical", spacing=10)
@@ -1231,40 +1240,35 @@ class CashRegisterApp(MDApp):
         total_with_tax = self.order_manager.calculate_total_with_tax()
 
         order_summary = "Order Summary:\n"
-        for item in self.order_manager.items:
-            item_name = item.get("name", "Unknown Item")
-            item_price = item.get("price", 0)
+        for item_name, item_details in self.order_manager.items.items():
+            quantity = item_details['quantity']
+            total_price_for_item = item_details['total_price']
 
             try:
-                item_price_float = float(item_price)
+                total_price_float = float(total_price_for_item)
             except ValueError:
-                print(f"Error: Item price for {item_name} is not a valid number.")
+                print(f"Error: Total price for {item_name} is not a valid number.")
                 continue
 
-            order_summary += f"{item_name}  ${item_price_float:.2f}\n"
+            order_summary += f"{item_name} x{quantity}  ${total_price_float:.2f}\n"
         order_summary += f"Total with Tax: ${total_with_tax:.2f}"
 
         self.show_order_popup(order_summary)
 
+
+
+
     def update_display(self):
         self.order_layout.clear_widgets()
-
-        for item in self.order_manager.items:
-            item_name = item["name"]
-            try:
-                item_price = float(item["price"])  #
-            except ValueError:
-                print(f"Invalid item price for {item_name}: {item['price']}")
-                continue
-
+        for item_name, item_info in self.order_manager.items.items():
+            item_quantity = item_info['quantity']
+            item_total_price = item_info['total_price']
             item_button = MDRaisedButton(
-                text=f"{item_name}  ${item_price:.2f}",
-
+                text=f"{item_name} x{item_quantity} ${item_total_price:.2f}",
                 size_hint=(0.1, 0.1),
                 halign="center",
                 valign="center",
             )
-
             item_button.bind(on_press=self.on_item_click)
             self.order_layout.add_widget(item_button)
 
@@ -1305,11 +1309,11 @@ class CashRegisterApp(MDApp):
             return
 
         custom_item_name = "Custom Item"
-        self.order_manager.items.append({"name": custom_item_name, "price": price})
-        self.order_manager.total += price
+        self.order_manager.add_item(custom_item_name, price)  # Use the updated add_item method
         self.update_display()
         self.update_financial_summary()
         self.custom_item_popup.dismiss()
+
 
     def on_custom_item_cancel(self, instance):
         self.custom_item_popup.dismiss()
@@ -1317,9 +1321,13 @@ class CashRegisterApp(MDApp):
     def send_order_to_history_database(self, order_details, order_manager, db_manager):
         tax = order_details["total_with_tax"] - order_details["total"]
         timestamp = datetime.datetime.now()
+
+        # Convert items to a list format if needed for database storage
+        items_for_db = [{**{'name': item_name}, **item_details} for item_name, item_details in order_details["items"].items()]
+
         db_manager.add_order_history(
             order_details["order_id"],
-            json.dumps(order_details["items"]),
+            json.dumps(items_for_db),
             order_details["total"],
             tax,
             order_details["total_with_tax"],
