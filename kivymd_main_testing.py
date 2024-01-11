@@ -431,7 +431,7 @@ class CashRegisterApp(MDApp):
         self.order_layout = GridLayout(
             orientation="tb-lr",
             cols=2,
-            rows=10,
+            rows=13,
             spacing=5,
             row_default_height=60,
             row_force_default=True,
@@ -872,8 +872,9 @@ class CashRegisterApp(MDApp):
             ]
             for button in numeric_buttons:
                 btn = MDFlatButton(
-                    text=button, text_color="white",
-                    font_style="H6",
+                    text=button,
+                    text_color=(0,0,0,1),
+                    font_style="H4",
                     size_hint=(0.8, 0.8),
                     on_press=self.on_lock_screen_button_press
                 )
