@@ -595,14 +595,9 @@ class CashRegisterApp(MDApp):
         if instance.text == "Clear Order":
             self.order_layout.clear_widgets()
             self.order_manager.clear_order()
-            # self.subtotal_label.text = 'Subtotal: $0.00'
-            # self.tax_label.text = 'Tax: $0.00'
-            # self.total_label.text = 'Total: $0.00'
             self.update_financial_summary()
         elif instance.text == "Open Register":
             open_cash_drawer()
-        # elif instance.text == "Inventory":
-        #     self.show_inventory()
         elif instance.text == "Reporting":
             self.show_reporting_popup()
         elif instance.text == "Label Printer":
@@ -696,11 +691,8 @@ class CashRegisterApp(MDApp):
     Popup display functions
     """
     def show_theme_change_popup(self):
-        # Create the layout
         layout = FloatLayout()
 
-        # Dropdown for colors
-        # Example, populate with actual color options
         color_menu_items = [{"text": f"Color {i}"} for i in range(5)]
         color_dropdown = MDDropdownMenu(
 
@@ -708,7 +700,6 @@ class CashRegisterApp(MDApp):
             position="center",
         )
 
-        # Toggle for Light/Dark Mode
         theme_switch = MDSwitch(
             pos_hint={"center_x": 0.5, "center_y": 0.5},
             on_active=self.toggle_theme_style,
@@ -716,7 +707,6 @@ class CashRegisterApp(MDApp):
         layout.add_widget(color_dropdown)
         layout.add_widget(theme_switch)
 
-        # Create and open popup
         self.theme_change_popup = Popup(title="Change Theme", content=layout)
         self.theme_change_popup.open()
 
@@ -882,7 +872,7 @@ class CashRegisterApp(MDApp):
             ]
             for button in numeric_buttons:
                 btn = MDFlatButton(
-                    text=button, on_press=self.on_lock_screen_button_press
+                    text=button, size_hint=(0.8, 0.8), on_press=self.on_lock_screen_button_press
                 )
                 keypad_layout.add_widget(btn)
 
@@ -1265,11 +1255,7 @@ class CashRegisterApp(MDApp):
 
             item_button = MDRaisedButton(
                 text=f"{item_name}  ${item_price:.2f}",
-                # size_hint_y=None,
-                # height=100,
-                # size_hint_x = 1/2,
-                # size_hint_y = None,
-                # height = 100,
+
                 size_hint=(0.1, 0.1),
                 halign="center",
                 valign="center",
@@ -1366,4 +1352,6 @@ class CashRegisterApp(MDApp):
             pass
 
 if __name__ == "__main__":
-    CashRegisterApp().run()
+    app = CashRegisterApp()
+    app.run()
+    #app.show_lock_screen()
