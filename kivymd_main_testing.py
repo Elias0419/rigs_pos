@@ -548,22 +548,22 @@ class CashRegisterApp(MDApp):
             self.handle_scanned_barcode(barcode)
 
     def handle_scanned_barcode(self, barcode):
-        if self.in_inventory_management_view and self.inventory_manager_view:
-            self.inventory_manager_view.show_add_item_popup(barcode)
-        else:
-            try:
-                item_details = self.db_manager.get_item_details(barcode)
+        # if self.in_inventory_management_view and self.inventory_manager_view:
+        #     self.inventory_manager_view.show_add_item_popup(barcode)
+        # else:
+        try:
+            item_details = self.db_manager.get_item_details(barcode)
 
-                if item_details:
-                    item_name, item_price = item_details
-                    self.order_manager.add_item(item_name, item_price)
-                    self.update_display()
-                    self.update_financial_summary()
-                    return item_details
-                else:
-                    self.show_add_or_bypass_popup(barcode)
-            except Exception as e:
-                print(f"Error handling scanned barcode: {e}")
+            if item_details:
+                item_name, item_price = item_details
+                self.order_manager.add_item(item_name, item_price)
+                self.update_display()
+                self.update_financial_summary()
+                return item_details
+            else:
+                self.show_add_or_bypass_popup(barcode)
+        except Exception as e:
+            print(f"Error handling scanned barcode: {e}")
 
     def show_add_or_bypass_popup(self, barcode):
         popup_layout = BoxLayout(orientation="vertical", spacing=10)
