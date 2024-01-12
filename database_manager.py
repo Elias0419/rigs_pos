@@ -22,7 +22,9 @@ class DatabaseManager:
                 """CREATE TABLE IF NOT EXISTS items (
                                 barcode TEXT PRIMARY KEY,
                                 name TEXT,
-                                price REAL
+                                price REAL,
+                                cost REAL,
+                                sku TEXT
                               )"""
             )
             conn.commit()
@@ -51,17 +53,22 @@ class DatabaseManager:
         finally:
             conn.close()
 
-    def add_item(self, barcode, name, price):
+    def add_item(self, barcode, name, price, cost=None, SKU=None):
         self.create_items_table()
-        print("DEBUG DatabaseManager add_item", barcode, name, price)
+        print("DEBUG DatabaseManager add_item", barcode, name, price, cost, SKU)
+
+        # Use None (or any other default value) for optional parameters if they are not provided
+        cost = cost if cost is not None else "nan"
+        SKU = SKU if SKU is not None else "nan"
 
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO items (barcode, name, price) VALUES (?, ?, ?)",
-                (barcode, name, price),
+                "INSERT INTO items (barcode, name, price, cost, SKU) VALUES (?, ?, ?, ?, ?)",
+                (barcode, name, price, cost, SKU),
             )
+
             conn.commit()
         except sqlite3.IntegrityError:
             print(f"Item with barcode {barcode} already exists.")
@@ -123,6 +130,14 @@ class DatabaseManager:
             conn.close()
 
         return items
+
+    def barcode_exists(self, barcode):
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT 1 FROM items WHERE barcode = ?", (barcode,))
+        exists = cursor.fetchone() is not None
+        conn.close()
+        return exists
 
     def update_item(self, barcode, updated_info):
         pass
