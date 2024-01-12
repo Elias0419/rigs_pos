@@ -2,12 +2,14 @@ from kivy.config import Config
 from kivy.modules import inspector
 
 Config.set("kivy", "keyboard_mode", "systemanddock")
-
+import random
 import json
 import datetime
 import subprocess
 import time
 import re
+from barcode.upc import UniversalProductCodeA as upc_a
+
 #####
 from kivy.app import App
 from kivy.clock import Clock
@@ -42,6 +44,7 @@ from kivymd.uix.button import (
     MDRectangleFlatButton,
     MDRectangleFlatIconButton,
 )
+from kivymd.color_definitions import palette
 
 from kivymd.uix.label import MDLabel
 
@@ -172,6 +175,17 @@ class InventoryManagementView(BoxLayout):
         self.full_inventory = []
         self.database_manager = DatabaseManager("inventory.db")
 
+    def generate_unique_barcode(self):
+        while True:
+            new_barcode = str(upc_a(str(random.randint(100000000000, 999999999999)), writer=None).get_fullcode())
+
+            if not self.database_manager.barcode_exists(new_barcode):
+                return new_barcode
+
+    def show_add_item_popup(self, scanned_barcode):
+        self.barcode = scanned_barcode
+        self.inventory_item_popup()
+
     def show_inventory_for_manager(self, inventory_items):
         self.full_inventory = inventory_items
         self.rv.data = self.generate_data_for_rv(inventory_items)
@@ -184,15 +198,13 @@ class InventoryManagementView(BoxLayout):
         name_input = TextInput()
         price_input = TextInput(input_filter="float")
         barcode_input = TextInput(input_filter="int")
-
+        barcode_input.text = self.barcode if self.barcode else ''
         content.add_widget(Label(text="Name"))
         content.add_widget(name_input)
         content.add_widget(Label(text="Price"))
         content.add_widget(price_input)
         content.add_widget(Label(text="Barcode"))
-        content.add_widget(
-            barcode_input
-        )  ### we should be able to capture barcodes here
+        content.add_widget(barcode_input)
 
         button_layout = BoxLayout(
             orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
@@ -212,6 +224,7 @@ class InventoryManagementView(BoxLayout):
         button_layout.add_widget(
             MDRaisedButton(
                 text="Generate Barcode",
+                on_press=lambda *args: self.set_generated_barcode(barcode_input)
             )
         )
 
@@ -219,6 +232,10 @@ class InventoryManagementView(BoxLayout):
 
         popup = Popup(title="Item details", content=content, size_hint=(0.8, 0.6))
         popup.open()
+
+    def set_generated_barcode(self, barcode_input):
+        unique_barcode = self.generate_unique_barcode()
+        barcode_input.text = unique_barcode
 
     def add_item_to_database(self, barcode_input, name_input, price_input):
         if barcode_input and name_input and price_input:
@@ -424,8 +441,11 @@ class CashRegisterApp(MDApp):
         self.entered_pin = ""
         self.is_guard_screen_displayed = False
         self.is_lock_screen_displayed = False
+        self.in_inventory_management_view = False
+        self.inventory_manager_view = None
         self.theme_cls.theme_style = "Light"
         self.theme_cls.primary_palette = "Brown"
+        self.load_settings()
 
     def build(self):
         self.barcode_scanner = BarcodeScanner()
@@ -515,6 +535,8 @@ class CashRegisterApp(MDApp):
 
         self.financial_summary_widget.update_summary(subtotal, tax, total_with_tax)
 
+
+
     """
     Barcode functions
     """
@@ -526,26 +548,22 @@ class CashRegisterApp(MDApp):
             self.handle_scanned_barcode(barcode)
 
     def handle_scanned_barcode(self, barcode):
-        try:
-            item_details = self.db_manager.get_item_details(barcode)
-            # if item_details:
-            #     item_name, item_price = item_details
-            #     self.order_manager.items.append(
-            #         {"name": item_name, "price": item_price}
-            #     )
-            #     self.order_manager.total += item_price
-            #     self.update_display()
-            #     self.update_financial_summary()
-            if item_details:
-                item_name, item_price = item_details
-                self.order_manager.add_item(item_name, item_price)
-                self.update_display()
-                self.update_financial_summary()
-                return item_details
-            else:
-                self.show_add_or_bypass_popup(barcode)
-        except Exception as e:
-            print(f"Error handling scanned barcode: {e}")
+        if self.in_inventory_management_view and self.inventory_manager_view:
+            self.inventory_manager_view.show_add_item_popup(barcode)
+        else:
+            try:
+                item_details = self.db_manager.get_item_details(barcode)
+
+                if item_details:
+                    item_name, item_price = item_details
+                    self.order_manager.add_item(item_name, item_price)
+                    self.update_display()
+                    self.update_financial_summary()
+                    return item_details
+                else:
+                    self.show_add_or_bypass_popup(barcode)
+            except Exception as e:
+                print(f"Error handling scanned barcode: {e}")
 
     def show_add_or_bypass_popup(self, barcode):
         popup_layout = BoxLayout(orientation="vertical", spacing=10)
@@ -654,8 +672,9 @@ class CashRegisterApp(MDApp):
         self.update_financial_summary()
         self.order_layout.clear_widgets()
 
-    def on_item_click(self, instance):
-        for item_id, item_info in self.order_manager.items.items():
+    def on_item_click(self, item_id):
+        item_info = self.order_manager.items.get(item_id)
+        if item_info:
             item_name = item_info['name']
             item_quantity = item_info['quantity']
             item_price = item_info['total_price']
@@ -703,31 +722,54 @@ class CashRegisterApp(MDApp):
     """
     Popup display functions
     """
+
     def show_theme_change_popup(self):
-        layout = FloatLayout()
+        layout = GridLayout(cols=4, rows=8, orientation="lr-tb")
 
-        color_menu_items = [{"text": f"Color {i}"} for i in range(5)]
-        color_dropdown = MDDropdownMenu(
+        button_layout = GridLayout(cols=4, rows=8, orientation="lr-tb", spacing=5, size_hint=(1, 0.4))
+        button_layout.bind(minimum_height=button_layout.setter('height'))
 
-            items=color_menu_items,
-            position="center",
-        )
+        for color in palette:
+            button = MDRaisedButton(
+                text=color,
+                size_hint=(0.8,0.8),
+                #pos_hint={"center_x": 0.5, "center_y": 0.5},
+                on_release=lambda x, col=color: self.set_primary_palette(col)
+            )
 
-        theme_switch = MDSwitch(
-            pos_hint={"center_x": 0.5, "center_y": 0.5},
-            on_active=self.toggle_theme_style,
-        )
-        layout.add_widget(color_dropdown)
-        layout.add_widget(theme_switch)
+            button_layout.add_widget(button)
+        dark_btn =MDRaisedButton(
+                text="Dark Mode",
+                size_hint=(0.8,0.8),
+                md_bg_color=(0,0,0,1),
+                #pos_hint={"center_x": 0.5, "center_y": 0.5},
+                on_release=lambda x, col=color: self.toggle_dark_mode()
+                )
+        button_layout.add_widget(dark_btn)
+        layout.add_widget(button_layout)
 
-        self.theme_change_popup = Popup(title="Change Theme", content=layout)
+        self.theme_change_popup = Popup(
+            title="",
+            content=layout,
+            size_hint=(0.6, 0.6),
+
+            background="transparent.png",
+            background_color=(0, 0, 0, 0),
+            separator_height=0,
+                                        )
         self.theme_change_popup.open()
 
-    def set_primary_color(self, instance):
-        self.theme_cls.primary_palette = instance.text
+    def set_primary_palette(self, color_name):
+        self.theme_cls.primary_palette = color_name
+        self.save_settings()
 
-    def toggle_theme_style(self, instance, value):
-        self.theme_cls.theme_style = "Light" if value else "Dark"
+
+    def toggle_dark_mode(self):
+        if self.theme_cls.theme_style == "Dark":
+             self.theme_cls.theme_style = "Light"
+        else:
+            self.theme_cls.theme_style = "Dark"
+        self.save_settings()
 
 
     def show_system_popup(self):
@@ -785,7 +827,6 @@ class CashRegisterApp(MDApp):
         background_color=[1, 0, 0, 1],
     )
 
-
         popup.open()
 
 
@@ -799,12 +840,14 @@ class CashRegisterApp(MDApp):
         popup.open()
 
     def show_inventory_management_view(self):
+        self.in_inventory_management_view = True
+        self.inventory_manager_view = InventoryManagementView()
         inventory = self.db_manager.get_all_items()
-        inventory_manager_view = InventoryManagementView()
-        inventory_manager_view.show_inventory_for_manager(inventory)
+        #inventory_manager_view = InventoryManagementView()
+        self.inventory_manager_view.show_inventory_for_manager(inventory)
         popup = Popup(
             title="Inventory Management",
-            content=inventory_manager_view,
+            content=self.inventory_manager_view,
             size_hint=(0.9, 0.9),
         )
         popup.open()
@@ -1285,7 +1328,7 @@ class CashRegisterApp(MDApp):
                 halign="center",
                 valign="center",
             )
-            item_button.bind(on_press=self.on_item_click)
+            item_button.bind(on_press=lambda instance, x=item_id: self.on_item_click(x))
             self.order_layout.add_widget(item_button)
 
             for widget in self.order_layout.children:
@@ -1326,7 +1369,7 @@ class CashRegisterApp(MDApp):
             return
 
         custom_item_name = "Custom Item"
-        self.order_manager.add_item(custom_item_name, price)  # Use the updated add_item method
+        self.order_manager.add_item(custom_item_name, price)
         self.update_display()
         self.update_financial_summary()
         self.custom_item_popup.dismiss()
@@ -1339,7 +1382,6 @@ class CashRegisterApp(MDApp):
         tax = order_details["total_with_tax"] - order_details["total"]
         timestamp = datetime.datetime.now()
 
-        # Convert items to a list format if needed for database storage
         items_for_db = [{**{'name': item_name}, **item_details} for item_name, item_details in order_details["items"].items()]
 
         db_manager.add_order_history(
@@ -1360,6 +1402,10 @@ class CashRegisterApp(MDApp):
         finally:
             pass
 
+    def close_inventory_management_view(self):
+        self.in_inventory_management_view = False
+        self.inventory_manager_view = None
+
     def reboot(self, instance):
         subprocess.run(["echo", "test"])
 
@@ -1379,6 +1425,7 @@ class CashRegisterApp(MDApp):
                 self.theme_cls.theme_style = settings.get("theme_style", "Light")
         except FileNotFoundError:
             pass
+
 
 if __name__ == "__main__":
     app = CashRegisterApp()
