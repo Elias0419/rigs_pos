@@ -72,7 +72,7 @@ import uuid
 
 class OrderManager:
     def __init__(self, tax_rate=0.07):
-        self.items = {}  # Changed to a dictionary
+        self.items = {}
         self.total = 0.0
         self.tax_rate = tax_rate
         self._total_with_tax = None
@@ -85,22 +85,26 @@ class OrderManager:
         self._update_total_with_tax()
         return self._total_with_tax
 
-    def add_item(self, item_name, item_price):
-        # Create a unique key combining item name and price
-        item_key = f"{item_name}_{item_price}"
 
-        if item_key in self.items:
-            # Item with the same name and price exists, update quantity and total price
-            self.items[item_key]['quantity'] += 1
-            self.items[item_key]['total_price'] += item_price
+    def add_item(self, item_name, item_price):
+        item_id = str(uuid.uuid4())
+
+        existing_item = next((key for key, value in self.items.items()
+                            if value['name'] == item_name and value['price'] == item_price), None)
+
+        if existing_item:
+            self.items[existing_item]['quantity'] += 1
+            self.items[existing_item]['total_price'] += item_price
         else:
-            # New item or same item with different price, add it to the dictionary
-            self.items[item_key] = {
+            self.items[item_id] = {
+                'name': item_name,
+                'price': item_price,
                 'quantity': 1,
                 'total_price': item_price
             }
         self.total += item_price
         self._update_total_with_tax()
+
 
 
     def remove_item(self, item_name):
@@ -139,5 +143,56 @@ class OrderManager:
             self.remove_item(item_name)
         else:
             print(f"Item named '{item_name}' not found or invalid quantity.")
+
+    def update_item_price(self, item_name, new_price):
+        print("update item price")
+        print(self.items)
+        print("item_name", item_name)
+        print("new_price", new_price)
+
+        item_updated = False
+
+        for item_id, item in self.items.items():
+            if item['name'] == item_name:
+                print("Found item to update")
+                old_price = item["price"]
+                old_total_price = item["total_price"]
+                print("old_price", old_price)
+                print("old_total_price", old_total_price)
+
+                # Adjusting total price for the changed item price
+                self.total -= old_total_price
+                new_total_price = new_price * item['quantity']
+                self.items[item_id] = {
+                    "name": item_name,
+                    "price": new_price,
+                    "quantity": item["quantity"],
+                    "total_price": new_total_price
+                }
+
+                self.total += new_total_price
+                print("new items with new price", new_price)
+                print("new total", self.total)
+                item_updated = True
+            self._update_total_with_tax()
+            if item_updated:
+                return
+
+        print("Item not found")
+
+
+        # for i, item in enumerate(self.items):
+        #     if item['name'] == item_name:
+        #         old_price = item["price"]
+        #         self.total -= old_price
+        #         self.items[i] = {
+        #             "name": item_name,
+        #             "price": new_price,
+        #         }
+        #         self.total += new_price
+        #         self._update_total_with_tax()
+        #         return
+
+        # print(f"Item named '{name}' not found in the order.")
 
     # Add other necessary methods or update existing ones if needed
