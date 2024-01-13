@@ -5,10 +5,12 @@ import re
 import subprocess
 import sys
 import time
+from kivy.config import Config
+
+Config.set("kivy", "keyboard_mode", "systemanddock")
 
 from kivy.app import App
 from kivy.clock import Clock
-from kivy.config import Config
 from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.metrics import dp
@@ -36,7 +38,6 @@ from label_printer import LabelPrinter
 from open_cash_drawer import open_cash_drawer
 from order_manager import OrderManager
 
-Config.set("kivy", "keyboard_mode", "systemanddock")
 Window.maximize()
 Window.borderless = True
 
