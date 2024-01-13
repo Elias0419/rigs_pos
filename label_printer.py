@@ -31,13 +31,14 @@ class LabelPrinter:
         font_size = 25
 
         # Create barcode in SVG format
-        svg_io = BytesIO()
-        barcode_class = barcode.get_barcode_class('upc_a')  # Replace 'ean13' with your desired format
-        barcode_object = barcode_class(barcode_data, writer=SVGWriter())
-        barcode_object.write(svg_io)
+        # svg_io = BytesIO()
+        # barcode_class = barcode.get_barcode_class('upc_a')  # Replace 'ean13' with your desired format
+        # barcode_object = barcode_class(barcode_data, writer=SVGWriter())
+        # barcode_object.write(svg_io)
+        barcode_img = upc_a(barcode_data, writer=SVGWriter).render()
 
         # Convert SVG to PNG using CairoSVG
-        png_data = cairosvg.svg2png(bytestring=svg_io.getvalue())
+        # png_data = cairosvg.svg2png(bytestring=svg_io.getvalue())
 
         # Create an empty image for the label
         label_image = Image.new('RGB', (label_width, label_height), color='white')
@@ -57,7 +58,7 @@ class LabelPrinter:
         # barcode_target_height = label_height // 2
         # barcode_img = barcode_img.resize((barcode_target_width, barcode_target_height), Image.Resampling.LANCZOS)
         # barcode_position_y = label_height // 4 + (label_height * 3 // 4 - barcode_target_height) // 2
-        label_image.paste(svg_io)
+        label_image.paste(barcode_img)
 
 
 
