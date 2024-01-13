@@ -8,6 +8,8 @@ import datetime
 import subprocess
 import time
 import re
+import sys
+
 from barcode.upc import UniversalProductCodeA as upc_a
 
 #####
@@ -698,7 +700,7 @@ class CashRegisterApp(MDApp):
         if instance.text == "Reboot System":
             self.reboot_are_you_sure()
         elif instance.text == "Restart App":
-            pass
+            sys.exit(1)
         elif instance.text == "Change Theme":
             self.show_theme_change_popup()
         self.system_popup.dismiss()
@@ -1493,7 +1495,7 @@ class CashRegisterApp(MDApp):
         self.inventory_manager_view = None
 
     def reboot(self, instance):
-        subprocess.run(["echo", "test"])
+        subprocess.run(["reboot"])
 
     def save_settings(self):
         settings = {
@@ -1512,7 +1514,8 @@ class CashRegisterApp(MDApp):
         except FileNotFoundError:
             pass
 
-
+app = CashRegisterApp()
+app.run()
 if __name__ == "__main__":
     app = CashRegisterApp()
     app.run()
