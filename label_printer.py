@@ -6,6 +6,8 @@ import brother_ql
 from brother_ql.conversion import convert
 from brother_ql.backends.helpers import send
 from io import BytesIO
+from barcode.writer import SVGWriter
+import cairosvg
 
 class LabelPrinter:
     def __init__(self):
