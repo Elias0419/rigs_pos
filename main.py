@@ -539,7 +539,7 @@ class CashRegisterApp(MDApp):
 
     def show_lock_screen(self):
         if not self.is_lock_screen_displayed:
-            print("Lock screen triggered", datetime.datetime.now())
+            print("Lock screen triggered", datetime.now())
 
             lock_layout = BoxLayout(orientation="vertical")
             keypad_layout = GridLayout(cols=3)
@@ -1013,7 +1013,7 @@ class CashRegisterApp(MDApp):
 
     def send_order_to_history_database(self, order_details, order_manager, db_manager):
         tax = order_details["total_with_tax"] - order_details["total"]
-        timestamp = datetime.datetime.now()
+        timestamp = datetime.now()
 
         items_for_db = [
             {**{"name": item_name}, **item_details}
@@ -1530,7 +1530,7 @@ class HistoryView(BoxLayout):
 
     def __init__(self, **kwargs):
         super(HistoryView, self).__init__(**kwargs)
-        self.order_history = []  # Initialize the order history
+        self.order_history = []
 
     def set_order_history(self, order_history):
         self.order_history = order_history
