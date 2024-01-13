@@ -2,7 +2,7 @@ import subprocess
 
 
 def run_app():
-    script_path = "kivymd_main_testing.py"
+    script_path = "main.py"
 
     while True:
         result = subprocess.run(["../0/bin/python", script_path])
