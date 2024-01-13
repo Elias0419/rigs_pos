@@ -32,7 +32,7 @@ class LabelPrinter:
 
         # Create barcode in SVG format
         svg_io = BytesIO()
-        barcode_class = barcode.get_barcode_class('ean13')  # Replace 'ean13' with your desired format
+        barcode_class = barcode.get_barcode_class('upc_a')  # Replace 'ean13' with your desired format
         barcode_object = barcode_class(barcode_data, writer=SVGWriter())
         barcode_object.write(svg_io)
 
@@ -43,26 +43,26 @@ class LabelPrinter:
         label_image = Image.new('RGB', (label_width, label_height), color='white')
         draw = ImageDraw.Draw(label_image)
 
-        # Draw price text
-        font = ImageFont.truetype(font_path, font_size)
-        price_text = f"${float(item_price):.2f}"
-        text_width = draw.textlength(price_text, font=font)
-        text_height = 1.2 * font_size
-        text_position = ((label_width - text_width) / 2, margin)
-        draw.text(text_position, price_text, font=font, fill="black")
+        # # Draw price text
+        # font = ImageFont.truetype(font_path, font_size)
+        # price_text = f"${float(item_price):.2f}"
+        # text_width = draw.textlength(price_text, font=font)
+        # text_height = 1.2 * font_size
+        # text_position = ((label_width - text_width) / 2, margin)
+        # draw.text(text_position, price_text, font=font, fill="black")
 
         # Place barcode (converted from SVG to PNG)
-        barcode_img = Image.open(BytesIO(png_data))
-        barcode_target_width = label_width - 2 * margin
-        barcode_target_height = label_height // 2
-        barcode_img = barcode_img.resize((barcode_target_width, barcode_target_height), Image.Resampling.LANCZOS)
-        barcode_position_y = label_height // 4 + (label_height * 3 // 4 - barcode_target_height) // 2
-        label_image.paste(barcode_img, (margin, barcode_position_y))
+        # barcode_img = Image.open(BytesIO(png_data))
+        # barcode_target_width = label_width - 2 * margin
+        # barcode_target_height = label_height // 2
+        # barcode_img = barcode_img.resize((barcode_target_width, barcode_target_height), Image.Resampling.LANCZOS)
+        # barcode_position_y = label_height // 4 + (label_height * 3 // 4 - barcode_target_height) // 2
+        label_image.paste(svg_io)
 
 
 
         # Save the image
-        label_image.save(save_path)
+        #label_image.save(save_path)
 
         # Printing logic (as provided in your code)
         qlr = brother_ql.BrotherQLRaster('QL-710W')
