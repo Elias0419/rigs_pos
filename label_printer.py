@@ -38,7 +38,7 @@ class LabelPrinter:
         # Draw price text
         font = ImageFont.truetype(font_path, font_size)
         price_text = f"${float(item_price):.2f}"
-        text_width, text_height = draw.textsize(price_text, font=font)
+        text_width, text_height = draw.textlength(price_text, font=font)
         draw.text(((label_width - text_width) / 2, margin), price_text, font=font, fill="black")
 
         # Place barcode
