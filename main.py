@@ -6,6 +6,7 @@ import subprocess
 import sys
 import time
 import ast
+import threading
 
 from kivy.config import Config
 
@@ -57,6 +58,7 @@ class CashRegisterApp(MDApp):
         self.is_lock_screen_displayed = False
         self.in_inventory_management_view = False
         self.inventory_manager_view = None
+        self.pin_reset_timer = None
         self.theme_cls.theme_style = "Light"
         self.theme_cls.primary_palette = "Brown"
         self.load_settings()
@@ -554,9 +556,8 @@ class CashRegisterApp(MDApp):
                 "7",
                 "8",
                 "9",
-                "*",
                 "0",
-                "#",
+                "Reset",
             ]
             for button in numeric_buttons:
                 btn = MDFlatButton(
@@ -584,7 +585,11 @@ class CashRegisterApp(MDApp):
             self.lock_popup.open()
 
     def on_lock_screen_button_press(self, instance):
-        self.entered_pin += instance.text
+        if instance.text == "Reset":
+            self.entered_pin = ""
+        else:
+            self.entered_pin += instance.text
+            self.reset_pin_timer()
 
         if len(self.entered_pin) == 4:
             if self.entered_pin == self.correct_pin:
@@ -592,6 +597,17 @@ class CashRegisterApp(MDApp):
                 self.entered_pin = ""
             else:
                 self.entered_pin = ""
+
+    def reset_pin_timer(self):
+        if self.pin_reset_timer is not None:
+            self.pin_reset_timer.cancel()
+
+        self.pin_reset_timer = threading.Timer(5.0, self.reset_pin)
+        self.pin_reset_timer.start()
+
+    def reset_pin(self):
+        self.entered_pin = ""
+
 
     def show_inventory(self):
         inventory = self.db_manager.get_all_items()
