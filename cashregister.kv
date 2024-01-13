@@ -146,32 +146,24 @@
 
 
 <HistoryRow>:
-    # order_id: order_id
-    items: items
-    total: total
-    tax: tax
-    total_with_tax: total_with_tax
-    timestamp: timestamp
+    orientation: 'horizontal'
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint_x: 0.8
 
-    # Label:
-    #     id: order_id
-    #     text: str(root.order_id)
-    Label:
-        id: items
-        text: str(root.items)
-    Label:
-        id: total
-        text: str(root.total)
-
-    Label:
-        id: tax
-        text: str(root.tax)
-    Label:
-        id: total_with_tax
-        text: str(root.total_with_tax)
-    Label:
-        id: timestamp
-        text: str(root.timestamp)
+        Label:
+            id: items
+            text: root.items
+        Label:
+            id: total_with_tax
+            text: root.total_with_tax
+        Label:
+            id: timestamp
+            text: root.timestamp
+    Button:
+        size_hint_x: 0.2
+        text: "Details"
+        on_press: root.history_view.display_order_details(root.order_id)
 
 <HistoryView>:
     orientation: 'vertical'

@@ -1,10 +1,12 @@
-import datetime
+from datetime import datetime
 import json
 import random
 import re
 import subprocess
 import sys
 import time
+import ast
+
 from kivy.config import Config
 
 Config.set("kivy", "keyboard_mode", "systemanddock")
@@ -16,12 +18,15 @@ from kivy.lang import Builder
 from kivy.metrics import dp
 from kivy.modules import inspector
 from kivy.properties import StringProperty, ListProperty, ObjectProperty
+
 from kivy.uix.button import Button
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.uix.textinput import TextInput
+from kivy.utils import get_color_from_hex
+
 
 from kivymd.app import MDApp
 from kivymd.color_definitions import palette
@@ -242,7 +247,7 @@ class CashRegisterApp(MDApp):
         elif instance.text == "Open Register":
             open_cash_drawer()
         elif instance.text == "Reporting":
-            self.show_reporting_popup()
+            self.show_hist_reporting_popup()
         elif instance.text == "Label Printer":
             self.show_label_printing_view()
         elif instance.text == "Inventory Management":
@@ -595,7 +600,7 @@ class CashRegisterApp(MDApp):
         popup = Popup(title="Inventory", content=inventory_view, size_hint=(0.9, 0.9))
         popup.open()
 
-    def show_reporting_popup(self):
+    def show_hist_reporting_popup(self):
         order_history = self.db_manager.get_order_history()
         history_view = HistoryView()
         history_view.show_reporting_popup(order_history)
@@ -1057,7 +1062,9 @@ class CashRegisterApp(MDApp):
                 self.theme_cls.theme_style = settings.get("theme_style", "Light")
         except FileNotFoundError:
             pass
-
+    """
+    Other classes
+    """
 
 class FinancialSummaryWidget(MDRaisedButton):
     def __init__(self, **kwargs):
@@ -1456,9 +1463,6 @@ class InventoryRow(BoxLayout):
         app.update_financial_summary()
 
 
-class HistoryRow(BoxLayout):
-    pass
-
 
 class InventoryView(BoxLayout):
     def __init__(self, order_manager, **kwargs):
@@ -1493,19 +1497,115 @@ class InventoryView(BoxLayout):
             filtered_items = self.full_inventory
         self.rv.data = self.generate_data_for_rv(filtered_items)
 
+class HistoryRow(BoxLayout):
+    history_view = ObjectProperty(None)
+    items = StringProperty('')
+    total = StringProperty('')
+    tax = StringProperty('')
+    total_with_tax = StringProperty('')
+    timestamp = StringProperty('')
+    order_id = StringProperty('')
+
+    def __init__(self, **kwargs):
+        super(HistoryRow, self).__init__(**kwargs)
+        self.orientation = 'horizontal'
+        self.size_hint_y = None
+        self.height = 40
+        self.order_history = None
+
+
+
+class OrderDetailsPopup(Popup):
+    def __init__(self, order, **kwargs):
+        super(OrderDetailsPopup, self).__init__(**kwargs)
+        self.title = f"Order Details - {order[0]}"
+        self.content = Label(text=self.format_order_details(order))
+        self.size_hint = (0.8, 0.6)
+
+    def format_order_details(self, order):
+        details = f"Order ID: {order[0]}\nItems: {order[1]}\nTotal: {order[2]}\nTax: {order[3]}\nTotal with Tax: {order[4]}\nTimestamp: {order[5]}"
+        return details
 
 class HistoryView(BoxLayout):
+
+    def __init__(self, **kwargs):
+        super(HistoryView, self).__init__(**kwargs)
+        self.order_history = []  # Initialize the order history
+
+    def set_order_history(self, order_history):
+        self.order_history = order_history
+
     def show_reporting_popup(self, order_history):
-        self.rv.data = [
-            {
-                "items": str(order[1]),
-                "total": str(order[2]),
-                "tax": str(order[3]),
-                "total_with_tax": str(order[4]),
-                "timestamp": str(order[5]),
-            }  # TODO look in truncating/wrapping/collapsing items
-            for order in order_history
-        ]
+
+        self.set_order_history(order_history)
+        self.clear_widgets()
+        for order in order_history:
+            history_row = self.create_history_row(order)
+            self.add_widget(history_row)
+
+    def display_order_details(self, order_id, ):
+
+
+        order_id_str = str(order_id)
+        try:
+            specific_order = next((order for order in self.order_history if str(order[0]) == order_id_str), None)
+        except:
+            print("Exception occurred while searching for order.")
+            return
+
+        if specific_order:
+            popup = OrderDetailsPopup(order=specific_order)
+            popup.open()
+        else:
+            print("Order not found")
+
+
+
+    def create_history_row(self, order):
+        history_row = HistoryRow()
+        history_row.order_id = order[0]
+        history_row.items = self.format_items(order[1])
+        history_row.total = self.format_money(order[2])
+        history_row.tax = self.format_money(order[3])
+        history_row.total_with_tax = self.format_money(order[4])
+        history_row.timestamp = self.format_date(order[5])
+
+        history_row.history_view = self
+
+        return history_row
+
+    def show_order_details(self, order_id):
+        specific_order = next((order for order in self.order_history if order[0] == order_id), None)
+        if specific_order:
+            self.clear_widgets()
+            history_row = self.create_history_row(specific_order)
+            self.add_widget(history_row)
+        else:
+            print("Order not found")
+
+    def format_items(self, items_str):
+        try:
+            items_list = ast.literal_eval(items_str)
+            all_item_names = ', '.join(item.get('name', 'Unknown') for item in items_list)
+            return self.truncate_text(all_item_names, max_length=40)
+        except (ValueError, SyntaxError):
+            return "Invalid item data"
+
+
+    def format_money(self, value):
+        return "{:.2f}".format(value)
+
+    def format_date(self, date_str):
+        try:
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
+            return date_obj.strftime("%d %b %Y, %H:%M")
+        except ValueError:
+            return "Invalid date"
+
+
+    def truncate_text(self, text, max_length=40):
+        return text if len(text) <= max_length else text[:max_length - 3] + "..."
+
 
 
 app = CashRegisterApp()
