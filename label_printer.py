@@ -39,9 +39,9 @@ class LabelPrinter:
         # Generate the barcode image
         barcode_img = upc_a(barcode_data, writer=barcode_writer).render(writer_options={"module_height": 15.0})
 
-        # Hardcoded barcode size
-        barcode_width = 180 # Adjust this value as needed
-        barcode_height = 120  # Adjust this value as needed
+        # Calculate barcode size to fit the bottom 3/4 of the label
+        barcode_width = label_width - 2 * margin
+        barcode_height = int(3 * (label_height - 2 * margin) / 4)
 
         barcode_img = barcode_img.resize((barcode_width, barcode_height), Image.Resampling.LANCZOS)
 
@@ -50,20 +50,19 @@ class LabelPrinter:
         draw = ImageDraw.Draw(label_image)
         font = ImageFont.truetype(font_path, font_size)
 
-        # Calculate text positioning
+        # Calculate text positioning for the top 1/4
         price_text_width = draw.textlength(price_text, font=font)
         price_text_height = font.getmetrics()[0]
         price_x_position = (label_width - price_text_width) // 2
-        price_y_position = label_height - price_text_height - margin
+        price_y_position = margin
 
         # Calculate barcode positioning
-        barcode_x_position = (label_width - barcode_width) // 2
-        barcode_y_position = (label_height - barcode_height - price_text_height - 2 * margin) // 2
+        barcode_x_position = margin
+        barcode_y_position = label_height - barcode_height - margin
 
         # Draw text and paste barcode
-        draw.text((price_x_position, price_y_position), price_text, font=font, fill=0)
-        label_image.paste(barcode_img, (barcode_x_position, barcode_y_position + price_text_height + margin))
-
+        draw.text((price_x_position, price_y_position - price_text_height - margin), price_text, font=font, fill=0)
+        label_image.paste(barcode_img, (barcode_x_position, barcode_y_position))
 
         # Save and print the label
         #label_image.save(save_path)
@@ -71,6 +70,7 @@ class LabelPrinter:
         qlr.exception_on_warning = True
         convert(qlr=qlr, images=[label_image], label='23x23', cut=False)
         send(instructions=qlr.data, printer_identifier='usb://0x04F9:0x2043', backend_identifier='pyusb')
+
 
 
     def process_queue(self):
