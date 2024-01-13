@@ -24,7 +24,7 @@ class LabelPrinter:
     def print_barcode_label(self, barcode_data, item_price, save_path):
         label_width, label_height = 202, 202
         margin = 10
-        font_path = "/usr/share/fonts/TTF/Hack-Bold.ttf"
+        font_path = "/usr/share/fonts/TTF/Hack-Regular.ttf"
         font_size = 25
         barcode_writer = ImageWriter()
 
@@ -40,8 +40,8 @@ class LabelPrinter:
         barcode_img = upc_a(barcode_data, writer=barcode_writer).render(writer_options={"module_height": 15.0})
 
         # Hardcoded barcode size
-        barcode_width = 202  # Adjust this value as needed
-        barcode_height = 150  # Adjust this value as needed
+        barcode_width = 180 # Adjust this value as needed
+        barcode_height = 120  # Adjust this value as needed
 
         barcode_img = barcode_img.resize((barcode_width, barcode_height), Image.Resampling.LANCZOS)
 
