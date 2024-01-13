@@ -40,7 +40,7 @@ class LabelPrinter:
         barcode_img = upc_a(barcode_data, writer=barcode_writer).render(writer_options={"module_height": 15.0})
 
         # Hardcoded barcode size
-        barcode_width = 200  # Adjust this value as needed
+        barcode_width = 300  # Adjust this value as needed
         barcode_height = 200  # Adjust this value as needed
 
         barcode_img = barcode_img.resize((barcode_width, barcode_height), Image.Resampling.LANCZOS)
