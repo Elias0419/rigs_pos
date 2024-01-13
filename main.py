@@ -518,7 +518,7 @@ class CashRegisterApp(MDApp):
 
     def show_guard_screen(self):
         if not self.is_guard_screen_displayed:
-            print("Guard screen triggered", datetime.datetime.now())
+            print("Guard screen triggered", datetime.now())
             guard_layout = BoxLayout()
             guard_popup = Popup(
                 title="Guard Screen",
