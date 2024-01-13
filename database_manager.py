@@ -53,20 +53,19 @@ class DatabaseManager:
         finally:
             conn.close()
 
-    def add_item(self, barcode, name, price, cost=None, SKU=None):
+    def add_item(self, barcode, name, price, cost=None, sku=None):
         self.create_items_table()
-        print("DEBUG DatabaseManager add_item", barcode, name, price, cost, SKU)
+        print("DEBUG DatabaseManager add_item", barcode, name, price, cost, sku)
 
-        # Use None (or any other default value) for optional parameters if they are not provided
-        cost = cost if cost is not None else "nan"
-        SKU = SKU if SKU is not None else "nan"
+        cost = cost if cost is not None else None
+        sku = sku if sku is not None else None
 
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO items (barcode, name, price, cost, SKU) VALUES (?, ?, ?, ?, ?)",
-                (barcode, name, price, cost, SKU),
+                "INSERT INTO items (barcode, name, price, cost, sku) VALUES (?, ?, ?, ?, ?)",
+                (barcode, name, price, cost, sku),
             )
 
             conn.commit()
@@ -121,7 +120,7 @@ class DatabaseManager:
         conn = self._get_connection()
         cursor = conn.cursor()
         try:
-            cursor.execute("SELECT barcode, name, price FROM items")
+            cursor.execute("SELECT barcode, name, price, cost, sku FROM items")
             items = cursor.fetchall()
         except sqlite3.Error as e:
             print(f"Error retrieving all items: {e}")
@@ -139,8 +138,35 @@ class DatabaseManager:
         conn.close()
         return exists
 
-    def update_item(self, barcode, updated_info):
-        pass
+    def update_item(self, barcode, name, price, cost=None, sku=None):
+        cost = cost if cost is not None else None
+        sku = sku if sku is not None else None
+        print("DEBUG DatabaseManager update_item", barcode, name, price, cost, sku)
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE items SET name=?, price=?, cost=?, sku=? WHERE barcode=?",
+                (name, price, cost, sku, barcode),
+            )
+            if cursor.rowcount == 0:
+                print("rowcount1")
+                cursor.execute(
+                    "UPDATE items SET barcode=?, price=?, cost=?, sku=? WHERE name=?",
+                    (barcode, price, cost, sku, name),
+                )
+                if cursor.rowcount == 0:
+                    print("rowcount2")
+                    return False
+
+            conn.commit()
+        except Exception as e:
+            print(f"Error updating item: {e}")
+            return False
+        finally:
+            conn.close()
+
+        return True
 
     def delete_item(self, barcode):
         pass
