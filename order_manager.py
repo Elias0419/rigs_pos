@@ -1,73 +1,4 @@
-# import uuid
-#
-#
-# class OrderManager:
-#     def __init__(self, tax_rate=0.07):
-#         self.items = []
-#         self.total = 0.0
-#         self.tax_rate = tax_rate
-#         self._total_with_tax = None
-#         self.order_id = str(uuid.uuid4())
-#
-#     def _update_total_with_tax(self):
-#         self._total_with_tax = self.total * (1 + self.tax_rate)
-#
-#     def calculate_total_with_tax(self):
-#         self._update_total_with_tax()
-#         return self._total_with_tax
-#
-#     def add_manual_item(self, name, price):
-#         item = {"name": name, "price": price}
-#         self.items.append(item)
-#         self.total += price
-#
-#     def add_item(self, item, price):
-#         self.items.append({"name": item, "price": float(price)})
-#         self.total += float(price)
-#         self._update_total_with_tax()
-#
-#     def remove_item(self, item_id):
-#         print("DEBUG order_manager remove_item", item_id)
-#         item_to_remove = next(
-#             (item for item in self.items if item["id"] == item_id), None
-#         )
-#         if item_to_remove:
-#             self.items.remove(item_to_remove)
-#             self.total -= item_to_remove["price"]
-#             self._update_total_with_tax()
-#         else:
-#             print(f"Item with ID {item_id} not found.")
-#
-#     def get_order_details(self):
-#         print("DEBUG order_manager get_order_details")
-#         print(self.items, self.total)
-#         return {
-#             "order_id": self.order_id,
-#             "items": self.items,
-#             "total": self.total,
-#             "total_with_tax": self._total_with_tax,
-#         }
-#
-#     def clear_order(self):
-#         self.items = []
-#         self.total = 0.0
-#         self._total_with_tax = None
-#         self.order_id = str(uuid.uuid4())
-#
-#     def update_item_price(self, name, new_price):
-#         for i, item in enumerate(self.items):
-#             if item.get("name") == name:
-#                 old_price = item.get("price", 0)
-#                 self.total -= old_price  # Subtract the old price
-#                 self.items[i] = {
-#                     "name": name,
-#                     "price": new_price,
-#                 }  # Update the dictionary
-#                 self.total += new_price  # Add the new price
-#                 self._update_total_with_tax()
-#                 return  # Exit the method after updating the item
-#
-#         print(f"Item named '{name}' not found in the order.")
+
 import uuid
 
 class OrderManager:
@@ -108,13 +39,16 @@ class OrderManager:
 
 
     def remove_item(self, item_name):
-        if item_name in self.items:
-            item_to_remove = self.items[item_name]
-            self.total -= item_to_remove['total_price']
-            del self.items[item_name]
+        print(self.items)
+        item_to_remove = next((key for key, value in self.items.items()
+                            if value['name'] == item_name), None)
+        if item_to_remove:
+            self.total -= self.items[item_to_remove]['total_price']
+            del self.items[item_to_remove]  # Delete using item_id
             self._update_total_with_tax()
         else:
             print(f"Item named '{item_name}' not found.")
+
 
     def get_order_details(self):
         return {
@@ -195,4 +129,3 @@ class OrderManager:
 
         # print(f"Item named '{name}' not found in the order.")
 
-    # Add other necessary methods or update existing ones if needed
