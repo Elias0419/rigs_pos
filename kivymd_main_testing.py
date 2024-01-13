@@ -77,7 +77,7 @@ class FinancialSummaryWidget(MDRaisedButton):
         self.size_hint_x = 1
         self.height = 80
         self.orientation = "vertical"
-        self.font_style = "Button"
+        self.font_style = "H6"
 
     def update_summary(self, subtotal, tax, total_with_tax):
         self.text = (
@@ -736,33 +736,43 @@ class CashRegisterApp(MDApp):
             item_quantity = item_info['quantity']
             item_price = item_info['total_price']
 
-        item_popup_layout = BoxLayout(orientation="vertical", spacing=10)
-        item_popup_layout.add_widget(Label(text=f"Name: {item_name}"))
-        item_popup_layout.add_widget(Label(text=f"Price: ${item_price}"))
+        # Use GridLayout with 2 rows
+        item_popup_layout = GridLayout(rows=2)
 
-        modify_button = MDRaisedButton(
+        # Top row for item details
+        details_layout = BoxLayout(orientation="vertical")
+        details_layout.add_widget(Label(text=f"Name: {item_name}\nPrice: ${item_price}"))
+        #details_layout.add_widget(Label(text=f"Price: ${item_price}"))
+        item_popup_layout.add_widget(details_layout)
+
+        # Bottom row for buttons
+        buttons_layout = BoxLayout(orientation="horizontal", spacing=10, size_hint_y=None, size_hint_x=None)
+        buttons_layout.add_widget(MDRaisedButton(
             text="Modify Item",
+            size_hint=(0.8,0.8),
             on_press=lambda x: self.modify_item(item_name, item_price),
-        )
-        item_popup_layout.add_widget(modify_button)
-        adjust_price_button = MDRaisedButton(
-            text="Adjust Price with Tax",
+        ))
+        buttons_layout.add_widget(MDRaisedButton(
+            text="Tax Adjust",
+            size_hint=(0.8,0.8),
             on_press=lambda x: self.show_adjust_price_popup(item_name, item_price),
-        )
-        item_popup_layout.add_widget(adjust_price_button)
-        remove_button = MDRaisedButton(
+        ))
+        buttons_layout.add_widget(MDRaisedButton(
             text="Remove Item",
+            size_hint=(0.8,0.8),
             on_press=lambda x: self.remove_item(item_name, item_price),
-        )
-        item_popup_layout.add_widget(remove_button)
+        ))
+        buttons_layout.add_widget(MDRaisedButton(
+            text="Cancel",
+            size_hint=(0.8,0.8),
+            on_press=lambda x: self.close_item_popup()
 
-        cancel_button = MDRaisedButton(
-            text="Cancel", on_press=lambda x: self.close_item_popup()
-        )
-        item_popup_layout.add_widget(cancel_button)
+        ))
+        item_popup_layout.add_widget(buttons_layout)
 
+        # Create and open the popup
         self.item_popup = Popup(
-            title="Item Details", content=item_popup_layout, size_hint=(0.6, 0.4)
+            title="Item Details", content=item_popup_layout, size_hint=(0.8, 0.4)
         )
         self.item_popup.open()
 
@@ -1172,10 +1182,16 @@ class CashRegisterApp(MDApp):
             btn = Button(text=button, on_press=self.on_numeric_button_press)
             keypad_layout.add_widget(btn)
 
-        confirm_button = MDRaisedButton(text="Confirm", on_press=self.on_cash_confirm)
+        confirm_button = MDRaisedButton(
+            text="Confirm",
+            size_hint=(0.8,0.8),
+            on_press=self.on_cash_confirm)
         keypad_layout.add_widget(confirm_button)
 
-        cancel_button = MDRaisedButton(text="Cancel", on_press=self.on_cash_cancel)
+        cancel_button = MDRaisedButton(
+            text="Cancel",
+            size_hint=(0.8,0.8),
+            on_press=self.on_cash_cancel)
         keypad_layout.add_widget(cancel_button)
 
         self.cash_popup_layout.add_widget(keypad_layout)
@@ -1187,35 +1203,37 @@ class CashRegisterApp(MDApp):
         self.cash_popup.open()
 
     def show_payment_confirmation_popup(self):
-        confirmation_layout = BoxLayout(orientation="vertical", spacing=10)
+        confirmation_layout = GridLayout(orientation="lr-tb",cols=1, size_hint=(1,1), spacing=10)
         total_with_tax = self.order_manager.calculate_total_with_tax()
-        order_summary = "Order Complete:\n"
+        order_summary = "Order Complete:\n\n"
 
-        for item_name, item_details in self.order_manager.items.items():
+        for item_id, item_details in self.order_manager.items.items():
+            item_name = item_details['name']  # Extracting the actual item name
             quantity = item_details['quantity']
             total_price_for_item = item_details['total_price']
+
+            print(f"Processing item ID: {item_id}, Item name: {item_name}, Details: {item_details}")
 
             try:
                 total_price_float = float(total_price_for_item)
             except ValueError:
-                print(f"Error: Total price for {item_name} is not a valid number.")
+                print(f"Error: Total price for {item_name} ({item_id}) is not a valid number.")
                 continue
 
             order_summary += f"{item_name} x{quantity}  ${total_price_float:.2f}\n"
 
         order_summary += f"Total with Tax: ${total_with_tax:.2f}"
-
         confirmation_layout.add_widget(Label(text=order_summary))
 
         done_button = MDRaisedButton(
-            text="Done", size_hint_y=None, height=50, on_press=self.on_done_button_press
+            text="Done", size_hint=(0.2,0.2), on_press=self.on_done_button_press  #####################
         )
         confirmation_layout.add_widget(done_button)
 
         self.payment_popup = Popup(
             title="Payment Confirmation",
             content=confirmation_layout,
-            size_hint=(0.8, 0.5),
+            size_hint=(0.8, 0.8),
         )
         self.popup.dismiss()
         self.payment_popup.open()
@@ -1348,22 +1366,30 @@ class CashRegisterApp(MDApp):
 
     def finalize_order(self):
         total_with_tax = self.order_manager.calculate_total_with_tax()
+        print(f"Total with tax: {total_with_tax}")
 
-        order_summary = "Order Summary:\n"
-        for item_name, item_details in self.order_manager.items.items():
+        order_summary = "Order Summary:\n\n"
+        for item_id, item_details in self.order_manager.items.items():
+            item_name = item_details['name']  # Extracting the actual item name
             quantity = item_details['quantity']
             total_price_for_item = item_details['total_price']
+
+            print(f"Processing item ID: {item_id}, Item name: {item_name}, Details: {item_details}")
 
             try:
                 total_price_float = float(total_price_for_item)
             except ValueError:
-                print(f"Error: Total price for {item_name} is not a valid number.")
+                print(f"Error: Total price for {item_name} ({item_id}) is not a valid number.")
                 continue
 
             order_summary += f"{item_name} x{quantity}  ${total_price_float:.2f}\n"
+
         order_summary += f"Total with Tax: ${total_with_tax:.2f}"
+        print(f"Final Order Summary:\n{order_summary}")
 
         self.show_order_popup(order_summary)
+
+
 
 
 
