@@ -14,30 +14,20 @@ from kivy.lang import Builder
 from kivy.metrics import dp
 from kivy.modules import inspector
 from kivy.properties import StringProperty, ListProperty, ObjectProperty
-from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.button import Button
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
-from kivy.uix.scrollview import ScrollView
 from kivy.uix.textinput import TextInput
 
 from kivymd.app import MDApp
 from kivymd.color_definitions import palette
-from kivymd.theming import ThemeManager
 from kivymd.uix.boxlayout import BoxLayout
-from kivymd.uix.button import (MDFlatButton, MDIconButton, MDRaisedButton,
-                               MDRectangleFlatButton,
-                               MDRectangleFlatIconButton)
-from kivymd.uix.dialog import MDDialog
+from kivymd.uix.button import MDFlatButton, MDRaisedButton
 from kivymd.uix.gridlayout import GridLayout
 from kivymd.uix.label import MDLabel
-from kivymd.uix.menu.menu import MDDropdownMenu
 from kivymd.uix.recycleview import RecycleView
-from kivymd.uix.scrollview import ScrollView as MDScrollView
-from kivymd.uix.selectioncontrol import MDSwitch
-from kivymd.uix.textfield import MDTextField, MDTextFieldRect
 
 from barcode.upc import UniversalProductCodeA as upc_a
 from barcode_scanner import BarcodeScanner
@@ -98,13 +88,22 @@ class CashRegisterApp(MDApp):
             text="Pay", font_style="H6", size_hint=(8, 8), on_press=self.on_button_press
         )
         btn_custom_item = MDRaisedButton(
-            text="Custom",font_style="H6", size_hint=(8, 8), on_press=self.on_button_press
+            text="Custom",
+            font_style="H6",
+            size_hint=(8, 8),
+            on_press=self.on_button_press,
         )
         btn_inventory = MDRaisedButton(
-            text="Search",font_style="H6", size_hint=(8, 8), on_press=self.on_button_press
+            text="Search",
+            font_style="H6",
+            size_hint=(8, 8),
+            on_press=self.on_button_press,
         )
         btn_tools = MDRaisedButton(
-            text="Tools",font_style="H6", size_hint=(8, 8), on_press=self.on_button_press
+            text="Tools",
+            font_style="H6",
+            size_hint=(8, 8),
+            on_press=self.on_button_press,
         )
         button_layout.add_widget(btn_pay)
         button_layout.add_widget(btn_custom_item)
@@ -127,7 +126,7 @@ class CashRegisterApp(MDApp):
             font_style="H6",
             height=80,
             color=(0, 0, 0, 1),
-            halign="center"
+            halign="center",
         )
 
         Clock.schedule_interval(self.update_clock, 1)
@@ -153,8 +152,6 @@ class CashRegisterApp(MDApp):
 
         self.financial_summary_widget.update_summary(subtotal, tax, total_with_tax)
 
-
-
     """
     Barcode functions
     """
@@ -162,26 +159,24 @@ class CashRegisterApp(MDApp):
     def check_for_scanned_barcode(self, dt):
         if self.barcode_scanner.is_barcode_ready():
             barcode = self.barcode_scanner.read_barcode()
-            print(f"Barcode scanned: {barcode}")
+
             self.handle_scanned_barcode(barcode)
 
     def handle_scanned_barcode(self, barcode):
-        # if self.in_inventory_management_view and self.inventory_manager_view:
-        #     self.inventory_manager_view.show_add_item_popup(barcode)
-        # else:
-            try:
-                item_details = self.db_manager.get_item_details(barcode)
 
-                if item_details:
-                    item_name, item_price = item_details
-                    self.order_manager.add_item(item_name, item_price)
-                    self.update_display()
-                    self.update_financial_summary()
-                    return item_details
-                else:
-                    self.show_add_or_bypass_popup(barcode)
-            except Exception as e:
-                print(f"Error handling scanned barcode: {e}")
+        try:
+            item_details = self.db_manager.get_item_details(barcode)
+
+            if item_details:
+                item_name, item_price = item_details
+                self.order_manager.add_item(item_name, item_price)
+                self.update_display()
+                self.update_financial_summary()
+                return item_details
+            else:
+                self.show_add_or_bypass_popup(barcode)
+        except Exception as e:
+            print(e)
 
     def show_add_or_bypass_popup(self, barcode):
         popup_layout = BoxLayout(orientation="vertical", spacing=10)
@@ -259,7 +254,7 @@ class CashRegisterApp(MDApp):
         if instance.text == "Reboot System":
             self.reboot_are_you_sure()
         elif instance.text == "Restart App":
-            sys.exit(1)
+            sys.exit(42)
         elif instance.text == "Change Theme":
             self.show_theme_change_popup()
         self.system_popup.dismiss()
@@ -293,45 +288,52 @@ class CashRegisterApp(MDApp):
     def on_item_click(self, item_id):
         item_info = self.order_manager.items.get(item_id)
         if item_info:
-            item_name = item_info['name']
-            item_quantity = item_info['quantity']
-            item_price = item_info['total_price']
+            item_name = item_info["name"]
+            item_quantity = item_info["quantity"]
+            item_price = item_info["total_price"]
 
-        # Use GridLayout with 2 rows
         item_popup_layout = GridLayout(rows=2)
 
-        # Top row for item details
         details_layout = BoxLayout(orientation="vertical")
-        details_layout.add_widget(Label(text=f"Name: {item_name}\nPrice: ${item_price}"))
-        #details_layout.add_widget(Label(text=f"Price: ${item_price}"))
+        details_layout.add_widget(
+            Label(text=f"Name: {item_name}\nPrice: ${item_price}")
+        )
+        # details_layout.add_widget(Label(text=f"Price: ${item_price}"))
         item_popup_layout.add_widget(details_layout)
 
-        # Bottom row for buttons
-        buttons_layout = BoxLayout(orientation="horizontal", spacing=10, size_hint_y=None, size_hint_x=None)
-        buttons_layout.add_widget(MDRaisedButton(
-            text="Modify Item",
-            size_hint=(0.8,0.8),
-            on_press=lambda x: self.modify_item(item_name, item_price),
-        ))
-        buttons_layout.add_widget(MDRaisedButton(
-            text="Tax Adjust",
-            size_hint=(0.8,0.8),
-            on_press=lambda x: self.show_adjust_price_popup(item_name, item_price),
-        ))
-        buttons_layout.add_widget(MDRaisedButton(
-            text="Remove Item",
-            size_hint=(0.8,0.8),
-            on_press=lambda x: self.remove_item(item_name, item_price),
-        ))
-        buttons_layout.add_widget(MDRaisedButton(
-            text="Cancel",
-            size_hint=(0.8,0.8),
-            on_press=lambda x: self.close_item_popup()
-
-        ))
+        buttons_layout = BoxLayout(
+            orientation="horizontal", spacing=10, size_hint_y=None, size_hint_x=None
+        )
+        buttons_layout.add_widget(
+            MDRaisedButton(
+                text="Modify Item",
+                size_hint=(0.8, 0.8),
+                on_press=lambda x: self.modify_item(item_name, item_price),
+            )
+        )
+        buttons_layout.add_widget(
+            MDRaisedButton(
+                text="Tax Adjust",
+                size_hint=(0.8, 0.8),
+                on_press=lambda x: self.show_adjust_price_popup(item_name, item_price),
+            )
+        )
+        buttons_layout.add_widget(
+            MDRaisedButton(
+                text="Remove Item",
+                size_hint=(0.8, 0.8),
+                on_press=lambda x: self.remove_item(item_name, item_price),
+            )
+        )
+        buttons_layout.add_widget(
+            MDRaisedButton(
+                text="Cancel",
+                size_hint=(0.8, 0.8),
+                on_press=lambda x: self.close_item_popup(),
+            )
+        )
         item_popup_layout.add_widget(buttons_layout)
 
-        # Create and open the popup
         self.item_popup = Popup(
             title="Item Details", content=item_popup_layout, size_hint=(0.8, 0.4)
         )
@@ -357,25 +359,27 @@ class CashRegisterApp(MDApp):
     def show_theme_change_popup(self):
         layout = GridLayout(cols=4, rows=8, orientation="lr-tb")
 
-        button_layout = GridLayout(cols=4, rows=8, orientation="lr-tb", spacing=5, size_hint=(1, 0.4))
-        button_layout.bind(minimum_height=button_layout.setter('height'))
+        button_layout = GridLayout(
+            cols=4, rows=8, orientation="lr-tb", spacing=5, size_hint=(1, 0.4)
+        )
+        button_layout.bind(minimum_height=button_layout.setter("height"))
 
         for color in palette:
             button = MDRaisedButton(
                 text=color,
-                size_hint=(0.8,0.8),
-                #pos_hint={"center_x": 0.5, "center_y": 0.5},
-                on_release=lambda x, col=color: self.set_primary_palette(col)
+                size_hint=(0.8, 0.8),
+                # pos_hint={"center_x": 0.5, "center_y": 0.5},
+                on_release=lambda x, col=color: self.set_primary_palette(col),
             )
 
             button_layout.add_widget(button)
-        dark_btn =MDRaisedButton(
-                text="Dark Mode",
-                size_hint=(0.8,0.8),
-                md_bg_color=(0,0,0,1),
-                #pos_hint={"center_x": 0.5, "center_y": 0.5},
-                on_release=lambda x, col=color: self.toggle_dark_mode()
-                )
+        dark_btn = MDRaisedButton(
+            text="Dark Mode",
+            size_hint=(0.8, 0.8),
+            md_bg_color=(0, 0, 0, 1),
+            # pos_hint={"center_x": 0.5, "center_y": 0.5},
+            on_release=lambda x, col=color: self.toggle_dark_mode(),
+        )
         button_layout.add_widget(dark_btn)
         layout.add_widget(button_layout)
 
@@ -383,25 +387,22 @@ class CashRegisterApp(MDApp):
             title="",
             content=layout,
             size_hint=(0.6, 0.6),
-
             background="transparent.png",
             background_color=(0, 0, 0, 0),
             separator_height=0,
-                                        )
+        )
         self.theme_change_popup.open()
 
     def set_primary_palette(self, color_name):
         self.theme_cls.primary_palette = color_name
         self.save_settings()
 
-
     def toggle_dark_mode(self):
         if self.theme_cls.theme_style == "Dark":
-             self.theme_cls.theme_style = "Light"
+            self.theme_cls.theme_style = "Light"
         else:
             self.theme_cls.theme_style = "Dark"
         self.save_settings()
-
 
     def show_system_popup(self):
         float_layout = FloatLayout()
@@ -421,7 +422,6 @@ class CashRegisterApp(MDApp):
             )
             float_layout.add_widget(btn)
 
-
         self.system_popup = Popup(
             content=float_layout,
             size_hint=(0.6, 0.6),
@@ -436,30 +436,25 @@ class CashRegisterApp(MDApp):
         arys_layout = BoxLayout()
 
         btn = MDRaisedButton(
-                text="Yes!",
-                size_hint=(0.9, 0.9),
-
-                on_press=self.reboot,
-            )
+            text="Yes!",
+            size_hint=(0.9, 0.9),
+            on_press=self.reboot,
+        )
         btn2 = MDRaisedButton(
-                text="No!",
-                size_hint=(0.9, 0.9),
-
-                 on_press=lambda x: popup.dismiss()
-            )
+            text="No!", size_hint=(0.9, 0.9), on_press=lambda x: popup.dismiss()
+        )
         arys_layout.add_widget(Label(text=f"Are you sure?"))
         arys_layout.add_widget(btn)
         arys_layout.add_widget(btn2)
         popup = Popup(
-        title="Reboot",
-        content=arys_layout,
-        size_hint=(0.9, 0.2),
-        pos_hint={"top": 1},
-        background_color=[1, 0, 0, 1],
-    )
+            title="Reboot",
+            content=arys_layout,
+            size_hint=(0.9, 0.2),
+            pos_hint={"top": 1},
+            background_color=[1, 0, 0, 1],
+        )
 
         popup.open()
-
 
     def show_label_printing_view(self):
         inventory = self.db_manager.get_all_items()
@@ -474,7 +469,7 @@ class CashRegisterApp(MDApp):
         self.in_inventory_management_view = True
         self.inventory_manager_view = InventoryManagementView()
         inventory = self.db_manager.get_all_items()
-        #inventory_manager_view = InventoryManagementView()
+        # inventory_manager_view = InventoryManagementView()
         self.inventory_manager_view.show_inventory_for_manager(inventory)
         popup = Popup(
             title="Inventory Management",
@@ -560,10 +555,10 @@ class CashRegisterApp(MDApp):
             for button in numeric_buttons:
                 btn = MDFlatButton(
                     text=button,
-                    text_color=(0,0,0,1),
+                    text_color=(0, 0, 0, 1),
                     font_style="H4",
                     size_hint=(0.8, 0.8),
-                    on_press=self.on_lock_screen_button_press
+                    on_press=self.on_lock_screen_button_press,
                 )
                 keypad_layout.add_widget(btn)
 
@@ -744,15 +739,13 @@ class CashRegisterApp(MDApp):
             keypad_layout.add_widget(btn)
 
         confirm_button = MDRaisedButton(
-            text="Confirm",
-            size_hint=(0.8,0.8),
-            on_press=self.on_cash_confirm)
+            text="Confirm", size_hint=(0.8, 0.8), on_press=self.on_cash_confirm
+        )
         keypad_layout.add_widget(confirm_button)
 
         cancel_button = MDRaisedButton(
-            text="Cancel",
-            size_hint=(0.8,0.8),
-            on_press=self.on_cash_cancel)
+            text="Cancel", size_hint=(0.8, 0.8), on_press=self.on_cash_cancel
+        )
         keypad_layout.add_widget(cancel_button)
 
         self.cash_popup_layout.add_widget(keypad_layout)
@@ -764,21 +757,22 @@ class CashRegisterApp(MDApp):
         self.cash_popup.open()
 
     def show_payment_confirmation_popup(self):
-        confirmation_layout = GridLayout(orientation="lr-tb",cols=1, size_hint=(1,1), spacing=10)
+        confirmation_layout = GridLayout(
+            orientation="lr-tb", cols=1, size_hint=(1, 1), spacing=10
+        )
         total_with_tax = self.order_manager.calculate_total_with_tax()
         order_summary = "Order Complete:\n\n"
 
         for item_id, item_details in self.order_manager.items.items():
-            item_name = item_details['name']  # Extracting the actual item name
-            quantity = item_details['quantity']
-            total_price_for_item = item_details['total_price']
+            item_name = item_details["name"]  # Extracting the actual item name
+            quantity = item_details["quantity"]
+            total_price_for_item = item_details["total_price"]
 
-            print(f"Processing item ID: {item_id}, Item name: {item_name}, Details: {item_details}")
 
             try:
                 total_price_float = float(total_price_for_item)
-            except ValueError:
-                print(f"Error: Total price for {item_name} ({item_id}) is not a valid number.")
+            except ValueError as e:
+                print(e)
                 continue
 
             order_summary += f"{item_name} x{quantity}  ${total_price_float:.2f}\n"
@@ -787,7 +781,9 @@ class CashRegisterApp(MDApp):
         confirmation_layout.add_widget(Label(text=order_summary))
 
         done_button = MDRaisedButton(
-            text="Done", size_hint=(0.2,0.2), on_press=self.on_done_button_press  #####################
+            text="Done",
+            size_hint=(0.2, 0.2),
+            on_press=self.on_done_button_press,  #####################
         )
         confirmation_layout.add_widget(done_button)
 
@@ -798,7 +794,6 @@ class CashRegisterApp(MDApp):
         )
         self.popup.dismiss()
         self.payment_popup.open()
-
 
     def show_make_change_popup(self, change):
         change_layout = BoxLayout(orientation="vertical", spacing=10)
@@ -877,7 +872,7 @@ class CashRegisterApp(MDApp):
 
     def on_input_focus(self, instance, value):
         if value:
-            # instance.keyboard_mode = 'managed'
+
             instance.show_keyboard()
         else:
             instance.hide_keyboard()
@@ -913,7 +908,7 @@ class CashRegisterApp(MDApp):
             output = result.stdout.decode("utf-8")
             return "Monitor is Off" in output
         except Exception as e:
-            print(f"Error checking monitor status: {e}")
+            print(e)
             return False
 
     def check_monitor_status(self, dt):
@@ -927,47 +922,39 @@ class CashRegisterApp(MDApp):
 
     def finalize_order(self):
         total_with_tax = self.order_manager.calculate_total_with_tax()
-        print(f"Total with tax: {total_with_tax}")
 
         order_summary = "Order Summary:\n\n"
         for item_id, item_details in self.order_manager.items.items():
-            item_name = item_details['name']  # Extracting the actual item name
-            quantity = item_details['quantity']
-            total_price_for_item = item_details['total_price']
-
-            print(f"Processing item ID: {item_id}, Item name: {item_name}, Details: {item_details}")
+            item_name = item_details["name"]
+            quantity = item_details["quantity"]
+            total_price_for_item = item_details["total_price"]
 
             try:
                 total_price_float = float(total_price_for_item)
-            except ValueError:
-                print(f"Error: Total price for {item_name} ({item_id}) is not a valid number.")
+            except ValueError as e:
+                print(e)
                 continue
 
             order_summary += f"{item_name} x{quantity}  ${total_price_float:.2f}\n"
 
         order_summary += f"Total with Tax: ${total_with_tax:.2f}"
-        print(f"Final Order Summary:\n{order_summary}")
 
         self.show_order_popup(order_summary)
-
-
-
-
-
 
     def update_display(self):
         print("called update display")
         self.order_layout.clear_widgets()
         for item_id, item_info in self.order_manager.items.items():
-            item_name = item_info['name']
-            item_quantity = item_info['quantity']
-            item_total_price = item_info['total_price']
+            item_name = item_info["name"]
+            item_quantity = item_info["quantity"]
+            item_total_price = item_info["total_price"]
 
             if item_quantity > 1:
-                item_display_text = f"{item_name} x{item_quantity} ${item_total_price:.2f}"
+                item_display_text = (
+                    f"{item_name} x{item_quantity} ${item_total_price:.2f}"
+                )
             else:
                 item_display_text = f"{item_name} ${item_total_price:.2f}"
-
 
             item_button = MDRaisedButton(
                 text=item_display_text,
@@ -978,12 +965,6 @@ class CashRegisterApp(MDApp):
             item_button.bind(on_press=lambda instance, x=item_id: self.on_item_click(x))
             self.order_layout.add_widget(item_button)
 
-            for widget in self.order_layout.children:
-                print(f"Widget size: {widget.size}, pos: {widget.pos}")
-
-
-    def calculate_width(self):
-        return 400
 
     def handle_card_payment(self):
         open_cash_drawer()
@@ -1021,7 +1002,6 @@ class CashRegisterApp(MDApp):
         self.update_financial_summary()
         self.custom_item_popup.dismiss()
 
-
     def on_custom_item_cancel(self, instance):
         self.custom_item_popup.dismiss()
 
@@ -1029,7 +1009,10 @@ class CashRegisterApp(MDApp):
         tax = order_details["total_with_tax"] - order_details["total"]
         timestamp = datetime.datetime.now()
 
-        items_for_db = [{**{'name': item_name}, **item_details} for item_name, item_details in order_details["items"].items()]
+        items_for_db = [
+            {**{"name": item_name}, **item_details}
+            for item_name, item_details in order_details["items"].items()
+        ]
 
         db_manager.add_order_history(
             order_details["order_id"],
@@ -1042,10 +1025,9 @@ class CashRegisterApp(MDApp):
 
     def add_item_to_database(self, barcode, name, price):
         try:
-            if self.db_manager.add_item(barcode, name, price):
-                print(f"Item '{name}' added to the database.")
+            self.db_manager.add_item(barcode, name, price)
         except Exception as e:
-            print(f"Error adding item to database: {e}")
+            print(e)
         finally:
             pass
 
@@ -1068,10 +1050,13 @@ class CashRegisterApp(MDApp):
         try:
             with open("settings.json", "r") as f:
                 settings = json.load(f)
-                self.theme_cls.primary_palette = settings.get("primary_palette", "Brown")
+                self.theme_cls.primary_palette = settings.get(
+                    "primary_palette", "Brown"
+                )
                 self.theme_cls.theme_style = settings.get("theme_style", "Light")
         except FileNotFoundError:
             pass
+
 
 class FinancialSummaryWidget(MDRaisedButton):
     def __init__(self, **kwargs):
@@ -1093,11 +1078,12 @@ class FinancialSummaryWidget(MDRaisedButton):
     def open_order_modification_popup(self):
         popup = Popup(
             title="Modify Order",
-            content=MDLabel(text="Modify your order here"),
+            content=MDLabel(text=""),
             size_hint=(None, None),
             size=(400, 400),
         )
         popup.open()
+
 
 class InventoryManagementView(BoxLayout):
     barcode = StringProperty()
@@ -1114,7 +1100,11 @@ class InventoryManagementView(BoxLayout):
 
     def generate_unique_barcode(self):
         while True:
-            new_barcode = str(upc_a(str(random.randint(100000000000, 999999999999)), writer=None).get_fullcode())
+            new_barcode = str(
+                upc_a(
+                    str(random.randint(100000000000, 999999999999)), writer=None
+                ).get_fullcode()
+            )
 
             if not self.database_manager.barcode_exists(new_barcode):
                 return new_barcode
@@ -1132,11 +1122,17 @@ class InventoryManagementView(BoxLayout):
         updated_inventory = self.database_manager.get_all_items()
         self.show_inventory_for_manager(updated_inventory)
 
-    def add_item_to_database(self, barcode_input, name_input, price_input, cost_input, sku_input):
+    def add_item_to_database(
+        self, barcode_input, name_input, price_input, cost_input, sku_input
+    ):
         if barcode_input and name_input and price_input:
             try:
                 self.database_manager.add_item(
-                    barcode_input.text, name_input.text, price_input.text, cost_input.text, sku_input.text
+                    barcode_input.text,
+                    name_input.text,
+                    price_input.text,
+                    cost_input.text,
+                    sku_input.text,
                 )
             except Exception as e:
                 print(e)
@@ -1144,28 +1140,29 @@ class InventoryManagementView(BoxLayout):
     def inventory_item_popup(self):
         content = BoxLayout(orientation="vertical", padding=10)
 
-
-        name_layout = BoxLayout(orientation='horizontal', size_hint_y=0.4)
+        name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         name_input = TextInput(text=self.name)
         name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
         name_layout.add_widget(name_input)
 
-        barcode_layout = BoxLayout(orientation='horizontal', size_hint_y=0.4)
-        barcode_input = TextInput(input_filter="int", text=self.barcode if self.barcode else '')
+        barcode_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        barcode_input = TextInput(
+            input_filter="int", text=self.barcode if self.barcode else ""
+        )
         barcode_layout.add_widget(Label(text="Barcode", size_hint_x=0.2))
         barcode_layout.add_widget(barcode_input)
 
-        price_layout = BoxLayout(orientation='horizontal', size_hint_y=0.4)
+        price_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         price_input = TextInput(text=self.price, input_filter="float")
         price_layout.add_widget(Label(text="Price", size_hint_x=0.2))
         price_layout.add_widget(price_input)
 
-        cost_layout = BoxLayout(orientation='horizontal', size_hint_y=0.4)
+        cost_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         cost_input = TextInput(text=self.cost, input_filter="float")
         cost_layout.add_widget(Label(text="Cost", size_hint_x=0.2))
         cost_layout.add_widget(cost_input)
 
-        sku_layout = BoxLayout(orientation='horizontal', size_hint_y=0.4)
+        sku_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         sku_input = TextInput(text=self.sku)
         sku_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
         sku_layout.add_widget(sku_input)
@@ -1175,7 +1172,6 @@ class InventoryManagementView(BoxLayout):
         content.add_widget(price_layout)
         content.add_widget(cost_layout)
         content.add_widget(sku_layout)
-
 
         button_layout = BoxLayout(
             orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
@@ -1196,24 +1192,32 @@ class InventoryManagementView(BoxLayout):
         button_layout.add_widget(
             MDRaisedButton(
                 text="Generate Barcode",
-                on_press=lambda *args: self.set_generated_barcode(barcode_input)
+                on_press=lambda *args: self.set_generated_barcode(barcode_input),
             )
         )
 
         content.add_widget(button_layout)
 
-        popup = Popup(title="Item details",pos_hint={"top": 1},  content=content, size_hint=(0.8, 0.4))
+        popup = Popup(
+            title="Item details",
+            pos_hint={"top": 1},
+            content=content,
+            size_hint=(0.8, 0.4),
+        )
         popup.open()
 
-    def confirm_and_close(self, barcode_input, name_input, price_input, cost_input, sku_input, popup):
-        self.add_item_to_database(barcode_input, name_input, price_input, cost_input, sku_input)
+    def confirm_and_close(
+        self, barcode_input, name_input, price_input, cost_input, sku_input, popup
+    ):
+        self.add_item_to_database(
+            barcode_input, name_input, price_input, cost_input, sku_input
+        )
         self.refresh_inventory()
         popup.dismiss()
 
     def set_generated_barcode(self, barcode_input):
         unique_barcode = self.generate_unique_barcode()
         barcode_input.text = unique_barcode
-
 
     def open_inventory_manager(self):
         self.inventory_item_popup()
@@ -1240,6 +1244,7 @@ class InventoryManagementView(BoxLayout):
             filtered_items = self.full_inventory
         self.rv.data = self.generate_data_for_rv(filtered_items)
 
+
 class InventoryManagementRow(BoxLayout):
     barcode = StringProperty()
     name = StringProperty()
@@ -1255,28 +1260,29 @@ class InventoryManagementRow(BoxLayout):
     def inventory_item_popup(self):
         content = BoxLayout(orientation="vertical", padding=10)
 
-
-        name_layout = BoxLayout(orientation='horizontal', size_hint_y=0.4)
+        name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         name_input = TextInput(text=self.name)
         name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
         name_layout.add_widget(name_input)
 
-        barcode_layout = BoxLayout(orientation='horizontal', size_hint_y=0.4)
-        barcode_input = TextInput(input_filter="int", text=self.barcode if self.barcode else '')
+        barcode_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        barcode_input = TextInput(
+            input_filter="int", text=self.barcode if self.barcode else ""
+        )
         barcode_layout.add_widget(Label(text="Barcode", size_hint_x=0.2))
         barcode_layout.add_widget(barcode_input)
 
-        price_layout = BoxLayout(orientation='horizontal', size_hint_y=0.4)
+        price_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         price_input = TextInput(input_filter="float", text=self.price)
         price_layout.add_widget(Label(text="Price", size_hint_x=0.2))
         price_layout.add_widget(price_input)
 
-        cost_layout = BoxLayout(orientation='horizontal', size_hint_y=0.4)
+        cost_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         cost_input = TextInput(text=self.cost, input_filter="float")
         cost_layout.add_widget(Label(text="Cost", size_hint_x=0.2))
         cost_layout.add_widget(cost_input)
 
-        sku_layout = BoxLayout(orientation='horizontal', size_hint_y=0.4)
+        sku_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         sku_input = TextInput(text=self.sku)
         sku_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
         sku_layout.add_widget(sku_input)
@@ -1286,7 +1292,6 @@ class InventoryManagementRow(BoxLayout):
         content.add_widget(price_layout)
         content.add_widget(cost_layout)
         content.add_widget(sku_layout)
-
 
         button_layout = BoxLayout(
             orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
@@ -1302,33 +1307,45 @@ class InventoryManagementRow(BoxLayout):
         )
 
         button_layout.add_widget(
-            MDRaisedButton(text="Close", on_press=lambda *args: popup.dismiss()))
+            MDRaisedButton(text="Close", on_press=lambda *args: popup.dismiss())
+        )
 
         content.add_widget(button_layout)
 
-        popup = Popup(title="Item details", pos_hint={"top": 1}, content=content, size_hint=(0.8, 0.4))
+        popup = Popup(
+            title="Item details",
+            pos_hint={"top": 1},
+            content=content,
+            size_hint=(0.8, 0.4),
+        )
         popup.open()
 
-    def confirm_and_close(self, barcode_input, name_input, price_input, cost_input, sku_input, popup):
-        self.update_item_in_database(barcode_input, name_input, price_input, cost_input, sku_input)
+    def confirm_and_close(
+        self, barcode_input, name_input, price_input, cost_input, sku_input, popup
+    ):
+        self.update_item_in_database(
+            barcode_input, name_input, price_input, cost_input, sku_input
+        )
         self.inventory_management_view.refresh_inventory()
         popup.dismiss()
-
-
 
     def open_inventory_manager(self):
         self.inventory_item_popup()
 
-    def update_item_in_database(self, barcode_input, name_input, price_input, cost_input, sku_input):
+    def update_item_in_database(
+        self, barcode_input, name_input, price_input, cost_input, sku_input
+    ):
         if barcode_input and name_input and price_input:
-
             try:
                 self.database_manager.update_item(
-                    barcode_input.text, name_input.text, price_input.text, cost_input.text, sku_input.text
+                    barcode_input.text,
+                    name_input.text,
+                    price_input.text,
+                    cost_input.text,
+                    sku_input.text,
                 )
             except Exception as e:
                 print(e)
-
 
 
 class LabelPrintingRow(BoxLayout):
@@ -1338,7 +1355,6 @@ class LabelPrintingRow(BoxLayout):
     label_printer = ObjectProperty()
 
     def add_to_print_queue(self):
-        print(f"Adding {self.name} to print queue")
         self.show_label_popup()
 
     def show_label_popup(self):
@@ -1387,7 +1403,6 @@ class LabelPrintingView(BoxLayout):
         self.print_queue_popup.open()
 
     def print_now(self, instance):
-        print("we are inside print now")
         self.label_printer.process_queue()
         self.print_queue_popup.dismiss()
 
@@ -1427,7 +1442,6 @@ class InventoryRow(BoxLayout):
         self.order_manager = OrderManager()
 
     def add_to_order(self):
-        print(f"Adding {self.name} to order")
         print(self.price)
         print(type(self.price))
         try:

@@ -7,7 +7,6 @@ class DatabaseManager:
         self.ensure_tables_exist()
 
     def _get_connection(self):
-        print("DEBUG DatabaseManager get_connection")
         return sqlite3.connect(self.db_path)
 
     def ensure_tables_exist(self):
@@ -29,7 +28,7 @@ class DatabaseManager:
             )
             conn.commit()
         except sqlite3.Error as e:
-            print(f"Error creating items table: {e}")
+            print(e)
         finally:
             conn.close()
 
@@ -49,13 +48,12 @@ class DatabaseManager:
             )
             conn.commit()
         except sqlite3.Error as e:
-            print(f"Error creating order history table: {e}")
+            print(e)
         finally:
             conn.close()
 
     def add_item(self, barcode, name, price, cost=None, sku=None):
         self.create_items_table()
-        print("DEBUG DatabaseManager add_item", barcode, name, price, cost, sku)
 
         cost = cost if cost is not None else None
         sku = sku if sku is not None else None
@@ -69,8 +67,8 @@ class DatabaseManager:
             )
 
             conn.commit()
-        except sqlite3.IntegrityError:
-            print(f"Item with barcode {barcode} already exists.")
+        except sqlite3.IntegrityError as e:
+            print(e)
             conn.close()
             return False
         conn.close()
@@ -88,7 +86,7 @@ class DatabaseManager:
             )
             conn.commit()
         except sqlite3.Error as e:
-            print(f"Error adding order history: {e}")
+            print(e)
             return False
         finally:
             conn.close()
@@ -105,8 +103,6 @@ class DatabaseManager:
         return order_history
 
     def get_item_details(self, barcode):
-        print("DEBUG DatabaseManager get_item_details")
-
         conn = self._get_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT name, price FROM items WHERE barcode = ?", (barcode,))
@@ -115,15 +111,13 @@ class DatabaseManager:
         return item
 
     def get_all_items(self):
-        print("DEBUG DatabaseManager get_all_items")
-
         conn = self._get_connection()
         cursor = conn.cursor()
         try:
             cursor.execute("SELECT barcode, name, price, cost, sku FROM items")
             items = cursor.fetchall()
         except sqlite3.Error as e:
-            print(f"Error retrieving all items: {e}")
+            print(e)
             items = []
         finally:
             conn.close()
@@ -161,7 +155,7 @@ class DatabaseManager:
 
             conn.commit()
         except Exception as e:
-            print(f"Error updating item: {e}")
+            print(e)
             return False
         finally:
             conn.close()
@@ -172,7 +166,6 @@ class DatabaseManager:
         pass
 
     def close_connection(self):
-        print("DEBUG DatabaseManager close_connection")
         conn = self._get_connection()
         if conn:
             conn.close()
