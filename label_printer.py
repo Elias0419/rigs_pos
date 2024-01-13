@@ -55,7 +55,7 @@ class LabelPrinter:
         barcode_img = Image.open(BytesIO(png_data))
         barcode_target_width = label_width - 2 * margin
         barcode_target_height = label_height // 2
-        barcode_img = barcode_img.resize((barcode_target_width, barcode_target_height), Image.ANTIALIAS)
+        barcode_img = barcode_img.resize((barcode_target_width, barcode_target_height), Image.Resampling.LANCZOS)
         barcode_position_y = label_height // 4 + (label_height * 3 // 4 - barcode_target_height) // 2
         label_image.paste(barcode_img, (margin, barcode_position_y))
 
