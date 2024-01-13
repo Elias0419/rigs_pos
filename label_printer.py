@@ -33,7 +33,7 @@ class LabelPrinter:
             price_text = f"${price_float:.2f}"
         except ValueError:
             print(f"Invalid price format: {item_price}")
-            return  # Exit if the price format is wrong
+            return
 
         barcode_img = upc_a(barcode_data, writer=barcode_writer).render(
             writer_options={"module_height": 15.0}
@@ -55,12 +55,12 @@ class LabelPrinter:
         price_text_height = font.getmetrics()[0]
 
         price_x_position = (label_width - price_text_width) // 2
-        price_y_position = margin  # Start at top margin
+        price_y_position = margin
 
         barcode_x_position = (label_width - barcode_img_width) // 2
         barcode_y_position = (
             price_y_position + price_text_height + margin
-        )  # Add a margin between price and barcode
+        )
 
         draw.text((price_x_position, price_y_position), price_text, font=font, fill=0)
         label_image.paste(barcode_img, (barcode_x_position, barcode_y_position))
