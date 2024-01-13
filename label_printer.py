@@ -67,10 +67,10 @@ class LabelPrinter:
 
         save_path = "test.png"
         label_image.save(save_path)
-        # qlr = brother_ql.BrotherQLRaster('QL-710W')
-        # qlr.exception_on_warning = True
-        # convert(qlr=qlr, images=[label_image], label='23x23')
-        # send(instructions=qlr.data, printer_identifier='usb://0x04F9:0x2043', backend_identifier='pyusb')
+        qlr = brother_ql.BrotherQLRaster('QL-710W')
+        qlr.exception_on_warning = True
+        convert(qlr=qlr, images=[label_image], label='23x23')
+        send(instructions=qlr.data, printer_identifier='usb://0x04F9:0x2043', backend_identifier='pyusb')
 
     def process_queue(self):
         print("we are inside process queue")
