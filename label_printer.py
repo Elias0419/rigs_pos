@@ -5,9 +5,7 @@ from PIL import Image, ImageDraw, ImageFont
 import brother_ql
 from brother_ql.conversion import convert
 from brother_ql.backends.helpers import send
-from io import BytesIO
-from barcode.writer import SVGWriter
-import cairosvg
+
 
 class LabelPrinter:
     def __init__(self):
@@ -24,63 +22,52 @@ class LabelPrinter:
         )
 
     def print_barcode_label(self, barcode_data, item_price, save_path):
-
         label_width, label_height = 202, 202
-        margin = 10
-        font_path = "/usr/share/fonts/TTF/Hack-Regular.ttf"
-        font_size = 25
 
-        # Create barcode in SVG format
-        # svg_io = BytesIO()
-        # barcode_class = barcode.get_barcode_class('upc_a')  # Replace 'ean13' with your desired format
-        # barcode_object = barcode_class(barcode_data, writer=SVGWriter())
-        # barcode_object.write(svg_io)
-        barcode_img = upc_a(barcode_data, writer=SVGWriter).render()
+        UPC = barcode.get_barcode_class("upc")
+        writer = ImageWriter()
+        upc = UPC(barcode_data, writer=writer)
+        barcode_width, barcode_height = writer.calculate_size(len(barcode_data), 1)
+        desired_barcode_width = barcode_width / 800  # for example
+        desired_barcode_height = barcode_height - 20
+        barcode_image = upc.render(
+            {
+                "module_width": desired_barcode_width,
+                "module_height": 10,
+                "font_size": 4,
+                "text_distance": 2,
+                "dpi": 300,
+            }
+        )
 
-        # Convert SVG to PNG using CairoSVG
-        # png_data = cairosvg.svg2png(bytestring=svg_io.getvalue())
-
-        # Create an empty image for the label
-        label_image = Image.new('RGB', (label_width, label_height), color='white')
+        label_image = Image.new("RGB", (label_width, label_height), "white")
         draw = ImageDraw.Draw(label_image)
 
-        # # Draw price text
-        # font = ImageFont.truetype(font_path, font_size)
-        # price_text = f"${float(item_price):.2f}"
-        # text_width = draw.textlength(price_text, font=font)
-        # text_height = 1.2 * font_size
-        # text_position = ((label_width - text_width) / 2, margin)
-        # draw.text(text_position, price_text, font=font, fill="black")
+        font = ImageFont.truetype("/usr/share/fonts/TTF/Arialbd.TTF", 33)
 
-        # Place barcode (converted from SVG to PNG)
-        # barcode_img = Image.open(BytesIO(png_data))
-        # barcode_target_width = label_width - 2 * margin
-        # barcode_target_height = label_height // 2
-        # barcode_img = barcode_img.resize((barcode_target_width, barcode_target_height), Image.Resampling.LANCZOS)
-        # barcode_position_y = label_height // 4 + (label_height * 3 // 4 - barcode_target_height) // 2
-        label_image.paste(barcode_img)
+        draw.text((60, 0), f"{item_price}", fill="black", font=font)
 
+        barcode_position = (-70, 35)  # Adjust as needed
+        label_image.paste(barcode_image, barcode_position)
 
-
-        # Save the image
-        #label_image.save(save_path)
-
-        # Printing logic (as provided in your code)
-        qlr = brother_ql.BrotherQLRaster('QL-710W')
-        qlr.exception_on_warning = True
-        convert(qlr=qlr, images=[label_image], label='23x23', cut=False)
-        send(instructions=qlr.data, printer_identifier='usb://0x04F9:0x2043', backend_identifier='pyusb')
-
-
+        label_image.save(save_path)
+        # Printing logic
+        # qlr = brother_ql.BrotherQLRaster('QL-710W')
+        # qlr.exception_on_warning = True
+        # convert(qlr=qlr, images=[label_image], label='23x23', cut=False)
+        # send(instructions=qlr.data, printer_identifier='usb://0x04F9:0x2043', backend_identifier='pyusb')
 
     def process_queue(self):
-        print("we are inside process queue")
 
         for item in self.print_queue:
-            print("process_queue", item)
 
             for _ in range(item["quantity"]):
                 self.print_barcode_label(
                     item["barcode"], item["price"], f"{item['name']}_label.png"
                 )
         self.print_queue.clear()
+
+
+if __name__ == "__main__":
+    printer = LabelPrinter()
+    printer.print_barcode_label("123456789012", 9.99, "test.png")
