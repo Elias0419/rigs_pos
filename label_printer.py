@@ -50,12 +50,12 @@ class LabelPrinter:
         barcode_position = (-70, 35)  # Adjust as needed
         label_image.paste(barcode_image, barcode_position)
 
-        label_image.save(save_path)
+        # label_image.save(save_path)
         # Printing logic
-        # qlr = brother_ql.BrotherQLRaster('QL-710W')
-        # qlr.exception_on_warning = True
-        # convert(qlr=qlr, images=[label_image], label='23x23', cut=False)
-        # send(instructions=qlr.data, printer_identifier='usb://0x04F9:0x2043', backend_identifier='pyusb')
+        qlr = brother_ql.BrotherQLRaster('QL-710W')
+        qlr.exception_on_warning = True
+        convert(qlr=qlr, images=[label_image], label='23x23', cut=False)
+        send(instructions=qlr.data, printer_identifier='usb://0x04F9:0x2043', backend_identifier='pyusb')
 
     def process_queue(self):
 
