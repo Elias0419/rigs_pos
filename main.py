@@ -1058,7 +1058,7 @@ class CashRegisterApp(MDApp):
         self.inventory_manager_view = None
 
     def reboot(self, instance):
-        subprocess.run(["reboot"])
+        subprocess.run(["systemctl", "reboot"])
 
     def save_settings(self):
         settings = {
