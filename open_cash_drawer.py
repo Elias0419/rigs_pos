@@ -8,7 +8,7 @@ def open_cash_drawer(port="/dev/ttyUSB0", baudrate=9600):
             ser.write(b"\x00")
             time.sleep(1)
     except serial.SerialException as e:
-        print(f"Error opening cash drawer: {e}")
+        pass
 
 
 if __name__ == "__main__":

@@ -47,7 +47,7 @@ class LabelPrinter:
 
         draw.text((60, 0), f"{item_price}", fill="black", font=font)
 
-        barcode_position = (-70, 35)  # Adjust as needed
+        barcode_position = (-70, 35)
         label_image.paste(barcode_image, barcode_position)
 
         # label_image.save(save_path)
