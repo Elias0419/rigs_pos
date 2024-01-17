@@ -21,9 +21,11 @@ class OrderManager:
         return self._total_with_tax
 
     def update_tax_amount(self):
-        self.tax_amount = self.total * self.tax_rate
+
+        self.tax_amount = max(self.total * self.tax_rate, 0)
         print(self.tax_amount)
         return self.tax_amount
+
 
     def add_item(self, item_name, item_price):
         item_id = str(uuid.uuid4())
@@ -52,27 +54,37 @@ class OrderManager:
         self._update_total_with_tax()
 
     def remove_item(self, item_name):
-        print(self.items)
+        print("Current Items:", self.items)
         item_to_remove = next(
             (key for key, value in self.items.items() if value["name"] == item_name),
             None,
         )
         if item_to_remove:
-            self.total -= self.items[item_to_remove]["total_price"]
-            self.subtotal -= self.items[item_to_remove]["total_price"]
+            removed_item_total = self.items[item_to_remove]["total_price"]
+            self.subtotal -= removed_item_total
+
+            self.total = max(self.subtotal - self.order_discount, 0)
 
             del self.items[item_to_remove]
+            self.order_discount = 0.0
+            self.update_tax_amount()
             self._update_total_with_tax()
         else:
             pass
+
 
     def get_order_details(self):
         return {
             "order_id": self.order_id,
             "items": self.items,
+            "subtotal": self.subtotal,
             "total": self.total,
+            "tax_rate": self.tax_rate,
+            "tax_amount": self.tax_amount,
             "total_with_tax": self._total_with_tax,
+            "discount": self.order_discount
         }
+
 
     def clear_order(self):
         self.items = {}
@@ -122,14 +134,18 @@ class OrderManager:
 
     def add_discount(self, discount_amount=None, discount_percentage=None):
         if discount_amount is not None:
-            self.order_discount += discount_amount
-            self.total = self.subtotal - discount_amount
+            self.order_discount = min(discount_amount, self.subtotal)
         elif discount_percentage is not None:
             discount = self.subtotal * (discount_percentage / 100)
-            self.order_discount += discount
-            self.total = self.subtotal - discount
+            self.order_discount = discount
+        else:
+            return
+
+        self.total = max(self.subtotal - self.order_discount, 0)
+
         self.update_tax_amount()
         self._update_total_with_tax()
+
 
 
 

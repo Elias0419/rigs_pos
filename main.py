@@ -133,18 +133,25 @@ class CashRegisterApp(MDApp):
             size_hint_y=None,
             font_style="H6",
             height=80,
-            color=(0, 0, 0, 1),
+            color=self.get_text_color(),
             halign="center",
         )
 
         Clock.schedule_interval(self.update_clock, 1)
-
         clock_layout.add_widget(self.clock_label)
         return clock_layout
 
     def update_clock(self, *args):
         self.clock_label.text = time.strftime("%I:%M %p\n%A\n%B %d, %Y\n")
+        # Update color in case theme has changed
+        self.clock_label.color = self.get_text_color()
 
+    def get_text_color(self):
+
+        if self.theme_cls.theme_style == 'Dark':
+            return (1, 1, 1, 1)
+        else:
+            return (0, 0, 0, 1)
     def create_financial_layout(self):
         financial_layout = GridLayout(cols=1, size_hint_x=1 / 3)
 
@@ -320,13 +327,7 @@ class CashRegisterApp(MDApp):
                 on_press=lambda x: self.add_discount_popup(item_name, item_price),
             )
         )
-        buttons_layout.add_widget(
-            MDRaisedButton(
-                text="Tax Adjust",
-                size_hint=(0.8, 0.8),
-                on_press=lambda x: self.show_adjust_price_popup(item_name, item_price),
-            )
-        )
+
         buttons_layout.add_widget(
             MDRaisedButton(
                 text="Remove Item",
@@ -556,9 +557,8 @@ class CashRegisterApp(MDApp):
         )
         popup.open()
 
-    def show_adjust_price_popup(self, item_name, item_price):
-        self.current_item_name = item_name
-        self.current_item_price = item_price
+    def show_adjust_price_popup(self):
+
         self.adjust_price_popup_layout = BoxLayout(orientation="vertical", spacing=10)
         self.target_amount_input = TextInput(
             text="",
@@ -1158,20 +1158,33 @@ class FinancialSummaryWidget(MDRaisedButton):
         self.size_hint_x = 1
         self.height = 80
         self.orientation = "vertical"
-        self.font_style = "H6"
+        #self.font_style = "H6"
+        #cash_register = CashRegisterApp()
+        app = App.get_running_app()
 
     def update_summary(self, subtotal, tax, total_with_tax, discount):
-
         self.text = (
-            f"Subtotal: ${subtotal:.2f}\nDiscount: ${discount:.2f}\nTax: ${tax:.2f}\nTotal: ${total_with_tax:.2f}")
+            f"[size=20]Subtotal: ${subtotal:.2f}\n"
+            f"Discount: ${discount:.2f}\n"
+            f"Tax: ${tax:.2f}\n\n[/size]"
+            f"[size=24]Total: [b]${total_with_tax:.2f}[/b][/size]"
+        )
 
     def on_press(self):
         self.open_order_modification_popup()
 
     def open_order_modification_popup(self):
+        order_mod_layout = GridLayout(cols=1, size_hint=(0.8,0.8))
+        adjust_price_button = MDRaisedButton(
+                                text="Adjust Payment",
+                                on_press=lambda x: app.show_adjust_price_popup(),
+
+                               )
+
+        order_mod_layout.add_widget(adjust_price_button)
         popup = Popup(
             title="Modify Order",
-            content=MDLabel(text=""),
+            content=order_mod_layout,
             size_hint=(None, None),
             size=(400, 400),
         )
@@ -1604,12 +1617,32 @@ class OrderDetailsPopup(Popup):
     def __init__(self, order, **kwargs):
         super(OrderDetailsPopup, self).__init__(**kwargs)
         self.title = f"Order Details - {order[0]}"
-        self.content = Label(text=self.format_order_details(order))
+        self.history_view = HistoryView()
+        self.content = Label(text=self.format_order_details(order), valign='top', halign='left')
         self.size_hint = (0.8, 0.6)
 
+    def format_items(self, items_str):
+        try:
+            items_list = ast.literal_eval(items_str)
+            all_item_names = ', '.join(item.get('name', 'Unknown') for item in items_list)
+            return all_item_names
+        except (ValueError, SyntaxError):
+            return "Invalid item data"
+
+
     def format_order_details(self, order):
-        details = f"Order ID: {order[0]}\nItems: {order[1]}\nTotal: {order[2]}\nTax: {order[3]}\nTotal with Tax: {order[4]}\nTimestamp: {order[5]}"
-        return details
+        print(order)
+        formatted_order = [
+            f"Order ID: {order[0]}",
+            f"Items: {self.format_items(order[1])}",
+            f"Total: ${self.history_view.format_money(order[2])}",
+            #f"Discount: ${self.history_view.format_money(order[2])}",
+            f"Tax: ${self.history_view.format_money(order[3])}",
+            f"Total with Tax: ${self.history_view.format_money(order[4])}",
+            f"Timestamp: {self.history_view.format_date(order[5])}"
+        ]
+        return '\n'.join(formatted_order)
+
 
 class HistoryView(BoxLayout):
 
