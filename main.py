@@ -147,11 +147,11 @@ class CashRegisterApp(MDApp):
         self.clock_label.color = self.get_text_color()
 
     def get_text_color(self):
-
-        if self.theme_cls.theme_style == 'Dark':
+        if self.theme_cls.theme_style == "Dark":
             return (1, 1, 1, 1)
         else:
             return (0, 0, 0, 1)
+
     def create_financial_layout(self):
         financial_layout = GridLayout(cols=1, size_hint_x=1 / 3)
 
@@ -163,10 +163,12 @@ class CashRegisterApp(MDApp):
     def update_financial_summary(self):
         subtotal = self.order_manager.subtotal
         total_with_tax = self.order_manager.calculate_total_with_tax()
-        tax =  self.order_manager.tax_amount
+        tax = self.order_manager.tax_amount
         discount = self.order_manager.order_discount
 
-        self.financial_summary_widget.update_summary(subtotal, tax, total_with_tax, discount)
+        self.financial_summary_widget.update_summary(
+            subtotal, tax, total_with_tax, discount
+        )
 
     """
     Barcode functions
@@ -179,7 +181,6 @@ class CashRegisterApp(MDApp):
             self.handle_scanned_barcode(barcode)
 
     def handle_scanned_barcode(self, barcode):
-
         try:
             item_details = self.db_manager.get_item_details(barcode)
 
@@ -349,20 +350,20 @@ class CashRegisterApp(MDApp):
         )
         self.item_popup.open()
 
-
-
     def add_discount_popup(self, item_name, item_price):
-
-        discount_layout = BoxLayout(orientation="vertical", size_hint_x=1, )
+        discount_layout = BoxLayout(
+            orientation="vertical",
+            size_hint_x=1,
+        )
 
         percent_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         percent_input = TextInput(multiline=False, hint_text="Percent")
-        #percent_layout.add_widget(Label(text="Percent"))
+        # percent_layout.add_widget(Label(text="Percent"))
         percent_layout.add_widget(percent_input)
 
         amount_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         amount_input = TextInput(multiline=False, hint_text="Amount")
-        #amount_layout.add_widget(Label(text="Amount"))
+        # amount_layout.add_widget(Label(text="Amount"))
         amount_layout.add_widget(amount_input)
 
         button_layout = BoxLayout(
@@ -373,21 +374,15 @@ class CashRegisterApp(MDApp):
                 text="Confirm",
                 size_hint=(0.8, 0.8),
                 on_press=lambda x: self.discount_single_item(
-
-                discount_amount=amount_input.text,
-                discount_percentage=percent_input.text
-            ),
-        )
-    )
-        button_layout.add_widget(
-            MDRaisedButton(
-                text="Cancel"
-                )
+                    discount_amount=amount_input.text,
+                    discount_percentage=percent_input.text,
+                ),
             )
+        )
+        button_layout.add_widget(MDRaisedButton(text="Cancel"))
         discount_layout.add_widget(percent_layout)
         discount_layout.add_widget(amount_layout)
         discount_layout.add_widget(button_layout)
-
 
         popup = Popup(
             title="Add Discount",
@@ -397,29 +392,26 @@ class CashRegisterApp(MDApp):
         )
         popup.open()
 
-
-    def discount_single_item(self,discount_amount=None, discount_percentage=None):
+    def discount_single_item(self, discount_amount=None, discount_percentage=None):
         try:
             discount_amount = float(discount_amount) if discount_amount else None
-            discount_percentage = float(discount_percentage) if discount_percentage else None
+            discount_percentage = (
+                float(discount_percentage) if discount_percentage else None
+            )
         except ValueError:
-
             return
 
         if discount_amount is not None:
             self.order_manager.add_discount(discount_amount=discount_amount)
-            #self.order_manager.update_tax_amount()
+            # self.order_manager.update_tax_amount()
             self.update_display()
             self.update_financial_summary()
         elif discount_percentage is not None:
             self.order_manager.add_discount(discount_percentage=discount_percentage)
-            #self.order_manager.update_tax_amount()
+            # self.order_manager.update_tax_amount()
 
             self.update_display()
             self.update_financial_summary()
-
-
-
 
     def remove_item(self, item_name, item_price):
         self.order_manager.remove_item(item_name)
@@ -558,7 +550,6 @@ class CashRegisterApp(MDApp):
         popup.open()
 
     def show_adjust_price_popup(self):
-
         self.adjust_price_popup_layout = BoxLayout(orientation="vertical", spacing=10)
         self.target_amount_input = TextInput(
             text="",
@@ -677,7 +668,6 @@ class CashRegisterApp(MDApp):
 
     def reset_pin(self):
         self.entered_pin = ""
-
 
     def show_inventory(self):
         inventory = self.db_manager.get_all_items()
@@ -860,7 +850,6 @@ class CashRegisterApp(MDApp):
             quantity = item_details["quantity"]
             total_price_for_item = item_details["total_price"]
 
-
             try:
                 total_price_float = float(total_price_for_item)
             except ValueError as e:
@@ -964,7 +953,6 @@ class CashRegisterApp(MDApp):
 
     def on_input_focus(self, instance, value):
         if value:
-
             instance.show_keyboard()
         else:
             instance.hide_keyboard()
@@ -1054,7 +1042,6 @@ class CashRegisterApp(MDApp):
             )
             item_button.bind(on_press=lambda instance, x=item_id: self.on_item_click(x))
             self.order_layout.add_widget(item_button)
-
 
     def handle_card_payment(self):
         open_cash_drawer()
@@ -1147,9 +1134,11 @@ class CashRegisterApp(MDApp):
                 self.theme_cls.theme_style = settings.get("theme_style", "Light")
         except FileNotFoundError:
             pass
+
     """
     Other classes
     """
+
 
 class FinancialSummaryWidget(MDRaisedButton):
     def __init__(self, **kwargs):
@@ -1158,8 +1147,8 @@ class FinancialSummaryWidget(MDRaisedButton):
         self.size_hint_x = 1
         self.height = 80
         self.orientation = "vertical"
-        #self.font_style = "H6"
-        #cash_register = CashRegisterApp()
+        # self.font_style = "H6"
+        # cash_register = CashRegisterApp()
         app = App.get_running_app()
 
     def update_summary(self, subtotal, tax, total_with_tax, discount):
@@ -1174,12 +1163,11 @@ class FinancialSummaryWidget(MDRaisedButton):
         self.open_order_modification_popup()
 
     def open_order_modification_popup(self):
-        order_mod_layout = GridLayout(cols=1, size_hint=(0.8,0.8))
+        order_mod_layout = GridLayout(cols=1, size_hint=(0.8, 0.8))
         adjust_price_button = MDRaisedButton(
-                                text="Adjust Payment",
-                                on_press=lambda x: app.show_adjust_price_popup(),
-
-                               )
+            text="Adjust Payment",
+            on_press=lambda x: app.show_adjust_price_popup(),
+        )
 
         order_mod_layout.add_widget(adjust_price_button)
         popup = Popup(
@@ -1561,7 +1549,6 @@ class InventoryRow(BoxLayout):
         app.update_financial_summary()
 
 
-
 class InventoryView(BoxLayout):
     def __init__(self, order_manager, **kwargs):
         super(InventoryView, self).__init__(**kwargs)
@@ -1595,22 +1582,22 @@ class InventoryView(BoxLayout):
             filtered_items = self.full_inventory
         self.rv.data = self.generate_data_for_rv(filtered_items)
 
+
 class HistoryRow(BoxLayout):
     history_view = ObjectProperty(None)
-    items = StringProperty('')
-    total = StringProperty('')
-    tax = StringProperty('')
-    total_with_tax = StringProperty('')
-    timestamp = StringProperty('')
-    order_id = StringProperty('')
+    items = StringProperty("")
+    total = StringProperty("")
+    tax = StringProperty("")
+    total_with_tax = StringProperty("")
+    timestamp = StringProperty("")
+    order_id = StringProperty("")
 
     def __init__(self, **kwargs):
         super(HistoryRow, self).__init__(**kwargs)
-        self.orientation = 'horizontal'
+        self.orientation = "horizontal"
         self.size_hint_y = None
         self.height = 40
         self.order_history = None
-
 
 
 class OrderDetailsPopup(Popup):
@@ -1618,17 +1605,20 @@ class OrderDetailsPopup(Popup):
         super(OrderDetailsPopup, self).__init__(**kwargs)
         self.title = f"Order Details - {order[0]}"
         self.history_view = HistoryView()
-        self.content = Label(text=self.format_order_details(order), valign='top', halign='left')
+        self.content = Label(
+            text=self.format_order_details(order), valign="top", halign="left"
+        )
         self.size_hint = (0.8, 0.6)
 
     def format_items(self, items_str):
         try:
             items_list = ast.literal_eval(items_str)
-            all_item_names = ', '.join(item.get('name', 'Unknown') for item in items_list)
+            all_item_names = ", ".join(
+                item.get("name", "Unknown") for item in items_list
+            )
             return all_item_names
         except (ValueError, SyntaxError):
-            return "Invalid item data"
-
+            pass
 
     def format_order_details(self, order):
         print(order)
@@ -1636,16 +1626,15 @@ class OrderDetailsPopup(Popup):
             f"Order ID: {order[0]}",
             f"Items: {self.format_items(order[1])}",
             f"Total: ${self.history_view.format_money(order[2])}",
-            #f"Discount: ${self.history_view.format_money(order[2])}",
+            # f"Discount: ${self.history_view.format_money(order[2])}",
             f"Tax: ${self.history_view.format_money(order[3])}",
             f"Total with Tax: ${self.history_view.format_money(order[4])}",
-            f"Timestamp: {self.history_view.format_date(order[5])}"
+            f"Timestamp: {self.history_view.format_date(order[5])}",
         ]
-        return '\n'.join(formatted_order)
+        return "\n".join(formatted_order)
 
 
 class HistoryView(BoxLayout):
-
     def __init__(self, **kwargs):
         super(HistoryView, self).__init__(**kwargs)
         self.order_history = []
@@ -1654,30 +1643,34 @@ class HistoryView(BoxLayout):
         self.order_history = order_history
 
     def show_reporting_popup(self, order_history):
-
         self.set_order_history(order_history)
         self.clear_widgets()
         for order in order_history:
             history_row = self.create_history_row(order)
             self.add_widget(history_row)
 
-    def display_order_details(self, order_id, ):
-
-
+    def display_order_details(
+        self,
+        order_id,
+    ):
         order_id_str = str(order_id)
         try:
-            specific_order = next((order for order in self.order_history if str(order[0]) == order_id_str), None)
+            specific_order = next(
+                (
+                    order
+                    for order in self.order_history
+                    if str(order[0]) == order_id_str
+                ),
+                None,
+            )
         except:
-            print("Exception occurred while searching for order.")
-            return
+            pass
 
         if specific_order:
             popup = OrderDetailsPopup(order=specific_order)
             popup.open()
         else:
-            print("Order not found")
-
-
+            pass
 
     def create_history_row(self, order):
         history_row = HistoryRow()
@@ -1693,22 +1686,25 @@ class HistoryView(BoxLayout):
         return history_row
 
     def show_order_details(self, order_id):
-        specific_order = next((order for order in self.order_history if order[0] == order_id), None)
+        specific_order = next(
+            (order for order in self.order_history if order[0] == order_id), None
+        )
         if specific_order:
             self.clear_widgets()
             history_row = self.create_history_row(specific_order)
             self.add_widget(history_row)
         else:
-            print("Order not found")
+            pass
 
     def format_items(self, items_str):
         try:
             items_list = ast.literal_eval(items_str)
-            all_item_names = ', '.join(item.get('name', 'Unknown') for item in items_list)
+            all_item_names = ", ".join(
+                item.get("name", "Unknown") for item in items_list
+            )
             return self.truncate_text(all_item_names, max_length=40)
         except (ValueError, SyntaxError):
-            return "Invalid item data"
-
+           pass
 
     def format_money(self, value):
         return "{:.2f}".format(value)
@@ -1718,12 +1714,10 @@ class HistoryView(BoxLayout):
             date_obj = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
             return date_obj.strftime("%d %b %Y, %H:%M")
         except ValueError:
-            return "Invalid date"
-
+            pass
 
     def truncate_text(self, text, max_length=40):
-        return text if len(text) <= max_length else text[:max_length - 3] + "..."
-
+        return text if len(text) <= max_length else text[: max_length - 3] + "..."
 
 
 app = CashRegisterApp()
