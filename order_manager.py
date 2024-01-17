@@ -5,16 +5,25 @@ class OrderManager:
     def __init__(self, tax_rate=0.07):
         self.items = {}
         self.total = 0.0
+        self.subtotal = 0.0
         self.tax_rate = tax_rate
+        self.tax_amount = 0.0
         self._total_with_tax = None
         self.order_id = str(uuid.uuid4())
+        self.order_discount = 0.0
 
     def _update_total_with_tax(self):
-        self._total_with_tax = self.total * (1 + self.tax_rate)
+        self.tax_amount = self.total * self.tax_rate
+        self._total_with_tax = self.total + self.tax_amount
 
     def calculate_total_with_tax(self):
         self._update_total_with_tax()
         return self._total_with_tax
+
+    def update_tax_amount(self):
+        self.tax_amount = self.total * self.tax_rate
+        print(self.tax_amount)
+        return self.tax_amount
 
     def add_item(self, item_name, item_price):
         item_id = str(uuid.uuid4())
@@ -39,6 +48,7 @@ class OrderManager:
                 "total_price": item_price,
             }
         self.total += item_price
+        self.subtotal += item_price
         self._update_total_with_tax()
 
     def remove_item(self, item_name):
@@ -49,7 +59,9 @@ class OrderManager:
         )
         if item_to_remove:
             self.total -= self.items[item_to_remove]["total_price"]
-            del self.items[item_to_remove]  # Delete using item_id
+            self.subtotal -= self.items[item_to_remove]["total_price"]
+
+            del self.items[item_to_remove]
             self._update_total_with_tax()
         else:
             pass
@@ -67,6 +79,9 @@ class OrderManager:
         self.total = 0.0
         self._total_with_tax = None
         self.order_id = str(uuid.uuid4())
+        self.order_discount = 0.0
+        self.tax_amount = 0.0
+        self.subtotal = 0.0
 
     def update_item_quantity(self, item_name, new_quantity):
         if item_name in self.items and new_quantity > 0:
@@ -82,26 +97,44 @@ class OrderManager:
         else:
             pass
 
-    def update_item_price(self, item_name, new_price):
-        item_updated = False
 
-        for item_id, item in self.items.items():
-            if item["name"] == item_name:
-                old_price = item["price"]
-                old_total_price = item["total_price"]
+    def adjust_order_to_target_total(self, target_total_with_tax):
+        adjusted_subtotal = target_total_with_tax / (1 + self.tax_rate)
 
-                self.total -= old_total_price
-                new_total_price = new_price * item["quantity"]
-                self.items[item_id] = {
-                    "name": item_name,
-                    "price": new_price,
-                    "quantity": item["quantity"],
-                    "total_price": new_total_price,
-                }
+        discount = self.subtotal - adjusted_subtotal
 
-                self.total += new_total_price
+        if discount < 0 or discount > self.subtotal:
+            print("Adjustment not possible.")
+            return False
 
-                item_updated = True
-            self._update_total_with_tax()
-            if item_updated:
-                return
+        self.subtotal = adjusted_subtotal
+        self.total = adjusted_subtotal
+        self.order_discount += discount
+
+        # Update tax amount and total with tax
+        self.tax_amount = self.total * self.tax_rate
+        self._total_with_tax = self.total + self.tax_amount
+
+        return True
+
+
+
+
+    def add_discount(self, discount_amount=None, discount_percentage=None):
+        if discount_amount is not None:
+            self.order_discount += discount_amount
+            self.total = self.subtotal - discount_amount
+        elif discount_percentage is not None:
+            discount = self.subtotal * (discount_percentage / 100)
+            self.order_discount += discount
+            self.total = self.subtotal - discount
+        self.update_tax_amount()
+        self._update_total_with_tax()
+
+
+
+    def calculate_final_total(self):
+
+        discounted_total = self.total - self.order_discount
+        final_total_with_tax = discounted_total * (1 + self.tax_rate)
+        return final_total_with_tax

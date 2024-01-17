@@ -154,11 +154,12 @@ class CashRegisterApp(MDApp):
         return financial_layout
 
     def update_financial_summary(self):
-        subtotal = self.order_manager.total
-        tax = subtotal * self.order_manager.tax_rate
+        subtotal = self.order_manager.subtotal
         total_with_tax = self.order_manager.calculate_total_with_tax()
+        tax =  self.order_manager.tax_amount
+        discount = self.order_manager.order_discount
 
-        self.financial_summary_widget.update_summary(subtotal, tax, total_with_tax)
+        self.financial_summary_widget.update_summary(subtotal, tax, total_with_tax, discount)
 
     """
     Barcode functions
@@ -314,9 +315,9 @@ class CashRegisterApp(MDApp):
         )
         buttons_layout.add_widget(
             MDRaisedButton(
-                text="Modify Item",
+                text="Add Discount",
                 size_hint=(0.8, 0.8),
-                on_press=lambda x: self.modify_item(item_name, item_price),
+                on_press=lambda x: self.add_discount_popup(item_name, item_price),
             )
         )
         buttons_layout.add_widget(
@@ -347,8 +348,77 @@ class CashRegisterApp(MDApp):
         )
         self.item_popup.open()
 
-    def modify_item(self, item_name, item_price):
-        pass
+
+
+    def add_discount_popup(self, item_name, item_price):
+
+        discount_layout = BoxLayout(orientation="vertical", size_hint_x=1, )
+
+        percent_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        percent_input = TextInput(multiline=False, hint_text="Percent")
+        #percent_layout.add_widget(Label(text="Percent"))
+        percent_layout.add_widget(percent_input)
+
+        amount_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        amount_input = TextInput(multiline=False, hint_text="Amount")
+        #amount_layout.add_widget(Label(text="Amount"))
+        amount_layout.add_widget(amount_input)
+
+        button_layout = BoxLayout(
+            orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
+        )
+        button_layout.add_widget(
+            MDRaisedButton(
+                text="Confirm",
+                size_hint=(0.8, 0.8),
+                on_press=lambda x: self.discount_single_item(
+
+                discount_amount=amount_input.text,
+                discount_percentage=percent_input.text
+            ),
+        )
+    )
+        button_layout.add_widget(
+            MDRaisedButton(
+                text="Cancel"
+                )
+            )
+        discount_layout.add_widget(percent_layout)
+        discount_layout.add_widget(amount_layout)
+        discount_layout.add_widget(button_layout)
+
+
+        popup = Popup(
+            title="Add Discount",
+            pos_hint={"top": 1},
+            content=discount_layout,
+            size_hint=(0.8, 0.4),
+        )
+        popup.open()
+
+
+    def discount_single_item(self,discount_amount=None, discount_percentage=None):
+        try:
+            discount_amount = float(discount_amount) if discount_amount else None
+            discount_percentage = float(discount_percentage) if discount_percentage else None
+        except ValueError:
+
+            return
+
+        if discount_amount is not None:
+            self.order_manager.add_discount(discount_amount=discount_amount)
+            #self.order_manager.update_tax_amount()
+            self.update_display()
+            self.update_financial_summary()
+        elif discount_percentage is not None:
+            self.order_manager.add_discount(discount_percentage=discount_percentage)
+            #self.order_manager.update_tax_amount()
+
+            self.update_display()
+            self.update_financial_summary()
+
+
+
 
     def remove_item(self, item_name, item_price):
         self.order_manager.remove_item(item_name)
@@ -913,13 +983,11 @@ class CashRegisterApp(MDApp):
         target_amount = self.target_amount_input.text
         try:
             target_amount = float(target_amount)
-        except ValueError:
-            return
+        except ValueError as e:
+            print(e)
+            pass
 
-        tax_rate = 0.07
-        adjusted_price = target_amount / (1 + tax_rate)
-
-        self.order_manager.update_item_price(self.current_item_name, adjusted_price)
+        self.order_manager.adjust_order_to_target_total(target_amount)
         self.update_display()
         self.update_financial_summary()
         self.adjust_price_popup.dismiss()
@@ -1041,6 +1109,7 @@ class CashRegisterApp(MDApp):
             json.dumps(items_for_db),
             order_details["total"],
             tax,
+            order_details["discount"],
             order_details["total_with_tax"],
             timestamp,
         )
@@ -1091,10 +1160,10 @@ class FinancialSummaryWidget(MDRaisedButton):
         self.orientation = "vertical"
         self.font_style = "H6"
 
-    def update_summary(self, subtotal, tax, total_with_tax):
+    def update_summary(self, subtotal, tax, total_with_tax, discount):
+
         self.text = (
-            f"Subtotal: ${subtotal:.2f}\nTax: ${tax:.2f}\nTotal: ${total_with_tax:.2f}"
-        )
+            f"Subtotal: ${subtotal:.2f}\nDiscount: ${discount:.2f}\nTax: ${tax:.2f}\nTotal: ${total_with_tax:.2f}")
 
     def on_press(self):
         self.open_order_modification_popup()
