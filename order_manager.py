@@ -21,11 +21,9 @@ class OrderManager:
         return self._total_with_tax
 
     def update_tax_amount(self):
-
         self.tax_amount = max(self.total * self.tax_rate, 0)
         print(self.tax_amount)
         return self.tax_amount
-
 
     def add_item(self, item_name, item_price):
         item_id = str(uuid.uuid4())
@@ -72,7 +70,6 @@ class OrderManager:
         else:
             pass
 
-
     def get_order_details(self):
         return {
             "order_id": self.order_id,
@@ -82,9 +79,8 @@ class OrderManager:
             "tax_rate": self.tax_rate,
             "tax_amount": self.tax_amount,
             "total_with_tax": self._total_with_tax,
-            "discount": self.order_discount
+            "discount": self.order_discount,
         }
-
 
     def clear_order(self):
         self.items = {}
@@ -109,28 +105,22 @@ class OrderManager:
         else:
             pass
 
-
     def adjust_order_to_target_total(self, target_total_with_tax):
         adjusted_subtotal = target_total_with_tax / (1 + self.tax_rate)
 
         discount = self.subtotal - adjusted_subtotal
 
         if discount < 0 or discount > self.subtotal:
-            print("Adjustment not possible.")
             return False
 
         self.subtotal = adjusted_subtotal
         self.total = adjusted_subtotal
         self.order_discount += discount
 
-        # Update tax amount and total with tax
         self.tax_amount = self.total * self.tax_rate
         self._total_with_tax = self.total + self.tax_amount
 
         return True
-
-
-
 
     def add_discount(self, discount_amount=None, discount_percentage=None):
         if discount_amount is not None:
@@ -142,15 +132,7 @@ class OrderManager:
             return
 
         self.total = max(self.subtotal - self.order_discount, 0)
-
         self.update_tax_amount()
         self._update_total_with_tax()
 
 
-
-
-    def calculate_final_total(self):
-
-        discounted_total = self.total - self.order_discount
-        final_total_with_tax = discounted_total * (1 + self.tax_rate)
-        return final_total_with_tax
