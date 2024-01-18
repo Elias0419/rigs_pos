@@ -42,6 +42,7 @@ class DatabaseManager:
                                 items TEXT,
                                 total REAL,
                                 tax REAL,
+                                discount REAL,
                                 total_with_tax REAL,
                                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                             )"""
@@ -74,15 +75,15 @@ class DatabaseManager:
         conn.close()
         return True
 
-    def add_order_history(self, order_id, items, total, tax, total_with_tax, timestamp):
+    def add_order_history(self, order_id, items, total, tax, discount, total_with_tax, timestamp):
         self.create_order_history_table()
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
 
             cursor.execute(
-                "INSERT INTO order_history (order_id, items, total, tax, total_with_tax, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
-                (order_id, items, total, tax, total_with_tax, timestamp),
+                "INSERT INTO order_history (order_id, items, total, tax, discount, total_with_tax, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (order_id, items, total, tax, discount, total_with_tax, timestamp),
             )
             conn.commit()
         except sqlite3.Error as e:

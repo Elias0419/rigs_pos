@@ -5,7 +5,94 @@ from PIL import Image, ImageDraw, ImageFont
 import brother_ql
 from brother_ql.conversion import convert
 from brother_ql.backends.helpers import send
+from kivymd.uix.boxlayout import BoxLayout
+from kivy.uix.popup import Popup
+from kivy.uix.label import Label
+from kivy.properties import StringProperty, ListProperty, ObjectProperty
+from kivy.uix.textinput import TextInput
+from kivymd.uix.button import MDFlatButton, MDRaisedButton
 
+class LabelPrintingRow(BoxLayout):
+    barcode = StringProperty()
+    name = StringProperty()
+    price = StringProperty()
+    label_printer = ObjectProperty()
+
+    def add_to_print_queue(self):
+        self.show_label_popup()
+
+    def show_label_popup(self):
+        content = BoxLayout(orientation="vertical", padding=10)
+        quantity_input = TextInput(text="1", input_filter="int")
+        content.add_widget(Label(text=f"Enter quantity for {self.name}"))
+        content.add_widget(quantity_input)
+        content.add_widget(
+            MDRaisedButton(
+                text="Add",
+                on_press=lambda *args: self.on_add_button_press(quantity_input, popup),
+            )
+        )
+        popup = Popup(title="Label Quantity", content=content, size_hint=(0.8, 0.4))
+        popup.open()
+
+    def on_add_button_press(self, quantity_input, popup):
+        self.add_quantity_to_queue(quantity_input.text)
+        popup.dismiss()
+
+    def add_quantity_to_queue(self, quantity):
+        self.label_printer.add_to_queue(self.barcode, self.name, self.price, quantity)
+
+
+class LabelPrintingView(BoxLayout):
+    def __init__(self, **kwargs):
+        super(LabelPrintingView, self).__init__(**kwargs)
+        self.full_inventory = []
+        self.label_printer = LabelPrinter()
+
+    def show_inventory_for_label_printing(self, inventory_items):
+        self.full_inventory = inventory_items
+        self.rv.data = self.generate_data_for_rv(inventory_items)
+
+    def show_print_queue(self):
+        content = BoxLayout(orientation="vertical", spacing=10)
+        for item in self.label_printer.print_queue:
+            content.add_widget(Label(text=f"{item['name']} x {item['quantity']}"))
+
+        content.add_widget(MDRaisedButton(text="Print Now", on_press=self.print_now))
+        content.add_widget(MDRaisedButton(text="Cancel", on_press=self.cancel_print))
+
+        self.print_queue_popup = Popup(
+            title="Print Queue", content=content, size_hint=(0.8, 0.6)
+        )
+        self.print_queue_popup.open()
+
+    def print_now(self, instance):
+        self.label_printer.process_queue()
+        self.print_queue_popup.dismiss()
+
+    def cancel_print(self, instance):
+        self.print_queue_popup.dismiss()
+
+    def generate_data_for_rv(self, items):
+        return [
+            {
+                "barcode": str(item[0]),
+                "name": item[1],
+                "price": str(item[2]),
+                "label_printer": self.label_printer,
+            }
+            for item in items
+        ]
+
+    def filter_inventory(self, query):
+        if query:
+            query = query.lower()
+            filtered_items = [
+                item for item in self.full_inventory if query in item[1].lower()
+            ]
+        else:
+            filtered_items = self.full_inventory
+        self.rv.data = self.generate_data_for_rv(filtered_items)
 
 class LabelPrinter:
     def __init__(self):
@@ -51,11 +138,14 @@ class LabelPrinter:
         label_image.paste(barcode_image, barcode_position)
 
         # label_image.save(save_path)
-        # Printing logic
         qlr = brother_ql.BrotherQLRaster('QL-710W')
         qlr.exception_on_warning = True
         convert(qlr=qlr, images=[label_image], label='23x23', cut=False)
-        send(instructions=qlr.data, printer_identifier='usb://0x04F9:0x2043', backend_identifier='pyusb')
+        try:
+            send(instructions=qlr.data, printer_identifier='usb://0x04F9:0x2043', backend_identifier='pyusb')
+        except ValueError as e:
+            print(e)
+            pass
 
     def process_queue(self):
 
