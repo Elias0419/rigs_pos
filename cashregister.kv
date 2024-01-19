@@ -47,6 +47,12 @@ MDRaisedButton:
             height: self.minimum_height
             orientation: 'vertical'
 <LabelPrintingRow>:
+    canvas.after:
+        Color:
+            rgba: 0.5, 0.5, 0.5, 1
+        Line:
+            points: self.x, self.y, self.x + self.width, self.y
+            width: 1
     barcode: root.barcode
     name: root.name
     price: root.price
@@ -99,6 +105,12 @@ MDRaisedButton:
             orientation: 'vertical'
 
 <InventoryManagementRow>:
+    canvas.after:
+        Color:
+            rgba: 0.5, 0.5, 0.5, 1
+        Line:
+            points: self.x, self.y, self.x + self.width, self.y
+            width: 1
     barcode: root.barcode
     name: root.name
     price: root.price
@@ -155,34 +167,52 @@ MDRaisedButton:
 
 
 <HistoryRow>:
-    orientation: 'horizontal'
-    BoxLayout:
-        orientation: 'horizontal'
-        size_hint_x: 0.8
+    canvas.after:
+        Color:
+            rgba: 0.5, 0.5, 0.5, 1
+        Line:
+            points: self.x, self.y, self.x + self.width, self.y
+            width: 1
+
+    GridLayout:
+        orientation: 'lr-tb'
+        cols: 3
 
         Label:
             id: items
             text: root.items
+            size_hint_x: 0.65
+            text_size: self.size
+            halign: "left"
+
         Label:
             id: total_with_tax
             text: root.total_with_tax
+            size_hint_x: 0.1
+
         Label:
             id: timestamp
             text: root.timestamp
+            size_hint_x: 0.15
+
     Button:
-        size_hint_x: 0.2
+        size_hint_x: 0.1
+
         text: "Details"
         on_press: root.history_view.display_order_details(root.order_id)
 
 <HistoryView>:
     orientation: 'vertical'
-    rv: rv
     RecycleView:
-        id: rv
+        id: history_rv
         viewclass: 'HistoryRow'
+        size_hint_x: 1
         RecycleBoxLayout:
-            default_size: None, dp(56)
+            default_size: None, dp(32)
             default_size_hint: 1, None
             size_hint_y: None
             height: self.minimum_height
             orientation: 'vertical'
+
+
+

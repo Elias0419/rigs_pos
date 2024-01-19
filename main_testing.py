@@ -43,7 +43,7 @@ from database_manager import DatabaseManager
 from label_printer import LabelPrinter, LabelPrintingRow, LabelPrintingView
 from open_cash_drawer import open_cash_drawer
 from order_manager import OrderManager
-from history_manager import HistoryRow, HistoryView, OrderDetailsPopup
+from history_manager import HistoryPopup
 from inventory_manager import InventoryManagementRow, InventoryManagementView, InventoryRow, InventoryView
 Window.maximize()
 Window.borderless = True
@@ -66,6 +66,7 @@ class CashRegisterApp(MDApp):
         self.barcode_scanner = BarcodeScanner()
         self.db_manager = DatabaseManager("inventory.db")
         self.order_manager = OrderManager()
+        self.history_popup = HistoryPopup()
 
         main_layout = GridLayout(cols=1, orientation="tb-lr", row_default_height=60)
         top_area_layout = GridLayout(cols=3, orientation="lr-tb", row_default_height=60)
@@ -257,7 +258,7 @@ class CashRegisterApp(MDApp):
         elif instance.text == "Open Register":
             open_cash_drawer()
         elif instance.text == "Reporting":
-            self.show_hist_reporting_popup()
+            self.history_popup.show_hist_reporting_popup()
         elif instance.text == "Label Printer":
             self.show_label_printing_view()
         elif instance.text == "Inventory Management":
@@ -675,12 +676,12 @@ class CashRegisterApp(MDApp):
         popup = Popup(title="Inventory", content=inventory_view, size_hint=(0.9, 0.9))
         popup.open()
 
-    def show_hist_reporting_popup(self):
-        order_history = self.db_manager.get_order_history()
-        history_view = HistoryView()
-        history_view.show_reporting_popup(order_history)
-        popup = Popup(title="Order History", content=history_view, size_hint=(0.9, 0.9))
-        popup.open()
+    # def show_hist_reporting_popup(self):
+    #     order_history = self.db_manager.get_order_history()
+    #     history_view = HistoryView()
+    #     history_view.show_reporting_popup(order_history)
+    #     popup = Popup(title="Order History", content=history_view, size_hint=(0.9, 0.9))
+    #     popup.open()
 
     def show_tools_popup(self):
         float_layout = FloatLayout()
