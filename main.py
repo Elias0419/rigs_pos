@@ -1,12 +1,13 @@
+import ast
 from datetime import datetime
 import json
 import random
 import re
 import subprocess
 import sys
-import time
-import ast
 import threading
+import time
+
 
 from kivy.config import Config
 
@@ -28,7 +29,6 @@ from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.uix.textinput import TextInput
 from kivy.utils import get_color_from_hex
 
-
 from kivymd.app import MDApp
 from kivymd.color_definitions import palette
 from kivymd.uix.boxlayout import BoxLayout
@@ -45,7 +45,13 @@ from open_cash_drawer import open_cash_drawer
 from order_manager import OrderManager
 from history_manager import HistoryPopup
 from receipt_printer import ReceiptPrinter
-from inventory_manager import InventoryManagementRow, InventoryManagementView, InventoryRow, InventoryView
+from inventory_manager import (
+    InventoryManagementRow,
+    InventoryManagementView,
+    InventoryRow,
+    InventoryView,
+)
+
 Window.maximize()
 Window.borderless = True
 
@@ -68,7 +74,7 @@ class CashRegisterApp(MDApp):
         self.db_manager = DatabaseManager("inventory.db")
         self.order_manager = OrderManager()
         self.history_popup = HistoryPopup()
-        self.receipt_printer = ReceiptPrinter('receipt_printer_config.yaml')
+        self.receipt_printer = ReceiptPrinter("receipt_printer_config.yaml")
 
         main_layout = GridLayout(cols=1, orientation="tb-lr", row_default_height=60)
         top_area_layout = GridLayout(cols=3, orientation="lr-tb", row_default_height=60)
@@ -678,7 +684,6 @@ class CashRegisterApp(MDApp):
         popup = Popup(title="Inventory", content=inventory_view, size_hint=(0.9, 0.9))
         popup.open()
 
-
     def show_tools_popup(self):
         float_layout = FloatLayout()
 
@@ -871,7 +876,6 @@ class CashRegisterApp(MDApp):
         )
         confirmation_layout.add_widget(receipt_button)
 
-
         self.payment_popup = Popup(
             title="Payment Confirmation",
             content=confirmation_layout,
@@ -881,14 +885,17 @@ class CashRegisterApp(MDApp):
         self.payment_popup.open()
 
     def on_receipt_button_press(self, instance):
-        printer = ReceiptPrinter('receipt_printer_config.yaml')
+        printer = ReceiptPrinter("receipt_printer_config.yaml")
 
         # Obtain order details from OrderManager
         order_details = self.order_manager.get_order_details()
-
-        # Create receipt image with order details
-        receipt_image = printer.create_receipt_image(order_details)
-        printer.print_image(receipt_image)
+        try:
+            # Create receipt image with order details
+            receipt_image = printer.create_receipt_image(order_details)
+            printer.print_image(receipt_image)
+        except:
+            print("printer not connected")
+            pass
 
     def show_make_change_popup(self, change):
         change_layout = BoxLayout(orientation="vertical", spacing=10)
@@ -1123,7 +1130,6 @@ class CashRegisterApp(MDApp):
         finally:
             pass
 
-
     def reboot(self, instance):
         subprocess.run(["systemctl", "reboot"])
 
@@ -1145,7 +1151,6 @@ class CashRegisterApp(MDApp):
                 self.theme_cls.theme_style = settings.get("theme_style", "Light")
         except FileNotFoundError:
             pass
-
 
 
 class FinancialSummaryWidget(MDRaisedButton):
