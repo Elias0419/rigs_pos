@@ -634,8 +634,8 @@ class CashRegisterApp(MDApp):
                 else:
                     btn = Button(
                         size_hint=(0.8, 0.8),
-                        opacity=0,
-                        background_color=(0, 0, 0, 0),
+                        opacity=1,
+                        background_color=(155, 0, 0, 0),
                         on_press=lambda instance: self.manual_override(instance)
                     )
                 keypad_layout.add_widget(btn)
