@@ -1,6 +1,8 @@
 import ast
 import csv
+import json
 from datetime import datetime, timedelta
+from functools import partial
 
 from kivymd.app import MDApp
 from kivy.metrics import dp
@@ -16,6 +18,7 @@ from kivymd.uix.button import MDRaisedButton
 from kivy.uix.popup import Popup
 
 from database_manager import DatabaseManager
+from receipt_printer import ReceiptPrinter
 
 
 class HistoryPopup(Popup):
@@ -56,6 +59,7 @@ class HistoryView(BoxLayout):
         self.orientation = "vertical"
         self.current_filter = None
         # self.size_hint = (1, 1)
+        self.receipt_printer = ReceiptPrinter("receipt_printer_config.yaml")
 
         self.button_layout = BoxLayout(orientation="horizontal", size_hint=(1, 0.2))
         self.button_layout.add_widget(
@@ -109,7 +113,7 @@ class HistoryView(BoxLayout):
             for row in csv_data:
                 writer.writerow(row)
 
-        print(f"Exported history to {filename}")
+
 
     def get_export_filename(self):
         today = datetime.now().strftime("%Y-%m-%d")
@@ -192,8 +196,6 @@ class HistoryView(BoxLayout):
 
     def on_custom_range_selected(self, instance, picker, date_range):
         self.current_filter = "custom_range"
-
-        print(f"{picker}\n{date_range}")
 
         date_set = set(date_range)
 
@@ -282,7 +284,8 @@ class HistoryView(BoxLayout):
             pass
 
         if specific_order:
-            popup = OrderDetailsPopup(order=specific_order)
+            popup = OrderDetailsPopup(specific_order, self.receipt_printer)
+
             popup.open()
         else:
             pass
@@ -292,6 +295,7 @@ class HistoryView(BoxLayout):
             (order for order in self.order_history if order[0] == order_id), None
         )
         if specific_order:
+            print(specific_order)
             self.clear_widgets()
             history_row = self.create_history_row(specific_order)
             self.add_widget(history_row)
@@ -305,7 +309,7 @@ class HistoryView(BoxLayout):
                 item.get("name", "Unknown") for item in items_list
             )
             return self.truncate_text(all_item_names)
-        except (ValueError, SyntaxError):
+        except:
             pass
 
     def format_money(self, value):
@@ -315,7 +319,7 @@ class HistoryView(BoxLayout):
         try:
             date_obj = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
             return date_obj.strftime("%d %b %Y, %H:%M")
-        except ValueError:
+        except:
             pass
 
     def truncate_text(self, text, max_length=120):
@@ -323,14 +327,47 @@ class HistoryView(BoxLayout):
 
 
 class OrderDetailsPopup(Popup):
-    def __init__(self, order, **kwargs):
+    def __init__(self, order, receipt_printer, **kwargs):
         super(OrderDetailsPopup, self).__init__(**kwargs)
         self.title = f"Order Details - {order[0]}"
         self.history_view = HistoryView()
-        self.content = Label(
-            text=self.format_order_details(order), valign="top", halign="left"
-        )
         self.size_hint = (0.8, 0.6)
+        self.receipt_printer = receipt_printer
+
+        content_layout = BoxLayout(orientation="vertical", spacing=dp(10))
+
+        content_layout.add_widget(
+            Label(text=self.format_order_details(order), valign="top", halign="left")
+        )
+
+        button_layout = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(10))
+
+        button_layout.add_widget(
+            MDRaisedButton(
+                text="Print Receipt", on_press=partial(self.print_receipt, order=order)
+            )
+        )
+        button_layout.add_widget(MDRaisedButton(text="Refund", on_press=self.refund))
+        button_layout.add_widget(
+            MDRaisedButton(text="Close", on_press=self.dismiss_popup)
+        )
+
+        content_layout.add_widget(button_layout)
+
+        self.content = content_layout
+
+    def print_receipt(self, instance, order):
+        print(order)
+        order_dict = self.convert_order_to_dict(order)
+
+        receipt_image = self.receipt_printer.create_receipt_image(order_dict)
+        self.receipt_printer.print_image(receipt_image)
+
+    def refund(self, instance):
+        pass
+
+    def dismiss_popup(self, instance):
+        self.dismiss()
 
     def format_items(self, items_str):
         try:
@@ -341,6 +378,30 @@ class OrderDetailsPopup(Popup):
             return all_item_names
         except (ValueError, SyntaxError):
             pass
+
+    def convert_order_to_dict(self, order_tuple):
+        order_id, items_json, total, tax, total_with_tax, timestamp = order_tuple
+        try:
+            items = json.loads(items_json)
+        except json.JSONDecodeError:
+            items = ast.literal_eval(items_json)
+
+        if isinstance(items, list):
+            items_dict = {str(i): item for i, item in enumerate(items)}
+        else:
+            items_dict = items
+
+        order_dict = {
+            "order_id": order_id,
+            "items": items_dict,
+            "subtotal": total,
+            "tax_amount": tax,
+            "total_with_tax": total_with_tax,
+            "timestamp": timestamp,
+            "discount": 0.0,
+        }
+
+        return order_dict
 
     def format_order_details(self, order):
         print(order)

@@ -44,6 +44,7 @@ from label_printer import LabelPrinter, LabelPrintingRow, LabelPrintingView
 from open_cash_drawer import open_cash_drawer
 from order_manager import OrderManager
 from history_manager import HistoryPopup
+from receipt_printer import ReceiptPrinter
 from inventory_manager import InventoryManagementRow, InventoryManagementView, InventoryRow, InventoryView
 Window.maximize()
 Window.borderless = True
@@ -67,6 +68,7 @@ class CashRegisterApp(MDApp):
         self.db_manager = DatabaseManager("inventory.db")
         self.order_manager = OrderManager()
         self.history_popup = HistoryPopup()
+        self.receipt_printer = ReceiptPrinter('receipt_printer_config.yaml')
 
         main_layout = GridLayout(cols=1, orientation="tb-lr", row_default_height=60)
         top_area_layout = GridLayout(cols=3, orientation="lr-tb", row_default_height=60)
@@ -676,12 +678,6 @@ class CashRegisterApp(MDApp):
         popup = Popup(title="Inventory", content=inventory_view, size_hint=(0.9, 0.9))
         popup.open()
 
-    # def show_hist_reporting_popup(self):
-    #     order_history = self.db_manager.get_order_history()
-    #     history_view = HistoryView()
-    #     history_view.show_reporting_popup(order_history)
-    #     popup = Popup(title="Order History", content=history_view, size_hint=(0.9, 0.9))
-    #     popup.open()
 
     def show_tools_popup(self):
         float_layout = FloatLayout()
@@ -868,6 +864,14 @@ class CashRegisterApp(MDApp):
         )
         confirmation_layout.add_widget(done_button)
 
+        receipt_button = MDRaisedButton(
+            text="Print Receipt",
+            size_hint=(0.2, 0.2),
+            on_press=self.on_receipt_button_press,  ####################################
+        )
+        confirmation_layout.add_widget(receipt_button)
+
+
         self.payment_popup = Popup(
             title="Payment Confirmation",
             content=confirmation_layout,
@@ -875,6 +879,16 @@ class CashRegisterApp(MDApp):
         )
         self.popup.dismiss()
         self.payment_popup.open()
+
+    def on_receipt_button_press(self, instance):
+        printer = ReceiptPrinter('receipt_printer_config.yaml')
+
+        # Obtain order details from OrderManager
+        order_details = self.order_manager.get_order_details()
+
+        # Create receipt image with order details
+        receipt_image = printer.create_receipt_image(order_details)
+        printer.print_image(receipt_image)
 
     def show_make_change_popup(self, change):
         change_layout = BoxLayout(orientation="vertical", spacing=10)
@@ -1173,9 +1187,11 @@ class FinancialSummaryWidget(MDRaisedButton):
         popup.open()
 
 
-
-app = CashRegisterApp()
-app.run()
+try:
+    app = CashRegisterApp()
+    app.run()
+except KeyboardInterrupt:
+    print("test")
 # if __name__ == "__main__":
 #     app = CashRegisterApp()
 #     app.run()
