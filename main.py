@@ -1,13 +1,12 @@
-import ast
 from datetime import datetime
 import json
 import random
 import re
 import subprocess
 import sys
-import threading
 import time
-
+import ast
+import threading
 
 from kivy.config import Config
 
@@ -29,10 +28,11 @@ from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.uix.textinput import TextInput
 from kivy.utils import get_color_from_hex
 
+
 from kivymd.app import MDApp
 from kivymd.color_definitions import palette
 from kivymd.uix.boxlayout import BoxLayout
-from kivymd.uix.button import MDFlatButton, MDRaisedButton
+from kivymd.uix.button import MDFlatButton, MDRaisedButton, MDIconButton
 from kivymd.uix.gridlayout import GridLayout
 from kivymd.uix.label import MDLabel
 from kivymd.uix.recycleview import RecycleView
@@ -45,13 +45,7 @@ from open_cash_drawer import open_cash_drawer
 from order_manager import OrderManager
 from history_manager import HistoryPopup
 from receipt_printer import ReceiptPrinter
-from inventory_manager import (
-    InventoryManagementRow,
-    InventoryManagementView,
-    InventoryRow,
-    InventoryView,
-)
-
+from inventory_manager import InventoryManagementRow, InventoryManagementView, InventoryRow, InventoryView
 Window.maximize()
 Window.borderless = True
 
@@ -64,6 +58,7 @@ class CashRegisterApp(MDApp):
         self.entered_pin = ""
         self.is_guard_screen_displayed = False
         self.is_lock_screen_displayed = False
+        self.override_tap_time = 0
         self.pin_reset_timer = None
         self.theme_cls.theme_style = "Light"
         self.theme_cls.primary_palette = "Brown"
@@ -74,7 +69,7 @@ class CashRegisterApp(MDApp):
         self.db_manager = DatabaseManager("inventory.db")
         self.order_manager = OrderManager()
         self.history_popup = HistoryPopup()
-        self.receipt_printer = ReceiptPrinter("receipt_printer_config.yaml")
+        self.receipt_printer = ReceiptPrinter('receipt_printer_config.yaml')
 
         main_layout = GridLayout(cols=1, orientation="tb-lr", row_default_height=60)
         top_area_layout = GridLayout(cols=3, orientation="lr-tb", row_default_height=60)
@@ -144,6 +139,13 @@ class CashRegisterApp(MDApp):
             color=self.get_text_color(),
             halign="center",
         )
+        padlock_button = MDIconButton(
+            icon="lock",
+            pos_hint={"right": 1},
+            on_press=lambda x: self.turn_off_monitor()
+        )
+        clock_layout.add_widget(padlock_button)
+
 
         Clock.schedule_interval(self.update_clock, 1)
         clock_layout.add_widget(self.clock_label)
@@ -616,27 +618,30 @@ class CashRegisterApp(MDApp):
             keypad_layout = GridLayout(cols=3)
 
             numeric_buttons = [
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "7",
-                "8",
-                "9",
-                "0",
-                "Reset",
+                "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "Reset", " "
             ]
+
             for button in numeric_buttons:
-                btn = MDFlatButton(
-                    text=button,
-                    text_color=(0, 0, 0, 1),
-                    font_style="H4",
-                    size_hint=(0.8, 0.8),
-                    on_press=self.on_lock_screen_button_press,
-                )
-                keypad_layout.add_widget(btn)
+                if button != " ":
+                    # Visible buttons
+                    btn = MDFlatButton(
+                        text=button,
+                        text_color=(0, 0, 0, 1),
+                        font_style="H4",
+                        size_hint=(0.8, 0.8),
+                        on_press=self.on_lock_screen_button_press,
+                    )
+                    keypad_layout.add_widget(btn)
+                else:
+                    # Invisible button for manual override
+                    btn_2 = Button(
+                        size_hint=(0.8, 0.8),
+                        opacity=0,  # Make it invisible
+                        background_color=(0, 0, 0, 0),  # Transparent background
+                    )
+                    btn_2.bind(on_press=self.manual_override)
+                    keypad_layout.add_widget(btn_2)
+
 
             lock_layout.add_widget(keypad_layout)
             self.lock_popup = Popup(
@@ -652,6 +657,14 @@ class CashRegisterApp(MDApp):
                 )
             )
             self.lock_popup.open()
+
+    def manual_override(self, instance):
+
+        current_time = time.time()
+        if current_time - self.override_tap_time < 1:
+            sys.exit(42)
+        else:
+            self.override_tap_time = current_time
 
     def on_lock_screen_button_press(self, instance):
         if instance.text == "Reset":
@@ -683,6 +696,7 @@ class CashRegisterApp(MDApp):
         inventory_view.show_inventory(inventory)
         popup = Popup(title="Inventory", content=inventory_view, size_hint=(0.9, 0.9))
         popup.open()
+
 
     def show_tools_popup(self):
         float_layout = FloatLayout()
@@ -876,6 +890,7 @@ class CashRegisterApp(MDApp):
         )
         confirmation_layout.add_widget(receipt_button)
 
+
         self.payment_popup = Popup(
             title="Payment Confirmation",
             content=confirmation_layout,
@@ -885,17 +900,14 @@ class CashRegisterApp(MDApp):
         self.payment_popup.open()
 
     def on_receipt_button_press(self, instance):
-        printer = ReceiptPrinter("receipt_printer_config.yaml")
+        printer = ReceiptPrinter('receipt_printer_config.yaml')
 
         # Obtain order details from OrderManager
         order_details = self.order_manager.get_order_details()
-        try:
-            # Create receipt image with order details
-            receipt_image = printer.create_receipt_image(order_details)
-            printer.print_image(receipt_image)
-        except:
-            print("printer not connected")
-            pass
+
+        # Create receipt image with order details
+        receipt_image = printer.create_receipt_image(order_details)
+        printer.print_image(receipt_image)
 
     def show_make_change_popup(self, change):
         change_layout = BoxLayout(orientation="vertical", spacing=10)
@@ -1009,6 +1021,31 @@ class CashRegisterApp(MDApp):
         except Exception as e:
             print(e)
             return False
+
+    def turn_off_monitor(self):
+        touchscreen_device = "iSolution multitouch"
+
+        try:
+            subprocess.run(["xinput", "disable", touchscreen_device], check=True)
+        except subprocess.CalledProcessError as e:
+            print("Error disabling touchscreen:", e)
+            return
+
+        try:
+            subprocess.run(["xset", "dpms", "force", "off"], check=True)
+        except subprocess.CalledProcessError as e:
+            print("Error turning off monitor:", e)
+            subprocess.run(["xinput", "enable", touchscreen_device])
+            return
+
+        def reenable_touchscreen():
+            time.sleep(1)
+            try:
+                subprocess.run(["xinput", "enable", touchscreen_device], check=True)
+            except subprocess.CalledProcessError as e:
+                print("Error re-enabling touchscreen:", e)
+
+        threading.Thread(target=reenable_touchscreen).start()
 
     def check_monitor_status(self, dt):
         if self.is_monitor_off():
@@ -1130,6 +1167,7 @@ class CashRegisterApp(MDApp):
         finally:
             pass
 
+
     def reboot(self, instance):
         subprocess.run(["systemctl", "reboot"])
 
@@ -1151,6 +1189,7 @@ class CashRegisterApp(MDApp):
                 self.theme_cls.theme_style = settings.get("theme_style", "Light")
         except FileNotFoundError:
             pass
+
 
 
 class FinancialSummaryWidget(MDRaisedButton):
