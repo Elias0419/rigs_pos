@@ -32,7 +32,7 @@ from kivy.utils import get_color_from_hex
 from kivymd.app import MDApp
 from kivymd.color_definitions import palette
 from kivymd.uix.boxlayout import BoxLayout
-from kivymd.uix.button import MDFlatButton, MDRaisedButton
+from kivymd.uix.button import MDFlatButton, MDRaisedButton, MDIconButton
 from kivymd.uix.gridlayout import GridLayout
 from kivymd.uix.label import MDLabel
 from kivymd.uix.recycleview import RecycleView
@@ -139,6 +139,13 @@ class CashRegisterApp(MDApp):
             color=self.get_text_color(),
             halign="center",
         )
+        padlock_button = MDIconButton(
+            icon="lock",
+            pos_hint={"right": 1},
+            on_press=lambda x: self.turn_off_monitor()
+        )
+        clock_layout.add_widget(padlock_button)
+
 
         Clock.schedule_interval(self.update_clock, 1)
         clock_layout.add_widget(self.clock_label)
@@ -629,7 +636,7 @@ class CashRegisterApp(MDApp):
                         size_hint=(0.8, 0.8),
                         opacity=0,
                         background_color=(0, 0, 0, 0),
-                        on_press=self.manual_override
+                        on_press=lambda instance: self.manual_override(instance)
                     )
                 keypad_layout.add_widget(btn)
 
@@ -647,9 +654,11 @@ class CashRegisterApp(MDApp):
                 )
             )
             self.lock_popup.open()
+
     def manual_override(self, instance):
+        print("test")
         current_time = time.time()
-        if current_time - self.override_tap_time < 1:  # 0.5 seconds threshold for double tap
+        if current_time - self.override_tap_time < 1:
             sys.exit(42)
         else:
             self.override_tap_time = current_time
@@ -1009,6 +1018,13 @@ class CashRegisterApp(MDApp):
         except Exception as e:
             print(e)
             return False
+
+    def turn_off_monitor(self):
+        try:
+            subprocess.run(["xset", "dpms", "force", "off"])
+        except Exception as e:
+            print(e)
+            pass
 
     def check_monitor_status(self, dt):
         if self.is_monitor_off():
