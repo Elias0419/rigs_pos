@@ -610,26 +610,26 @@ class CashRegisterApp(MDApp):
             keypad_layout = GridLayout(cols=3)
 
             numeric_buttons = [
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "7",
-                "8",
-                "9",
-                "0",
-                "Reset",
+                "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "Reset", " "
             ]
+
             for button in numeric_buttons:
-                btn = MDFlatButton(
-                    text=button,
-                    text_color=(0, 0, 0, 1),
-                    font_style="H4",
-                    size_hint=(0.8, 0.8),
-                    on_press=self.on_lock_screen_button_press,
-                )
+                if button:
+                    # Visible buttons
+                    btn = MDFlatButton(
+                        text=button,
+                        text_color=(0, 0, 0, 1),
+                        font_style="H4",
+                        size_hint=(0.8, 0.8),
+                        on_press=self.on_lock_screen_button_press,
+                    )
+                else:
+                    btn = Button(
+                        size_hint=(0.8, 0.8),
+                        opacity=0,
+                        background_color=(0, 0, 0, 0),
+                        on_press=self.manual_override
+                    )
                 keypad_layout.add_widget(btn)
 
             lock_layout.add_widget(keypad_layout)
@@ -646,6 +646,9 @@ class CashRegisterApp(MDApp):
                 )
             )
             self.lock_popup.open()
+    def manual_override(self, instance):
+
+        sys.exit(42)
 
     def on_lock_screen_button_press(self, instance):
         if instance.text == "Reset":
