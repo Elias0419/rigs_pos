@@ -1,108 +1,115 @@
-import datetime
+from datetime import datetime
 from escpos.printer import Usb
 from PIL import Image, ImageDraw, ImageFont
+from escpos.config import Config
+import textwrap
+
 
 class ReceiptPrinter:
-    def __init__(self, printer_vendor_id, printer_product_id, printer_profile):
-        self.printer = Usb(printer_vendor_id, printer_product_id, profile=printer_profile)
+    def __init__(self, config_path):
+        self.config_handler = Config()
+        self.config_handler.load(config_path)
+        self.printer = self.config_handler.printer()
 
-    def format_order_details(self, order_details):
+    def create_receipt_image(self, order_details):
+        print(order_details)
+        font_size = 25
+        alt_font_size = 18
+        line_spacing = 50
+        initial_height = 250
+        max_line_width = 25
 
-        formatted_text = ""
-        return formatted_text
+        font = ImageFont.truetype(
+            "/usr/share/fonts/TTF/JetBrainsMono-ExtraBold.ttf", font_size
+        )
+        alt_font = ImageFont.truetype(
+            "/usr/share/fonts/TTF/JetBrainsMono-ExtraBold.ttf", alt_font_size
+        )
 
-    def print_receipt(self, order_details):
+        def wrap_text(text, line_width):
+            return textwrap.wrap(text, line_width)
 
-        formatted_text = self.format_order_details(order_details)
-        self.printer.text(formatted_text)
+        num_lines = 4
+        for item in order_details["items"].values():
+            wrapped_item_name = wrap_text(item["name"], max_line_width)
+            num_lines += len(wrapped_item_name)
 
-        self.printer.cut()
+        if order_details["discount"] > 0:
+            num_lines += 1
 
-    def add_logo(self, logo_path):
-        pass
+        total_height = initial_height + (num_lines * line_spacing) + 50
 
-    def add_barcode(self, barcode_value, barcode_type='EAN13'):
-        pass
+        canvas = Image.new("RGB", (600, total_height), color="white")
+        draw = ImageDraw.Draw(canvas)
+        date = str(datetime.now().replace(microsecond=0))
 
-    def add_datetime(self):
-        current_datetime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        self.printer.text(f"\n{current_datetime}\n")
+        logo = Image.open("logo.png")
+        canvas.paste(logo, (100, -60))
 
-class ReceiptPreview:
-    def __init__(self, width=300, height=500):
-        self.canvas = Image.new('RGB', (width, height), color='white')
-        self.draw = ImageDraw.Draw(self.canvas)
-        self.font = ImageFont.truetype('/usr/share/fonts/TTF/JetBrainsMono-ExtraBold.ttf', 15)
+        y_position = initial_height
+        draw.text((100, 200), date, fill="black", font=font)
 
-    def add_text(self, text, position):
-        self.draw.text(position, text, fill='black', font=self.font)
+        for item in order_details["items"].values():
+            wrapped_item_name = wrap_text(item["name"], max_line_width)
+            for line_index, line in enumerate(wrapped_item_name):
+                if line_index == len(wrapped_item_name) - 1:
+                    item_line = (
+                        f"{line} x{item['quantity']}  ${item['total_price']:.2f}"
+                    )
+                else:
+                    item_line = line
 
-    def add_image(self, image_path, position):
-        image = Image.open(image_path)
-        image = image.resize((100, 100), Image.Resampling.LANCZOS)
-        self.canvas.paste(image, position)
+                draw.text((10, y_position), item_line, fill="black", font=font)
+                y_position += line_spacing
 
-    def show_preview(self):
-        self.canvas.show()
+        draw.text(
+            (10, y_position + 20),
+            f"Subtotal: ${order_details['subtotal']:.2f}",
+            fill="black",
+            font=font,
+        )
+        y_position += line_spacing
 
-preview = ReceiptPreview()
-preview.add_image("logo.png", (80, 0))
-preview.add_text("Store Name", (100, 100))
-preview.add_text("Date", (100, 110))
-preview.add_text("Other details", (100, 120))
-preview.add_text("An item", (40, 150))
-preview.add_text("An item price", (175, 150))
-preview.add_text("An item 2", (40, 165))
-preview.add_text("An item price 2", (175, 165))
+        if order_details["discount"] > 0:
+            draw.text(
+                (10, y_position),
+                f"Discount: -${order_details['discount']:.2f}",
+                fill="black",
+                font=font,
+            )
+            y_position += line_spacing
 
-preview.show_preview()
+        draw.text(
+            (10, y_position),
+            f"Tax: ${order_details['tax_amount']:.2f}",
+            fill="black",
+            font=font,
+        )
+        y_position += line_spacing
+        draw.text(
+            (10, y_position),
+            f"Total: ${order_details['total_with_tax']:.2f}",
+            fill="black",
+            font=font,
+        )
+        y_position += line_spacing
+        draw.text(
+            (10, y_position + 50),
+            f"{order_details['order_id']}",
+            fill="black",
+            font=alt_font,
+        )
+        return canvas
+
+    def print_image(self, img_source):
+        try:
+            self.printer.image(img_source)
+            self.printer.cut()
+        except:
+            pass
 
 
-# class ReceiptPreview:
-#     def __init__(self, width=300):
-#         self.width = width
-#         self.padding = 40
-#         self.current_y = 10
-#         self.canvas = Image.new('RGB', (self.width, 800), color='white')
-#         self.draw = ImageDraw.Draw(self.canvas)
-#         self.font = ImageFont.truetype('/usr/share/fonts/TTF/Arial.TTF', 15)
-#
-#     def add_text(self, text, position, font=None, anchor='left'):
-#         if font is None:
-#             font = self.font
-#         bbox = self.draw.textbbox(position, text, font=font)
-#         text_width = bbox[2] - bbox[0]
-#         text_height = bbox[3] - bbox[1]
-#
-#         if anchor == 'right':
-#             position = (self.width - text_width - self.padding, position[1])
-#         elif anchor == 'center':
-#             position = ((self.width - text_width) // 2, position[1])
-#
-#         self.draw.text(position, text, fill='black', font=font)
-#         self.current_y = position[1] + text_height
-#
-#     def add_image(self, image_path, position, size=(100, 100)):
-#         try:
-#             image = Image.open(image_path)
-#             image = image.resize(size, Image.Resampling.LANCZOS)
-#             self.canvas.paste(image, position, image)
-#         except IOError:
-#             print("Error opening image file")
-#
-#     def show_preview(self):
-#         self.canvas = self.canvas.crop((0, 0, self.width, self.current_y + self.padding))
-#         self.canvas.show()
-#
-# preview = ReceiptPreview()
-# preview.add_image("logo.png", (100, preview.current_y))
-# preview.add_text("Store Name", (preview.padding, preview.current_y), anchor='center')
-# preview.add_text("Date", (preview.padding, preview.current_y), anchor='center')
-# preview.add_text("Other details", (preview.padding, preview.current_y), anchor='center')
-# preview.add_text("An item", (preview.padding, preview.current_y))
-# preview.add_text("An item price", (preview.width - preview.padding, preview.current_y), anchor='right')
-# preview.add_text("An item 2", (preview.padding, preview.current_y))
-# preview.add_text("An item price 2", (preview.width - preview.padding, preview.current_y), anchor='right')
-#
-# preview.show_preview()
-
+if __name__ == "__main__":
+    printer = ReceiptPrinter("receipt_printer_config.yaml")
+    receipt_image = printer.create_receipt_image()
+    printer.print_image(receipt_image)

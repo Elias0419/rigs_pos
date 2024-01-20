@@ -124,10 +124,10 @@ class OrderManager:
 
     def add_discount(self, discount_amount=None, discount_percentage=None):
         if discount_amount is not None:
-            self.order_discount = min(discount_amount, self.subtotal)
+            self.order_discount += min(discount_amount, self.subtotal)
         elif discount_percentage is not None:
             discount = self.subtotal * (discount_percentage / 100)
-            self.order_discount = discount
+            self.order_discount += discount
         else:
             return
 

@@ -40,10 +40,12 @@ from kivymd.uix.recycleview import RecycleView
 from barcode.upc import UniversalProductCodeA as upc_a
 from barcode_scanner import BarcodeScanner
 from database_manager import DatabaseManager
-from label_printer import LabelPrinter
+from label_printer import LabelPrinter, LabelPrintingRow, LabelPrintingView
 from open_cash_drawer import open_cash_drawer
 from order_manager import OrderManager
-
+from history_manager import HistoryPopup
+from receipt_printer import ReceiptPrinter
+from inventory_manager import InventoryManagementRow, InventoryManagementView, InventoryRow, InventoryView
 Window.maximize()
 Window.borderless = True
 
@@ -51,13 +53,11 @@ Window.borderless = True
 class CashRegisterApp(MDApp):
     def __init__(self, **kwargs):
         super(CashRegisterApp, self).__init__(**kwargs)
-        self.last_scanned_item = None
+
         self.correct_pin = "1234"
         self.entered_pin = ""
         self.is_guard_screen_displayed = False
         self.is_lock_screen_displayed = False
-        self.in_inventory_management_view = False
-        self.inventory_manager_view = None
         self.pin_reset_timer = None
         self.theme_cls.theme_style = "Light"
         self.theme_cls.primary_palette = "Brown"
@@ -67,6 +67,8 @@ class CashRegisterApp(MDApp):
         self.barcode_scanner = BarcodeScanner()
         self.db_manager = DatabaseManager("inventory.db")
         self.order_manager = OrderManager()
+        self.history_popup = HistoryPopup()
+        self.receipt_printer = ReceiptPrinter('receipt_printer_config.yaml')
 
         main_layout = GridLayout(cols=1, orientation="tb-lr", row_default_height=60)
         top_area_layout = GridLayout(cols=3, orientation="lr-tb", row_default_height=60)
@@ -258,7 +260,7 @@ class CashRegisterApp(MDApp):
         elif instance.text == "Open Register":
             open_cash_drawer()
         elif instance.text == "Reporting":
-            self.show_hist_reporting_popup()
+            self.history_popup.show_hist_reporting_popup()
         elif instance.text == "Label Printer":
             self.show_label_printing_view()
         elif instance.text == "Inventory Management":
@@ -676,12 +678,6 @@ class CashRegisterApp(MDApp):
         popup = Popup(title="Inventory", content=inventory_view, size_hint=(0.9, 0.9))
         popup.open()
 
-    def show_hist_reporting_popup(self):
-        order_history = self.db_manager.get_order_history()
-        history_view = HistoryView()
-        history_view.show_reporting_popup(order_history)
-        popup = Popup(title="Order History", content=history_view, size_hint=(0.9, 0.9))
-        popup.open()
 
     def show_tools_popup(self):
         float_layout = FloatLayout()
@@ -868,6 +864,14 @@ class CashRegisterApp(MDApp):
         )
         confirmation_layout.add_widget(done_button)
 
+        receipt_button = MDRaisedButton(
+            text="Print Receipt",
+            size_hint=(0.2, 0.2),
+            on_press=self.on_receipt_button_press,  ####################################
+        )
+        confirmation_layout.add_widget(receipt_button)
+
+
         self.payment_popup = Popup(
             title="Payment Confirmation",
             content=confirmation_layout,
@@ -875,6 +879,16 @@ class CashRegisterApp(MDApp):
         )
         self.popup.dismiss()
         self.payment_popup.open()
+
+    def on_receipt_button_press(self, instance):
+        printer = ReceiptPrinter('receipt_printer_config.yaml')
+
+        # Obtain order details from OrderManager
+        order_details = self.order_manager.get_order_details()
+
+        # Create receipt image with order details
+        receipt_image = printer.create_receipt_image(order_details)
+        printer.print_image(receipt_image)
 
     def show_make_change_popup(self, change):
         change_layout = BoxLayout(orientation="vertical", spacing=10)
@@ -1109,9 +1123,6 @@ class CashRegisterApp(MDApp):
         finally:
             pass
 
-    def close_inventory_management_view(self):
-        self.in_inventory_management_view = False
-        self.inventory_manager_view = None
 
     def reboot(self, instance):
         subprocess.run(["systemctl", "reboot"])
@@ -1135,9 +1146,6 @@ class CashRegisterApp(MDApp):
         except FileNotFoundError:
             pass
 
-    """
-    Other classes
-    """
 
 
 class FinancialSummaryWidget(MDRaisedButton):
@@ -1179,549 +1187,11 @@ class FinancialSummaryWidget(MDRaisedButton):
         popup.open()
 
 
-class InventoryManagementView(BoxLayout):
-    barcode = StringProperty()
-    name = StringProperty()
-    price = StringProperty()
-    cost = StringProperty()
-    sku = StringProperty()
-
-    def __init__(self, **kwargs):
-        super(InventoryManagementView, self).__init__(**kwargs)
-
-        self.full_inventory = []
-        self.database_manager = DatabaseManager("inventory.db")
-
-    def generate_unique_barcode(self):
-        while True:
-            new_barcode = str(
-                upc_a(
-                    str(random.randint(100000000000, 999999999999)), writer=None
-                ).get_fullcode()
-            )
-
-            if not self.database_manager.barcode_exists(new_barcode):
-                return new_barcode
-
-    def show_add_item_popup(self, scanned_barcode):
-        self.barcode = scanned_barcode
-        self.inventory_item_popup()
-
-    def show_inventory_for_manager(self, inventory_items):
-        self.full_inventory = inventory_items
-        self.rv.data = self.generate_data_for_rv(inventory_items)
-
-    def refresh_inventory(self):
-        print("refresh")
-        updated_inventory = self.database_manager.get_all_items()
-        self.show_inventory_for_manager(updated_inventory)
-
-    def add_item_to_database(
-        self, barcode_input, name_input, price_input, cost_input, sku_input
-    ):
-        if barcode_input and name_input and price_input:
-            try:
-                self.database_manager.add_item(
-                    barcode_input.text,
-                    name_input.text,
-                    price_input.text,
-                    cost_input.text,
-                    sku_input.text,
-                )
-            except Exception as e:
-                print(e)
-
-    def inventory_item_popup(self):
-        content = BoxLayout(orientation="vertical", padding=10)
-
-        name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        name_input = TextInput(text=self.name)
-        name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
-        name_layout.add_widget(name_input)
-
-        barcode_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        barcode_input = TextInput(
-            input_filter="int", text=self.barcode if self.barcode else ""
-        )
-        barcode_layout.add_widget(Label(text="Barcode", size_hint_x=0.2))
-        barcode_layout.add_widget(barcode_input)
-
-        price_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        price_input = TextInput(text=self.price, input_filter="float")
-        price_layout.add_widget(Label(text="Price", size_hint_x=0.2))
-        price_layout.add_widget(price_input)
-
-        cost_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        cost_input = TextInput(text=self.cost, input_filter="float")
-        cost_layout.add_widget(Label(text="Cost", size_hint_x=0.2))
-        cost_layout.add_widget(cost_input)
-
-        sku_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        sku_input = TextInput(text=self.sku)
-        sku_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
-        sku_layout.add_widget(sku_input)
-
-        content.add_widget(name_layout)
-        content.add_widget(barcode_layout)
-        content.add_widget(price_layout)
-        content.add_widget(cost_layout)
-        content.add_widget(sku_layout)
-
-        button_layout = BoxLayout(
-            orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
-        )
-
-        button_layout.add_widget(
-            MDRaisedButton(
-                text="Confirm",
-                on_press=lambda *args: self.confirm_and_close(
-                    barcode_input, name_input, price_input, cost_input, sku_input, popup
-                ),
-            )
-        )
-
-        button_layout.add_widget(
-            MDRaisedButton(text="Cancel", on_press=lambda *args: popup.dismiss())
-        )
-        button_layout.add_widget(
-            MDRaisedButton(
-                text="Generate Barcode",
-                on_press=lambda *args: self.set_generated_barcode(barcode_input),
-            )
-        )
-
-        content.add_widget(button_layout)
-
-        popup = Popup(
-            title="Item details",
-            pos_hint={"top": 1},
-            content=content,
-            size_hint=(0.8, 0.4),
-        )
-        popup.open()
-
-    def confirm_and_close(
-        self, barcode_input, name_input, price_input, cost_input, sku_input, popup
-    ):
-        self.add_item_to_database(
-            barcode_input, name_input, price_input, cost_input, sku_input
-        )
-        self.refresh_inventory()
-        popup.dismiss()
-
-    def set_generated_barcode(self, barcode_input):
-        unique_barcode = self.generate_unique_barcode()
-        barcode_input.text = unique_barcode
-
-    def open_inventory_manager(self):
-        self.inventory_item_popup()
-
-    def generate_data_for_rv(self, items):
-        return [
-            {
-                "barcode": str(item[0]),
-                "name": item[1],
-                "price": str(item[2]),
-                "cost": str(item[3]),
-                "sku": str(item[4]),
-            }
-            for item in items
-        ]
-
-    def filter_inventory(self, query):
-        if query:
-            query = query.lower()
-            filtered_items = [
-                item for item in self.full_inventory if query in item[1].lower()
-            ]
-        else:
-            filtered_items = self.full_inventory
-        self.rv.data = self.generate_data_for_rv(filtered_items)
-
-
-class InventoryManagementRow(BoxLayout):
-    barcode = StringProperty()
-    name = StringProperty()
-    price = StringProperty()
-    cost = StringProperty()
-    sku = StringProperty()
-
-    def __init__(self, **kwargs):
-        super(InventoryManagementRow, self).__init__(**kwargs)
-        self.database_manager = DatabaseManager("inventory.db")
-        self.inventory_management_view = InventoryManagementView()
-
-    def inventory_item_popup(self):
-        content = BoxLayout(orientation="vertical", padding=10)
-
-        name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        name_input = TextInput(text=self.name)
-        name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
-        name_layout.add_widget(name_input)
-
-        barcode_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        barcode_input = TextInput(
-            input_filter="int", text=self.barcode if self.barcode else ""
-        )
-        barcode_layout.add_widget(Label(text="Barcode", size_hint_x=0.2))
-        barcode_layout.add_widget(barcode_input)
-
-        price_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        price_input = TextInput(input_filter="float", text=self.price)
-        price_layout.add_widget(Label(text="Price", size_hint_x=0.2))
-        price_layout.add_widget(price_input)
-
-        cost_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        cost_input = TextInput(text=self.cost, input_filter="float")
-        cost_layout.add_widget(Label(text="Cost", size_hint_x=0.2))
-        cost_layout.add_widget(cost_input)
-
-        sku_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        sku_input = TextInput(text=self.sku)
-        sku_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
-        sku_layout.add_widget(sku_input)
-
-        content.add_widget(name_layout)
-        content.add_widget(barcode_layout)
-        content.add_widget(price_layout)
-        content.add_widget(cost_layout)
-        content.add_widget(sku_layout)
-
-        button_layout = BoxLayout(
-            orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
-        )
-
-        button_layout.add_widget(
-            MDRaisedButton(
-                text="Update Details",
-                on_press=lambda *args: self.confirm_and_close(
-                    barcode_input, name_input, price_input, cost_input, sku_input, popup
-                ),
-            )
-        )
-
-        button_layout.add_widget(
-            MDRaisedButton(text="Close", on_press=lambda *args: popup.dismiss())
-        )
-
-        content.add_widget(button_layout)
-
-        popup = Popup(
-            title="Item details",
-            pos_hint={"top": 1},
-            content=content,
-            size_hint=(0.8, 0.4),
-        )
-        popup.open()
-
-    def confirm_and_close(
-        self, barcode_input, name_input, price_input, cost_input, sku_input, popup
-    ):
-        self.update_item_in_database(
-            barcode_input, name_input, price_input, cost_input, sku_input
-        )
-        self.inventory_management_view.refresh_inventory()
-        popup.dismiss()
-
-    def open_inventory_manager(self):
-        self.inventory_item_popup()
-
-    def update_item_in_database(
-        self, barcode_input, name_input, price_input, cost_input, sku_input
-    ):
-        if barcode_input and name_input and price_input:
-            try:
-                self.database_manager.update_item(
-                    barcode_input.text,
-                    name_input.text,
-                    price_input.text,
-                    cost_input.text,
-                    sku_input.text,
-                )
-            except Exception as e:
-                print(e)
-
-
-class LabelPrintingRow(BoxLayout):
-    barcode = StringProperty()
-    name = StringProperty()
-    price = StringProperty()
-    label_printer = ObjectProperty()
-
-    def add_to_print_queue(self):
-        self.show_label_popup()
-
-    def show_label_popup(self):
-        content = BoxLayout(orientation="vertical", padding=10)
-        quantity_input = TextInput(text="1", input_filter="int")
-        content.add_widget(Label(text=f"Enter quantity for {self.name}"))
-        content.add_widget(quantity_input)
-        content.add_widget(
-            MDRaisedButton(
-                text="Add",
-                on_press=lambda *args: self.on_add_button_press(quantity_input, popup),
-            )
-        )
-        popup = Popup(title="Label Quantity", content=content, size_hint=(0.8, 0.4))
-        popup.open()
-
-    def on_add_button_press(self, quantity_input, popup):
-        self.add_quantity_to_queue(quantity_input.text)
-        popup.dismiss()
-
-    def add_quantity_to_queue(self, quantity):
-        self.label_printer.add_to_queue(self.barcode, self.name, self.price, quantity)
-
-
-class LabelPrintingView(BoxLayout):
-    def __init__(self, **kwargs):
-        super(LabelPrintingView, self).__init__(**kwargs)
-        self.full_inventory = []
-        self.label_printer = LabelPrinter()
-
-    def show_inventory_for_label_printing(self, inventory_items):
-        self.full_inventory = inventory_items
-        self.rv.data = self.generate_data_for_rv(inventory_items)
-
-    def show_print_queue(self):
-        content = BoxLayout(orientation="vertical", spacing=10)
-        for item in self.label_printer.print_queue:
-            content.add_widget(Label(text=f"{item['name']} x {item['quantity']}"))
-
-        content.add_widget(MDRaisedButton(text="Print Now", on_press=self.print_now))
-        content.add_widget(MDRaisedButton(text="Cancel", on_press=self.cancel_print))
-
-        self.print_queue_popup = Popup(
-            title="Print Queue", content=content, size_hint=(0.8, 0.6)
-        )
-        self.print_queue_popup.open()
-
-    def print_now(self, instance):
-        self.label_printer.process_queue()
-        self.print_queue_popup.dismiss()
-
-    def cancel_print(self, instance):
-        self.print_queue_popup.dismiss()
-
-    def generate_data_for_rv(self, items):
-        return [
-            {
-                "barcode": str(item[0]),
-                "name": item[1],
-                "price": str(item[2]),
-                "label_printer": self.label_printer,
-            }
-            for item in items
-        ]
-
-    def filter_inventory(self, query):
-        if query:
-            query = query.lower()
-            filtered_items = [
-                item for item in self.full_inventory if query in item[1].lower()
-            ]
-        else:
-            filtered_items = self.full_inventory
-        self.rv.data = self.generate_data_for_rv(filtered_items)
-
-
-class InventoryRow(BoxLayout):
-    barcode = StringProperty()
-    name = StringProperty()
-    price = StringProperty()
-    order_manager = ObjectProperty()
-
-    def __init__(self, **kwargs):
-        super(InventoryRow, self).__init__(**kwargs)
-        self.order_manager = OrderManager()
-
-    def add_to_order(self):
-        print(self.price)
-        print(type(self.price))
-        try:
-            price_float = float(self.price)
-        except ValueError as e:
-            print(e)
-            pass
-        self.order_manager.add_item(self.name, price_float)
-        app = App.get_running_app()
-        app.update_display()
-        app.update_financial_summary()
-
-
-class InventoryView(BoxLayout):
-    def __init__(self, order_manager, **kwargs):
-        super(InventoryView, self).__init__(**kwargs)
-        self.order_manager = order_manager
-
-    def show_inventory(self, inventory_items):
-        self.full_inventory = inventory_items
-        data = self.generate_data_for_rv(inventory_items)
-        for item in data:
-            item["order_manager"] = self.order_manager
-        self.rv.data = data
-
-    def generate_data_for_rv(self, items):
-        return [
-            {
-                "barcode": str(item[0]),
-                "name": item[1],
-                "price": str(item[2]),
-                "order_manager": self.order_manager,
-            }
-            for item in items
-        ]
-
-    def filter_inventory(self, query):
-        if query:
-            query = query.lower()
-            filtered_items = [
-                item for item in self.full_inventory if query in item[1].lower()
-            ]
-        else:
-            filtered_items = self.full_inventory
-        self.rv.data = self.generate_data_for_rv(filtered_items)
-
-
-class HistoryRow(BoxLayout):
-    history_view = ObjectProperty(None)
-    items = StringProperty("")
-    total = StringProperty("")
-    tax = StringProperty("")
-    total_with_tax = StringProperty("")
-    timestamp = StringProperty("")
-    order_id = StringProperty("")
-
-    def __init__(self, **kwargs):
-        super(HistoryRow, self).__init__(**kwargs)
-        self.orientation = "horizontal"
-        self.size_hint_y = None
-        self.height = 40
-        self.order_history = None
-
-
-class OrderDetailsPopup(Popup):
-    def __init__(self, order, **kwargs):
-        super(OrderDetailsPopup, self).__init__(**kwargs)
-        self.title = f"Order Details - {order[0]}"
-        self.history_view = HistoryView()
-        self.content = Label(
-            text=self.format_order_details(order), valign="top", halign="left"
-        )
-        self.size_hint = (0.8, 0.6)
-
-    def format_items(self, items_str):
-        try:
-            items_list = ast.literal_eval(items_str)
-            all_item_names = ", ".join(
-                item.get("name", "Unknown") for item in items_list
-            )
-            return all_item_names
-        except (ValueError, SyntaxError):
-            pass
-
-    def format_order_details(self, order):
-        print(order)
-        formatted_order = [
-            f"Order ID: {order[0]}",
-            f"Items: {self.format_items(order[1])}",
-            f"Total: ${self.history_view.format_money(order[2])}",
-            # f"Discount: ${self.history_view.format_money(order[2])}",
-            f"Tax: ${self.history_view.format_money(order[3])}",
-            f"Total with Tax: ${self.history_view.format_money(order[4])}",
-            f"Timestamp: {self.history_view.format_date(order[5])}",
-        ]
-        return "\n".join(formatted_order)
-
-
-class HistoryView(BoxLayout):
-    def __init__(self, **kwargs):
-        super(HistoryView, self).__init__(**kwargs)
-        self.order_history = []
-
-    def set_order_history(self, order_history):
-        self.order_history = order_history
-
-    def show_reporting_popup(self, order_history):
-        self.set_order_history(order_history)
-        self.clear_widgets()
-        for order in order_history:
-            history_row = self.create_history_row(order)
-            self.add_widget(history_row)
-
-    def display_order_details(
-        self,
-        order_id,
-    ):
-        order_id_str = str(order_id)
-        try:
-            specific_order = next(
-                (
-                    order
-                    for order in self.order_history
-                    if str(order[0]) == order_id_str
-                ),
-                None,
-            )
-        except:
-            pass
-
-        if specific_order:
-            popup = OrderDetailsPopup(order=specific_order)
-            popup.open()
-        else:
-            pass
-
-    def create_history_row(self, order):
-        history_row = HistoryRow()
-        history_row.order_id = order[0]
-        history_row.items = self.format_items(order[1])
-        history_row.total = self.format_money(order[2])
-        history_row.tax = self.format_money(order[3])
-        history_row.total_with_tax = self.format_money(order[4])
-        history_row.timestamp = self.format_date(order[5])
-
-        history_row.history_view = self
-
-        return history_row
-
-    def show_order_details(self, order_id):
-        specific_order = next(
-            (order for order in self.order_history if order[0] == order_id), None
-        )
-        if specific_order:
-            self.clear_widgets()
-            history_row = self.create_history_row(specific_order)
-            self.add_widget(history_row)
-        else:
-            pass
-
-    def format_items(self, items_str):
-        try:
-            items_list = ast.literal_eval(items_str)
-            all_item_names = ", ".join(
-                item.get("name", "Unknown") for item in items_list
-            )
-            return self.truncate_text(all_item_names, max_length=40)
-        except (ValueError, SyntaxError):
-           pass
-
-    def format_money(self, value):
-        return "{:.2f}".format(value)
-
-    def format_date(self, date_str):
-        try:
-            date_obj = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
-            return date_obj.strftime("%d %b %Y, %H:%M")
-        except ValueError:
-            pass
-
-    def truncate_text(self, text, max_length=40):
-        return text if len(text) <= max_length else text[: max_length - 3] + "..."
-
-
-app = CashRegisterApp()
-app.run()
+try:
+    app = CashRegisterApp()
+    app.run()
+except KeyboardInterrupt:
+    print("test")
 # if __name__ == "__main__":
 #     app = CashRegisterApp()
 #     app.run()
