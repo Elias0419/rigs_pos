@@ -643,7 +643,6 @@ class CashRegisterApp(MDApp):
                     keypad_layout.add_widget(btn_2)
 
 
-                keypad_layout.add_widget(btn)
 
             lock_layout.add_widget(keypad_layout)
             self.lock_popup = Popup(
