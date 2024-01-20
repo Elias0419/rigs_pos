@@ -643,7 +643,6 @@ class CashRegisterApp(MDApp):
                     keypad_layout.add_widget(btn_2)
 
 
-
             lock_layout.add_widget(keypad_layout)
             self.lock_popup = Popup(
                 title="Lock Screen",
@@ -660,7 +659,7 @@ class CashRegisterApp(MDApp):
             self.lock_popup.open()
 
     def manual_override(self, instance):
-        print("test")
+
         current_time = time.time()
         if current_time - self.override_tap_time < 1:
             sys.exit(42)
@@ -1024,6 +1023,7 @@ class CashRegisterApp(MDApp):
             return False
 
     def turn_off_monitor(self):
+        print("turn_off_monitor triggered")
         try:
             subprocess.run(["xset", "dpms", "force", "off"])
         except Exception as e:
