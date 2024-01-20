@@ -58,6 +58,7 @@ class CashRegisterApp(MDApp):
         self.entered_pin = ""
         self.is_guard_screen_displayed = False
         self.is_lock_screen_displayed = False
+        self.override_tap_time = 0
         self.pin_reset_timer = None
         self.theme_cls.theme_style = "Light"
         self.theme_cls.primary_palette = "Brown"
@@ -647,8 +648,11 @@ class CashRegisterApp(MDApp):
             )
             self.lock_popup.open()
     def manual_override(self, instance):
-
-        sys.exit(42)
+        current_time = time.time()
+        if current_time - self.override_tap_time < 1:  # 0.5 seconds threshold for double tap
+            sys.exit(42)
+        else:
+            self.override_tap_time = current_time
 
     def on_lock_screen_button_press(self, instance):
         if instance.text == "Reset":
