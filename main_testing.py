@@ -632,13 +632,14 @@ class CashRegisterApp(MDApp):
                         on_press=self.on_lock_screen_button_press,
                     )
                 else:
-                    btn = Button(
+                    btn_2 = Button(
                         size_hint=(0.8, 0.8),
                         opacity=1,
                         background_color=(1, 0, 0, 1),
-                        on_press=lambda instance: self.manual_override(instance)
+                        #on_press=lambda instance: self.manual_override(instance)
                     )
-                keypad_layout.add_widget(btn)
+                    btn_2.bind(on_press=self.manual_override)
+                keypad_layout.add_widget(btn_2)
 
             lock_layout.add_widget(keypad_layout)
             self.lock_popup = Popup(
