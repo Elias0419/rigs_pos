@@ -1023,12 +1023,29 @@ class CashRegisterApp(MDApp):
             return False
 
     def turn_off_monitor(self):
-        print("turn_off_monitor triggered")
+        touchscreen_device = "iSolution multitouch"
+
         try:
-            subprocess.run(["xset", "dpms", "force", "off"])
-        except Exception as e:
-            print(e)
-            pass
+            subprocess.run(["xinput", "disable", touchscreen_device], check=True)
+        except subprocess.CalledProcessError as e:
+            print("Error disabling touchscreen:", e)
+            return
+
+        try:
+            subprocess.run(["xset", "dpms", "force", "off"], check=True)
+        except subprocess.CalledProcessError as e:
+            print("Error turning off monitor:", e)
+            subprocess.run(["xinput", "enable", touchscreen_device])
+            return
+
+        def reenable_touchscreen():
+            time.sleep(1)
+            try:
+                subprocess.run(["xinput", "enable", touchscreen_device], check=True)
+            except subprocess.CalledProcessError as e:
+                print("Error re-enabling touchscreen:", e)
+
+        threading.Thread(target=reenable_touchscreen).start()
 
     def check_monitor_status(self, dt):
         if self.is_monitor_off():
