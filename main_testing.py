@@ -622,7 +622,7 @@ class CashRegisterApp(MDApp):
             ]
 
             for button in numeric_buttons:
-                if button:
+                if button != " ":
                     # Visible buttons
                     btn = MDFlatButton(
                         text=button,
@@ -631,15 +631,17 @@ class CashRegisterApp(MDApp):
                         size_hint=(0.8, 0.8),
                         on_press=self.on_lock_screen_button_press,
                     )
+                    keypad_layout.add_widget(btn)
                 else:
+                    # Invisible button for manual override
                     btn_2 = Button(
                         size_hint=(0.8, 0.8),
-                        opacity=1,
-                        background_color=(1, 0, 0, 1),
-                        #on_press=lambda instance: self.manual_override(instance)
+                        opacity=0,  # Make it invisible
+                        background_color=(0, 0, 0, 0),  # Transparent background
                     )
                     btn_2.bind(on_press=self.manual_override)
                     keypad_layout.add_widget(btn_2)
+
 
                 keypad_layout.add_widget(btn)
 
