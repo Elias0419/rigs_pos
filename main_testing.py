@@ -639,7 +639,9 @@ class CashRegisterApp(MDApp):
                         #on_press=lambda instance: self.manual_override(instance)
                     )
                     btn_2.bind(on_press=self.manual_override)
-                keypad_layout.add_widget(btn_2)
+                    keypad_layout.add_widget(btn_2)
+
+                keypad_layout.add_widget(btn)
 
             lock_layout.add_widget(keypad_layout)
             self.lock_popup = Popup(
