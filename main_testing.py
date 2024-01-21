@@ -153,7 +153,6 @@ class CashRegisterApp(MDApp):
 
     def update_clock(self, *args):
         self.clock_label.text = time.strftime("%I:%M %p\n%A\n%B %d, %Y\n")
-        # Update color in case theme has changed
         self.clock_label.color = self.get_text_color()
 
     def get_text_color(self):
@@ -623,7 +622,6 @@ class CashRegisterApp(MDApp):
 
             for button in numeric_buttons:
                 if button != " ":
-                    # Visible buttons
                     btn = MDFlatButton(
                         text=button,
                         text_color=(0, 0, 0, 1),
@@ -633,11 +631,11 @@ class CashRegisterApp(MDApp):
                     )
                     keypad_layout.add_widget(btn)
                 else:
-                    # Invisible button for manual override
+
                     btn_2 = Button(
                         size_hint=(0.8, 0.8),
-                        opacity=0,  # Make it invisible
-                        background_color=(0, 0, 0, 0),  # Transparent background
+                        opacity=0,
+                        background_color=(0, 0, 0, 0),
                     )
                     btn_2.bind(on_press=self.manual_override)
                     keypad_layout.add_widget(btn_2)
@@ -806,35 +804,32 @@ class CashRegisterApp(MDApp):
         self.popup.open()
 
     def show_cash_payment_popup(self):
+        total_with_tax = self.order_manager.calculate_total_with_tax()
+        common_amounts = self.calculate_common_amounts(total_with_tax)
+
         self.cash_popup_layout = BoxLayout(orientation="vertical", spacing=10)
-        self.cash_input = TextInput(
-            text="",
-            multiline=False,
-            input_filter="float",
-            font_size=30,
-            size_hint_y=None,
-            height=50,
-        )
+        self.cash_input = MoneyInput(text="",
+                                    input_type='number',
+                                    multiline=False,
+                                    input_filter="float",
+                                    font_size=30,
+                                    size_hint_y=0.2,
+                                    size_hint_x=0.3,
+                                    height=50,
+                                    )
         self.cash_popup_layout.add_widget(self.cash_input)
 
         keypad_layout = GridLayout(cols=3, spacing=10)
 
-        numeric_buttons = [
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "0",
-        ]
-        for button in numeric_buttons:
-            btn = Button(text=button, on_press=self.on_numeric_button_press)
+        for amount in common_amounts:
+            btn = Button(text=f"${amount}", on_press=self.on_preset_amount_press) #######################
             keypad_layout.add_widget(btn)
-
+        custom_cash_button = MDRaisedButton(
+           text="Custom",
+            size_hint=(0.8, 0.8),
+            on_press=self.open_custom_cash_popup
+            )
+        keypad_layout.add_widget(custom_cash_button)
         confirm_button = MDRaisedButton(
             text="Confirm", size_hint=(0.8, 0.8), on_press=self.on_cash_confirm
         )
@@ -853,6 +848,60 @@ class CashRegisterApp(MDApp):
         )
         self.cash_popup.open()
 
+    def open_custom_cash_popup(self,instance):
+        self.custom_cash_popup_layout = BoxLayout(orientation="vertical", spacing=10)
+        self.cash_input = TextInput(
+            text="",
+            multiline=False,
+            input_filter="float",
+            font_size=30,
+            size_hint_y=None,
+            height=50,
+        )
+        self.custom_cash_popup_layout.add_widget(self.cash_input)
+
+        keypad_layout = GridLayout(cols=3, spacing=10)
+
+        numeric_buttons = [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "0",
+        ]
+        for button in numeric_buttons:
+            btn = MDRaisedButton(
+                text=button, size_hint=(0.8, 0.8), on_press=self.on_numeric_button_press
+            )
+            keypad_layout.add_widget(btn)
+
+        confirm_button = MDRaisedButton(
+            text="Confirm", size_hint=(0.8, 0.8),  on_press=lambda instance: self.on_cash_confirm(instance)
+        )
+        keypad_layout.add_widget(confirm_button)
+
+        cancel_button = MDRaisedButton(
+            text="Cancel", size_hint=(0.8, 0.8), on_press=self.on_custom_cash_cancel
+        )
+        keypad_layout.add_widget(cancel_button)
+
+        self.custom_cash_popup_layout.add_widget(keypad_layout)
+        self.custom_cash_popup = Popup(
+            title="Custom Item",
+            content=self.custom_cash_popup_layout,
+            size_hint=(0.8, 0.8),
+        )
+        self.custom_cash_popup.open()
+
+    def on_preset_amount_press(self, instance):
+        self.cash_input.text = instance.text.strip("$")
+
+
     def show_payment_confirmation_popup(self):
         confirmation_layout = GridLayout(
             orientation="lr-tb", cols=1, size_hint=(1, 1), spacing=10
@@ -861,7 +910,7 @@ class CashRegisterApp(MDApp):
         order_summary = "Order Complete:\n\n"
 
         for item_id, item_details in self.order_manager.items.items():
-            item_name = item_details["name"]  # Extracting the actual item name
+            item_name = item_details["name"]
             quantity = item_details["quantity"]
             total_price_for_item = item_details["total_price"]
 
@@ -879,14 +928,14 @@ class CashRegisterApp(MDApp):
         done_button = MDRaisedButton(
             text="Done",
             size_hint=(0.2, 0.2),
-            on_press=self.on_done_button_press,  #####################
+            on_press=self.on_done_button_press,
         )
         confirmation_layout.add_widget(done_button)
 
         receipt_button = MDRaisedButton(
             text="Print Receipt",
             size_hint=(0.2, 0.2),
-            on_press=self.on_receipt_button_press,  ####################################
+            on_press=self.on_receipt_button_press,
         )
         confirmation_layout.add_widget(receipt_button)
 
@@ -902,10 +951,8 @@ class CashRegisterApp(MDApp):
     def on_receipt_button_press(self, instance):
         printer = ReceiptPrinter('receipt_printer_config.yaml')
 
-        # Obtain order details from OrderManager
         order_details = self.order_manager.get_order_details()
 
-        # Create receipt image with order details
         receipt_image = printer.create_receipt_image(order_details)
         printer.print_image(receipt_image)
 
@@ -922,6 +969,14 @@ class CashRegisterApp(MDApp):
             title="Change Calculation", content=change_layout, size_hint=(0.6, 0.3)
         )
         self.change_popup.open()
+
+    def calculate_common_amounts(self, total):
+        amounts = []
+        for base in [1, 5, 10, 20, 50, 100]:
+            amount = total - (total % base) + base
+            if amount not in amounts and amount >= total:
+                amounts.append(amount)
+        return amounts
 
     def show_add_to_database_popup(self, barcode):
         popup_layout = BoxLayout(orientation="vertical", spacing=10)
@@ -1107,7 +1162,6 @@ class CashRegisterApp(MDApp):
 
     def on_change_done(self, instance):
         self.change_popup.dismiss()
-        # open_cash_drawer()
         self.show_payment_confirmation_popup()
 
     def on_cash_cancel(self, instance):
@@ -1120,7 +1174,10 @@ class CashRegisterApp(MDApp):
         amount_tendered = float(self.cash_input.text)
         total_with_tax = self.order_manager.calculate_total_with_tax()
         change = amount_tendered - total_with_tax
-        self.cash_popup.dismiss()
+        if hasattr(self, 'cash_popup'):
+            self.cash_popup.dismiss()
+        if hasattr(self, 'custom_cash_popup'):
+            self.custom_cash_popup.dismiss()
         open_cash_drawer()
         self.show_make_change_popup(change)
 
@@ -1139,6 +1196,9 @@ class CashRegisterApp(MDApp):
 
     def on_custom_item_cancel(self, instance):
         self.custom_item_popup.dismiss()
+
+    def on_custom_cash_cancel(self, instance):
+        self.custom_cash_popup.dismiss()
 
     def send_order_to_history_database(self, order_details, order_manager, db_manager):
         tax = order_details["total_with_tax"] - order_details["total"]
@@ -1190,7 +1250,16 @@ class CashRegisterApp(MDApp):
         except FileNotFoundError:
             pass
 
-
+class MoneyInput(TextInput):
+    def insert_text(self, substring, from_undo=False):
+        if not from_undo:
+            current_text = self.text.replace(".", "") + substring
+            current_text = current_text.zfill(3)
+            new_text = current_text[:-2] + "." + current_text[-2:]
+            super(MoneyInput, self).insert_text(new_text, from_undo=from_undo)
+            return True
+        else:
+            return super(MoneyInput, self).insert_text(substring, from_undo=from_undo)
 
 class FinancialSummaryWidget(MDRaisedButton):
     def __init__(self, **kwargs):
