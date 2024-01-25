@@ -7,7 +7,19 @@ def read_csv(file_name):
     with open(file_name, "r") as file:
         csv_reader = csv.DictReader(file)
         for row in csv_reader:
-            data.append((row["Name"], row["Product Code"], row["Price"], row["Cost"], row["SKU"]))
+            parent_barcode = row.get("Parent Barcode")
+            category = row.get("Category")
+            data.append(
+                (
+                    row["Name"],
+                    row["Product Code"],
+                    row["Price"],
+                    row["Cost"],
+                    row["SKU"],
+                    category,
+                    parent_barcode,
+                )
+            )
     return data
 
 
@@ -16,20 +28,22 @@ def create_db_and_insert_data(data):
     cursor = conn.cursor()
 
     cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS items (
-            name TEXT,
-            barcode TEXT,
-            price REAL,
-            cost REAL,
-            sku TEXT
-
-        )
-    """
+        """CREATE TABLE IF NOT EXISTS items (
+                            barcode TEXT,
+                            name TEXT,
+                            price REAL,
+                            cost REAL,
+                            sku TEXT,
+                            category TEXT,
+                            parent_barcode TEXT,
+                            PRIMARY KEY (barcode, name),
+                            FOREIGN KEY(parent_barcode) REFERENCES items(barcode)
+                            )"""
     )
 
     cursor.executemany(
-        "INSERT INTO items (name, barcode, price, cost, sku) VALUES (?, ?, ?, ?, ?)", data
+        "INSERT INTO items (name, barcode, price, cost, sku, category, parent_barcode) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        data,
     )
 
     conn.commit()
