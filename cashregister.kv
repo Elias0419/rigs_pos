@@ -32,7 +32,7 @@ MDRaisedButton:
         size_hint_y: None
         height: '48dp'
         TextInput:
-            id: search_input
+            id: label_search_input
             size_hint_x: 0.8
             hint_text: 'Search'
             on_text: root.filter_inventory(self.text)
@@ -84,11 +84,14 @@ MDRaisedButton:
         orientation: 'horizontal'
 
         TextInput:
-            id: search_input
+            id: label_search_input
             size_hint_x: 0.8
             hint_text: 'Search'
             on_text: root.filter_inventory(self.text)
-
+        MDRaisedButton:
+            text: "Clear"
+            size_hint_x: 0.2
+            on_press: root.clear_search()
         MDRaisedButton:
             text: "Show Print Queue"
             size_hint_x: 0.2
@@ -143,10 +146,14 @@ MDRaisedButton:
         orientation: 'horizontal'
 
         TextInput:
-            id: search_input
+            id: inv_search_input
             size_hint_x: 0.8
             hint_text: 'Search'
             on_text: root.filter_inventory(self.text)
+        MDRaisedButton:
+            text: "Clear"
+            size_hint_x: 0.2
+            on_press: root.clear_search()
 
         MDRaisedButton:
             text: "Add Item"

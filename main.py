@@ -60,6 +60,7 @@ class CashRegisterApp(MDApp):
         self.is_lock_screen_displayed = False
         self.override_tap_time = 0
         self.pin_reset_timer = None
+        self.current_context = "main"
         self.theme_cls.theme_style = "Light"
         self.theme_cls.primary_palette = "Brown"
         self.load_settings()
@@ -70,7 +71,8 @@ class CashRegisterApp(MDApp):
         self.order_manager = OrderManager()
         self.history_popup = HistoryPopup()
         self.receipt_printer = ReceiptPrinter('receipt_printer_config.yaml')
-
+        self.inventory_manager = InventoryManagementView()
+        self.label_manager = LabelPrintingView()
         main_layout = GridLayout(cols=1, orientation="tb-lr", row_default_height=60)
         top_area_layout = GridLayout(cols=3, orientation="lr-tb", row_default_height=60)
         self.order_layout = GridLayout(
@@ -187,9 +189,20 @@ class CashRegisterApp(MDApp):
         if self.barcode_scanner.is_barcode_ready():
             barcode = self.barcode_scanner.read_barcode()
 
-            self.handle_scanned_barcode(barcode)
+            self.handle_global_barcode_scan(barcode)
+
+    def handle_global_barcode_scan(self, barcode):
+
+        if self.current_context == 'inventory':
+
+            self.inventory_manager.handle_scanned_barcode(barcode)
+        elif self.current_context == 'label':
+            self.label_manager.handle_scanned_barcode(barcode)
+        else:
+            self.handle_scanned_barcode(barcode)  # default behavior
 
     def handle_scanned_barcode(self, barcode):
+
         try:
             item_details = self.db_manager.get_item_details(barcode)
 
@@ -539,10 +552,13 @@ class CashRegisterApp(MDApp):
     def show_label_printing_view(self):
         inventory = self.db_manager.get_all_items()
         label_printing_view = LabelPrintingView()
+        self.current_context = "label"
+        print("label printing context", self.current_context)
         label_printing_view.show_inventory_for_label_printing(inventory)
         popup = Popup(
             title="Label Printing", content=label_printing_view, size_hint=(0.9, 0.9)
         )
+        popup.bind(on_dismiss=self.reset_to_main_context)
         popup.open()
 
     def show_inventory_management_view(self):
@@ -551,11 +567,14 @@ class CashRegisterApp(MDApp):
         inventory = self.db_manager.get_all_items()
         # inventory_manager_view = InventoryManagementView()
         self.inventory_manager_view.show_inventory_for_manager(inventory)
+        self.current_context = "inventory"
+        print("inventory manager context", self.current_context)
         popup = Popup(
             title="Inventory Management",
             content=self.inventory_manager_view,
             size_hint=(0.9, 0.9),
         )
+        popup.bind(on_dismiss=self.reset_to_main_context)
         popup.open()
 
     def show_adjust_price_popup(self):
@@ -1167,6 +1186,10 @@ class CashRegisterApp(MDApp):
     def on_cash_cancel(self, instance):
         self.cash_popup.dismiss()
 
+    def reset_to_main_context(self, instance):
+        print("reset to main context before", self.current_context)
+        self.current_context = "main"
+        print("reset to main context after", self.current_context)
     def on_adjust_price_cancel(self, instance):
         self.adjust_price_popup.dismiss()
 
