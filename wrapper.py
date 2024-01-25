@@ -1,6 +1,7 @@
 import subprocess
 import time
 
+
 def run_app(script_path="main.py", max_restarts=3, restart_window=10):
     recent_restarts = 0
     last_restart_time = time.time()
@@ -18,9 +19,9 @@ def run_app(script_path="main.py", max_restarts=3, restart_window=10):
             if recent_restarts >= max_restarts:
                 try:
                     print("test")
-                    #result = subprocess.run(["../1/bin/python", "/net/fallback/main_fallback.py"])
-                    #TODO logging and send email/text
-                    #TODO wrapper-ception instead of calling fallback directly?
+                    # result = subprocess.run(["../1/bin/python", "/net/fallback/main_fallback.py"])
+                    # TODO logging and send email/text
+                    # TODO wrapper-ception instead of calling fallback directly?
                 except:
                     break
             continue
@@ -28,6 +29,7 @@ def run_app(script_path="main.py", max_restarts=3, restart_window=10):
             break
         else:
             break
+
 
 if __name__ == "__main__":
     run_app()

@@ -113,8 +113,6 @@ class HistoryView(BoxLayout):
             for row in csv_data:
                 writer.writerow(row)
 
-
-
     def get_export_filename(self):
         today = datetime.now().strftime("%Y-%m-%d")
         if self.current_filter == "today":
