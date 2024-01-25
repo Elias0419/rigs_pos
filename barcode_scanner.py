@@ -2,6 +2,7 @@ from pynput.keyboard import Key, Listener
 import threading
 import time
 
+
 class BarcodeScanner:
     def __init__(self, barcode_scanned_callback=None):
         self.current_barcode = ""
@@ -33,11 +34,9 @@ class BarcodeScanner:
     def on_release(self, key):
         if key == Key.enter:
             if self.current_barcode:
-
                 self.barcode_ready.set()
                 if self.barcode_scanned_callback:
                     self.barcode_scanned_callback(self.current_barcode.strip())
-
 
     def read_barcode(self):
         self.barcode_ready.wait()
@@ -51,5 +50,3 @@ class BarcodeScanner:
 
     def close(self):
         self.listener.stop()
-
-

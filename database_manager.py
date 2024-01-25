@@ -10,10 +10,11 @@ class DatabaseManager:
         return cls._instance
 
     def __init__(self, db_path):
-        if not hasattr(self, '_init'):
+        if not hasattr(self, "_init"):
             self.db_path = db_path
             self.ensure_tables_exist()
             self._init = True
+
     def _get_connection(self):
         return sqlite3.connect(self.db_path)
 
@@ -27,12 +28,16 @@ class DatabaseManager:
             cursor = conn.cursor()
             cursor.execute(
                 """CREATE TABLE IF NOT EXISTS items (
-                                barcode TEXT PRIMARY KEY,
+                                barcode TEXT,
                                 name TEXT,
                                 price REAL,
                                 cost REAL,
-                                sku TEXT
-                              )"""
+                                sku TEXT,
+                                category TEXT,
+                                parent_barcode TEXT,
+                                PRIMARY KEY (barcode, sku),
+                                FOREIGN KEY(parent_barcode) REFERENCES items(barcode)
+                            )"""
             )
             conn.commit()
         except sqlite3.Error as e:
@@ -61,20 +66,30 @@ class DatabaseManager:
         finally:
             conn.close()
 
-    def add_item(self, barcode, name, price, cost=None, sku=None):
+    def add_item(
+        self,
+        barcode,
+        name,
+        price,
+        cost=None,
+        sku=None,
+        category=None,
+        parent_barcode=None,
+    ):
         self.create_items_table()
 
         cost = cost if cost is not None else None
         sku = sku if sku is not None else None
+        category = category if category is not None else None
+        parent_barcode = parent_barcode if parent_barcode is not None else None
 
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO items (barcode, name, price, cost, sku) VALUES (?, ?, ?, ?, ?)",
-                (barcode, name, price, cost, sku),
+                "INSERT INTO items (barcode, name, price, cost, sku, category, parent_barcode) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (barcode, name, price, cost, sku, category, parent_barcode),
             )
-
             conn.commit()
         except sqlite3.IntegrityError as e:
             print(e)
@@ -83,7 +98,9 @@ class DatabaseManager:
         conn.close()
         return True
 
-    def add_order_history(self, order_id, items, total, tax, discount, total_with_tax, timestamp):
+    def add_order_history(
+        self, order_id, items, total, tax, discount, total_with_tax, timestamp
+    ):
         self.create_order_history_table()
         conn = self._get_connection()
         try:
@@ -123,7 +140,9 @@ class DatabaseManager:
         conn = self._get_connection()
         cursor = conn.cursor()
         try:
-            cursor.execute("SELECT barcode, name, price, cost, sku FROM items")
+            cursor.execute(
+                "SELECT barcode, name, price, cost, sku, category, parent_barcode FROM items"
+            )
             items = cursor.fetchall()
         except sqlite3.Error as e:
             print(e)

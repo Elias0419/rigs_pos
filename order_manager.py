@@ -2,15 +2,25 @@ import uuid
 
 
 class OrderManager:
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(OrderManager, cls).__new__(cls, *args, **kwargs)
+        return cls._instance
+
     def __init__(self, tax_rate=0.07):
-        self.items = {}
-        self.total = 0.0
-        self.subtotal = 0.0
-        self.tax_rate = tax_rate
-        self.tax_amount = 0.0
-        self._total_with_tax = None
-        self.order_id = str(uuid.uuid4())
-        self.order_discount = 0.0
+        if not hasattr(self, "_init"):
+            print("order manager init", self)
+            self.items = {}
+            self.total = 0.0
+            self.subtotal = 0.0
+            self.tax_rate = tax_rate
+            self.tax_amount = 0.0
+            self._total_with_tax = None
+            self.order_id = str(uuid.uuid4())
+            self.order_discount = 0.0
+            self._init = True
 
     def _update_total_with_tax(self):
         self.tax_amount = self.total * self.tax_rate
@@ -91,19 +101,17 @@ class OrderManager:
         self.tax_amount = 0.0
         self.subtotal = 0.0
 
-    def update_item_quantity(self, item_name, new_quantity):
-        if item_name in self.items and new_quantity > 0:
-            item = self.items[item_name]
-            single_item_price = item["total_price"] / item["quantity"]
+    def adjust_item_quantity(self, item_id, adjustment):
+        if item_id in self.items:
+            item = self.items[item_id]
+            new_quantity = max(item["quantity"] + adjustment, 1)
+            single_item_price = item["price"]
             self.total -= item["total_price"]
-            self.items[item_name]["quantity"] = new_quantity
-            self.items[item_name]["total_price"] = single_item_price * new_quantity
-            self.total += self.items[item_name]["total_price"]
+            item["quantity"] = new_quantity
+            item["total_price"] = single_item_price * new_quantity
+            self.total += item["total_price"]
+            self.subtotal = max(self.total - self.order_discount, 0)
             self._update_total_with_tax()
-        elif new_quantity == 0:
-            self.remove_item(item_name)
-        else:
-            pass
 
     def adjust_order_to_target_total(self, target_total_with_tax):
         adjusted_subtotal = target_total_with_tax / (1 + self.tax_rate)
@@ -134,5 +142,3 @@ class OrderManager:
         self.total = max(self.subtotal - self.order_discount, 0)
         self.update_tax_amount()
         self._update_total_with_tax()
-
-

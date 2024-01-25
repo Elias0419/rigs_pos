@@ -12,6 +12,7 @@ from kivymd.uix.button import MDFlatButton, MDRaisedButton
 from barcode.upc import UniversalProductCodeA as upc_a
 import random
 
+
 class InventoryManagementView(BoxLayout):
     barcode = StringProperty()
     name = StringProperty()
@@ -22,11 +23,13 @@ class InventoryManagementView(BoxLayout):
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
-            cls._instance = super(InventoryManagementView, cls).__new__(cls, *args, **kwargs)
+            cls._instance = super(InventoryManagementView, cls).__new__(
+                cls, *args, **kwargs
+            )
         return cls._instance
 
     def __init__(self, **kwargs):
-        if not hasattr(self, '_init'):
+        if not hasattr(self, "_init"):
             super(InventoryManagementView, self).__init__(**kwargs)
             self.full_inventory = []
             self.database_manager = DatabaseManager("inventory.db")
@@ -38,7 +41,6 @@ class InventoryManagementView(BoxLayout):
     def handle_scanned_barcode(self, barcode):
         barcode = barcode.strip()
         Clock.schedule_once(lambda dt: self.update_search_input(barcode), 0.1)
-
 
     def generate_unique_barcode(self):
         while True:
@@ -159,7 +161,8 @@ class InventoryManagementView(BoxLayout):
         popup.dismiss()
 
     def clear_search(self):
-            self.ids.inv_search_input.text = ""
+        self.ids.inv_search_input.text = ""
+
     def set_generated_barcode(self, barcode_input):
         unique_barcode = self.generate_unique_barcode()
         barcode_input.text = unique_barcode
@@ -182,8 +185,6 @@ class InventoryManagementView(BoxLayout):
         return data
 
     def filter_inventory(self, query):
-
-
         if query:
             query = query.lower()
             filtered_items = []
@@ -197,10 +198,6 @@ class InventoryManagementView(BoxLayout):
             filtered_items = self.full_inventory
 
         self.rv.data = self.generate_data_for_rv(filtered_items)
-
-
-
-
 
 
 class InventoryManagementRow(BoxLayout):
@@ -306,8 +303,6 @@ class InventoryManagementRow(BoxLayout):
                 print(e)
 
 
-
-
 class InventoryRow(BoxLayout):
     barcode = StringProperty()
     name = StringProperty()
@@ -336,6 +331,7 @@ class InventoryView(BoxLayout):
     def __init__(self, order_manager, **kwargs):
         super(InventoryView, self).__init__(**kwargs)
         self.order_manager = order_manager
+
     def show_inventory(self, inventory_items):
         self.full_inventory = inventory_items
         data = self.generate_data_for_rv(inventory_items)
@@ -358,11 +354,11 @@ class InventoryView(BoxLayout):
         if query:
             query = query.lower()
             filtered_items = [
-                item for item in self.full_inventory
+                item
+                for item in self.full_inventory
                 if query in str(item[0]).lower() or query in item[1].lower()
             ]
         else:
             filtered_items = self.full_inventory
 
         self.rv.data = self.generate_data_for_rv(filtered_items)
-

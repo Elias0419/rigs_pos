@@ -12,6 +12,7 @@ from kivy.properties import StringProperty, ListProperty, ObjectProperty
 from kivy.uix.textinput import TextInput
 from kivymd.uix.button import MDFlatButton, MDRaisedButton
 
+
 class LabelPrintingRow(BoxLayout):
     barcode = StringProperty()
     name = StringProperty()
@@ -52,13 +53,13 @@ class LabelPrintingView(BoxLayout):
         return cls._instance
 
     def __init__(self, **kwargs):
-        if not hasattr(self, '_init'):
-
+        if not hasattr(self, "_init"):
             super(LabelPrintingView, self).__init__(**kwargs)
             self.full_inventory = []
             self.label_printer = LabelPrinter()
 
             self._init = True
+
     def clear_search(self):
         self.ids.label_search_input.text = ""
 
@@ -68,7 +69,6 @@ class LabelPrintingView(BoxLayout):
 
     def handle_scanned_barcode(self, barcode):
         barcode = barcode.strip()
-
 
         self.ids.label_search_input.text = barcode
 
@@ -117,6 +117,7 @@ class LabelPrintingView(BoxLayout):
 
         self.rv.data = self.generate_data_for_rv(filtered_items)
 
+
 class LabelPrinter:
     def __init__(self):
         self.print_queue = []
@@ -161,19 +162,21 @@ class LabelPrinter:
         label_image.paste(barcode_image, barcode_position)
 
         # label_image.save(save_path)
-        qlr = brother_ql.BrotherQLRaster('QL-710W')
+        qlr = brother_ql.BrotherQLRaster("QL-710W")
         qlr.exception_on_warning = True
-        convert(qlr=qlr, images=[label_image], label='23x23', cut=False)
+        convert(qlr=qlr, images=[label_image], label="23x23", cut=False)
         try:
-            send(instructions=qlr.data, printer_identifier='usb://0x04F9:0x2043', backend_identifier='pyusb')
+            send(
+                instructions=qlr.data,
+                printer_identifier="usb://0x04F9:0x2043",
+                backend_identifier="pyusb",
+            )
         except ValueError as e:
             print(e)
             pass
 
     def process_queue(self):
-
         for item in self.print_queue:
-
             for _ in range(item["quantity"]):
                 self.print_barcode_label(
                     item["barcode"], item["price"], f"{item['name']}_label.png"
