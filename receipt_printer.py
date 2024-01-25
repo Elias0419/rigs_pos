@@ -4,6 +4,7 @@ from PIL import Image
 from escpos.config import Config
 import textwrap
 
+
 class ReceiptPrinter:
     def __init__(self, config_path):
         self.config_handler = Config()
@@ -15,26 +16,25 @@ class ReceiptPrinter:
         self.printer.image(logo, (100, -60))
 
         date = str(datetime.now().replace(microsecond=0))
-        self.printer.set(align='center', font='a')
+        self.printer.set(align="center", font="a")
         self.printer.textln(date)
         self.printer.textln()
 
         max_line_width = 48
-        self.printer.set(align='left', font='a', bold=False)
+        self.printer.set(align="left", font="a", bold=False)
 
         for item in order_details["items"].values():
-            # Formatting each line
-            if item['quantity'] > 1:
+            if item["quantity"] > 1:
                 item_name = f"{item['name']} x{item['quantity']}"
             else:
-                item_name = item['name']
+                item_name = item["name"]
             price = f"${item['total_price']:.2f}"
-            spaces = ' ' * (max_line_width - len(item_name) - len(price))
+            spaces = " " * (max_line_width - len(item_name) - len(price))
             item_line = item_name + spaces + price
 
             self.printer.textln(item_line)
             self.printer.textln()
-        self.printer.set(align='center', font='a', bold=True)
+        self.printer.set(align="center", font="a", bold=True)
         self.printer.textln()
         self.printer.textln(f"Subtotal: ${order_details['subtotal']:.2f}")
 
@@ -44,9 +44,9 @@ class ReceiptPrinter:
         self.printer.textln(f"Tax: ${order_details['tax_amount']:.2f}")
         self.printer.textln(f"Total: ${order_details['total_with_tax']:.2f}")
 
-        self.printer.set(align='center', font='b', bold=False)
+        self.printer.set(align="center", font="b", bold=False)
         self.printer.textln()
-        self.printer.textln(order_details['order_id'])
+        self.printer.textln(order_details["order_id"])
         self.printer.cut()
 
     def close(self):
@@ -64,8 +64,7 @@ if __name__ == "__main__":
         "discount": 0,
         "tax_amount": 1.50,
         "total_with_tax": 16.50,
-        "order_id": "12345"
+        "order_id": "12345",
     }
     printer.print_receipt(order_details)
     printer.close()
-
