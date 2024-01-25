@@ -1,9 +1,8 @@
 from datetime import datetime
 from escpos.printer import Usb
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 from escpos.config import Config
 import textwrap
-
 
 class ReceiptPrinter:
     def __init__(self, config_path):
@@ -11,105 +10,62 @@ class ReceiptPrinter:
         self.config_handler.load(config_path)
         self.printer = self.config_handler.printer()
 
-    def create_receipt_image(self, order_details):
-        print(order_details)
-        font_size = 25
-        alt_font_size = 18
-        line_spacing = 50
-        initial_height = 250
-        max_line_width = 25
-
-        font = ImageFont.truetype(
-            "/usr/share/fonts/TTF/JetBrainsMono-ExtraBold.ttf", font_size
-        )
-        alt_font = ImageFont.truetype(
-            "/usr/share/fonts/TTF/JetBrainsMono-ExtraBold.ttf", alt_font_size
-        )
-
-        def wrap_text(text, line_width):
-            return textwrap.wrap(text, line_width)
-
-        num_lines = 4
-        for item in order_details["items"].values():
-            wrapped_item_name = wrap_text(item["name"], max_line_width)
-            num_lines += len(wrapped_item_name)
-
-        if order_details["discount"] > 0:
-            num_lines += 1
-
-        total_height = initial_height + (num_lines * line_spacing) + 50
-
-        canvas = Image.new("RGB", (600, total_height), color="white")
-        draw = ImageDraw.Draw(canvas)
-        date = str(datetime.now().replace(microsecond=0))
-
+    def print_receipt(self, order_details):
         logo = Image.open("logo.png")
-        canvas.paste(logo, (100, -60))
+        self.printer.image(logo, (100, -60))
 
-        y_position = initial_height
-        draw.text((100, 200), date, fill="black", font=font)
+        date = str(datetime.now().replace(microsecond=0))
+        self.printer.set(align='center', font='a')
+        self.printer.textln(date)
+        self.printer.textln()
+
+        max_line_width = 48
+        self.printer.set(align='left', font='a', bold=False)
 
         for item in order_details["items"].values():
-            wrapped_item_name = wrap_text(item["name"], max_line_width)
-            for line_index, line in enumerate(wrapped_item_name):
-                if line_index == len(wrapped_item_name) - 1:
-                    item_line = (
-                        f"{line} x{item['quantity']}  ${item['total_price']:.2f}"
-                    )
-                else:
-                    item_line = line
+            # Formatting each line
+            if item['quantity'] > 1:
+                item_name = f"{item['name']} x{item['quantity']}"
+            else:
+                item_name = item['name']
+            price = f"${item['total_price']:.2f}"
+            spaces = ' ' * (max_line_width - len(item_name) - len(price))
+            item_line = item_name + spaces + price
 
-                draw.text((10, y_position), item_line, fill="black", font=font)
-                y_position += line_spacing
-
-        draw.text(
-            (10, y_position + 20),
-            f"Subtotal: ${order_details['subtotal']:.2f}",
-            fill="black",
-            font=font,
-        )
-        y_position += line_spacing
+            self.printer.textln(item_line)
+            self.printer.textln()
+        self.printer.set(align='center', font='a', bold=True)
+        self.printer.textln()
+        self.printer.textln(f"Subtotal: ${order_details['subtotal']:.2f}")
 
         if order_details["discount"] > 0:
-            draw.text(
-                (10, y_position),
-                f"Discount: -${order_details['discount']:.2f}",
-                fill="black",
-                font=font,
-            )
-            y_position += line_spacing
+            self.printer.textln(f"Discount: -${order_details['discount']:.2f}")
 
-        draw.text(
-            (10, y_position),
-            f"Tax: ${order_details['tax_amount']:.2f}",
-            fill="black",
-            font=font,
-        )
-        y_position += line_spacing
-        draw.text(
-            (10, y_position),
-            f"Total: ${order_details['total_with_tax']:.2f}",
-            fill="black",
-            font=font,
-        )
-        y_position += line_spacing
-        draw.text(
-            (10, y_position + 50),
-            f"{order_details['order_id']}",
-            fill="black",
-            font=alt_font,
-        )
-        return canvas
+        self.printer.textln(f"Tax: ${order_details['tax_amount']:.2f}")
+        self.printer.textln(f"Total: ${order_details['total_with_tax']:.2f}")
 
-    def print_image(self, img_source):
-        try:
-            self.printer.image(img_source)
-            self.printer.cut()
-        except:
-            pass
+        self.printer.set(align='center', font='b', bold=False)
+        self.printer.textln()
+        self.printer.textln(order_details['order_id'])
+        self.printer.cut()
+
+    def close(self):
+        self.printer.close()
 
 
 if __name__ == "__main__":
     printer = ReceiptPrinter("receipt_printer_config.yaml")
-    receipt_image = printer.create_receipt_image()
-    printer.print_image(receipt_image)
+    order_details = {
+        "items": {
+            "item1": {"name": "Item 1", "quantity": 2, "total_price": 10.00},
+            "item2": {"name": "Item 2", "quantity": 1, "total_price": 5.00},
+        },
+        "subtotal": 15.00,
+        "discount": 0,
+        "tax_amount": 1.50,
+        "total_with_tax": 16.50,
+        "order_id": "12345"
+    }
+    printer.print_receipt(order_details)
+    printer.close()
+
