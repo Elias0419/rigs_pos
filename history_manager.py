@@ -355,11 +355,11 @@ class OrderDetailsPopup(Popup):
         self.content = content_layout
 
     def print_receipt(self, instance, order):
-        print(order)
+
         order_dict = self.convert_order_to_dict(order)
 
-        receipt_image = self.receipt_printer.create_receipt_image(order_dict)
-        self.receipt_printer.print_image(receipt_image)
+        #receipt_image = self.receipt_printer.create_receipt_image(order_dict)
+        self.receipt_printer.print_receipt(order_dict)
 
     def refund(self, instance):
         pass
