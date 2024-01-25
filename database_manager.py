@@ -2,10 +2,18 @@ import sqlite3
 
 
 class DatabaseManager:
-    def __init__(self, db_path):
-        self.db_path = db_path
-        self.ensure_tables_exist()
+    _instance = None
 
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(DatabaseManager, cls).__new__(cls)
+        return cls._instance
+
+    def __init__(self, db_path):
+        if not hasattr(self, '_init'):
+            self.db_path = db_path
+            self.ensure_tables_exist()
+            self._init = True
     def _get_connection(self):
         return sqlite3.connect(self.db_path)
 

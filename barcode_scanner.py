@@ -3,10 +3,11 @@ import threading
 import time
 
 class BarcodeScanner:
-    def __init__(self):
+    def __init__(self, barcode_scanned_callback=None):
         self.current_barcode = ""
         self.scan_timeout = 0.25
         self.last_key_time = None
+        self.barcode_scanned_callback = barcode_scanned_callback
         self.barcode_ready = threading.Event()
         self.listener = Listener(on_press=self.on_press, on_release=self.on_release)
         self.listener.start()
@@ -31,7 +32,12 @@ class BarcodeScanner:
 
     def on_release(self, key):
         if key == Key.enter:
-            self.barcode_ready.set()
+            if self.current_barcode:
+
+                self.barcode_ready.set()
+                if self.barcode_scanned_callback:
+                    self.barcode_scanned_callback(self.current_barcode.strip())
+
 
     def read_barcode(self):
         self.barcode_ready.wait()

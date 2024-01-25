@@ -44,14 +44,33 @@ class LabelPrintingRow(BoxLayout):
 
 
 class LabelPrintingView(BoxLayout):
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(LabelPrintingView, cls).__new__(cls, *args, **kwargs)
+        return cls._instance
+
     def __init__(self, **kwargs):
-        super(LabelPrintingView, self).__init__(**kwargs)
-        self.full_inventory = []
-        self.label_printer = LabelPrinter()
+        if not hasattr(self, '_init'):
+
+            super(LabelPrintingView, self).__init__(**kwargs)
+            self.full_inventory = []
+            self.label_printer = LabelPrinter()
+
+            self._init = True
+    def clear_search(self):
+        self.ids.label_search_input.text = ""
 
     def show_inventory_for_label_printing(self, inventory_items):
         self.full_inventory = inventory_items
         self.rv.data = self.generate_data_for_rv(inventory_items)
+
+    def handle_scanned_barcode(self, barcode):
+        barcode = barcode.strip()
+
+
+        self.ids.label_search_input.text = barcode
 
     def show_print_queue(self):
         content = BoxLayout(orientation="vertical", spacing=10)
@@ -87,11 +106,15 @@ class LabelPrintingView(BoxLayout):
     def filter_inventory(self, query):
         if query:
             query = query.lower()
-            filtered_items = [
-                item for item in self.full_inventory if query in item[1].lower()
-            ]
+            filtered_items = []
+            for item in self.full_inventory:
+                barcode_match = query in str(item[0]).lower()
+                name_match = query in item[1].lower()
+                if barcode_match or name_match:
+                    filtered_items.append(item)
         else:
             filtered_items = self.full_inventory
+
         self.rv.data = self.generate_data_for_rv(filtered_items)
 
 class LabelPrinter:

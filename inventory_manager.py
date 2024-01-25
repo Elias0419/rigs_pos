@@ -1,5 +1,6 @@
 from kivy.app import App
 
+from kivy.clock import Clock
 from kivymd.uix.boxlayout import BoxLayout
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
@@ -17,12 +18,27 @@ class InventoryManagementView(BoxLayout):
     price = StringProperty()
     cost = StringProperty()
     sku = StringProperty()
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(InventoryManagementView, cls).__new__(cls, *args, **kwargs)
+        return cls._instance
 
     def __init__(self, **kwargs):
-        super(InventoryManagementView, self).__init__(**kwargs)
+        if not hasattr(self, '_init'):
+            super(InventoryManagementView, self).__init__(**kwargs)
+            self.full_inventory = []
+            self.database_manager = DatabaseManager("inventory.db")
+            self._init = True
 
-        self.full_inventory = []
-        self.database_manager = DatabaseManager("inventory.db")
+    def update_search_input(self, barcode):
+        self.ids.inv_search_input.text = barcode
+
+    def handle_scanned_barcode(self, barcode):
+        barcode = barcode.strip()
+        Clock.schedule_once(lambda dt: self.update_search_input(barcode), 0.1)
+
 
     def generate_unique_barcode(self):
         while True:
@@ -41,6 +57,7 @@ class InventoryManagementView(BoxLayout):
 
     def show_inventory_for_manager(self, inventory_items):
         self.full_inventory = inventory_items
+
         self.rv.data = self.generate_data_for_rv(inventory_items)
 
     def refresh_inventory(self):
@@ -141,6 +158,8 @@ class InventoryManagementView(BoxLayout):
         self.refresh_inventory()
         popup.dismiss()
 
+    def clear_search(self):
+            self.ids.inv_search_input.text = ""
     def set_generated_barcode(self, barcode_input):
         unique_barcode = self.generate_unique_barcode()
         barcode_input.text = unique_barcode
@@ -149,7 +168,7 @@ class InventoryManagementView(BoxLayout):
         self.inventory_item_popup()
 
     def generate_data_for_rv(self, items):
-        return [
+        data = [
             {
                 "barcode": str(item[0]),
                 "name": item[1],
@@ -160,15 +179,28 @@ class InventoryManagementView(BoxLayout):
             for item in items
         ]
 
+        return data
+
     def filter_inventory(self, query):
+
+
         if query:
             query = query.lower()
-            filtered_items = [
-                item for item in self.full_inventory if query in item[1].lower()
-            ]
+            filtered_items = []
+            for item in self.full_inventory:
+                barcode = str(item[0]).lower()
+                name = item[1].lower()
+                if query == barcode or query in name:
+                    filtered_items.append(item)
+
         else:
             filtered_items = self.full_inventory
+
         self.rv.data = self.generate_data_for_rv(filtered_items)
+
+
+
+
 
 
 class InventoryManagementRow(BoxLayout):
@@ -304,7 +336,6 @@ class InventoryView(BoxLayout):
     def __init__(self, order_manager, **kwargs):
         super(InventoryView, self).__init__(**kwargs)
         self.order_manager = order_manager
-
     def show_inventory(self, inventory_items):
         self.full_inventory = inventory_items
         data = self.generate_data_for_rv(inventory_items)
@@ -327,8 +358,11 @@ class InventoryView(BoxLayout):
         if query:
             query = query.lower()
             filtered_items = [
-                item for item in self.full_inventory if query in item[1].lower()
+                item for item in self.full_inventory
+                if query in str(item[0]).lower() or query in item[1].lower()
             ]
         else:
             filtered_items = self.full_inventory
+
         self.rv.data = self.generate_data_for_rv(filtered_items)
+
