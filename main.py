@@ -219,39 +219,7 @@ class CashRegisterApp(MDApp):
         except Exception as e:
             print(e)
 
-    def show_add_or_bypass_popup(self, barcode):
-        popup_layout = BoxLayout(orientation="vertical", spacing=10)
 
-        popup_layout.add_widget(Label(text=f"Barcode: {barcode}"))
-
-        button_layout = BoxLayout(orientation="horizontal", spacing=10)
-
-        for option in ["Add Custom Item", "Add to Database"]:
-            btn = MDRaisedButton(
-                text=option,
-                size_hint=(0.5, 0.4),
-                on_press=lambda x, barcode=barcode: self.dismiss_bypass_popup(
-                    x, barcode
-                ),
-            )
-            button_layout.add_widget(btn)
-
-        popup_layout.add_widget(button_layout)
-
-        self.popup = Popup(
-            title="Item Not Found", content=popup_layout, size_hint=(0.8, 0.6)
-        )
-        self.popup.open()
-
-    def dismiss_bypass_popup(self, instance, barcode):
-        self.on_add_or_bypass_choice(instance.text, barcode)
-        self.popup.dismiss()
-
-    def on_add_or_bypass_choice(self, choice_text, barcode):
-        if choice_text == "Add Custom Item":
-            self.show_custom_item_popup(barcode)
-        elif choice_text == "Add to Database":
-            self.show_add_to_database_popup(barcode)
 
     """
     Button handlers
@@ -326,6 +294,56 @@ class CashRegisterApp(MDApp):
         self.update_financial_summary()
         self.order_layout.clear_widgets()
 
+    def on_receipt_button_press(self, instance):
+        printer = ReceiptPrinter("receipt_printer_config.yaml")
+
+        order_details = self.order_manager.get_order_details()
+
+        printer.print_receipt(order_details)
+
+    def on_lock_screen_button_press(self, instance):
+        if instance.text == "Reset":
+            self.entered_pin = ""
+        else:
+            self.entered_pin += instance.text
+            self.reset_pin_timer()
+
+        if len(self.entered_pin) == 4:
+            if self.entered_pin == self.correct_pin:
+                self.lock_popup.dismiss()
+                self.entered_pin = ""
+            else:
+                self.entered_pin = ""
+
+
+    """
+    Popup display functions
+    """
+
+    def show_add_or_bypass_popup(self, barcode):
+        popup_layout = BoxLayout(orientation="vertical", spacing=10)
+
+        popup_layout.add_widget(Label(text=f"Barcode: {barcode}"))
+
+        button_layout = BoxLayout(orientation="horizontal", spacing=10)
+
+        for option in ["Add Custom Item", "Add to Database"]:
+            btn = MDRaisedButton(
+                text=option,
+                size_hint=(0.5, 0.4),
+                on_press=lambda x, barcode=barcode: self.dismiss_bypass_popup(
+                    x, barcode
+                ),
+            )
+            button_layout.add_widget(btn)
+
+        popup_layout.add_widget(button_layout)
+
+        self.popup = Popup(
+            title="Item Not Found", content=popup_layout, size_hint=(0.8, 0.6)
+        )
+        self.popup.open()
+
     def on_item_click(self, item_id):
         item_info = self.order_manager.items.get(item_id)
         if item_info:
@@ -336,7 +354,6 @@ class CashRegisterApp(MDApp):
         item_popup_layout = GridLayout(rows=3, size_hint=(0.8, 0.8))
 
         details_layout = BoxLayout(orientation="vertical")
-        # details_layout.add_widget(Label(text=f"Name: {item_name}\nPrice: ${item_price}\nQuantity: {item_quantity}"))
         details_layout.add_widget(
             Label(text=f"Name: {item_name}\nPrice: ${item_price}")
         )
@@ -391,12 +408,7 @@ class CashRegisterApp(MDApp):
         )
         self.item_popup.open()
 
-    def adjust_item_quantity(self, item_id, adjustment):
-        self.order_manager.adjust_item_quantity(item_id, adjustment)
-        self.item_popup.dismiss()
-        self.on_item_click(item_id)
-        self.update_display()
-        self.update_financial_summary()
+
 
     def add_discount_popup(self, item_name, item_price):
         discount_layout = BoxLayout(
@@ -406,12 +418,10 @@ class CashRegisterApp(MDApp):
 
         percent_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         percent_input = TextInput(multiline=False, hint_text="Percent")
-        # percent_layout.add_widget(Label(text="Percent"))
         percent_layout.add_widget(percent_input)
 
         amount_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         amount_input = TextInput(multiline=False, hint_text="Amount")
-        # amount_layout.add_widget(Label(text="Amount"))
         amount_layout.add_widget(amount_input)
 
         button_layout = BoxLayout(
@@ -439,41 +449,6 @@ class CashRegisterApp(MDApp):
             size_hint=(0.8, 0.4),
         )
         popup.open()
-
-    def discount_single_item(self, discount_amount=None, discount_percentage=None):
-        try:
-            discount_amount = float(discount_amount) if discount_amount else None
-            discount_percentage = (
-                float(discount_percentage) if discount_percentage else None
-            )
-        except ValueError:
-            return
-
-        if discount_amount is not None:
-            self.order_manager.add_discount(discount_amount=discount_amount)
-            # self.order_manager.update_tax_amount()
-            self.update_display()
-            self.update_financial_summary()
-        elif discount_percentage is not None:
-            self.order_manager.add_discount(discount_percentage=discount_percentage)
-            # self.order_manager.update_tax_amount()
-
-            self.update_display()
-            self.update_financial_summary()
-
-    def remove_item(self, item_name, item_price):
-        self.order_manager.remove_item(item_name)
-        self.update_display()
-        self.update_financial_summary()
-        self.close_item_popup()
-
-    def close_item_popup(self):
-        if self.item_popup:
-            self.item_popup.dismiss()
-
-    """
-    Popup display functions
-    """
 
     def show_theme_change_popup(self):
         layout = GridLayout(cols=4, rows=8, orientation="lr-tb")
@@ -512,16 +487,7 @@ class CashRegisterApp(MDApp):
         )
         self.theme_change_popup.open()
 
-    def set_primary_palette(self, color_name):
-        self.theme_cls.primary_palette = color_name
-        self.save_settings()
 
-    def toggle_dark_mode(self):
-        if self.theme_cls.theme_style == "Dark":
-            self.theme_cls.theme_style = "Light"
-        else:
-            self.theme_cls.theme_style = "Dark"
-        self.save_settings()
 
     def show_system_popup(self):
         float_layout = FloatLayout()
@@ -551,29 +517,7 @@ class CashRegisterApp(MDApp):
         )
         self.system_popup.open()
 
-    def reboot_are_you_sure(self):
-        arys_layout = BoxLayout()
 
-        btn = MDRaisedButton(
-            text="Yes!",
-            size_hint=(0.9, 0.9),
-            on_press=self.reboot,
-        )
-        btn2 = MDRaisedButton(
-            text="No!", size_hint=(0.9, 0.9), on_press=lambda x: popup.dismiss()
-        )
-        arys_layout.add_widget(Label(text=f"Are you sure?"))
-        arys_layout.add_widget(btn)
-        arys_layout.add_widget(btn2)
-        popup = Popup(
-            title="Reboot",
-            content=arys_layout,
-            size_hint=(0.9, 0.2),
-            pos_hint={"top": 1},
-            background_color=[1, 0, 0, 1],
-        )
-
-        popup.open()
 
     def show_label_printing_view(self):
         inventory = self.db_manager.get_all_items()
@@ -710,36 +654,7 @@ class CashRegisterApp(MDApp):
             )
             self.lock_popup.open()
 
-    def manual_override(self, instance):
-        current_time = time.time()
-        if current_time - self.override_tap_time < 1:
-            sys.exit(42)
-        else:
-            self.override_tap_time = current_time
 
-    def on_lock_screen_button_press(self, instance):
-        if instance.text == "Reset":
-            self.entered_pin = ""
-        else:
-            self.entered_pin += instance.text
-            self.reset_pin_timer()
-
-        if len(self.entered_pin) == 4:
-            if self.entered_pin == self.correct_pin:
-                self.lock_popup.dismiss()
-                self.entered_pin = ""
-            else:
-                self.entered_pin = ""
-
-    def reset_pin_timer(self):
-        if self.pin_reset_timer is not None:
-            self.pin_reset_timer.cancel()
-
-        self.pin_reset_timer = threading.Timer(5.0, self.reset_pin)
-        self.pin_reset_timer.start()
-
-    def reset_pin(self):
-        self.entered_pin = ""
 
     def show_inventory(self):
         inventory = self.db_manager.get_all_items()
@@ -877,7 +792,7 @@ class CashRegisterApp(MDApp):
         for amount in common_amounts:
             btn = Button(
                 text=f"${amount}", on_press=self.on_preset_amount_press
-            )  #######################
+            )
             keypad_layout.add_widget(btn)
         custom_cash_button = MDRaisedButton(
             text="Custom", size_hint=(0.8, 0.8), on_press=self.open_custom_cash_popup
@@ -953,8 +868,7 @@ class CashRegisterApp(MDApp):
         )
         self.custom_cash_popup.open()
 
-    def on_preset_amount_press(self, instance):
-        self.cash_input.text = instance.text.strip("$")
+
 
     def show_payment_confirmation_popup(self):
         confirmation_layout = GridLayout(
@@ -1001,13 +915,7 @@ class CashRegisterApp(MDApp):
         self.popup.dismiss()
         self.payment_popup.open()
 
-    def on_receipt_button_press(self, instance):
-        printer = ReceiptPrinter("receipt_printer_config.yaml")
 
-        order_details = self.order_manager.get_order_details()
-
-        receipt_image = printer.create_receipt_image(order_details)
-        printer.print_image(receipt_image)
 
     def show_make_change_popup(self, change):
         change_layout = BoxLayout(orientation="vertical", spacing=10)
@@ -1023,13 +931,7 @@ class CashRegisterApp(MDApp):
         )
         self.change_popup.open()
 
-    def calculate_common_amounts(self, total):
-        amounts = []
-        for base in [1, 5, 10, 20, 50, 100]:
-            amount = total - (total % base) + base
-            if amount not in amounts and amount >= total:
-                amounts.append(amount)
-        return amounts
+
 
     def show_add_to_database_popup(self, barcode):
         popup_layout = BoxLayout(orientation="vertical", spacing=10)
@@ -1092,21 +994,106 @@ class CashRegisterApp(MDApp):
 
         self.add_to_db_popup.open()
 
+
+
+    """
+    Accessory functions
+    """
+    def manual_override(self, instance):
+        current_time = time.time()
+        if current_time - self.override_tap_time < 1:
+            sys.exit(42)
+        else:
+            self.override_tap_time = current_time
+
+    def set_primary_palette(self, color_name):
+        self.theme_cls.primary_palette = color_name
+        self.save_settings()
+
+    def toggle_dark_mode(self):
+        if self.theme_cls.theme_style == "Dark":
+            self.theme_cls.theme_style = "Light"
+        else:
+            self.theme_cls.theme_style = "Dark"
+        self.save_settings()
+
+    def remove_item(self, item_name, item_price):
+        self.order_manager.remove_item(item_name)
+        self.update_display()
+        self.update_financial_summary()
+        self.close_item_popup()
+
+    def close_item_popup(self):
+        if self.item_popup:
+            self.item_popup.dismiss()
+
+    def reset_pin_timer(self):
+        if self.pin_reset_timer is not None:
+            self.pin_reset_timer.cancel()
+
+        self.pin_reset_timer = threading.Timer(5.0, self.reset_pin)
+        self.pin_reset_timer.start()
+
+    def reset_pin(self):
+        self.entered_pin = ""
+
+
+    def adjust_item_quantity(self, item_id, adjustment):
+        self.order_manager.adjust_item_quantity(item_id, adjustment)
+        self.item_popup.dismiss()
+        self.on_item_click(item_id)
+        self.update_display()
+        self.update_financial_summary()
+
+    def discount_single_item(self, discount_amount=None, discount_percentage=None):
+        try:
+            discount_amount = float(discount_amount) if discount_amount else None
+            discount_percentage = (
+                float(discount_percentage) if discount_percentage else None
+            )
+        except ValueError:
+            return
+
+        if discount_amount is not None:
+            self.order_manager.add_discount(discount_amount=discount_amount)
+            self.update_display()
+            self.update_financial_summary()
+        elif discount_percentage is not None:
+            self.order_manager.add_discount(discount_percentage=discount_percentage)
+
+            self.update_display()
+            self.update_financial_summary()
+
+    def dismiss_bypass_popup(self, instance, barcode):
+        self.on_add_or_bypass_choice(instance.text, barcode)
+        self.popup.dismiss()
+
+    def on_add_or_bypass_choice(self, choice_text, barcode):
+        if choice_text == "Add Custom Item":
+            self.show_custom_item_popup(barcode)
+        elif choice_text == "Add to Database":
+            self.show_add_to_database_popup(barcode)
+
+
+    def calculate_common_amounts(self, total):
+        amounts = []
+        for base in [1, 5, 10, 20, 50, 100]:
+            amount = total - (total % base) + base
+            if amount not in amounts and amount >= total:
+                amounts.append(amount)
+        return amounts
+
     def on_input_focus(self, instance, value):
         if value:
             instance.show_keyboard()
         else:
             instance.hide_keyboard()
 
-    def close_add_to_database_popup(self, instance):
-        self.add_to_db_popup.dismiss()
-
-    """
-    Accessory functions
-    """
-
     def add_item_to_label_printing_queue(self):
         pass
+
+    def close_add_to_database_popup(self, instance):
+        self.add_to_db_popup.dismiss()
 
     def add_adjusted_price_item(self, instance):
         target_amount = self.target_amount_input.text
@@ -1130,19 +1117,43 @@ class CashRegisterApp(MDApp):
             print(e)
             return False
 
+    def reboot_are_you_sure(self):
+        arys_layout = BoxLayout()
+
+        btn = MDRaisedButton(
+            text="Yes!",
+            size_hint=(0.9, 0.9),
+            on_press=self.reboot,
+        )
+        btn2 = MDRaisedButton(
+            text="No!", size_hint=(0.9, 0.9), on_press=lambda x: popup.dismiss()
+        )
+        arys_layout.add_widget(Label(text=f"Are you sure?"))
+        arys_layout.add_widget(btn)
+        arys_layout.add_widget(btn2)
+        popup = Popup(
+            title="Reboot",
+            content=arys_layout,
+            size_hint=(0.9, 0.2),
+            pos_hint={"top": 1},
+            background_color=[1, 0, 0, 1],
+        )
+
+        popup.open()
+
     def turn_off_monitor(self):
         touchscreen_device = "iSolution multitouch"
 
         try:
             subprocess.run(["xinput", "disable", touchscreen_device], check=True)
         except subprocess.CalledProcessError as e:
-            print("Error disabling touchscreen:", e)
+            print(e)
             return
 
         try:
             subprocess.run(["xset", "dpms", "force", "off"], check=True)
         except subprocess.CalledProcessError as e:
-            print("Error turning off monitor:", e)
+            print(e)
             subprocess.run(["xinput", "enable", touchscreen_device])
             return
 
@@ -1151,7 +1162,7 @@ class CashRegisterApp(MDApp):
             try:
                 subprocess.run(["xinput", "enable", touchscreen_device], check=True)
             except subprocess.CalledProcessError as e:
-                print("Error re-enabling touchscreen:", e)
+                print(e)
 
         threading.Thread(target=reenable_touchscreen).start()
 
@@ -1227,6 +1238,9 @@ class CashRegisterApp(MDApp):
 
     def on_adjust_price_cancel(self, instance):
         self.adjust_price_popup.dismiss()
+
+    def on_preset_amount_press(self, instance):
+        self.cash_input.text = instance.text.strip("$")
 
     def on_cash_confirm(self, instance):
         amount_tendered = float(self.cash_input.text)
