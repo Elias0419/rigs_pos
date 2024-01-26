@@ -139,11 +139,11 @@ class LabelPrinter:
         writer = ImageWriter()
         upc = UPC(barcode_data, writer=writer)
         barcode_width, barcode_height = writer.calculate_size(len(barcode_data), 1)
-        desired_barcode_width = barcode_width / 800  # for example
-        desired_barcode_height = barcode_height - 20
+        d_barcode_width = barcode_width / 800
+
         barcode_image = upc.render(
             {
-                "module_width": desired_barcode_width,
+                "module_width": d_barcode_width,
                 "module_height": 10,
                 "font_size": 4,
                 "text_distance": 2,

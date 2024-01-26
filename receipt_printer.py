@@ -4,6 +4,7 @@ from PIL import Image
 from escpos.config import Config
 import textwrap
 
+import io
 
 class ReceiptPrinter:
     def __init__(self, config_path):
@@ -14,6 +15,9 @@ class ReceiptPrinter:
         except Exception as e:
             print(e)
             pass
+
+
+
     def print_receipt(self, order_details):
         logo = Image.open("logo.png")
         try:
@@ -50,6 +54,15 @@ class ReceiptPrinter:
 
             self.printer.set(align="center", font="b", bold=False)
             self.printer.textln()
+            #barcode_data = "{Bwhat_the_fuck"
+            barcode_data = str(order_details["order_id"])
+            short_uuid = barcode_data[:14]   # test truncation length
+            barcode_data_short = "{B" + short_uuid
+            self.printer.barcode(barcode_data_short, "CODE128")
+
+
+
+            self.printer.textln()
             self.printer.textln(order_details["order_id"])
             self.printer.cut()
         except Exception as e:
@@ -61,18 +74,10 @@ class ReceiptPrinter:
             self.printer.close()
         except:
             pass
+
+
 if __name__ == "__main__":
     printer = ReceiptPrinter("receipt_printer_config.yaml")
-    order_details = {
-        "items": {
-            "item1": {"name": "Item 1", "quantity": 2, "total_price": 10.00},
-            "item2": {"name": "Item 2", "quantity": 1, "total_price": 5.00},
-        },
-        "subtotal": 15.00,
-        "discount": 0,
-        "tax_amount": 1.50,
-        "total_with_tax": 16.50,
-        "order_id": "12345",
-    }
-    printer.print_receipt(order_details)
+
+    printer.print_png_image("barcodes.png")
     printer.close()
