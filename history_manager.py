@@ -60,7 +60,7 @@ class HistoryView(BoxLayout):
         self.current_filter = None
         # self.size_hint = (1, 1)
         self.receipt_printer = ReceiptPrinter("receipt_printer_config.yaml")
-
+        print("historyview init", self)
         self.button_layout = BoxLayout(orientation="horizontal", size_hint=(1, 0.2))
         self.button_layout.add_widget(
             MDRaisedButton(
