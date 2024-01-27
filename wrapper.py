@@ -2,12 +2,12 @@ import subprocess
 import time
 
 
-def run_app(script_path="main.py", max_restarts=3, restart_window=10):
+def run_app(script_path="/home/rigs/rigs_pos/main.py", max_restarts=3, restart_window=10):
     recent_restarts = 0
     last_restart_time = time.time()
 
     while True:
-        result = subprocess.run(["../0/bin/python", script_path])
+        result = subprocess.run(["/home/rigs/0/bin/python", script_path])
 
         current_time = time.time()
         if current_time - last_restart_time > restart_window:
