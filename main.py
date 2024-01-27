@@ -79,6 +79,7 @@ class CashRegisterApp(MDApp):
         self.receipt_printer = ReceiptPrinter("receipt_printer_config.yaml")
         self.inventory_manager = InventoryManagementView()
         self.label_manager = LabelPrintingView()
+
         main_layout = GridLayout(cols=1, orientation="tb-lr", row_default_height=60)
         top_area_layout = GridLayout(cols=3, orientation="lr-tb", row_default_height=60)
         self.order_layout = GridLayout(
@@ -92,15 +93,11 @@ class CashRegisterApp(MDApp):
         )
 
         top_area_layout.add_widget(self.order_layout)
-
         financial_layout = self.create_financial_layout()
         top_area_layout.add_widget(financial_layout)
-
         clock_layout = self.create_clock_layout()
         top_area_layout.add_widget(clock_layout)
-
         main_layout.add_widget(top_area_layout)
-
         button_layout = GridLayout(cols=4, size_hint_y=1 / 8, orientation="lr-tb")
 
         btn_pay = MDRaisedButton(
@@ -158,15 +155,6 @@ class CashRegisterApp(MDApp):
         clock_layout.add_widget(self.clock_label)
         return clock_layout
 
-    def update_clock(self, *args):
-        self.clock_label.text = time.strftime("%I:%M %p\n%A\n%B %d, %Y\n")
-        self.clock_label.color = self.get_text_color()
-
-    def get_text_color(self):
-        if self.theme_cls.theme_style == "Dark":
-            return (1, 1, 1, 1)
-        else:
-            return (0, 0, 0, 1)
 
     def create_financial_layout(self):
         financial_layout = GridLayout(cols=1, size_hint_x=1 / 3)
@@ -176,15 +164,7 @@ class CashRegisterApp(MDApp):
 
         return financial_layout
 
-    def update_financial_summary(self):
-        subtotal = self.order_manager.subtotal
-        total_with_tax = self.order_manager.calculate_total_with_tax()
-        tax = self.order_manager.tax_amount
-        discount = self.order_manager.order_discount
 
-        self.financial_summary_widget.update_summary(
-            subtotal, tax, total_with_tax, discount
-        )
 
     """
     Barcode functions
@@ -654,8 +634,6 @@ class CashRegisterApp(MDApp):
             )
             self.lock_popup.open()
 
-
-
     def show_inventory(self):
         inventory = self.db_manager.get_all_items()
         inventory_view = InventoryView(order_manager=self.order_manager)
@@ -1095,6 +1073,27 @@ class CashRegisterApp(MDApp):
     def close_add_to_database_popup(self, instance):
         self.add_to_db_popup.dismiss()
 
+    def update_clock(self, *args):
+        self.clock_label.text = time.strftime("%I:%M %p\n%A\n%B %d, %Y\n")
+        self.clock_label.color = self.get_text_color()
+
+    def get_text_color(self):
+        if self.theme_cls.theme_style == "Dark":
+            return (1, 1, 1, 1)
+        else:
+            return (0, 0, 0, 1)
+
+    def update_financial_summary(self):
+        subtotal = self.order_manager.subtotal
+        total_with_tax = self.order_manager.calculate_total_with_tax()
+        tax = self.order_manager.tax_amount
+        discount = self.order_manager.order_discount
+
+        self.financial_summary_widget.update_summary(
+            subtotal, tax, total_with_tax, discount
+        )
+
+
     def add_adjusted_price_item(self, instance):
         target_amount = self.target_amount_input.text
         try:
@@ -1341,8 +1340,7 @@ class FinancialSummaryWidget(MDRaisedButton):
         self.size_hint_x = 1
         self.height = 80
         self.orientation = "vertical"
-        # self.font_style = "H6"
-        # cash_register = CashRegisterApp()
+
         app = App.get_running_app()
 
     def update_summary(self, subtotal, tax, total_with_tax, discount):
