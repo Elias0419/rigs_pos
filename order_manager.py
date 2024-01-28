@@ -9,17 +9,22 @@ class OrderManager:
             cls._instance = super(OrderManager, cls).__new__(cls, *args, **kwargs)
         return cls._instance
 
+
     def __init__(self, tax_rate=0.07):
         if not hasattr(self, "_init"):
             print("order manager init", self)
             self.items = {}
             self.total = 0.0
             self.subtotal = 0.0
-            self.tax_rate = tax_rate
             self.tax_amount = 0.0
+            self.change_given = 0.0
+            self.order_discount = 0.0
+            self.amount_tendered = 0.0
+            self.tax_rate = tax_rate
+            self.payment_method = None
             self._total_with_tax = None
             self.order_id = str(uuid.uuid4())
-            self.order_discount = 0.0
+
             self._init = True
 
     def _update_total_with_tax(self):
@@ -90,6 +95,9 @@ class OrderManager:
             "tax_amount": self.tax_amount,
             "total_with_tax": self._total_with_tax,
             "discount": self.order_discount,
+            "payment_method": self.payment_method,
+            "amount_tendered": self.amount_tendered,
+            "change_given": self.change_given,
         }
 
     def clear_order(self):
@@ -100,6 +108,9 @@ class OrderManager:
         self.order_discount = 0.0
         self.tax_amount = 0.0
         self.subtotal = 0.0
+        self.payment_method = None
+        self.amount_tendered = 0.0
+        self.change_given = 0.0
 
     def adjust_item_quantity(self, item_id, adjustment):
         if item_id in self.items:
@@ -142,3 +153,12 @@ class OrderManager:
         self.total = max(self.subtotal - self.order_discount, 0)
         self.update_tax_amount()
         self._update_total_with_tax()
+
+
+
+    def set_payment_method(self, method):
+        self.payment_method = method
+
+    def set_payment_details(self, amount_tendered=None, change=None):
+        self.amount_tendered = amount_tendered if amount_tendered is not None else 0.0
+        self.change_given = change if change is not None else 0.0

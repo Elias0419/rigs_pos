@@ -57,6 +57,9 @@ class DatabaseManager:
                                 tax REAL,
                                 discount REAL,
                                 total_with_tax REAL,
+                                payment_method TEXT,
+                                amount_tendered REAL,
+                                change_given REAL,
                                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                             )"""
             )
@@ -98,18 +101,18 @@ class DatabaseManager:
         conn.close()
         return True
 
-    def add_order_history(
-        self, order_id, items, total, tax, discount, total_with_tax, timestamp
-    ):
+    def add_order_history(self, order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given):
         self.create_order_history_table()
         conn = self._get_connection()
+        amount_tendered = amount_tendered if amount_tendered is not None else None
+        change_given = change_given if change_given is not None else None
         try:
             cursor = conn.cursor()
 
             cursor.execute(
-                "INSERT INTO order_history (order_id, items, total, tax, discount, total_with_tax, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (order_id, items, total, tax, discount, total_with_tax, timestamp),
-            )
+            "INSERT INTO order_history (order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given),
+        )
             conn.commit()
         except sqlite3.Error as e:
             print(e)
@@ -122,7 +125,7 @@ class DatabaseManager:
         conn = self._get_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT order_id, items, total, tax, total_with_tax, timestamp FROM order_history"
+            "SELECT order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given FROM order_history"
         )
         order_history = cursor.fetchall()
         conn.close()

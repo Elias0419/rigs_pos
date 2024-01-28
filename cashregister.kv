@@ -77,7 +77,7 @@ MDRaisedButton:
 
 <LabelPrintingView>:
     orientation: 'vertical'
-    rv: rv
+    rv: label_rv
     BoxLayout:
         size_hint_y: None
         height: '48dp'
@@ -98,7 +98,7 @@ MDRaisedButton:
             on_press: root.show_print_queue()
 
     RecycleView:
-        id: rv
+        id: label_rv
         viewclass: 'LabelPrintingRow'
         RecycleBoxLayout:
             default_size: None, dp(56)
@@ -107,6 +107,48 @@ MDRaisedButton:
             height: self.minimum_height
             orientation: 'vertical'
 
+<PrintQueueRow>:
+    orientation: 'horizontal'
+    #size_hint_y: None
+    height: dp(48)
+
+    Label:
+        text: root.name
+    BoxLayout:
+        orientation: 'horizontal'
+        #size_hint_x: None
+        #width: dp(100)
+        spacing: 10
+
+        MDRaisedButton:
+            text: "-"
+            #width: dp(48)
+            on_press: root.decrement_quantity()
+        Label:
+            text: root.quantity
+            size_hint: (None,0.8)
+            #size_hint_x: 0.3
+            #width: dp(48)
+        MDRaisedButton:
+            text: "+"
+            #width: dp(48)
+
+            on_press: root.increment_quantity()
+    MDRaisedButton:
+        text: "Remove"
+        on_press: root.on_remove_button_press()
+
+<LabelQueueLayout>:
+    RecycleView:
+        id: label_queue_rv
+        size_hint: (1, 1)
+        viewclass: 'PrintQueueRow'
+        RecycleBoxLayout:
+            default_size: None, dp(48)
+            default_size_hint: 1, None
+            size_hint_y: None
+            height: self.minimum_height
+            orientation: 'vertical'
 <InventoryManagementRow>:
     canvas.after:
         Color:

@@ -28,14 +28,19 @@ class HistoryPopup(Popup):
 
     def show_hist_reporting_popup(self):
         order_history = self.db_manager.get_order_history()
+        print(order_history)
         history_view = HistoryView()
+        print("1")
         history_view.show_reporting_popup(order_history)
-
+        print("2")
         self.content = history_view
+        print("3")
         self.size_hint = (0.9, 0.9)
+        print("4")
         self.title = "Order History"
-
+        print("5")
         self.open()
+        print("6")
 
 
 class HistoryRow(BoxLayout):
@@ -46,6 +51,9 @@ class HistoryRow(BoxLayout):
     total_with_tax = StringProperty()
     timestamp = StringProperty()
     history_view = ObjectProperty()
+    payment_method = StringProperty()
+    amount_tendered = StringProperty()
+    change_given = StringProperty()
 
     def __init__(self, **kwargs):
         super(HistoryRow, self).__init__(**kwargs)
@@ -58,7 +66,7 @@ class HistoryView(BoxLayout):
         self.order_history = []
         self.orientation = "vertical"
         self.current_filter = None
-        # self.size_hint = (1, 1)
+
         self.receipt_printer = ReceiptPrinter("receipt_printer_config.yaml")
         print("historyview init", self)
         self.button_layout = BoxLayout(orientation="horizontal", size_hint=(1, 0.2))
@@ -108,7 +116,7 @@ class HistoryView(BoxLayout):
         with open(filename, "w", newline="", encoding="utf-8") as file:
             writer = csv.writer(file)
             writer.writerow(
-                ["Order ID", "Items", "Total", "Tax", "Total with Tax", "Timestamp"]
+                ["Order ID", "Items", "Total", "Tax", "Discount", "Total with Tax", "Timestamp", "Payment Method", "Amount Tendered", "Change Given"]
             )
             for row in csv_data:
                 writer.writerow(row)
@@ -135,42 +143,61 @@ class HistoryView(BoxLayout):
                 order["items"],
                 order["total"],
                 order["tax"],
+                order["discount"],
                 order["total_with_tax"],
                 order["timestamp"],
+                order["payment_method"],
+                order["amount_tendered"],
+                order["change_given"]
             ]
             for order in self.rv_data
         ]
 
     def show_reporting_popup(self, order_history):
+        print("entering show reporting popup")
         self.order_history = order_history
+        print("order history before updating rv", order_history)
         self.rv_data = [
-            {
-                "order_id": order[0],
-                "items": self.format_items(order[1]),
-                "total": self.format_money(order[2]),
-                "tax": self.format_money(order[3]),
-                "total_with_tax": self.format_money(order[4]),
-                "timestamp": self.format_date(order[5]),
-                "history_view": self,
-            }
-            for order in order_history
-        ]
-        self.rv_data.reverse()
+        {
+            "order_id": order[0],
+            "items": self.format_items(order[1]),
+            "total": self.format_money(order[2]),
+            "tax": self.format_money(order[3]),
+            "discount": self.format_money(order[4]),
+            "total_with_tax": self.format_money(order[5]),
+            "timestamp": self.format_date(order[6]),
+            "payment_method": order[7],
+            "amount_tendered": self.format_money(order[8]),
+            "change_given": self.format_money(order[9]),
+            "history_view": self,
+        }
+        for order in order_history
+    ]
 
+        print("after updating rv_data", self.rv_data)
+        self.rv_data.reverse()
+        print("after reverse rv_data", self.rv_data)
         self.ids.history_rv.data = self.rv_data
 
     def create_history_row(self, order):
-        history_row = HistoryRow()
-        history_row.order_id = order[0]
-        history_row.items = self.format_items(order[1])
-        history_row.total = self.format_money(order[2])
-        history_row.tax = self.format_money(order[3])
-        history_row.total_with_tax = self.format_money(order[4])
-        history_row.timestamp = self.format_date(order[5])
-
-        history_row.history_view = self
-
-        return history_row
+        print(order)
+        try:
+            history_row = HistoryRow()
+            history_row.order_id = order[0]
+            history_row.items = self.format_items(order[1])
+            history_row.total = self.format_money(order[2])
+            history_row.tax = self.format_money(order[3])
+            history_row.discount = self.format_items(order[4])
+            history_row.total_with_tax = self.format_money(order[5])
+            history_row.timestamp = self.format_date(order[6])
+            history_row.payment_method = order[7]
+            history_row.amount_tendered = self.format_money(order[8])
+            history_row.change_given = self.format_money(order[9])
+            history_row.history_view = self
+            return history_row
+        except Exception as e:
+            print(e)
+            pass
 
     def show_specific_day_popup(self, instance):
         specific_day_picker = MDDatePicker()
@@ -211,8 +238,12 @@ class HistoryView(BoxLayout):
                 "items": self.format_items(order[1]),
                 "total": self.format_money(order[2]),
                 "tax": self.format_money(order[3]),
-                "total_with_tax": self.format_money(order[4]),
-                "timestamp": self.format_date(order[5]),
+                "discount": self.format_money(order[4]),
+                "total_with_tax": self.format_money(order[5]),
+                "timestamp": self.format_date(order[6]),
+                "payment_method": order[7],
+                "amount_tendered": order[8],
+                "change_given": order[9],
                 "history_view": self,
             }
             for order in filtered_history
@@ -295,8 +326,12 @@ class HistoryView(BoxLayout):
         if specific_order:
             print(specific_order)
             self.clear_widgets()
-            history_row = self.create_history_row(specific_order)
-            self.add_widget(history_row)
+            try:
+                history_row = self.create_history_row(specific_order)
+                self.add_widget(history_row)
+            except Exception as e:
+                print(e)
+                pass
         else:
             pass
 
@@ -311,6 +346,7 @@ class HistoryView(BoxLayout):
             pass
 
     def format_money(self, value):
+
         return "{:.2f}".format(value)
 
     def format_date(self, date_str):
@@ -355,10 +391,7 @@ class OrderDetailsPopup(Popup):
         self.content = content_layout
 
     def print_receipt(self, instance, order):
-
         order_dict = self.convert_order_to_dict(order)
-
-        #receipt_image = self.receipt_printer.create_receipt_image(order_dict)
         self.receipt_printer.print_receipt(order_dict)
 
     def refund(self, instance):
@@ -407,9 +440,14 @@ class OrderDetailsPopup(Popup):
             f"Order ID: {order[0]}",
             f"Items: {self.format_items(order[1])}",
             f"Total: ${self.history_view.format_money(order[2])}",
-            # f"Discount: ${self.history_view.format_money(order[2])}",
             f"Tax: ${self.history_view.format_money(order[3])}",
-            f"Total with Tax: ${self.history_view.format_money(order[4])}",
-            f"Timestamp: {self.history_view.format_date(order[5])}",
+            f"Discount: ${self.history_view.format_money(order[4])}",
+            f"Total with Tax: ${self.history_view.format_money(order[5])}",
+            f"Timestamp: {self.history_view.format_date(order[6])}",
         ]
+        formatted_order.extend([
+            f"Payment Method: {order[7]}",
+            f"Amount Tendered: ${self.history_view.format_money(order[8])}",
+            f"Change Given: ${self.history_view.format_money(order[9])}",
+        ])
         return "\n".join(formatted_order)

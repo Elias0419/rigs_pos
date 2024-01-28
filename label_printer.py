@@ -11,6 +11,8 @@ from kivy.uix.label import Label
 from kivy.properties import StringProperty, ListProperty, ObjectProperty
 from kivy.uix.textinput import TextInput
 from kivymd.uix.button import MDFlatButton, MDRaisedButton
+from kivymd.uix.recycleview import RecycleView
+from kivy.metrics import dp
 
 
 class LabelPrintingRow(BoxLayout):
@@ -23,17 +25,29 @@ class LabelPrintingRow(BoxLayout):
         self.show_label_popup()
 
     def show_label_popup(self):
-        content = BoxLayout(orientation="vertical", padding=10)
-        quantity_input = TextInput(text="1", input_filter="int")
+        content = BoxLayout(orientation="vertical")
+        quantity_input = TextInput(text="1",size_hint=(1,0.4), input_filter="int")
         content.add_widget(Label(text=f"Enter quantity for {self.name}"))
         content.add_widget(quantity_input)
-        content.add_widget(
+        btn_layout = BoxLayout(orientation="horizontal", size_hint=(0.8,0.8), spacing=10)
+        popup = Popup(title="Label Quantity",  content=content, size_hint=(0.8, 0.4),  pos_hint={"top": 1})
+        btn_layout.add_widget(
             MDRaisedButton(
                 text="Add",
+                size_hint=(0.8,0.8),
                 on_press=lambda *args: self.on_add_button_press(quantity_input, popup),
             )
         )
-        popup = Popup(title="Label Quantity", content=content, size_hint=(0.8, 0.4))
+        btn_layout.add_widget(
+        MDRaisedButton(
+            text="Cancel",
+            size_hint=(None,0.8),
+
+            on_press=lambda *args: popup.dismiss(),
+            )
+        )
+        content.add_widget(btn_layout)
+
         popup.open()
 
     def on_add_button_press(self, quantity_input, popup):
@@ -65,7 +79,12 @@ class LabelPrintingView(BoxLayout):
 
     def show_inventory_for_label_printing(self, inventory_items):
         self.full_inventory = inventory_items
-        self.rv.data = self.generate_data_for_rv(inventory_items)
+        self.ids.label_rv.data = self.generate_data_for_rv(inventory_items)
+
+    def remove_from_queue(self, item_name):
+        self.label_printer.remove_from_queue(item_name)
+        self.show_print_queue()
+
 
     def handle_scanned_barcode(self, barcode):
         barcode = barcode.strip()
@@ -73,17 +92,42 @@ class LabelPrintingView(BoxLayout):
         self.ids.label_search_input.text = barcode
 
     def show_print_queue(self):
-        content = BoxLayout(orientation="vertical", spacing=10)
-        for item in self.label_printer.print_queue:
-            content.add_widget(Label(text=f"{item['name']} x {item['quantity']}"))
+        queue_data = [
+            {
+                'name': item['name'],
+                'quantity': str(item['quantity']),
+            }
+            for item in self.label_printer.print_queue
+        ]
+        print("Queue Data:", queue_data)  # Debugging
+        queue_layout = LabelQueueLayout()
+        queue_layout.ids['label_queue_rv'].data = [
+            {
+                'name': item['name'],
+                'quantity': str(item['quantity']),
+                'remove_callback': self.remove_from_queue,
+                'quantity_changed_callback': self.update_print_queue_quantity,
+            }
+            for item in self.label_printer.print_queue
+        ]
 
-        content.add_widget(MDRaisedButton(text="Print Now", on_press=self.print_now))
-        content.add_widget(MDRaisedButton(text="Cancel", on_press=self.cancel_print))
-
+        btn_layout = BoxLayout(orientation="horizontal", spacing=10)
+        btn_layout.add_widget(MDRaisedButton(text="Print Now", on_press=self.print_now))
+        btn_layout.add_widget(MDRaisedButton(text="Cancel", on_press=self.cancel_print))
+        btn_layout.add_widget(MDRaisedButton(text="Clear Queue", on_press=self.clear_queue))
+        queue_layout.add_widget(btn_layout)
         self.print_queue_popup = Popup(
-            title="Print Queue", content=content, size_hint=(0.8, 0.6)
+            title="Print Queue", content=queue_layout, size_hint=(0.8, 0.6)
         )
+        print("Popup content:", self.print_queue_popup.content)
         self.print_queue_popup.open()
+
+    def update_print_queue_quantity(self, item_name, new_quantity):
+        self.label_printer.update_queue_item_quantity(item_name, new_quantity)
+
+    def clear_queue(self, instance):
+        self.label_printer.clear_queue()
+        self.print_queue_popup.dismiss()
 
     def print_now(self, instance):
         self.label_printer.process_queue()
@@ -115,7 +159,7 @@ class LabelPrintingView(BoxLayout):
         else:
             filtered_items = self.full_inventory
 
-        self.rv.data = self.generate_data_for_rv(filtered_items)
+        self.ids.label_rv.data = self.generate_data_for_rv(filtered_items)
 
 
 class LabelPrinter:
@@ -131,6 +175,17 @@ class LabelPrinter:
                 "quantity": int(quantity),
             }
         )
+
+    def update_queue_item_quantity(self, name, new_quantity):
+        for item in self.print_queue:
+            if item['name'] == name:
+                item['quantity'] = new_quantity
+                break
+
+    def clear_queue(self):
+        self.print_queue.clear()
+        print("Print queue cleared")  # Debugging print
+
 
     def print_barcode_label(self, barcode_data, item_price, save_path):
         label_width, label_height = 202, 202
@@ -161,7 +216,6 @@ class LabelPrinter:
         barcode_position = (-70, 35)
         label_image.paste(barcode_image, barcode_position)
 
-        # label_image.save(save_path)
         qlr = brother_ql.BrotherQLRaster("QL-710W")
         qlr.exception_on_warning = True
         convert(qlr=qlr, images=[label_image], label="23x23", cut=False)
@@ -182,6 +236,47 @@ class LabelPrinter:
                     item["barcode"], item["price"], f"{item['name']}_label.png"
                 )
         self.print_queue.clear()
+
+class PrintQueueRow(BoxLayout):
+    name = StringProperty()
+    quantity = StringProperty()
+    remove_callback = ObjectProperty()
+    quantity_changed_callback = ObjectProperty()
+
+    def on_remove_button_press(self):
+        if self.remove_callback:
+            self.remove_callback(self.name)
+
+    def increment_quantity(self):
+        new_quantity = int(self.quantity) + 1
+        self.quantity = str(new_quantity)
+        if self.quantity_changed_callback:
+            self.quantity_changed_callback(self.name, new_quantity)
+        print(f"Incremented: {self.name} to {new_quantity}")
+
+
+    def decrement_quantity(self):
+        new_quantity = max(1, int(self.quantity) - 1)
+        self.quantity = str(new_quantity)
+        if self.quantity_changed_callback:
+            self.quantity_changed_callback(self.name, new_quantity)
+        print(f"Decremented: {self.name} to {new_quantity}")
+
+
+
+
+class LabelQueueLayout(BoxLayout):
+    def __init__(self, **kwargs):
+        super(LabelQueueLayout, self).__init__(**kwargs)
+        print("RecycleView ID:", self.ids.get('label_queue_rv'))  # Debugging
+        self.bind(children=self.update_height)
+
+        self.orientation = 'vertical'
+        self.height = self.minimum_height
+        print("Layout size:", self.size)
+
+    def update_height(self, *args):
+        self.height = len(self.children) * dp(48)
 
 
 if __name__ == "__main__":
