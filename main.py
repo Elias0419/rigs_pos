@@ -208,10 +208,17 @@ class CashRegisterApp(MDApp):
     def on_payment_button_press(self, instance):
         if instance.text == "Pay Cash":
             self.show_cash_payment_popup()
-        elif instance.text == "Pay Card":
-            self.handle_card_payment()
+        elif instance.text == "Pay Debit":
+            self.handle_debit_payment()
+        elif instance.text == "Pay Credit":
+            self.handle_credit_payment()
+        elif instance.text == "Split":
+            self.handle_split_payment()
         elif instance.text == "Cancel":
             self.popup.dismiss()
+
+    def handle_split_payment(self, instance):
+        pass
 
     def on_numeric_button_press(self, instance):
         current_input = self.cash_input.text.replace(".", "").lstrip("0")
@@ -393,14 +400,15 @@ class CashRegisterApp(MDApp):
     def add_discount_popup(self, item_name, item_price):
         discount_layout = BoxLayout(
             orientation="vertical",
-            size_hint_x=1,
+            size_hint_x=0.8,
+            size_hint_y=0.8
         )
 
-        percent_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        percent_layout = BoxLayout(orientation="horizontal", size_hint_y=0.1)
         percent_input = TextInput(multiline=False, hint_text="Percent")
         percent_layout.add_widget(percent_input)
 
-        amount_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        amount_layout = BoxLayout(orientation="horizontal", size_hint_y=0.1)
         amount_input = TextInput(multiline=False, hint_text="Amount")
         amount_layout.add_widget(amount_input)
 
@@ -414,10 +422,18 @@ class CashRegisterApp(MDApp):
                 on_press=lambda x: self.discount_single_item(
                     discount_amount=amount_input.text,
                     discount_percentage=percent_input.text,
+                    discount_popup=popup
                 ),
             )
         )
-        button_layout.add_widget(MDRaisedButton(text="Cancel"))
+        button_layout.add_widget(
+            MDRaisedButton(
+                text="Cancel",
+
+                on_press= lambda x: self.dismiss_add_discount_popup(discount_popup=popup)
+
+                )
+            )
         discount_layout.add_widget(percent_layout)
         discount_layout.add_widget(amount_layout)
         discount_layout.add_widget(button_layout)
@@ -726,19 +742,28 @@ class CashRegisterApp(MDApp):
         popup_layout = BoxLayout(orientation="vertical", spacing=10)
         popup_layout.add_widget(Label(text=order_summary))
 
-        button_layout = BoxLayout(size_hint_y=None, height=50)
+        button_layout = BoxLayout(size_hint_y=None, height=50, spacing=5)
 
         btn_pay_cash = MDRaisedButton(
             text="Pay Cash", size_hint=(0.8, 1.5), on_press=self.on_payment_button_press
         )
-        btn_pay_card = MDRaisedButton(
-            text="Pay Card", size_hint=(0.8, 1.5), on_press=self.on_payment_button_press
+        btn_pay_credit = MDRaisedButton(
+            text="Pay Credit", size_hint=(0.8, 1.5), on_press=self.on_payment_button_press
+        )
+        btn_pay_debit = MDRaisedButton(
+            text="Pay Debit", size_hint=(0.8, 1.5), on_press=self.on_payment_button_press
+        )
+
+        btn_pay_split = MDRaisedButton(
+            text="Split", size_hint=(0.8, 1.5), on_press=self.on_payment_button_press
         )
         btn_cancel = MDRaisedButton(
             text="Cancel", size_hint=(0.8, 1.5), on_press=self.on_payment_button_press
         )
         button_layout.add_widget(btn_pay_cash)
-        button_layout.add_widget(btn_pay_card)
+        button_layout.add_widget(btn_pay_debit)
+        button_layout.add_widget(btn_pay_credit)
+        button_layout.add_widget(btn_pay_split)
         button_layout.add_widget(btn_cancel)
 
         popup_layout.add_widget(button_layout)
@@ -749,6 +774,7 @@ class CashRegisterApp(MDApp):
         self.popup.open()
 
     def show_cash_payment_popup(self):
+        print("test")
         total_with_tax = self.order_manager.calculate_total_with_tax()
         common_amounts = self.calculate_common_amounts(total_with_tax)
 
@@ -1005,6 +1031,10 @@ class CashRegisterApp(MDApp):
         if self.item_popup:
             self.item_popup.dismiss()
 
+    def dismiss_add_discount_popup(self, discount_popup):
+        if discount_popup:
+           discount_popup.dismiss()
+
     def reset_pin_timer(self):
         if self.pin_reset_timer is not None:
             self.pin_reset_timer.cancel()
@@ -1023,7 +1053,7 @@ class CashRegisterApp(MDApp):
         self.update_display()
         self.update_financial_summary()
 
-    def discount_single_item(self, discount_amount=None, discount_percentage=None):
+    def discount_single_item(self, discount_popup, discount_amount=None, discount_percentage=None):
         try:
             discount_amount = float(discount_amount) if discount_amount else None
             discount_percentage = (
@@ -1041,6 +1071,9 @@ class CashRegisterApp(MDApp):
 
             self.update_display()
             self.update_financial_summary()
+        discount_popup.dismiss()
+        if hasattr(self, 'item_popup') and self.item_popup is not None:
+            self.item_popup.dismiss()
 
     def dismiss_bypass_popup(self, instance, barcode):
         self.on_add_or_bypass_choice(instance.text, barcode)
@@ -1219,13 +1252,34 @@ class CashRegisterApp(MDApp):
             item_button.bind(on_press=lambda instance, x=item_id: self.on_item_click(x))
             self.order_layout.add_widget(item_button)
 
-    def handle_card_payment(self):
+    def handle_credit_payment(self):
         open_cash_drawer()
+        self.order_manager.set_payment_method("Credit")
         self.show_payment_confirmation_popup()
+
+    def handle_debit_payment(self):
+        open_cash_drawer()
+        self.order_manager.set_payment_method("Debit")
+        self.show_payment_confirmation_popup()
+
 
     def on_change_done(self, instance):
         self.change_popup.dismiss()
         self.show_payment_confirmation_popup()
+
+    def on_cash_confirm(self, instance):
+        amount_tendered = float(self.cash_input.text)
+        total_with_tax = self.order_manager.calculate_total_with_tax()
+        change = amount_tendered - total_with_tax
+        if hasattr(self, "cash_popup"):
+            self.cash_popup.dismiss()
+        if hasattr(self, "custom_cash_popup"):
+            self.custom_cash_popup.dismiss()
+        open_cash_drawer()
+        self.order_manager.set_payment_method("Cash")
+        self.order_manager.set_payment_details(amount_tendered, change)
+        self.show_make_change_popup(change)
+
 
     def on_cash_cancel(self, instance):
         self.cash_popup.dismiss()
@@ -1241,16 +1295,6 @@ class CashRegisterApp(MDApp):
     def on_preset_amount_press(self, instance):
         self.cash_input.text = instance.text.strip("$")
 
-    def on_cash_confirm(self, instance):
-        amount_tendered = float(self.cash_input.text)
-        total_with_tax = self.order_manager.calculate_total_with_tax()
-        change = amount_tendered - total_with_tax
-        if hasattr(self, "cash_popup"):
-            self.cash_popup.dismiss()
-        if hasattr(self, "custom_cash_popup"):
-            self.custom_cash_popup.dismiss()
-        open_cash_drawer()
-        self.show_make_change_popup(change)
 
     def add_custom_item(self, instance):
         price = self.cash_input.text
@@ -1288,6 +1332,9 @@ class CashRegisterApp(MDApp):
             order_details["discount"],
             order_details["total_with_tax"],
             timestamp,
+            order_details["payment_method"],
+            order_details["amount_tendered"],
+            order_details["change_given"]
         )
 
     def add_item_to_database(self, barcode, name, price):
