@@ -217,8 +217,195 @@ class CashRegisterApp(MDApp):
         elif instance.text == "Cancel":
             self.popup.dismiss()
 
-    def handle_split_payment(self, instance):
+    def handle_split_payment(self):
+        if hasattr(self, 'split_amount_popup') and self.split_amount_popup._is_open:
+            self.split_amount_popup.dismiss()
+        if hasattr(self, 'split_cash_popup') and self.split_cash_popup._is_open:
+            self.split_cash_popup.dismiss()
+        if hasattr(self, 'split_change_popup') and self.split_change_popup._is_open:
+            self.split_change_popup.dismiss()
+        remaining_amount = self.order_manager.calculate_total_with_tax()
+        remaining_amount = float(f"{remaining_amount:.2f}")
+        self.split_payment_info = {
+            "total_paid": 0.0,
+            "remaining_amount": remaining_amount,
+            "payments": []
+        }
+        self.show_split_payment_popup()
+
+    def show_split_payment_popup(self, subsequent_payment=False):
+        if hasattr(self, 'split_cash_popup') and self.split_cash_popup._is_open:
+            self.split_cash_popup.dismiss()
+        if hasattr(self, 'split_change_popup') and self.split_change_popup._is_open:
+            self.split_change_popup.dismiss()
+
+        split_amount_layout = BoxLayout(orientation="vertical")
+        if subsequent_payment:
+            amount_remaining = f"{self.split_payment_info['remaining_amount']:.2f}"
+            split_amount_input = TextInput(text=amount_remaining)
+        else:
+            split_amount_input = TextInput()
+        split_amount_buttons = BoxLayout(orientation="horizontal")
+        split_amount_remaining = Label(text=str(f"Remaining Amount: {self.split_payment_info['remaining_amount']:.2f}"))
+        self.split_amount_popup = Popup(
+            size_hint=(0.8,0.8),
+            content=split_amount_layout
+            )
+        split_cash_btn = MDRaisedButton(
+            text = "Cash",
+            on_press=lambda x: self.handle_split_input(amount=split_amount_input.text, method="Cash")
+            )
+        split_credit_btn = MDRaisedButton(
+            text = "Credit",
+            on_press=lambda x: self.handle_split_input(amount=split_amount_input.text, method="Credit")
+            )
+        split_debit_btn = MDRaisedButton(
+            text = "Debit",
+            on_press=lambda x: self.handle_split_input(amount=split_amount_input.text, method="Debit")
+            )
+        split_cancel_btn = MDRaisedButton(
+            text = "Cancel",
+            on_press = lambda x: self.split_amount_popup.dismiss()
+            )
+        split_amount_buttons.add_widget(split_cash_btn)
+        split_amount_buttons.add_widget(split_credit_btn)
+        split_amount_buttons.add_widget(split_debit_btn)
+        split_amount_buttons.add_widget(split_cancel_btn)
+        split_amount_layout.add_widget(split_amount_remaining)
+        split_amount_layout.add_widget(split_amount_input)
+        split_amount_layout.add_widget(split_amount_buttons)
+
+        self.split_amount_popup.open()
+
+    def handle_split_input(self, amount, method):
+        if not amount.strip():
+            pass
+        else:
+            try:
+                amount = float(amount)
+                self.on_split_payment_confirm(amount=amount, method=method)
+            except ValueError as e:
+
+                print(e)
+                pass
+
+
+    def on_split_payment_confirm(self, amount, method):
+        amount = float(f"{amount:.2f}")
+        print("on_split_payment_confirm float", amount, method)
+        self.split_payment_info["total_paid"] += amount
+        self.split_payment_info["remaining_amount"] -= amount
+        self.split_payment_info["payments"].append({"method": method, "amount": amount})
+        print(self.split_payment_info, "after Modify")
+
+        if method == "Cash":
+            print("method", method)
+            self.show_split_cash_popup(amount)
+            self.split_amount_popup.dismiss()
+
+    def split_cash_continue(self):
+        print("continue")
+        print(self.split_payment_info["remaining_amount"])
+        tolerance = 0.001
+        if self.split_cash_popup:
+            self.split_cash_popup.dismiss()
+        if abs(self.split_payment_info["remaining_amount"]) <= tolerance:
+            print("continue - finalize")
+            self.finalize_split_payment()
+        else:
+            print("continue 2")
+            self.show_split_payment_popup(subsequent_payment=True)
+
+
+    def show_split_cash_popup(self, amount):
+        print("inside split cash popup", amount)
+        common_amounts = self.calculate_common_amounts(amount)
+
+        self.split_cash_popup_layout = BoxLayout(orientation="vertical", spacing=10)
+        self.split_cash_input = MoneyInput(
+            text=str(amount),
+            input_type="number",
+            multiline=False,
+            input_filter="float",
+            font_size=30,
+            size_hint_y=0.2,
+            size_hint_x=0.3,
+            height=50,
+        )
+        self.split_cash_popup_layout.add_widget(self.split_cash_input)
+
+        split_cash_keypad_layout = GridLayout(cols=3, spacing=10)
+
+        for cash_amount in common_amounts:
+            btn = Button(
+                text=f"${cash_amount}", on_press=self.split_on_preset_amount_press ######
+            )
+            split_cash_keypad_layout.add_widget(btn)
+
+        split_custom_cash_button = MDRaisedButton(
+            text="Custom", size_hint=(0.8, 0.8), on_press=self.split_open_custom_cash_popup #####
+        )
+        split_cash_keypad_layout.add_widget(split_custom_cash_button)
+        split_cash_confirm_button = MDRaisedButton(
+            text="Confirm", size_hint=(0.8, 0.8), on_press=lambda x : self.split_on_cash_confirm(x, amount)
+        )
+        split_cash_keypad_layout.add_widget(split_cash_confirm_button)
+
+        split_cash_cancel_button = MDRaisedButton(
+            text="Cancel", size_hint=(0.8, 0.8), on_press=self.split_on_cash_cancel
+        )
+        split_cash_keypad_layout.add_widget(split_cash_cancel_button)
+
+        self.split_cash_popup_layout.add_widget(split_cash_keypad_layout)
+        self.split_cash_popup = Popup(
+            title="Enter Cash Amount",
+            content=self.split_cash_popup_layout,
+            size_hint=(0.8, 0.8),
+        )
+        print("end of split cash popup")
+        self.split_cash_popup.open()
+
+    def split_on_preset_amount_press(self, instance):
+
+        self.split_cash_input.text = instance.text.strip("$")
+
+    def split_open_custom_cash_popup(self, instance):
         pass
+
+    def split_on_cash_confirm(self, instance, amount):
+        self.split_cash_popup.dismiss()
+        if float(self.split_cash_input.text) > amount:
+            open_cash_drawer()
+            change = float(self.split_cash_input.text) - amount
+            print("make change")
+            self.split_cash_make_change(change)
+        else:
+            print(amount)
+            self.split_cash_continue()
+
+    def split_cash_make_change(self, change):
+        split_change_layout = BoxLayout(orientation="vertical", spacing=10)
+        split_change_layout.add_widget(Label(text=f"Change to return: ${change:.2f}"))
+
+        split_done_button = MDRaisedButton(
+            text="Done", size_hint_y=None, height=50, on_press=lambda x: self.split_cash_continue()
+        )
+        split_change_layout.add_widget(split_done_button)
+
+        self.split_change_popup = Popup(
+            title="Change Calculation", content=split_change_layout, size_hint=(0.6, 0.3)
+        )
+        self.split_change_popup.open()
+
+
+    def split_on_cash_cancel(self, instance):
+        pass
+
+
+    def finalize_split_payment(self):
+        print("finalize")
+        pass
+
 
     def on_numeric_button_press(self, instance):
         current_input = self.cash_input.text.replace(".", "").lstrip("0")
