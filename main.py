@@ -100,26 +100,30 @@ class CashRegisterApp(MDApp):
         main_layout.add_widget(top_area_layout)
         button_layout = GridLayout(cols=4, size_hint_y=1 / 8, orientation="lr-tb")
 
-        btn_pay = MDRaisedButton(
-            text="Pay", font_style="H6", size_hint=(8, 8), on_press=self.on_button_press
+        btn_pay = self.create_md_raised_button(
+            "Pay",
+            self.on_button_press,
+            (8, 8),
+            "H6",
         )
-        btn_custom_item = MDRaisedButton(
-            text="Custom",
-            font_style="H6",
-            size_hint=(8, 8),
-            on_press=self.on_button_press,
+
+        btn_custom_item = self.create_md_raised_button(
+            "Custom",
+            self.on_button_press,
+            (8, 8),
+            "H6",
         )
-        btn_inventory = MDRaisedButton(
-            text="Search",
-            font_style="H6",
-            size_hint=(8, 8),
-            on_press=self.on_button_press,
+        btn_inventory = self.create_md_raised_button(
+            "Search",
+            self.on_button_press,
+            (8, 8),
+            "H6",
         )
-        btn_tools = MDRaisedButton(
-            text="Tools",
-            font_style="H6",
-            size_hint=(8, 8),
-            on_press=self.on_button_press,
+        btn_tools = self.create_md_raised_button(
+            "Tools",
+            self.on_button_press,
+            (8, 8),
+            "H6",
         )
         button_layout.add_widget(btn_pay)
         button_layout.add_widget(btn_custom_item)
@@ -155,7 +159,6 @@ class CashRegisterApp(MDApp):
         clock_layout.add_widget(self.clock_label)
         return clock_layout
 
-
     def create_financial_layout(self):
         financial_layout = GridLayout(cols=1, size_hint_x=1 / 3)
 
@@ -163,8 +166,6 @@ class CashRegisterApp(MDApp):
         financial_layout.add_widget(self.financial_summary_widget)
 
         return financial_layout
-
-
 
     """
     Barcode functions
@@ -182,7 +183,7 @@ class CashRegisterApp(MDApp):
         elif self.current_context == "label":
             self.label_manager.handle_scanned_barcode(barcode)
         else:
-            self.handle_scanned_barcode(barcode)  # default behavior
+            self.handle_scanned_barcode(barcode)
 
     def handle_scanned_barcode(self, barcode):
         try:
@@ -199,8 +200,6 @@ class CashRegisterApp(MDApp):
         except Exception as e:
             print(e)
 
-
-
     """
     Button handlers
     """
@@ -215,58 +214,106 @@ class CashRegisterApp(MDApp):
         elif instance.text == "Split":
             self.handle_split_payment()
         elif instance.text == "Cancel":
-            self.popup.dismiss()
+            self.finalize_order_popup.dismiss()
+
+    ########################################################################################################################\
+    def create_md_raised_button(
+        self,
+        text,
+        on_press_action,
+        size_hint=(None, None),
+        font_style="Body1",
+        height=50,
+        size_hint_y=None,
+        size_hint_x=None,
+    ):
+        button = MDRaisedButton(
+            text=text,
+            size_hint=size_hint,
+            height=height,
+            on_press=on_press_action,
+            font_style=font_style,
+        )
+        return button
+
+    def dismiss_popups(self, *popups):
+        for popup_attr in popups:
+            if hasattr(self, popup_attr):
+                try:
+                    popup = getattr(self, popup_attr)
+                    if popup._is_open:
+                        popup.dismiss()
+                except Exception as e:
+                    print(e)
 
     def handle_split_payment(self):
-        if hasattr(self, 'split_amount_popup') and self.split_amount_popup._is_open:
-            self.split_amount_popup.dismiss()
-        if hasattr(self, 'split_cash_popup') and self.split_cash_popup._is_open:
-            self.split_cash_popup.dismiss()
-        if hasattr(self, 'split_change_popup') and self.split_change_popup._is_open:
-            self.split_change_popup.dismiss()
+        self.dismiss_popups(
+            "split_amount_popup", "split_cash_popup", "split_change_popup"
+        )
         remaining_amount = self.order_manager.calculate_total_with_tax()
         remaining_amount = float(f"{remaining_amount:.2f}")
         self.split_payment_info = {
             "total_paid": 0.0,
             "remaining_amount": remaining_amount,
-            "payments": []
+            "payments": [],
         }
         self.show_split_payment_popup()
 
     def show_split_payment_popup(self, subsequent_payment=False):
-        if hasattr(self, 'split_cash_popup') and self.split_cash_popup._is_open:
-            self.split_cash_popup.dismiss()
-        if hasattr(self, 'split_change_popup') and self.split_change_popup._is_open:
-            self.split_change_popup.dismiss()
+        self.dismiss_popups(
+            "split_cash_confirm_popup",
+            "split_cash_popup",
+            "split_change_popup",
+            "finalize_order_popup",
+        )
 
         split_amount_layout = BoxLayout(orientation="vertical")
         if subsequent_payment:
             amount_remaining = f"{self.split_payment_info['remaining_amount']:.2f}"
-            split_amount_input = TextInput(text=amount_remaining)
+            split_amount_input = TextInput(
+                hint_text="Enter Amount of Next Payment",
+                text=amount_remaining,
+                height=20,
+                multiline=False,
+            )
         else:
-            split_amount_input = TextInput()
-        split_amount_buttons = BoxLayout(orientation="horizontal")
-        split_amount_remaining = Label(text=str(f"Remaining Amount: {self.split_payment_info['remaining_amount']:.2f}"))
+            split_amount_input = TextInput(height=20, multiline=False)
+        split_amount_buttons = BoxLayout(
+            orientation="horizontal", spacing=5, size_hint=(None, None)
+        )
+        split_amount_remaining = Label(
+            text=str(
+                f"[b]Remaining Amount: {self.split_payment_info['remaining_amount']:.2f}[/b]"
+            )
+        )
         self.split_amount_popup = Popup(
-            size_hint=(0.8,0.8),
-            content=split_amount_layout
-            )
-        split_cash_btn = MDRaisedButton(
-            text = "Cash",
-            on_press=lambda x: self.handle_split_input(amount=split_amount_input.text, method="Cash")
-            )
-        split_credit_btn = MDRaisedButton(
-            text = "Credit",
-            on_press=lambda x: self.handle_split_input(amount=split_amount_input.text, method="Credit")
-            )
-        split_debit_btn = MDRaisedButton(
-            text = "Debit",
-            on_press=lambda x: self.handle_split_input(amount=split_amount_input.text, method="Debit")
-            )
-        split_cancel_btn = MDRaisedButton(
-            text = "Cancel",
-            on_press = lambda x: self.split_amount_popup.dismiss()
-            )
+            size_hint=(0.8, 0.4),
+            content=split_amount_layout,
+            pos_hint={"top": 1},
+            title="Split Payment",
+        )
+
+        split_cash_btn = self.create_md_raised_button(
+            "Cash",
+            lambda x: self.handle_split_input(
+                amount=split_amount_input.text, method="Cash"
+            ),
+        )
+        split_credit_btn = self.create_md_raised_button(
+            "Credit",
+            lambda x: self.handle_split_input(
+                amount=split_amount_input.text, method="Credit"
+            ),
+        )
+        split_debit_btn = self.create_md_raised_button(
+            "Debit",
+            lambda x: self.handle_split_input(
+                amount=split_amount_input.text, method="Debit"
+            ),
+        )
+        split_cancel_btn = self.create_md_raised_button(
+            "Cancel", lambda x: self.split_amount_popup.dismiss()
+        )
         split_amount_buttons.add_widget(split_cash_btn)
         split_amount_buttons.add_widget(split_credit_btn)
         split_amount_buttons.add_widget(split_debit_btn)
@@ -285,10 +332,7 @@ class CashRegisterApp(MDApp):
                 amount = float(amount)
                 self.on_split_payment_confirm(amount=amount, method=method)
             except ValueError as e:
-
                 print(e)
-                pass
-
 
     def on_split_payment_confirm(self, amount, method):
         amount = float(f"{amount:.2f}")
@@ -302,30 +346,94 @@ class CashRegisterApp(MDApp):
             print("method", method)
             self.show_split_cash_popup(amount)
             self.split_amount_popup.dismiss()
+        elif method == "Debit":
+            self.show_split_card_confirm(amount, method)
+            self.split_amount_popup.dismiss()
+        elif method == "Credit":
+            self.show_split_card_confirm(amount, method)
+            self.split_amount_popup.dismiss()
 
-    def split_cash_continue(self):
-        print("continue")
-        print(self.split_payment_info["remaining_amount"])
+    def split_cash_continue(self, amount):
         tolerance = 0.001
-        if self.split_cash_popup:
-            self.split_cash_popup.dismiss()
+        self.dismiss_popups(
+            "split_cash_popup", "split_cash_confirm_popup", "split_change_popup"
+        )
+
         if abs(self.split_payment_info["remaining_amount"]) <= tolerance:
-            print("continue - finalize")
             self.finalize_split_payment()
         else:
-            print("continue 2")
             self.show_split_payment_popup(subsequent_payment=True)
 
+    def split_card_continue(self, amount, method):
+        print("split_card_continue", amount, method)
+        tolerance = 0.001
+        self.dismiss_popups("split_card_confirm_popup")
+
+        if abs(self.split_payment_info["remaining_amount"]) <= tolerance:
+            self.finalize_split_payment()
+        else:
+            self.show_split_payment_popup(subsequent_payment=True)
+
+    def show_split_card_confirm(self, amount, method):
+        split_card_confirm = BoxLayout()
+        split_card_confirm_text = Label(text=f"{amount} {method} payment confirmed")
+        tolerance = 0.001
+
+        if abs(self.split_payment_info["remaining_amount"]) <= tolerance:
+            split_card_confirm_next_btn = self.create_md_raised_button(
+                "Done",
+                lambda x: self.split_card_continue(amount, method),
+            )
+        else:
+            split_card_confirm_next_btn = self.create_md_raised_button(
+                "Next",
+                lambda x: self.split_card_continue(amount, method),
+            )
+        split_card_confirm.add_widget(split_card_confirm_text)
+        split_card_confirm.add_widget(split_card_confirm_next_btn)
+        self.split_card_confirm_popup = Popup(
+            content=split_card_confirm,
+            size_hint=(0.4, 0.4),
+        )
+        self.split_card_confirm_popup.open()
+
+    def show_split_cash_confirm(self, amount):
+        split_cash_confirm = BoxLayout()
+        split_cash_confirm_text = Label(text=f"{amount} cash payment confirmed")
+        tolerance = 0.001
+
+        if abs(self.split_payment_info["remaining_amount"]) <= tolerance:
+            split_cash_confirm_next_btn = self.create_md_raised_button(
+                "Done",
+                lambda x: self.split_cash_continue(amount),
+            )
+        else:
+            split_cash_confirm_next_btn = self.create_md_raised_button(
+                "Next",
+                lambda x: self.split_cash_continue(amount),
+            )
+
+        split_cash_confirm.add_widget(split_cash_confirm_text)
+        split_cash_confirm.add_widget(split_cash_confirm_next_btn)
+        self.split_cash_confirm_popup = Popup(
+            content=split_cash_confirm,
+            size_hint=(0.4, 0.4),
+        )
+        self.split_cash_confirm_popup.open()
 
     def show_split_cash_popup(self, amount):
-        print("inside split cash popup", amount)
         common_amounts = self.calculate_common_amounts(amount)
-
+        other_buttons = BoxLayout(
+            orientation="horizontal",
+            spacing=5,
+            size_hint=(1, 0.4),
+        )
         self.split_cash_popup_layout = BoxLayout(orientation="vertical", spacing=10)
         self.split_cash_input = MoneyInput(
             text=str(amount),
             input_type="number",
             multiline=False,
+            disabled=True,
             input_filter="float",
             font_size=30,
             size_hint_y=0.2,
@@ -334,31 +442,39 @@ class CashRegisterApp(MDApp):
         )
         self.split_cash_popup_layout.add_widget(self.split_cash_input)
 
-        split_cash_keypad_layout = GridLayout(cols=3, spacing=10)
-
+        split_cash_keypad_layout = GridLayout(cols=2, spacing=5)
         for cash_amount in common_amounts:
             btn = Button(
-                text=f"${cash_amount}", on_press=self.split_on_preset_amount_press ######
+                text=f"${cash_amount}",
+                on_press=self.split_on_preset_amount_press,
             )
             split_cash_keypad_layout.add_widget(btn)
 
-        split_custom_cash_button = MDRaisedButton(
-            text="Custom", size_hint=(0.8, 0.8), on_press=self.split_open_custom_cash_popup #####
+        split_custom_cash_button = self.create_md_raised_button(
+            "Custom",
+            lambda x: self.split_open_custom_cash_popup,  #####
+            (0.8, 0.8),
         )
-        split_cash_keypad_layout.add_widget(split_custom_cash_button)
-        split_cash_confirm_button = MDRaisedButton(
-            text="Confirm", size_hint=(0.8, 0.8), on_press=lambda x : self.split_on_cash_confirm(x, amount)
-        )
-        split_cash_keypad_layout.add_widget(split_cash_confirm_button)
 
-        split_cash_cancel_button = MDRaisedButton(
-            text="Cancel", size_hint=(0.8, 0.8), on_press=self.split_on_cash_cancel
+        split_cash_confirm_button = self.create_md_raised_button(
+            "Confirm",
+            lambda x: self.split_on_cash_confirm(x, amount),
+            (0.8, 0.8),
         )
-        split_cash_keypad_layout.add_widget(split_cash_cancel_button)
+
+        split_cash_cancel_button = self.create_md_raised_button(
+            "Cancel",
+            lambda x: self.split_on_cash_cancel,
+            (0.8, 0.8),
+        )
+        other_buttons.add_widget(split_custom_cash_button)
+        other_buttons.add_widget(split_cash_confirm_button)
+        other_buttons.add_widget(split_cash_cancel_button)
 
         self.split_cash_popup_layout.add_widget(split_cash_keypad_layout)
+        self.split_cash_popup_layout.add_widget(other_buttons)
         self.split_cash_popup = Popup(
-            title="Enter Cash Amount",
+            title="Amount Tendered",
             content=self.split_cash_popup_layout,
             size_hint=(0.8, 0.8),
         )
@@ -366,7 +482,6 @@ class CashRegisterApp(MDApp):
         self.split_cash_popup.open()
 
     def split_on_preset_amount_press(self, instance):
-
         self.split_cash_input.text = instance.text.strip("$")
 
     def split_open_custom_cash_popup(self, instance):
@@ -378,35 +493,39 @@ class CashRegisterApp(MDApp):
             open_cash_drawer()
             change = float(self.split_cash_input.text) - amount
             print("make change")
-            self.split_cash_make_change(change)
+            self.split_cash_make_change(change, amount)
         else:
             print(amount)
-            self.split_cash_continue()
+            self.show_split_cash_confirm(amount)
 
-    def split_cash_make_change(self, change):
+    def split_cash_make_change(self, change, amount):
         split_change_layout = BoxLayout(orientation="vertical", spacing=10)
         split_change_layout.add_widget(Label(text=f"Change to return: ${change:.2f}"))
 
-        split_done_button = MDRaisedButton(
-            text="Done", size_hint_y=None, height=50, on_press=lambda x: self.split_cash_continue()
+        split_done_button = self.create_md_raised_button(
+            "Done",
+            lambda x: self.split_cash_continue(amount),
+            size_hint_y=None,
+            height=50,
         )
         split_change_layout.add_widget(split_done_button)
 
         self.split_change_popup = Popup(
-            title="Change Calculation", content=split_change_layout, size_hint=(0.6, 0.3)
+            title="Change Calculation",
+            content=split_change_layout,
+            size_hint=(0.6, 0.3),
         )
         self.split_change_popup.open()
 
-
     def split_on_cash_cancel(self, instance):
-        pass
-
+        self.dismiss_popups("split_cash_popup")
 
     def finalize_split_payment(self):
+        self.order_manager.set_payment_method("Split")
+        self.show_payment_confirmation_popup()
         print("finalize")
-        pass
 
-
+    ##################################################################################################################
     def on_numeric_button_press(self, instance):
         current_input = self.cash_input.text.replace(".", "").lstrip("0")
         new_input = current_input + instance.text
@@ -444,12 +563,13 @@ class CashRegisterApp(MDApp):
 
     def on_button_press(self, instance):
         button_text = instance.text
-
+        total = self.order_manager.calculate_total_with_tax()
         if button_text == "Clear Order":
             self.order_layout.clear_widgets()
             self.order_manager.clear_order()
         elif button_text == "Pay":
-            self.finalize_order()
+            if total > 0:
+                self.finalize_order()
         elif button_text == "Custom":
             self.show_custom_item_popup(barcode="1234567890")
         elif button_text == "Tools":
@@ -463,16 +583,13 @@ class CashRegisterApp(MDApp):
             order_details, self.order_manager, self.db_manager
         )
         self.order_manager.clear_order()
-
         self.payment_popup.dismiss()
         self.update_financial_summary()
         self.order_layout.clear_widgets()
 
     def on_receipt_button_press(self, instance):
         printer = ReceiptPrinter("receipt_printer_config.yaml")
-
         order_details = self.order_manager.get_order_details()
-
         printer.print_receipt(order_details)
 
     def on_lock_screen_button_press(self, instance):
@@ -489,25 +606,20 @@ class CashRegisterApp(MDApp):
             else:
                 self.entered_pin = ""
 
-
     """
     Popup display functions
     """
 
     def show_add_or_bypass_popup(self, barcode):
-        popup_layout = BoxLayout(orientation="vertical", spacing=10)
-
+        popup_layout = BoxLayout(orientation="vertical", spacing=5)
         popup_layout.add_widget(Label(text=f"Barcode: {barcode}"))
-
-        button_layout = BoxLayout(orientation="horizontal", spacing=10)
+        button_layout = BoxLayout(orientation="horizontal", spacing=5)
 
         for option in ["Add Custom Item", "Add to Database"]:
-            btn = MDRaisedButton(
-                text=option,
-                size_hint=(0.5, 0.4),
-                on_press=lambda x, barcode=barcode: self.dismiss_bypass_popup(
-                    x, barcode
-                ),
+            btn = self.create_md_raised_button(
+                option,
+                lambda x, barcode=barcode: self.dismiss_bypass_popup(x, barcode),
+                (0.5, 0.4),
             )
             button_layout.add_widget(btn)
 
@@ -526,7 +638,6 @@ class CashRegisterApp(MDApp):
             item_price = item_info["total_price"]
 
         item_popup_layout = GridLayout(rows=3, size_hint=(0.8, 0.8))
-
         details_layout = BoxLayout(orientation="vertical")
         details_layout.add_widget(
             Label(text=f"Name: {item_name}\nPrice: ${item_price}")
@@ -535,17 +646,21 @@ class CashRegisterApp(MDApp):
         item_popup_layout.add_widget(details_layout)
 
         quantity_layout = BoxLayout(
-            orientation="horizontal", size_hint_y=None, height="48dp"
+            orientation="horizontal",
+            size_hint_y=None,
+            height="48dp",
         )
         quantity_layout.add_widget(
-            MDRaisedButton(
-                text="-", on_press=lambda x: self.adjust_item_quantity(item_id, -1)
+            self.create_md_raised_button(
+                "-",
+                lambda x: self.adjust_item_quantity(item_id, -1),
             )
         )
         quantity_layout.add_widget(Label(text=str(item_quantity)))
         quantity_layout.add_widget(
-            MDRaisedButton(
-                text="+", on_press=lambda x: self.adjust_item_quantity(item_id, 1)
+            self.create_md_raised_button(
+                "+",
+                lambda x: self.adjust_item_quantity(item_id, 1),
             )
         )
         item_popup_layout.add_widget(quantity_layout)
@@ -554,25 +669,25 @@ class CashRegisterApp(MDApp):
             orientation="horizontal", spacing=5, size_hint_y=None, size_hint_x=1
         )
         buttons_layout.add_widget(
-            MDRaisedButton(
-                text="Add Discount",
-                size_hint=(1, 0.4),
-                on_press=lambda x: self.add_discount_popup(item_name, item_price),
+            self.create_md_raised_button(
+                "Add Discount",
+                lambda x: self.add_discount_popup(item_name, item_price),
+                (1, 0.4),
             )
         )
 
         buttons_layout.add_widget(
-            MDRaisedButton(
-                text="Remove Item",
-                size_hint=(1, 0.4),
-                on_press=lambda x: self.remove_item(item_name, item_price),
+            self.create_md_raised_button(
+                "Remove Item",
+                lambda x: self.remove_item(item_name, item_price),
+                (1, 0.4),
             )
         )
         buttons_layout.add_widget(
-            MDRaisedButton(
-                text="Cancel",
-                size_hint=(1, 0.4),
-                on_press=lambda x: self.close_item_popup(),
+            self.create_md_raised_button(
+                "Cancel",
+                lambda x: self.close_item_popup(),
+                (1, 0.4),
             )
         )
         item_popup_layout.add_widget(buttons_layout)
@@ -582,13 +697,9 @@ class CashRegisterApp(MDApp):
         )
         self.item_popup.open()
 
-
-
     def add_discount_popup(self, item_name, item_price):
         discount_layout = BoxLayout(
-            orientation="vertical",
-            size_hint_x=0.8,
-            size_hint_y=0.8
+            orientation="vertical", size_hint_x=0.8, size_hint_y=0.8
         )
 
         percent_layout = BoxLayout(orientation="horizontal", size_hint_y=0.1)
@@ -603,24 +714,22 @@ class CashRegisterApp(MDApp):
             orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
         )
         button_layout.add_widget(
-            MDRaisedButton(
-                text="Confirm",
-                size_hint=(0.8, 0.8),
-                on_press=lambda x: self.discount_single_item(
+            self.create_md_raised_button(
+                "Confirm",
+                lambda x: self.discount_single_item(
                     discount_amount=amount_input.text,
                     discount_percentage=percent_input.text,
-                    discount_popup=popup
+                    discount_popup=popup,
                 ),
+                (0.8, 0.8),
             )
         )
         button_layout.add_widget(
-            MDRaisedButton(
-                text="Cancel",
-
-                on_press= lambda x: self.dismiss_add_discount_popup(discount_popup=popup)
-
-                )
+            self.create_md_raised_button(
+                "Cancel",
+                lambda x: self.dismiss_add_discount_popup(discount_popup=popup),
             )
+        )
         discount_layout.add_widget(percent_layout)
         discount_layout.add_widget(amount_layout)
         discount_layout.add_widget(button_layout)
@@ -642,19 +751,18 @@ class CashRegisterApp(MDApp):
         button_layout.bind(minimum_height=button_layout.setter("height"))
 
         for color in palette:
-            button = MDRaisedButton(
-                text=color,
-                size_hint=(0.8, 0.8),
-                # pos_hint={"center_x": 0.5, "center_y": 0.5},
-                on_release=lambda x, col=color: self.set_primary_palette(col),
+            button = self.create_md_raised_button(
+                color,
+                lambda x, col=color: self.set_primary_palette(col),
+                (0.8, 0.8),
             )
 
             button_layout.add_widget(button)
+
         dark_btn = MDRaisedButton(
             text="Dark Mode",
             size_hint=(0.8, 0.8),
             md_bg_color=(0, 0, 0, 1),
-            # pos_hint={"center_x": 0.5, "center_y": 0.5},
             on_release=lambda x, col=color: self.toggle_dark_mode(),
         )
         button_layout.add_widget(dark_btn)
@@ -669,8 +777,6 @@ class CashRegisterApp(MDApp):
             separator_height=0,
         )
         self.theme_change_popup.open()
-
-
 
     def show_system_popup(self):
         float_layout = FloatLayout()
@@ -700,8 +806,6 @@ class CashRegisterApp(MDApp):
         )
         self.system_popup.open()
 
-
-
     def show_label_printing_view(self):
         inventory = self.db_manager.get_all_items()
         label_printing_view = LabelPrintingView()
@@ -718,10 +822,9 @@ class CashRegisterApp(MDApp):
         self.in_inventory_management_view = True
         self.inventory_manager_view = InventoryManagementView()
         inventory = self.db_manager.get_all_items()
-        # inventory_manager_view = InventoryManagementView()
         self.inventory_manager_view.show_inventory_for_manager(inventory)
         self.current_context = "inventory"
-        print("inventory manager context", self.current_context)
+
         popup = Popup(
             title="Inventory Management",
             content=self.inventory_manager_view,
@@ -742,14 +845,16 @@ class CashRegisterApp(MDApp):
         )
         self.adjust_price_popup_layout.add_widget(self.target_amount_input)
 
-        confirm_button = MDRaisedButton(
-            text="Confirm", on_press=self.add_adjusted_price_item
+        confirm_button = self.create_md_raised_button(
+            "Confirm",
+            self.add_adjusted_price_item,
+        )
+
+        cancel_button = self.create_md_raised_button(
+            "Cancel",
+            self.on_adjust_price_cancel,
         )
         self.adjust_price_popup_layout.add_widget(confirm_button)
-
-        cancel_button = MDRaisedButton(
-            text="Cancel", on_press=self.on_adjust_price_cancel
-        )
         self.adjust_price_popup_layout.add_widget(cancel_button)
 
         self.adjust_price_popup = Popup(
@@ -762,7 +867,6 @@ class CashRegisterApp(MDApp):
 
     def show_guard_screen(self):
         if not self.is_guard_screen_displayed:
-            print("Guard screen triggered", datetime.now())
             guard_layout = BoxLayout()
             guard_popup = Popup(
                 title="Guard Screen",
@@ -770,21 +874,15 @@ class CashRegisterApp(MDApp):
                 size_hint=(1, 1),
                 auto_dismiss=False,
             )
-            guard_popup.bind(
-                on_touch_down=lambda instance, touch: guard_popup.dismiss()
-            )
+            guard_popup.bind(on_touch_down=lambda x, touch: guard_popup.dismiss())
             self.is_guard_screen_displayed = True
             guard_popup.bind(
-                on_dismiss=lambda instance: setattr(
-                    self, "is_guard_screen_displayed", False
-                )
+                on_dismiss=lambda x: setattr(self, "is_guard_screen_displayed", False)
             )
             guard_popup.open()
 
     def show_lock_screen(self):
         if not self.is_lock_screen_displayed:
-            print("Lock screen triggered", datetime.now())
-
             lock_layout = BoxLayout(orientation="vertical")
             keypad_layout = GridLayout(cols=3)
 
@@ -823,6 +921,7 @@ class CashRegisterApp(MDApp):
                     keypad_layout.add_widget(btn_2)
 
             lock_layout.add_widget(keypad_layout)
+
             self.lock_popup = Popup(
                 title="Lock Screen",
                 content=lock_layout,
@@ -841,7 +940,11 @@ class CashRegisterApp(MDApp):
         inventory = self.db_manager.get_all_items()
         inventory_view = InventoryView(order_manager=self.order_manager)
         inventory_view.show_inventory(inventory)
-        popup = Popup(title="Inventory", content=inventory_view, size_hint=(0.9, 0.9))
+        popup = Popup(
+            title="Inventory",
+            content=inventory_view,
+            size_hint=(0.9, 0.9),
+        )
         popup.open()
 
     def show_tools_popup(self):
@@ -902,19 +1005,26 @@ class CashRegisterApp(MDApp):
             "0",
         ]
         for button in numeric_buttons:
-            btn = MDRaisedButton(
-                text=button, size_hint=(0.8, 0.8), on_press=self.on_numeric_button_press
+            btn = self.create_md_raised_button(
+                button,
+                self.on_numeric_button_press,
+                (0.8, 0.8),
             )
             keypad_layout.add_widget(btn)
 
-        confirm_button = MDRaisedButton(
-            text="Confirm", size_hint=(0.8, 0.8), on_press=self.add_custom_item
+        confirm_button = self.create_md_raised_button(
+            "Confirm",
+            self.add_custom_item,
+            (0.8, 0.8),
         )
-        keypad_layout.add_widget(confirm_button)
 
-        cancel_button = MDRaisedButton(
-            text="Cancel", size_hint=(0.8, 0.8), on_press=self.on_custom_item_cancel
+        cancel_button = self.create_md_raised_button(
+            "Cancel",
+            self.on_custom_item_cancel,
+            (0.8, 0.8),
         )
+
+        keypad_layout.add_widget(confirm_button)
         keypad_layout.add_widget(cancel_button)
 
         self.custom_item_popup_layout.add_widget(keypad_layout)
@@ -929,23 +1039,39 @@ class CashRegisterApp(MDApp):
         popup_layout = BoxLayout(orientation="vertical", spacing=10)
         popup_layout.add_widget(Label(text=order_summary))
 
-        button_layout = BoxLayout(size_hint_y=None, height=50, spacing=5)
-
-        btn_pay_cash = MDRaisedButton(
-            text="Pay Cash", size_hint=(0.8, 1.5), on_press=self.on_payment_button_press
-        )
-        btn_pay_credit = MDRaisedButton(
-            text="Pay Credit", size_hint=(0.8, 1.5), on_press=self.on_payment_button_press
-        )
-        btn_pay_debit = MDRaisedButton(
-            text="Pay Debit", size_hint=(0.8, 1.5), on_press=self.on_payment_button_press
+        button_layout = BoxLayout(
+            size_hint_y=None,
+            height=50,
+            spacing=5,
         )
 
-        btn_pay_split = MDRaisedButton(
-            text="Split", size_hint=(0.8, 1.5), on_press=self.on_payment_button_press
+        btn_pay_cash = self.create_md_raised_button(
+            "Pay Cash",
+            self.on_payment_button_press,
+            (0.8, 1.5),
         )
-        btn_cancel = MDRaisedButton(
-            text="Cancel", size_hint=(0.8, 1.5), on_press=self.on_payment_button_press
+
+        btn_pay_credit = self.create_md_raised_button(
+            "Pay Credit",
+            self.on_payment_button_press,
+            (0.8, 1.5),
+        )
+        btn_pay_debit = self.create_md_raised_button(
+            "Pay Debit",
+            self.on_payment_button_press,
+            (0.8, 1.5),
+        )
+
+        btn_pay_split = self.create_md_raised_button(
+            "Split",
+            self.on_payment_button_press,
+            (0.8, 1.5),
+        )
+
+        btn_cancel = self.create_md_raised_button(
+            "Cancel",
+            self.on_payment_button_press,
+            (0.8, 1.5),
         )
         button_layout.add_widget(btn_pay_cash)
         button_layout.add_widget(btn_pay_debit)
@@ -955,19 +1081,19 @@ class CashRegisterApp(MDApp):
 
         popup_layout.add_widget(button_layout)
 
-        self.popup = Popup(
+        self.finalize_order_popup = Popup(
             title="Finalize Order", content=popup_layout, size_hint=(0.8, 0.8)
         )
-        self.popup.open()
+        self.finalize_order_popup.open()
 
     def show_cash_payment_popup(self):
-        print("test")
         total_with_tax = self.order_manager.calculate_total_with_tax()
         common_amounts = self.calculate_common_amounts(total_with_tax)
 
         self.cash_popup_layout = BoxLayout(orientation="vertical", spacing=10)
         self.cash_input = MoneyInput(
             text="",
+            disabled=True,
             input_type="number",
             multiline=False,
             input_filter="float",
@@ -978,30 +1104,43 @@ class CashRegisterApp(MDApp):
         )
         self.cash_popup_layout.add_widget(self.cash_input)
 
-        keypad_layout = GridLayout(cols=3, spacing=10)
+        keypad_layout = GridLayout(cols=2, spacing=5)
+        other_buttons = BoxLayout(
+            orientation="horizontal",
+            spacing=5,
+            size_hint=(1, 0.4),
+        )
 
         for amount in common_amounts:
-            btn = Button(
-                text=f"${amount}", on_press=self.on_preset_amount_press
-            )
+            btn = Button(text=f"${amount}", on_press=self.on_preset_amount_press)
             keypad_layout.add_widget(btn)
-        custom_cash_button = MDRaisedButton(
-            text="Custom", size_hint=(0.8, 0.8), on_press=self.open_custom_cash_popup
-        )
-        keypad_layout.add_widget(custom_cash_button)
-        confirm_button = MDRaisedButton(
-            text="Confirm", size_hint=(0.8, 0.8), on_press=self.on_cash_confirm
-        )
-        keypad_layout.add_widget(confirm_button)
 
-        cancel_button = MDRaisedButton(
-            text="Cancel", size_hint=(0.8, 0.8), on_press=self.on_cash_cancel
+        custom_cash_button = self.create_md_raised_button(
+            "Custom",
+            self.open_custom_cash_popup,
+            (0.4, 0.8),
         )
-        keypad_layout.add_widget(cancel_button)
+
+        confirm_button = self.create_md_raised_button(
+            f"[b]Confirm[/b]",
+            self.on_cash_confirm,
+            (0.4, 0.8),
+        )
+
+        cancel_button = self.create_md_raised_button(
+            "Cancel",
+            self.on_cash_cancel,
+            (0.4, 0.8),
+        )
+
+        other_buttons.add_widget(confirm_button)
+        other_buttons.add_widget(custom_cash_button)
+        other_buttons.add_widget(cancel_button)
 
         self.cash_popup_layout.add_widget(keypad_layout)
+        self.cash_popup_layout.add_widget(other_buttons)
         self.cash_popup = Popup(
-            title="Enter Cash Amount",
+            title="Amount Tendered",
             content=self.cash_popup_layout,
             size_hint=(0.8, 0.8),
         )
@@ -1034,21 +1173,25 @@ class CashRegisterApp(MDApp):
             "0",
         ]
         for button in numeric_buttons:
-            btn = MDRaisedButton(
-                text=button, size_hint=(0.8, 0.8), on_press=self.on_numeric_button_press
+            btn = self.create_md_raised_button(
+                button,
+                self.on_numeric_button_press,
+                (0.8, 0.8),
             )
             keypad_layout.add_widget(btn)
 
-        confirm_button = MDRaisedButton(
-            text="Confirm",
-            size_hint=(0.8, 0.8),
-            on_press=lambda instance: self.on_cash_confirm(instance),
+        confirm_button = self.create_md_raised_button(
+            "Confirm",
+            lambda instance: self.on_cash_confirm(instance),
+            (0.8, 0.8),
+        )
+
+        cancel_button = self.create_md_raised_button(
+            "Cancel",
+            self.on_custom_cash_cancel,
+            s(0.8, 0.8),
         )
         keypad_layout.add_widget(confirm_button)
-
-        cancel_button = MDRaisedButton(
-            text="Cancel", size_hint=(0.8, 0.8), on_press=self.on_custom_cash_cancel
-        )
         keypad_layout.add_widget(cancel_button)
 
         self.custom_cash_popup_layout.add_widget(keypad_layout)
@@ -1059,11 +1202,12 @@ class CashRegisterApp(MDApp):
         )
         self.custom_cash_popup.open()
 
-
-
     def show_payment_confirmation_popup(self):
         confirmation_layout = GridLayout(
-            orientation="lr-tb", cols=1, size_hint=(1, 1), spacing=10
+            orientation="lr-tb",
+            cols=1,
+            size_hint=(1, 1),
+            spacing=10,
         )
         total_with_tax = self.order_manager.calculate_total_with_tax()
         order_summary = "Order Complete:\n\n"
@@ -1084,18 +1228,19 @@ class CashRegisterApp(MDApp):
         order_summary += f"Total with Tax: ${total_with_tax:.2f}"
         confirmation_layout.add_widget(Label(text=order_summary))
 
-        done_button = MDRaisedButton(
-            text="Done",
-            size_hint=(0.2, 0.2),
-            on_press=self.on_done_button_press,
+        done_button = self.create_md_raised_button(
+            "Done",
+            self.on_done_button_press,
+            (0.2, 0.2),
         )
-        confirmation_layout.add_widget(done_button)
 
-        receipt_button = MDRaisedButton(
-            text="Print Receipt",
-            size_hint=(0.2, 0.2),
-            on_press=self.on_receipt_button_press,
+        receipt_button = self.create_md_raised_button(
+            "Print Receipt",
+            self.on_receipt_button_press,
+            (0.2, 0.2),
         )
+
+        confirmation_layout.add_widget(done_button)
         confirmation_layout.add_widget(receipt_button)
 
         self.payment_popup = Popup(
@@ -1103,17 +1248,16 @@ class CashRegisterApp(MDApp):
             content=confirmation_layout,
             size_hint=(0.8, 0.8),
         )
-        self.popup.dismiss()
+        self.finalize_order_popup.dismiss()
         self.payment_popup.open()
-
-
 
     def show_make_change_popup(self, change):
         change_layout = BoxLayout(orientation="vertical", spacing=10)
         change_layout.add_widget(Label(text=f"Change to return: ${change:.2f}"))
 
-        done_button = MDRaisedButton(
-            text="Done", size_hint_y=None, height=50, on_press=self.on_change_done
+        done_button = self.create_md_raised_button(
+            "Done",
+            self.on_change_done,
         )
         change_layout.add_widget(done_button)
 
@@ -1121,8 +1265,6 @@ class CashRegisterApp(MDApp):
             title="Change Calculation", content=change_layout, size_hint=(0.6, 0.3)
         )
         self.change_popup.open()
-
-
 
     def show_add_to_database_popup(self, barcode):
         popup_layout = BoxLayout(orientation="vertical", spacing=10)
@@ -1156,18 +1298,18 @@ class CashRegisterApp(MDApp):
             spacing=10,
         )
 
-        cancel_button = MDRaisedButton(
-            text="Cancel",
+        cancel_button = self.create_md_raised_button(
+            "Cancel",
+            self.close_add_to_database_popup,
             size_hint_x=1,
-            on_press=self.close_add_to_database_popup,
         )
-        confirm_button = MDRaisedButton(
-            text="Confirm",
-            size_hint_x=1,
-            on_press=lambda instance: (
+        confirm_button = self.create_md_raised_button(
+            "Confirm",
+            lambda instance: (
                 self.add_item_to_database(barcode, name_input.text, price_input.text),
                 self.close_add_to_database_popup(instance),
             ),
+            size_hint_x=1,
         )
 
         button_layout.add_widget(cancel_button)
@@ -1185,11 +1327,10 @@ class CashRegisterApp(MDApp):
 
         self.add_to_db_popup.open()
 
-
-
     """
     Accessory functions
     """
+
     def manual_override(self, instance):
         current_time = time.time()
         if current_time - self.override_tap_time < 1:
@@ -1220,7 +1361,7 @@ class CashRegisterApp(MDApp):
 
     def dismiss_add_discount_popup(self, discount_popup):
         if discount_popup:
-           discount_popup.dismiss()
+            discount_popup.dismiss()
 
     def reset_pin_timer(self):
         if self.pin_reset_timer is not None:
@@ -1232,7 +1373,6 @@ class CashRegisterApp(MDApp):
     def reset_pin(self):
         self.entered_pin = ""
 
-
     def adjust_item_quantity(self, item_id, adjustment):
         self.order_manager.adjust_item_quantity(item_id, adjustment)
         self.item_popup.dismiss()
@@ -1240,14 +1380,16 @@ class CashRegisterApp(MDApp):
         self.update_display()
         self.update_financial_summary()
 
-    def discount_single_item(self, discount_popup, discount_amount=None, discount_percentage=None):
+    def discount_single_item(
+        self, discount_popup, discount_amount=None, discount_percentage=None
+    ):
         try:
             discount_amount = float(discount_amount) if discount_amount else None
             discount_percentage = (
                 float(discount_percentage) if discount_percentage else None
             )
-        except ValueError:
-            return
+        except ValueError as e:
+            print(e)
 
         if discount_amount is not None:
             self.order_manager.add_discount(discount_amount=discount_amount)
@@ -1259,7 +1401,7 @@ class CashRegisterApp(MDApp):
             self.update_display()
             self.update_financial_summary()
         discount_popup.dismiss()
-        if hasattr(self, 'item_popup') and self.item_popup is not None:
+        if hasattr(self, "item_popup") and self.item_popup is not None:
             self.item_popup.dismiss()
 
     def dismiss_bypass_popup(self, instance, barcode):
@@ -1271,7 +1413,6 @@ class CashRegisterApp(MDApp):
             self.show_custom_item_popup(barcode)
         elif choice_text == "Add to Database":
             self.show_add_to_database_popup(barcode)
-
 
     def calculate_common_amounts(self, total):
         amounts = []
@@ -1286,9 +1427,6 @@ class CashRegisterApp(MDApp):
             instance.show_keyboard()
         else:
             instance.hide_keyboard()
-
-    def add_item_to_label_printing_queue(self):
-        pass
 
     def close_add_to_database_popup(self, instance):
         self.add_to_db_popup.dismiss()
@@ -1313,14 +1451,12 @@ class CashRegisterApp(MDApp):
             subtotal, tax, total_with_tax, discount
         )
 
-
     def add_adjusted_price_item(self, instance):
         target_amount = self.target_amount_input.text
         try:
             target_amount = float(target_amount)
         except ValueError as e:
             print(e)
-            pass
 
         self.order_manager.adjust_order_to_target_total(target_amount)
         self.update_display()
@@ -1339,13 +1475,15 @@ class CashRegisterApp(MDApp):
     def reboot_are_you_sure(self):
         arys_layout = BoxLayout()
 
-        btn = MDRaisedButton(
-            text="Yes!",
-            size_hint=(0.9, 0.9),
-            on_press=self.reboot,
+        btn = self.create_md_raised_button(
+            "Yes!",
+            self.reboot,
+            (0.9, 0.9),
         )
-        btn2 = MDRaisedButton(
-            text="No!", size_hint=(0.9, 0.9), on_press=lambda x: popup.dismiss()
+        btn2 = self.create_md_raised_button(
+            "No!",
+            lambda x: popup.dismiss(),
+            (0.9, 0.9),
         )
         arys_layout.add_widget(Label(text=f"Are you sure?"))
         arys_layout.add_widget(btn)
@@ -1410,7 +1548,6 @@ class CashRegisterApp(MDApp):
                 continue
 
             order_summary += f"{item_name} x{quantity}  ${total_price_float:.2f}\n"
-
         order_summary += f"Total with Tax: ${total_with_tax:.2f}"
 
         self.show_order_popup(order_summary)
@@ -1449,7 +1586,6 @@ class CashRegisterApp(MDApp):
         self.order_manager.set_payment_method("Debit")
         self.show_payment_confirmation_popup()
 
-
     def on_change_done(self, instance):
         self.change_popup.dismiss()
         self.show_payment_confirmation_popup()
@@ -1467,21 +1603,17 @@ class CashRegisterApp(MDApp):
         self.order_manager.set_payment_details(amount_tendered, change)
         self.show_make_change_popup(change)
 
-
     def on_cash_cancel(self, instance):
         self.cash_popup.dismiss()
 
     def reset_to_main_context(self, instance):
-        print("reset to main context before", self.current_context)
         self.current_context = "main"
-        print("reset to main context after", self.current_context)
 
     def on_adjust_price_cancel(self, instance):
         self.adjust_price_popup.dismiss()
 
     def on_preset_amount_press(self, instance):
         self.cash_input.text = instance.text.strip("$")
-
 
     def add_custom_item(self, instance):
         price = self.cash_input.text
@@ -1521,7 +1653,7 @@ class CashRegisterApp(MDApp):
             timestamp,
             order_details["payment_method"],
             order_details["amount_tendered"],
-            order_details["change_given"]
+            order_details["change_given"],
         )
 
     def add_item_to_database(self, barcode, name, price):
@@ -1529,11 +1661,12 @@ class CashRegisterApp(MDApp):
             self.db_manager.add_item(barcode, name, price)
         except Exception as e:
             print(e)
-        finally:
-            pass
 
     def reboot(self, instance):
-        subprocess.run(["systemctl", "reboot"])
+        try:
+            subprocess.run(["systemctl", "reboot"])
+        except Exception as e:
+            print(e)
 
     def save_settings(self):
         settings = {
@@ -1551,8 +1684,8 @@ class CashRegisterApp(MDApp):
                     "primary_palette", "Brown"
                 )
                 self.theme_cls.theme_style = settings.get("theme_style", "Light")
-        except FileNotFoundError:
-            pass
+        except FileNotFoundError as e:
+            print(e)
 
 
 class MoneyInput(TextInput):
