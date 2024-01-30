@@ -21,6 +21,13 @@ from database_manager import DatabaseManager
 from receipt_printer import ReceiptPrinter
 
 
+class NullableStringProperty(StringProperty):
+    def __init__(self, *args, **kwargs):
+
+        kwargs.setdefault('allownone', True)
+        super(NullableStringProperty, self).__init__(*args, **kwargs)
+
+
 class HistoryPopup(Popup):
     def __init__(self, **kwargs):
         super(HistoryPopup, self).__init__(**kwargs)
@@ -30,32 +37,27 @@ class HistoryPopup(Popup):
         order_history = self.db_manager.get_order_history()
         print(order_history)
         history_view = HistoryView()
-        print("1")
         history_view.show_reporting_popup(order_history)
-        print("2")
         self.content = history_view
-        print("3")
         self.size_hint = (0.9, 0.9)
-        print("4")
         self.title = "Order History"
-        print("5")
         self.open()
-        print("6")
 
 
 class HistoryRow(BoxLayout):
-    order_id = StringProperty()
-    items = StringProperty()
-    total = StringProperty()
-    tax = StringProperty()
-    total_with_tax = StringProperty()
-    timestamp = StringProperty()
+    order_id = NullableStringProperty()
+    items = NullableStringProperty()
+    total = NullableStringProperty()
+    tax = NullableStringProperty()
+    total_with_tax = NullableStringProperty()
+    timestamp = NullableStringProperty()
     history_view = ObjectProperty()
-    payment_method = StringProperty()
-    amount_tendered = StringProperty()
-    change_given = StringProperty()
+    payment_method = NullableStringProperty()
+    amount_tendered = NullableStringProperty()
+    change_given = NullableStringProperty()
 
     def __init__(self, **kwargs):
+
         super(HistoryRow, self).__init__(**kwargs)
         self.order_history = None
 
