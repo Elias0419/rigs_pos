@@ -35,6 +35,10 @@ class InventoryManagementView(BoxLayout):
             self.database_manager = DatabaseManager("inventory.db")
             self._init = True
 
+    def detach_from_parent(self):
+        if self.parent:
+            self.parent.remove_widget(self)
+
     def update_search_input(self, barcode):
         self.ids.inv_search_input.text = barcode
 
