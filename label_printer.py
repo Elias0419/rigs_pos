@@ -74,6 +74,10 @@ class LabelPrintingView(BoxLayout):
 
             self._init = True
 
+    def detach_from_parent(self):
+        if self.parent:
+            self.parent.remove_widget(self)
+
     def clear_search(self):
         self.ids.label_search_input.text = ""
 
