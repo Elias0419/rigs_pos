@@ -178,7 +178,7 @@ class HistoryView(BoxLayout):
 
         #print("after updating rv_data", self.rv_data)
         self.rv_data.reverse()
-        print("after reverse rv_data", self.rv_data)
+        #print("after reverse rv_data", self.rv_data)
         self.ids.history_rv.data = self.rv_data
 
     def create_history_row(self, order):
@@ -193,7 +193,9 @@ class HistoryView(BoxLayout):
             history_row.total_with_tax = self.format_money(order[5])
             history_row.timestamp = self.format_date(order[6])
             history_row.payment_method = order[7]
+            print(f"Before setting amount_tendered: {order[8]}")
             history_row.amount_tendered = self.format_money(order[8])
+            print(f"After setting amount_tendered: {order[8]}")
             history_row.change_given = self.format_money(order[9])
             history_row.history_view = self
             return history_row
@@ -244,12 +246,13 @@ class HistoryView(BoxLayout):
                 "total_with_tax": self.format_money(order[5]),
                 "timestamp": self.format_date(order[6]),
                 "payment_method": order[7],
-                "amount_tendered": order[8],
-                "change_given": order[9],
+                "amount_tendered": self.format_money(order[8]),
+                "change_given": self.format_money(order[9]),
                 "history_view": self,
             }
             for order in filtered_history
         ]
+        #print("amount_tendered in update_rv_data line 255", self.rv_data[8], type(self.rv_data[8]))
         self.rv_data.reverse()
         self.ids.history_rv.data = self.rv_data
 
@@ -326,7 +329,7 @@ class HistoryView(BoxLayout):
             (order for order in self.order_history if order[0] == order_id), None
         )
         if specific_order:
-            print(specific_order)
+            #print(specific_order)
             self.clear_widgets()
             try:
                 history_row = self.create_history_row(specific_order)
@@ -348,8 +351,9 @@ class HistoryView(BoxLayout):
             pass
 
     def format_money(self, value):
-
-        return "{:.2f}".format(value)
+        formatted_value = "{:.2f}".format(value)
+        print(f"format_money output: {formatted_value}, type: {type(formatted_value)}")
+        return formatted_value
 
     def format_date(self, date_str):
         try:
@@ -437,7 +441,7 @@ class OrderDetailsPopup(Popup):
         return order_dict
 
     def format_order_details(self, order):
-        print(order)
+        #print(order)
         formatted_order = [
             f"Order ID: {order[0]}",
             f"Items: {self.format_items(order[1])}",
