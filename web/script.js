@@ -8,19 +8,15 @@ async function fetchAndDisplayData() {
 
 
     const dailyTotals = data.reduce((acc, order) => {
-    // Extract the date part from the timestamp
-    const date = order.timestamp.split(' ')[0]; // Gets the date in 'YYYY-MM-DD' format
-    // Initialize the daily total for the date if it doesn't exist
+    const date = order.timestamp.split(' ')[0];
     if (!acc[date]) {
         acc[date] = 0;
     }
-    // Add the total_with_tax of the current order to its respective date
     acc[date] += order.total_with_tax;
     return acc;
 }, {});
 
-// Step 3: Prepare the data structure for Chart.js
-const labels = Object.keys(dailyTotals).sort(); // Sort the dates to display them in order
+const labels = Object.keys(dailyTotals).sort();
 const datasetData = labels.map(label => dailyTotals[label]);
 
 const chartData = {
