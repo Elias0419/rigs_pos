@@ -393,6 +393,7 @@ class CashRegisterApp(MDApp):
             self.show_split_payment_popup(subsequent_payment=True)
 
     def show_split_card_confirm(self, amount, method):
+        open_cash_drawer()
         split_card_confirm = BoxLayout()
         split_card_confirm_text = Label(text=f"{amount} {method} payment confirmed")
         tolerance = 0.001
@@ -515,6 +516,7 @@ class CashRegisterApp(MDApp):
             self.split_cash_make_change(change, amount)
         else:
             print(amount)
+            open_cash_drawer()
             self.show_split_cash_confirm(amount)
 
     def split_cash_make_change(self, change, amount):
