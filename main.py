@@ -7,7 +7,9 @@ import sys
 import time
 import ast
 import threading
+from threading import Thread
 
+import eel
 from kivy.config import Config
 
 Config.set("kivy", "keyboard_mode", "systemanddock")
@@ -74,12 +76,12 @@ class CashRegisterApp(MDApp):
     def build(self):
         self.barcode_scanner = BarcodeScanner()
         self.db_manager = DatabaseManager("inventory.db")
+
         self.order_manager = OrderManager()
         self.history_popup = HistoryPopup()
         self.receipt_printer = ReceiptPrinter("receipt_printer_config.yaml")
         self.inventory_manager = InventoryManagementView()
         self.label_manager = LabelPrintingView()
-
         main_layout = GridLayout(cols=1, spacing=5, orientation="tb-lr", row_default_height=60)
         top_area_layout = GridLayout(cols=3, orientation="lr-tb", row_default_height=60)
         self.order_layout = GridLayout(
@@ -542,7 +544,10 @@ class CashRegisterApp(MDApp):
         self.show_payment_confirmation_popup()
         print("finalize")
 
-    ##################################################################################################################
+
+
+
+
     def on_numeric_button_press(self, instance):
         current_input = self.cash_input.text.replace(".", "").lstrip("0")
         new_input = current_input + instance.text
@@ -576,7 +581,39 @@ class CashRegisterApp(MDApp):
             sys.exit(42)
         elif instance.text == "Change Theme":
             self.show_theme_change_popup()
+        elif instance.text == "TEST":
+            print("test button")
+            eel_thread = threading.Thread(target=self.start_eel)
+            eel_thread.daemon = True
+            eel_thread.start()
         self.system_popup.dismiss()
+
+
+    @eel.expose
+    @staticmethod
+    def get_order_history_for_eel():
+        db_manager = DatabaseManager("inventory.db")
+        order_history = db_manager.get_order_history()
+        formatted_data = [
+            {"order_id": order[0], "items": order[1], "total": order[2], "tax": order[3], "discount": order[4],
+            "total_with_tax": order[5], "timestamp": order[6], "payment_method": order[7],
+            "amount_tendered": order[8], "change_given": order[9]}
+            for order in order_history
+        ]
+        return formatted_data
+
+
+    def start_eel(self):
+        eel.init('web')
+        print("start eel")
+        eel.start('index.html')
+
+        #####################################################################################################################
+        #####################################################################################################################
+        #####################################################################################################################
+        #####################################################################################################################
+        #####################################################################################################################
+        ###################################################################################################
 
     def on_button_press(self, instance):
         button_text = instance.text
@@ -802,6 +839,7 @@ class CashRegisterApp(MDApp):
             "Change Theme",
             "Reboot System",
             "Restart App",
+            "TEST"
         ]
 
         for index, tool in enumerate(system_buttons):
@@ -1331,7 +1369,11 @@ class CashRegisterApp(MDApp):
             MDRaisedButton(
                 text="Confirm",
                 on_press=lambda x: self.add_item_to_database(
-                    barcode, name_input.text, price_input.text, cost_input.text, sku_input.text
+                    barcode,
+                    name_input.text,
+                    price_input.text,
+                    cost_input.text,
+                    sku_input.text
                 )
             )
         )
@@ -1777,6 +1819,10 @@ class FinancialSummaryWidget(MDRaisedButton):
             size=(400, 400),
         )
         popup.open()
+
+
+
+
 
 
 try:

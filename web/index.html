@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Test</title>
+<script type="text/javascript" src="/eel.js"></script>
+<script src="chart.js"></script>
+<style>
+.chart-interface-container {
+    display: flex;
+    height: 80%;
+}
+
+.chart-container {
+    flex: 2;
+    padding: 5%;
+    height: 87.5%;
+}
+
+.chart-interface-container {
+    flex: 1;
+    padding: 5%;
+    height: 100%;
+}
+
+
+canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+</style>
+</head>
+<body>
+<div class="chart-interface-container">
+    <div class="chart-container">
+        <canvas id="chart"></canvas>
+
+    </div>
+   <div class="controls-container">
+    <input type="date" id="datePicker" />
+
+    <select id="chartTypePicker">
+        <option value="bar">Bar</option>
+        <option value="line">Line</option>
+    </select>
+
+    <select id="variablePicker">
+        <option value="total">Total</option>
+        <option value="total_with_tax">Total with Tax</option>
+    </select>
+
+    <button id="updateChart">Update Chart</button>
+</div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

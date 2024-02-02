@@ -35,7 +35,7 @@ class HistoryPopup(Popup):
 
     def show_hist_reporting_popup(self):
         order_history = self.db_manager.get_order_history()
-        print(order_history)
+        # print(order_history)
         history_view = HistoryView()
         history_view.show_reporting_popup(order_history)
         self.content = history_view
@@ -158,7 +158,7 @@ class HistoryView(BoxLayout):
     def show_reporting_popup(self, order_history):
         print("entering show reporting popup")
         self.order_history = order_history
-        print("order history before updating rv", order_history)
+        #print("order history before updating rv", order_history)
         self.rv_data = [
         {
             "order_id": order[0],
@@ -176,13 +176,13 @@ class HistoryView(BoxLayout):
         for order in order_history
     ]
 
-        print("after updating rv_data", self.rv_data)
+        #print("after updating rv_data", self.rv_data)
         self.rv_data.reverse()
         print("after reverse rv_data", self.rv_data)
         self.ids.history_rv.data = self.rv_data
 
     def create_history_row(self, order):
-        print(order)
+       # print(order)
         try:
             history_row = HistoryRow()
             history_row.order_id = order[0]
