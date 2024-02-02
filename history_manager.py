@@ -212,7 +212,7 @@ class HistoryView(BoxLayout):
         filtered_history = [
             order
             for order in self.order_history
-            if datetime.strptime(order[5], "%Y-%m-%d %H:%M:%S.%f").date() == picker
+            if datetime.strptime(order[6], "%Y-%m-%d %H:%M:%S.%f").date() == picker
         ]
         self.update_rv_data(filtered_history)
 
@@ -229,7 +229,7 @@ class HistoryView(BoxLayout):
         filtered_history = [
             order
             for order in self.order_history
-            if datetime.strptime(order[5], "%Y-%m-%d %H:%M:%S.%f").date() in date_set
+            if datetime.strptime(order[6], "%Y-%m-%d %H:%M:%S.%f").date() in date_set
         ]
         self.update_rv_data(filtered_history)
 
@@ -261,7 +261,7 @@ class HistoryView(BoxLayout):
         filtered_history = [
             order
             for order in self.order_history
-            if self.is_today(datetime.strptime(order[5], "%Y-%m-%d %H:%M:%S.%f"))
+            if self.is_today(datetime.strptime(order[6], "%Y-%m-%d %H:%M:%S.%f"))
         ]
         self.update_rv_data(filtered_history)
 
@@ -276,7 +276,7 @@ class HistoryView(BoxLayout):
         filtered_history = [
             order
             for order in self.order_history
-            if self.is_this_week(datetime.strptime(order[5], "%Y-%m-%d %H:%M:%S.%f"))
+            if self.is_this_week(datetime.strptime(order[6], "%Y-%m-%d %H:%M:%S.%f"))
         ]
         self.update_rv_data(filtered_history)
 
@@ -290,7 +290,7 @@ class HistoryView(BoxLayout):
         filtered_history = [
             order
             for order in self.order_history
-            if self.is_this_month(datetime.strptime(order[5], "%Y-%m-%d %H:%M:%S.%f"))
+            if self.is_this_month(datetime.strptime(order[6], "%Y-%m-%d %H:%M:%S.%f"))
         ]
         self.update_rv_data(filtered_history)
 
