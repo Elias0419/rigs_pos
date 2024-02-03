@@ -19,6 +19,7 @@ class InventoryManagementView(BoxLayout):
     price = StringProperty()
     cost = StringProperty()
     sku = StringProperty()
+    category= StringProperty()
     _instance = None
 
     def __new__(cls, *args, **kwargs):
@@ -123,7 +124,14 @@ class InventoryManagementView(BoxLayout):
         sku_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         sku_input = TextInput(text=self.sku)
         sku_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
+
         sku_layout.add_widget(sku_input)
+
+        category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        category_input = TextInput(text=self.category)
+        category_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
+
+        category_layout.add_widget(sku_layout)
 
         content.add_widget(name_layout)
         content.add_widget(barcode_layout)
@@ -139,7 +147,7 @@ class InventoryManagementView(BoxLayout):
             MDRaisedButton(
                 text="Confirm",
                 on_press=lambda *args: self.confirm_and_close(
-                    barcode_input, name_input, price_input, cost_input, sku_input, popup
+                    barcode_input, name_input, price_input, cost_input, sku_input, category_input, popup
                 ),
             )
         )
@@ -285,7 +293,7 @@ class InventoryManagementRow(BoxLayout):
         button_layout.add_widget(
             MDRaisedButton(
                 text="Update Details",
-                on_press=lambda *args: self.confirm_and_close(
+                on_press=lambda _: self.confirm_and_close(
                     barcode_input,
                     name_input,
                     price_input,
@@ -312,10 +320,10 @@ class InventoryManagementRow(BoxLayout):
         popup.open()
 
     def confirm_and_close(
-        self, barcode_input, name_input, price_input, cost_input, sku_input, popup
+        self, barcode_input, name_input, price_input, cost_input, sku_input, category_input, popup
     ):
         self.update_item_in_database(
-            barcode_input, name_input, price_input, cost_input, sku_input
+            barcode_input, name_input, price_input, cost_input, sku_input, category_input
         )
         self.inventory_management_view.refresh_inventory()
         popup.dismiss()
@@ -324,7 +332,7 @@ class InventoryManagementRow(BoxLayout):
         self.inventory_item_popup()
 
     def update_item_in_database(
-        self, barcode_input, name_input, price_input, cost_input, sku_input
+        self, barcode_input, name_input, price_input, cost_input, sku_input, category_input
     ):
         if barcode_input and name_input and price_input:
             try:
@@ -334,6 +342,7 @@ class InventoryManagementRow(BoxLayout):
                     price_input.text,
                     cost_input.text,
                     sku_input.text,
+                    category_input.text
                 )
             except Exception as e:
                 print(e)
