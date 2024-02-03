@@ -44,7 +44,12 @@ class InventoryManagementView(BoxLayout):
 
     def handle_scanned_barcode(self, barcode):
         barcode = barcode.strip()
-        Clock.schedule_once(lambda dt: self.update_search_input(barcode), 0.1)
+        items = self.database_manager.get_all_items()
+        if any(item[0] == barcode for item in items):
+            Clock.schedule_once(lambda dt: self.update_search_input(barcode), 0.1)
+        else:
+            self.show_add_item_popup(barcode)
+
 
     def generate_unique_barcode(self):
         while True:
@@ -63,16 +68,20 @@ class InventoryManagementView(BoxLayout):
 
     def show_inventory_for_manager(self, inventory_items):
         self.full_inventory = inventory_items
-
         self.rv.data = self.generate_data_for_rv(inventory_items)
 
     def refresh_inventory(self):
-        print("refresh")
         updated_inventory = self.database_manager.get_all_items()
         self.show_inventory_for_manager(updated_inventory)
 
     def add_item_to_database(
-        self, barcode_input, name_input, price_input, cost_input, sku_input
+        self,
+        barcode_input,
+        name_input,
+        price_input,
+        cost_input,
+        sku_input,
+        category_input,
     ):
         if barcode_input and name_input and price_input:
             try:
@@ -82,13 +91,13 @@ class InventoryManagementView(BoxLayout):
                     price_input.text,
                     cost_input.text,
                     sku_input.text,
+                    category_input.text,
                 )
             except Exception as e:
                 print(e)
 
-    def inventory_item_popup(self):
+    def inventory_item_popup(self, barcode=None):
         content = BoxLayout(orientation="vertical", padding=10)
-
         name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         name_input = TextInput(text=self.name)
         name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
@@ -156,10 +165,22 @@ class InventoryManagementView(BoxLayout):
         popup.open()
 
     def confirm_and_close(
-        self, barcode_input, name_input, price_input, cost_input, sku_input, popup
+        self,
+        barcode_input,
+        name_input,
+        price_input,
+        cost_input,
+        sku_input,
+        category_input,
+        popup,
     ):
         self.add_item_to_database(
-            barcode_input, name_input, price_input, cost_input, sku_input
+            barcode_input,
+            name_input,
+            price_input,
+            cost_input,
+            sku_input,
+            category_input,
         )
         self.refresh_inventory()
         popup.dismiss()
@@ -210,6 +231,7 @@ class InventoryManagementRow(BoxLayout):
     price = StringProperty()
     cost = StringProperty()
     sku = StringProperty()
+    category = StringProperty()
 
     def __init__(self, **kwargs):
         super(InventoryManagementRow, self).__init__(**kwargs)
@@ -218,12 +240,10 @@ class InventoryManagementRow(BoxLayout):
 
     def inventory_item_popup(self):
         content = BoxLayout(orientation="vertical", padding=10)
-
         name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         name_input = TextInput(text=self.name)
         name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
         name_layout.add_widget(name_input)
-
         barcode_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         barcode_input = TextInput(
             input_filter="int", text=self.barcode if self.barcode else ""
@@ -246,11 +266,17 @@ class InventoryManagementRow(BoxLayout):
         sku_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
         sku_layout.add_widget(sku_input)
 
+        category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        category_input = TextInput(text=self.category, disabled=True)
+        category_layout.add_widget(Label(text="Categories", size_hint_x=0.2))
+        category_layout.add_widget(category_input)
+
         content.add_widget(name_layout)
         content.add_widget(barcode_layout)
         content.add_widget(price_layout)
         content.add_widget(cost_layout)
         content.add_widget(sku_layout)
+        content.add_widget(category_layout)
 
         button_layout = BoxLayout(
             orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
@@ -260,7 +286,13 @@ class InventoryManagementRow(BoxLayout):
             MDRaisedButton(
                 text="Update Details",
                 on_press=lambda *args: self.confirm_and_close(
-                    barcode_input, name_input, price_input, cost_input, sku_input, popup
+                    barcode_input,
+                    name_input,
+                    price_input,
+                    cost_input,
+                    sku_input,
+                    category_input,
+                    popup,
                 ),
             )
         )

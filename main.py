@@ -1677,8 +1677,11 @@ class CashRegisterApp(MDApp):
 
     def reset_to_main_context(self, instance):
         self.current_context = "main"
-        self.inventory_manager.detach_from_parent()
-        self.label_manager.detach_from_parent()
+        try:
+            self.inventory_manager.detach_from_parent()
+            self.label_manager.detach_from_parent()
+        except Exception as e:
+            print(e)
 
     def on_adjust_price_cancel(self, instance):
         self.adjust_price_popup.dismiss()
