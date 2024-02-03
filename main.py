@@ -206,15 +206,15 @@ class CashRegisterApp(MDApp):
     """
 
     def on_payment_button_press(self, instance):
-        if instance.text == "Pay Cash":
+        if "Pay Cash" in instance.text:
             self.show_cash_payment_popup()
-        elif instance.text == "Pay Debit":
+        elif "Pay Debit" in instance.text:
             self.handle_debit_payment()
-        elif instance.text == "Pay Credit":
+        elif "Pay Credit" in instance.text:
             self.handle_credit_payment()
-        elif instance.text == "Split":
+        elif "Split" in instance.text:
             self.handle_split_payment()
-        elif instance.text == "Cancel":
+        elif "Cancel" in instance.text:
             self.finalize_order_popup.dismiss()
 
     def on_numeric_button_press(self, instance):
@@ -1080,7 +1080,7 @@ class CashRegisterApp(MDApp):
         popup_layout.add_widget(button_layout)
 
         self.finalize_order_popup = Popup(
-            title="Finalize Order", content=popup_layout, size_hint=(0.8, 0.8)
+            title="Finalize Order", content=popup_layout, size_hint=(0.6, 0.8)
         )
         self.finalize_order_popup.open()
 
