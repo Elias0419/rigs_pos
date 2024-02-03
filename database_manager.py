@@ -81,10 +81,7 @@ class DatabaseManager:
     ):
         self.create_items_table()
 
-        cost = cost if cost is not None else None
-        sku = sku if sku is not None else None
-        category = category if category is not None else None
-        parent_barcode = parent_barcode if parent_barcode is not None else None
+
 
         conn = self._get_connection()
         try:
@@ -104,8 +101,7 @@ class DatabaseManager:
     def add_order_history(self, order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given):
         self.create_order_history_table()
         conn = self._get_connection()
-        amount_tendered = amount_tendered if amount_tendered is not None else None
-        change_given = change_given if change_given is not None else None
+
         try:
             cursor = conn.cursor()
 
@@ -163,27 +159,19 @@ class DatabaseManager:
         conn.close()
         return exists
 
-    def update_item(self, barcode, name, price, cost=None, sku=None):
-        cost = cost if cost is not None else None
-        sku = sku if sku is not None else None
-        print("DEBUG DatabaseManager update_item", barcode, name, price, cost, sku)
+    def update_item(self, barcode, name, price, cost=None, sku=None, category=None):
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute(
-                "UPDATE items SET name=?, price=?, cost=?, sku=? WHERE barcode=?",
-                (name, price, cost, sku, barcode),
-            )
-            if cursor.rowcount == 0:
-                print("rowcount1")
-                cursor.execute(
-                    "UPDATE items SET barcode=?, price=?, cost=?, sku=? WHERE name=?",
-                    (barcode, price, cost, sku, name),
-                )
-                if cursor.rowcount == 0:
-                    print("rowcount2")
-                    return False
 
+            update_query = """UPDATE items
+                            SET name=?, price=?, cost=?, sku=?, category=?
+                            WHERE barcode=? AND (sku=? OR ? IS NULL AND sku IS NULL)"""
+            cursor.execute(update_query, (name, price, cost, sku, category, barcode, sku, sku))
+
+            if cursor.rowcount == 0:
+                print("No item found with barcode and SKU:", barcode, sku)
+                return False
             conn.commit()
         except Exception as e:
             print(e)
@@ -192,6 +180,7 @@ class DatabaseManager:
             conn.close()
 
         return True
+
 
     def delete_item(self, barcode):
         pass

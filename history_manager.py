@@ -3,6 +3,7 @@ import csv
 import json
 from datetime import datetime, timedelta
 from functools import partial
+from kivy.clock import Clock
 
 from kivymd.app import MDApp
 from kivy.metrics import dp
@@ -32,7 +33,7 @@ class HistoryPopup(Popup):
     def __init__(self, **kwargs):
         super(HistoryPopup, self).__init__(**kwargs)
         self.db_manager = DatabaseManager("inventory.db")
-
+        self.history_view = HistoryView()
     def show_hist_reporting_popup(self):
         order_history = self.db_manager.get_order_history()
         # print(order_history)
@@ -67,93 +68,79 @@ class HistoryView(BoxLayout):
         super(HistoryView, self).__init__(**kwargs)
         self.order_history = []
         self.orientation = "vertical"
-        self.current_filter = None
+        self.current_filter = "today"
 
         self.receipt_printer = ReceiptPrinter("receipt_printer_config.yaml")
         print("historyview init", self)
+
+        self.totals_layout = BoxLayout(orientation="horizontal", size_hint=(1, 0.1))
+        self.total_amount_label = Label(text="Total: $0.00")
+        self.totals_layout.add_widget(self.total_amount_label)
+
+        self.button_layout = BoxLayout(orientation="horizontal", size_hint=(1, 0.4))
+        self.initialize_buttons()
+
+        self.add_widget(self.totals_layout)
+        self.add_widget(self.button_layout)
+
+        Clock.schedule_once(self.init_filter, 0.1)
+
+
+    def initialize_buttons(self):
         self.button_layout = BoxLayout(orientation="horizontal", size_hint=(1, 0.2))
         self.button_layout.add_widget(
             MDRaisedButton(
-                text="Today", size_hint=(0.2, 0.5), on_press=self.filter_today
+                text="Today", size_hint=(1, 1), on_press=self.filter_today
             )
         )
         self.button_layout.add_widget(
             MDRaisedButton(
-                text="This Week", size_hint=(0.2, 0.5), on_press=self.filter_this_week
+                text="This Week", size_hint=(1, 1), on_press=self.filter_this_week
             )
         )
         self.button_layout.add_widget(
             MDRaisedButton(
-                text="This Month", size_hint=(0.2, 0.5), on_press=self.filter_this_month
+                text="This Month", size_hint=(1, 1), on_press=self.filter_this_month
             )
         )
         self.button_layout.add_widget(
             MDRaisedButton(
                 text="Specific Day",
-                size_hint=(0.2, 0.5),
+                size_hint=(1, 1),
                 on_press=self.show_specific_day_popup,
             )
         )
         self.button_layout.add_widget(
             MDRaisedButton(
                 text="Custom Range",
-                size_hint=(0.2, 0.5),
+                size_hint=(1, 1),
                 on_press=self.show_custom_range_popup,
             )
         )
         self.button_layout.add_widget(
             MDRaisedButton(
-                text="Export CSV", size_hint=(0.2, 0.5), on_press=self.export_history
+                text="Export CSV", size_hint=(1, 1), on_press=self.export_history
             )
         )
-        self.rv_data = []
+        return self.button_layout
 
-        self.add_widget(self.button_layout)
 
-    def export_history(self, instance):
-        filename = self.get_export_filename()
+    def init_filter(self, dt):
+        self.filter_today(None)
+        self.update_totals()
 
-        csv_data = self.prepare_csv_data()
+    def update_totals(self):
 
-        with open(filename, "w", newline="", encoding="utf-8") as file:
-            writer = csv.writer(file)
-            writer.writerow(
-                ["Order ID", "Items", "Total", "Tax", "Discount", "Total with Tax", "Timestamp", "Payment Method", "Amount Tendered", "Change Given"]
-            )
-            for row in csv_data:
-                writer.writerow(row)
+        total_amount = sum(float(order["total"]) for order in self.rv_data)
+        total_tax = sum(float(order["tax"]) for order in self.rv_data)
+        total_with_tax = sum(float(order["total_with_tax"]) for order in self.rv_data)
 
-    def get_export_filename(self):
-        today = datetime.now().strftime("%Y-%m-%d")
-        if self.current_filter == "today":
-            return f"Order_History_Today_{today}.csv"
-        elif self.current_filter == "this_week":
-            return f"Order_History_This_Week_{today}.csv"
-        elif self.current_filter == "this_month":
-            return f"Order_History_This_Month_{today}.csv"
-        elif self.current_filter == "custom_range":
-            return f"Order_History_Custom_Range_{today}.csv"
-        elif self.current_filter == "specific_day":
-            return f"Order_History_Custom_Range_{today}.csv"
-        else:
-            return f"Order_History_All_{today}.csv"
+        #date_range_str = self.get_date_range_str()
 
-    def prepare_csv_data(self):
-        return [
-            [
-                order["order_id"],
-                order["items"],
-                order["total"],
-                order["tax"],
-                order["discount"],
-                order["total_with_tax"],
-                order["timestamp"],
-                order["payment_method"],
-                order["amount_tendered"],
-                order["change_given"]
-            ]
-            for order in self.rv_data
-        ]
+        # self.total_amount_label.text = f"{date_range_str} Total: ${total_amount:.2f}, Total Tax: ${total_tax:.2f}, Total with Tax: ${total_with_tax:.2f}"
+        self.total_amount_label.text = f"${total_amount:.2f} + ${total_tax:.2f} tax = ${total_with_tax:.2f}"
+
+
 
     def show_reporting_popup(self, order_history):
         print("entering show reporting popup")
@@ -217,6 +204,7 @@ class HistoryView(BoxLayout):
             if datetime.strptime(order[6], "%Y-%m-%d %H:%M:%S.%f").date() == picker
         ]
         self.update_rv_data(filtered_history)
+        self.update_totals()
 
     def show_custom_range_popup(self, instance):
         custom_range_picker = MDDatePicker(mode="range")
@@ -234,8 +222,10 @@ class HistoryView(BoxLayout):
             if datetime.strptime(order[6], "%Y-%m-%d %H:%M:%S.%f").date() in date_set
         ]
         self.update_rv_data(filtered_history)
+        self.update_totals()
 
     def update_rv_data(self, filtered_history):
+        #print("update_rv_data", filtered_history)
         self.rv_data = [
             {
                 "order_id": order[0],
@@ -259,6 +249,7 @@ class HistoryView(BoxLayout):
         return date_obj.date() == datetime.today().date()
 
     def filter_today(self, instance):
+        print("filtered today")
         self.current_filter = "today"
         filtered_history = [
             order
@@ -266,6 +257,7 @@ class HistoryView(BoxLayout):
             if self.is_today(datetime.strptime(order[6], "%Y-%m-%d %H:%M:%S.%f"))
         ]
         self.update_rv_data(filtered_history)
+        self.update_totals()
 
     def is_this_week(self, date_obj):
         today = datetime.today()
@@ -281,6 +273,7 @@ class HistoryView(BoxLayout):
             if self.is_this_week(datetime.strptime(order[6], "%Y-%m-%d %H:%M:%S.%f"))
         ]
         self.update_rv_data(filtered_history)
+        self.update_totals()
 
     def is_this_month(self, date_obj):
         today = datetime.today()
@@ -295,6 +288,7 @@ class HistoryView(BoxLayout):
             if self.is_this_month(datetime.strptime(order[6], "%Y-%m-%d %H:%M:%S.%f"))
         ]
         self.update_rv_data(filtered_history)
+        self.update_totals()
 
     def set_order_history(self, order_history):
         self.order_history = order_history
@@ -359,6 +353,51 @@ class HistoryView(BoxLayout):
 
     def truncate_text(self, text, max_length=120):
         return text if len(text) <= max_length else text[: max_length - 3] + "..."
+
+    def export_history(self, instance):
+        filename = self.get_export_filename()
+
+        csv_data = self.prepare_csv_data()
+
+        with open(filename, "w", newline="", encoding="utf-8") as file:
+            writer = csv.writer(file)
+            writer.writerow(
+                ["Order ID", "Items", "Total", "Tax", "Discount", "Total with Tax", "Timestamp", "Payment Method", "Amount Tendered", "Change Given"]
+            )
+            for row in csv_data:
+                writer.writerow(row)
+
+    def get_export_filename(self):
+        today = datetime.now().strftime("%Y-%m-%d")
+        if self.current_filter == "today":
+            return f"Order_History_Today_{today}.csv"
+        elif self.current_filter == "this_week":
+            return f"Order_History_This_Week_{today}.csv"
+        elif self.current_filter == "this_month":
+            return f"Order_History_This_Month_{today}.csv"
+        elif self.current_filter == "custom_range":
+            return f"Order_History_Custom_Range_{today}.csv"
+        elif self.current_filter == "specific_day":
+            return f"Order_History_Custom_Range_{today}.csv"
+        else:
+            return f"Order_History_All_{today}.csv"
+
+    def prepare_csv_data(self):
+        return [
+            [
+                order["order_id"],
+                order["items"],
+                order["total"],
+                order["tax"],
+                order["discount"],
+                order["total_with_tax"],
+                order["timestamp"],
+                order["payment_method"],
+                order["amount_tendered"],
+                order["change_given"]
+            ]
+            for order in self.rv_data
+        ]
 
 
 class OrderDetailsPopup(Popup):

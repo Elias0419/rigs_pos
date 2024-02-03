@@ -176,7 +176,6 @@ class CashRegisterApp(MDApp):
     def check_for_scanned_barcode(self, dt):
         if self.barcode_scanner.is_barcode_ready():
             barcode = self.barcode_scanner.read_barcode()
-
             self.handle_global_barcode_scan(barcode)
 
     def handle_global_barcode_scan(self, barcode):
@@ -218,44 +217,96 @@ class CashRegisterApp(MDApp):
         elif instance.text == "Cancel":
             self.finalize_order_popup.dismiss()
 
-    ########################################################################################################################\
+    def on_numeric_button_press(self, instance):
+        current_input = self.cash_input.text.replace(".", "").lstrip("0")
+        new_input = current_input + instance.text
+        new_input = new_input.zfill(2)
+        cents = int(new_input)
+        dollars = cents // 100
+        remaining_cents = cents % 100
+        self.cash_input.text = f"{dollars}.{remaining_cents:02d}"
+
+    def on_tool_button_press(self, instance):
+        if instance.text == "Clear Order":
+            self.order_layout.clear_widgets()
+            self.order_manager.clear_order()
+            self.update_financial_summary()
+        elif instance.text == "Open Register":
+            open_cash_drawer()
+        elif instance.text == "Reporting":
+            self.history_popup.show_hist_reporting_popup()
+        elif instance.text == "Label Printer":
+            self.show_label_printing_view()
+        elif instance.text == "Inventory Management":
+            self.show_inventory_management_view()
+        elif instance.text == "System":
+            self.show_system_popup()
+        self.tools_popup.dismiss()
+
+    def on_system_button_press(self, instance):
+        if instance.text == "Reboot System":
+            self.reboot_are_you_sure()
+        elif instance.text == "Restart App":
+            sys.exit(42)
+        elif instance.text == "Change Theme":
+            self.show_theme_change_popup()
+        elif instance.text == "TEST":
+            print("test button")
+            eel_thread = threading.Thread(target=self.start_eel)
+            eel_thread.daemon = True
+            eel_thread.start()
+        self.system_popup.dismiss()
 
 
-    def create_focus_popup(self, title, content, textinput, size_hint, pos_hint={}):
-        popup = FocusPopup(title=title, content=content, size_hint=size_hint, pos_hint=pos_hint)
-        popup.focus_on_textinput(textinput)
-        return popup
+    def on_button_press(self, instance):
+        button_text = instance.text
+        total = self.order_manager.calculate_total_with_tax()
+        if button_text == "Clear Order":
+            self.order_layout.clear_widgets()
+            self.order_manager.clear_order()
+        elif button_text == "Pay":
+            if total > 0:
+                self.finalize_order()
+        elif button_text == "Custom":
+            self.show_custom_item_popup(barcode="1234567890")
+        elif button_text == "Tools":
+            self.show_tools_popup()
+        elif button_text == "Search":
+            self.show_inventory()
 
-    def create_md_raised_button(
-        self,
-        text,
-        on_press_action,
-        size_hint = (None, None),
-        font_style="Body1",
-        height=50,
-        # size_hint_y=None,
-        # size_hint_x=None,
-    ):
-        button = MDRaisedButton(
-            text=text,
-            on_press=on_press_action,
-            size_hint=size_hint,
-            font_style=font_style,
-            height=height,
-            # size_hint_y=size_hint_y,
-            # size_hint_x=size_hint_x,
+    def on_done_button_press(self, instance):
+        order_details = self.order_manager.get_order_details()
+        self.send_order_to_history_database(
+            order_details, self.order_manager, self.db_manager
         )
-        return button
+        self.order_manager.clear_order()
+        self.payment_popup.dismiss()
+        self.update_financial_summary()
+        self.order_layout.clear_widgets()
 
-    def dismiss_popups(self, *popups):
-        for popup_attr in popups:
-            if hasattr(self, popup_attr):
-                try:
-                    popup = getattr(self, popup_attr)
-                    if popup._is_open:
-                        popup.dismiss()
-                except Exception as e:
-                    print(e)
+    def on_receipt_button_press(self, instance):
+        printer = ReceiptPrinter("receipt_printer_config.yaml")
+        order_details = self.order_manager.get_order_details()
+        printer.print_receipt(order_details)
+
+    def on_lock_screen_button_press(self, instance):
+        if instance.text == "Reset":
+            self.entered_pin = ""
+        else:
+            self.entered_pin += instance.text
+            self.reset_pin_timer()
+
+        if len(self.entered_pin) == 4:
+            if self.entered_pin == self.correct_pin:
+                self.lock_popup.dismiss()
+                self.entered_pin = ""
+            else:
+                self.entered_pin = ""
+
+
+    """
+    Split payment stuff
+    """
 
     def handle_split_payment(self):
         self.dismiss_popups(
@@ -487,9 +538,10 @@ class CashRegisterApp(MDApp):
             on_press=lambda x: self.split_on_cash_cancel,
             size_hint=(0.8, 0.8),
         )
-        other_buttons.add_widget(split_custom_cash_button)
+
         other_buttons.add_widget(split_cash_confirm_button)
         other_buttons.add_widget(split_cash_cancel_button)
+        other_buttons.add_widget(split_custom_cash_button)
 
         self.split_cash_popup_layout.add_widget(split_cash_keypad_layout)
         self.split_cash_popup_layout.add_widget(other_buttons)
@@ -546,121 +598,6 @@ class CashRegisterApp(MDApp):
         self.show_payment_confirmation_popup()
         print("finalize")
 
-
-
-
-
-    def on_numeric_button_press(self, instance):
-        current_input = self.cash_input.text.replace(".", "").lstrip("0")
-        new_input = current_input + instance.text
-        new_input = new_input.zfill(2)
-        cents = int(new_input)
-        dollars = cents // 100
-        remaining_cents = cents % 100
-        self.cash_input.text = f"{dollars}.{remaining_cents:02d}"
-
-    def on_tool_button_press(self, instance):
-        if instance.text == "Clear Order":
-            self.order_layout.clear_widgets()
-            self.order_manager.clear_order()
-            self.update_financial_summary()
-        elif instance.text == "Open Register":
-            open_cash_drawer()
-        elif instance.text == "Reporting":
-            self.history_popup.show_hist_reporting_popup()
-        elif instance.text == "Label Printer":
-            self.show_label_printing_view()
-        elif instance.text == "Inventory Management":
-            self.show_inventory_management_view()
-        elif instance.text == "System":
-            self.show_system_popup()
-        self.tools_popup.dismiss()
-
-    def on_system_button_press(self, instance):
-        if instance.text == "Reboot System":
-            self.reboot_are_you_sure()
-        elif instance.text == "Restart App":
-            sys.exit(42)
-        elif instance.text == "Change Theme":
-            self.show_theme_change_popup()
-        elif instance.text == "TEST":
-            print("test button")
-            eel_thread = threading.Thread(target=self.start_eel)
-            eel_thread.daemon = True
-            eel_thread.start()
-        self.system_popup.dismiss()
-
-
-    @eel.expose
-    @staticmethod
-    def get_order_history_for_eel():
-        db_manager = DatabaseManager("inventory.db")
-        order_history = db_manager.get_order_history()
-        formatted_data = [
-            {"order_id": order[0], "items": order[1], "total": order[2], "tax": order[3], "discount": order[4],
-            "total_with_tax": order[5], "timestamp": order[6], "payment_method": order[7],
-            "amount_tendered": order[8], "change_given": order[9]}
-            for order in order_history
-        ]
-        return formatted_data
-
-
-    def start_eel(self):
-        eel.init('web')
-        print("start eel")
-        eel.start('index.html')
-
-        #####################################################################################################################
-        #####################################################################################################################
-        #####################################################################################################################
-        #####################################################################################################################
-        #####################################################################################################################
-        ###################################################################################################
-
-    def on_button_press(self, instance):
-        button_text = instance.text
-        total = self.order_manager.calculate_total_with_tax()
-        if button_text == "Clear Order":
-            self.order_layout.clear_widgets()
-            self.order_manager.clear_order()
-        elif button_text == "Pay":
-            if total > 0:
-                self.finalize_order()
-        elif button_text == "Custom":
-            self.show_custom_item_popup(barcode="1234567890")
-        elif button_text == "Tools":
-            self.show_tools_popup()
-        elif button_text == "Search":
-            self.show_inventory()
-
-    def on_done_button_press(self, instance):
-        order_details = self.order_manager.get_order_details()
-        self.send_order_to_history_database(
-            order_details, self.order_manager, self.db_manager
-        )
-        self.order_manager.clear_order()
-        self.payment_popup.dismiss()
-        self.update_financial_summary()
-        self.order_layout.clear_widgets()
-
-    def on_receipt_button_press(self, instance):
-        printer = ReceiptPrinter("receipt_printer_config.yaml")
-        order_details = self.order_manager.get_order_details()
-        printer.print_receipt(order_details)
-
-    def on_lock_screen_button_press(self, instance):
-        if instance.text == "Reset":
-            self.entered_pin = ""
-        else:
-            self.entered_pin += instance.text
-            self.reset_pin_timer()
-
-        if len(self.entered_pin) == 4:
-            if self.entered_pin == self.correct_pin:
-                self.lock_popup.dismiss()
-                self.entered_pin = ""
-            else:
-                self.entered_pin = ""
 
     """
     Popup display functions
@@ -1107,18 +1044,18 @@ class CashRegisterApp(MDApp):
         )
 
         btn_pay_cash = self.create_md_raised_button(
-            "Pay Cash",
+            f"[b][size=20]Pay Cash[/b][/size]",
             self.on_payment_button_press,
             (0.8, 1.5),
         )
 
         btn_pay_credit = self.create_md_raised_button(
-            "Pay Credit",
+            f"[b][size=20]Pay Credit[/b][/size]",
             self.on_payment_button_press,
             (0.8, 1.5),
         )
         btn_pay_debit = self.create_md_raised_button(
-            "Pay Debit",
+            f"[b][size=20]Pay Debit[/b][/size]",
             self.on_payment_button_press,
             (0.8, 1.5),
         )
@@ -1153,7 +1090,7 @@ class CashRegisterApp(MDApp):
 
         self.cash_popup_layout = BoxLayout(orientation="vertical", spacing=10)
         self.cash_input = MoneyInput(
-            text="",
+            text=f"{total_with_tax:.2f}",
             disabled=True,
             input_type="number",
             multiline=False,
@@ -1195,8 +1132,9 @@ class CashRegisterApp(MDApp):
         )
 
         other_buttons.add_widget(confirm_button)
-        other_buttons.add_widget(custom_cash_button)
         other_buttons.add_widget(cancel_button)
+        other_buttons.add_widget(custom_cash_button)
+
 
         self.cash_popup_layout.add_widget(keypad_layout)
         self.cash_popup_layout.add_widget(other_buttons)
@@ -1764,6 +1702,61 @@ class CashRegisterApp(MDApp):
                 self.theme_cls.theme_style = settings.get("theme_style", "Light")
         except FileNotFoundError as e:
             print(e)
+
+    @eel.expose
+    @staticmethod
+    def get_order_history_for_eel():
+        db_manager = DatabaseManager("inventory.db")
+        order_history = db_manager.get_order_history()
+        formatted_data = [
+            {"order_id": order[0], "items": order[1], "total": order[2], "tax": order[3], "discount": order[4],
+            "total_with_tax": order[5], "timestamp": order[6], "payment_method": order[7],
+            "amount_tendered": order[8], "change_given": order[9]}
+            for order in order_history
+        ]
+        return formatted_data
+
+
+    def start_eel(self):
+        eel.init('web')
+        print("start eel")
+        eel.start('index.html')
+
+    def create_focus_popup(self, title, content, textinput, size_hint, pos_hint={}):
+        popup = FocusPopup(title=title, content=content, size_hint=size_hint, pos_hint=pos_hint)
+        popup.focus_on_textinput(textinput)
+        return popup
+
+    def create_md_raised_button(
+        self,
+        text,
+        on_press_action,
+        size_hint = (None, None),
+        font_style="Body1",
+        height=50,
+        # size_hint_y=None,
+        # size_hint_x=None,
+    ):
+        button = MDRaisedButton(
+            text=text,
+            on_press=on_press_action,
+            size_hint=size_hint,
+            font_style=font_style,
+            height=height,
+            # size_hint_y=size_hint_y,
+            # size_hint_x=size_hint_x,
+        )
+        return button
+
+    def dismiss_popups(self, *popups):
+        for popup_attr in popups:
+            if hasattr(self, popup_attr):
+                try:
+                    popup = getattr(self, popup_attr)
+                    if popup._is_open:
+                        popup.dismiss()
+                except Exception as e:
+                    print(e)
 
 class MarkupLabel(Label):
     pass
