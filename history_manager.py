@@ -193,15 +193,15 @@ class HistoryView(BoxLayout):
             history_row.total_with_tax = self.format_money(order[5])
             history_row.timestamp = self.format_date(order[6])
             history_row.payment_method = order[7]
-            print(f"Before setting amount_tendered: {order[8]}")
+            #print(f"Before setting amount_tendered: {order[8]}")
             history_row.amount_tendered = self.format_money(order[8])
-            print(f"After setting amount_tendered: {order[8]}")
+            # print(f"After setting amount_tendered: {order[8]}")
             history_row.change_given = self.format_money(order[9])
             history_row.history_view = self
             return history_row
         except Exception as e:
             print(e)
-            pass
+
 
     def show_specific_day_popup(self, instance):
         specific_day_picker = MDDatePicker()
@@ -252,7 +252,6 @@ class HistoryView(BoxLayout):
             }
             for order in filtered_history
         ]
-        #print("amount_tendered in update_rv_data line 255", self.rv_data[8], type(self.rv_data[8]))
         self.rv_data.reverse()
         self.ids.history_rv.data = self.rv_data
 
@@ -314,15 +313,14 @@ class HistoryView(BoxLayout):
                 ),
                 None,
             )
-        except:
-            pass
+        except Exception as e:
+            print(e)
 
         if specific_order:
             popup = OrderDetailsPopup(specific_order, self.receipt_printer)
 
             popup.open()
-        else:
-            pass
+
 
     def show_order_details(self, order_id):
         specific_order = next(
@@ -336,9 +334,7 @@ class HistoryView(BoxLayout):
                 self.add_widget(history_row)
             except Exception as e:
                 print(e)
-                pass
-        else:
-            pass
+
 
     def format_items(self, items_str):
         try:
@@ -347,20 +343,19 @@ class HistoryView(BoxLayout):
                 item.get("name", "Unknown") for item in items_list
             )
             return self.truncate_text(all_item_names)
-        except:
-            pass
+        except Exception as e:
+            print(e)
 
     def format_money(self, value):
         formatted_value = "{:.2f}".format(value)
-        print(f"format_money output: {formatted_value}, type: {type(formatted_value)}")
         return formatted_value
 
     def format_date(self, date_str):
         try:
             date_obj = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
             return date_obj.strftime("%d %b %Y, %H:%M")
-        except:
-            pass
+        except Exception as e:
+            print(e)
 
     def truncate_text(self, text, max_length=120):
         return text if len(text) <= max_length else text[: max_length - 3] + "..."
@@ -413,8 +408,8 @@ class OrderDetailsPopup(Popup):
                 item.get("name", "Unknown") for item in items_list
             )
             return all_item_names
-        except (ValueError, SyntaxError):
-            pass
+        except Exception as e:
+            print(e)
 
     def convert_order_to_dict(self, order_tuple):
         order_id, items_json, total, tax, total_with_tax, timestamp = order_tuple

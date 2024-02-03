@@ -162,24 +162,35 @@
     name: root.name
     price: root.price
 
-    BoxLayout:
-        orientation: 'horizontal'
-        size_hint_y: None
-        height: '48dp'
+    GridLayout:
+        orientation: 'lr-tb'
+
+        cols: 3
 
         Label:
-            id: barcode
-            text: root.barcode
-        Label:
+            text_size: self.size
+            halign: "left"
+            size_hint_x: 0.8
             id: name
             text: root.name
+
         Label:
+            halign: "left"
+            size_hint_x: 0.2
+            id: barcode
+            text: root.barcode
+
+        Label:
+            halign: "left"
+            size_hint_x: 0.2
             id: price
             text: root.price
 
-        MDRaisedButton:
-            text: "Details"
-            on_press: root.open_inventory_manager()
+
+    Button:
+        text: "Details"
+        size_hint_x: 0.1
+        on_press: root.open_inventory_manager()
 
 <InventoryManagementView>:
     orientation: 'vertical'
@@ -188,7 +199,8 @@
         size_hint_y: None
         height: '48dp'
         orientation: 'horizontal'
-
+        spacing: 5
+        size_hint_y: 0.1
         TextInput:
             id: inv_search_input
             size_hint_x: 0.8
@@ -196,12 +208,14 @@
             on_text: root.filter_inventory(self.text)
         MDRaisedButton:
             text: "Clear"
-            size_hint_x: 0.2
+            size_hint: (0.2,1)
+            #size_hint_x: 0.2
             on_press: root.clear_search()
 
         MDRaisedButton:
             text: "Add Item"
-            size_hint_x: 0.2
+            size_hint: (0.2,1)
+            #size_hint_x: 0.2
             on_press: root.open_inventory_manager()
 
 
@@ -210,7 +224,7 @@
         id: rv
         viewclass: 'InventoryManagementRow'
         RecycleBoxLayout:
-            default_size: None, dp(56)
+            default_size: None, dp(40)
             default_size_hint: 1, None
             size_hint_y: None
             height: self.minimum_height
@@ -248,7 +262,6 @@
 
     Button:
         size_hint_x: 0.1
-
         text: "Details"
         on_press: root.history_view.display_order_details(root.order_id)
 
