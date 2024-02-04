@@ -137,13 +137,27 @@ class CashRegisterApp(MDApp):
         button_layout.add_widget(btn_inventory)
         button_layout.add_widget(btn_tools)
         main_layout.add_widget(button_layout)
-
+        Clock.schedule_interval(self.check_inactivity, 10)
         Clock.schedule_interval(self.check_for_scanned_barcode, 0.1)
         if not hasattr(self, "monitor_check_scheduled"):
             Clock.schedule_interval(self.check_monitor_status, 5)
             self.monitor_check_scheduled = True
 
         return main_layout
+
+    def check_inactivity(self, *args):
+        try:
+
+            result = subprocess.run(["xprintidle"], stdout=subprocess.PIPE, check=True)
+            inactive_time = int(result.stdout.decode().strip())
+
+
+            if inactive_time > 600000:
+                self.turn_off_monitor()
+
+        except Exception as e:
+            print(e)
+
 
     def create_clock_layout(self):
         clock_layout = BoxLayout(orientation="vertical", size_hint_x=1 / 3)
@@ -1005,6 +1019,7 @@ class CashRegisterApp(MDApp):
                 on_dismiss=lambda x: setattr(self, "is_guard_screen_displayed", False)
             )
             self.guard_popup.open()
+
     def dismiss_guard_popup(self):
         self.guard_popup.dismiss()
         self.turn_on_monitor()
@@ -1610,8 +1625,6 @@ class CashRegisterApp(MDApp):
             subprocess.run(["xrandr", "--output", "HDMI-1", "--brightness", "1"], check=True)
             print(e)
             return
-
-
 
         def reenable_touchscreen():
             time.sleep(1)
