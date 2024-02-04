@@ -82,6 +82,7 @@ class CashRegisterApp(MDApp):
         self.receipt_printer = ReceiptPrinter("receipt_printer_config.yaml")
         self.inventory_manager = InventoryManagementView()
         self.label_manager = LabelPrintingView()
+
         main_layout = GridLayout(
             cols=1, spacing=5, orientation="tb-lr", row_default_height=60
         )
@@ -321,83 +322,7 @@ class CashRegisterApp(MDApp):
     Split payment stuff
     """
 
-    # def show_split_payment_popup(self, subsequent_payment=False):
-    #     self.dismiss_popups(
-    #         "split_cash_confirm_popup",
-    #         "split_cash_popup",
-    #         "split_change_popup",
-    #         "finalize_order_popup",
-    #     )
-    #
-    #     split_amount_layout = BoxLayout(size_hint=(1,1),orientation="vertical")
-    #     if subsequent_payment:
-    #         amount_remaining = f"{self.split_payment_info['remaining_amount']:.2f}"
-    #         split_amount_input = MoneyInput(
-    #             text=amount_remaining,
-    #             height=20,
-    #             multiline=False,
-    #             input_filter="float",
-    #         )
-    #     else:
-    #         split_amount_input = MoneyInput(
-    #             hint_text="Enter Amount of First Payment",
-    #             height=20,
-    #             multiline=False,
-    #             input_filter="float",
-    #             )
-    #     split_amount_buttons = BoxLayout(
-    #         orientation="horizontal", spacing=5, size_hint=(1, 1)
-    #     )
-    #     split_amount_remaining = MarkupLabel(
-    #         text=str(
-    #             f"[b]Remaining Amount: {self.split_payment_info['remaining_amount']:.2f}[/b]"
-    #         )
-    #     )
-    #     self.split_amount_popup = self.create_focus_popup(
-    #         size_hint=(0.8, 0.4),
-    #         content=split_amount_layout,
-    #         pos_hint={"top": 1},
-    #         title="Split Payment",
-    #         textinput=split_amount_input
-    #     )
-    #
-    #     split_cash_btn = self.create_md_raised_button(
-    #         "Cash",
-    #         lambda x: self.handle_split_input(
-    #             amount=split_amount_input.text, method="Cash",
-    #
-    #         ),
-    #         (1,1),
-    #     )
-    #     split_credit_btn = self.create_md_raised_button(
-    #         "Credit",
-    #         lambda x: self.handle_split_input(
-    #             amount=split_amount_input.text, method="Credit",
-    #
-    #         ),
-    #          (1,1),
-    #     )
-    #     split_debit_btn = self.create_md_raised_button(
-    #         "Debit",
-    #         lambda x: self.handle_split_input(
-    #             amount=split_amount_input.text, method="Debit",
-    #
-    #         ),
-    #          (1,1),
-    #     )
-    #     split_cancel_btn = Button(
-    #         text="Cancel", on_press=lambda x: self.split_amount_popup.dismiss(),
-    #         size_hint=(1,1),
-    #     )
-    #     split_amount_buttons.add_widget(split_cash_btn)
-    #     split_amount_buttons.add_widget(split_credit_btn)
-    #     split_amount_buttons.add_widget(split_debit_btn)
-    #     split_amount_buttons.add_widget(split_cancel_btn)
-    #     split_amount_layout.add_widget(split_amount_remaining)
-    #     split_amount_layout.add_widget(split_amount_input)
-    #     split_amount_layout.add_widget(split_amount_buttons)
-    #
-    #     self.split_amount_popup.open()
+
     def handle_split_payment(self):
         self.dismiss_popups(
             "split_amount_popup", "split_cash_popup", "split_change_popup"
@@ -469,12 +394,20 @@ class CashRegisterApp(MDApp):
             "9",
             "",
             "0",
-            "",
+            "Clear",
         ]
         for button in numeric_buttons:
             if button == "":
                 blank_space = Label(size_hint=(0.8, 0.8))
                 keypad_layout.add_widget(blank_space)
+            elif button =="Clear":
+                clr_button = Button(
+                    text=button,
+                    on_press=lambda x: self.clear_split_numeric_input(),
+                    size_hint=(0.8, 0.8),
+
+                    )
+                keypad_layout.add_widget(clr_button)
             else:
                 btn = Button(
                     text=button,
@@ -522,6 +455,9 @@ class CashRegisterApp(MDApp):
         self.split_payment_numeric_popup_layout.add_widget(buttons_layout)
 
         self.split_payment_numeric_popup.open()
+
+    def clear_split_numeric_input(self):
+        self.split_payment_numeric_cash_input.text = ""
 
     def split_cancel(self):
         self.split_payment_numeric_popup.dismiss()
@@ -649,16 +585,23 @@ class CashRegisterApp(MDApp):
         self.split_cash_popup_layout.add_widget(self.split_cash_input)
 
         split_cash_keypad_layout = GridLayout(cols=2, spacing=5)
-        for cash_amount in common_amounts:
+
+        #
+        placeholder_amounts = [0] * 5
+        for i, placeholder in enumerate(placeholder_amounts):
+
+            btn_text = f"${common_amounts[i]}" if i < len(common_amounts) else "-"
             btn = Button(
-                text=f"${cash_amount}",
+                text=btn_text,
                 on_press=self.split_on_preset_amount_press,
             )
+
+            btn.disabled = i >= len(common_amounts)
             split_cash_keypad_layout.add_widget(btn)
 
         split_custom_cash_button = self.create_md_raised_button(
             "Custom",
-            lambda x: self.split_open_custom_cash_popup,  #####
+            lambda x: self.split_open_custom_cash_popup(),
             (0.8, 0.8),
         )
 
@@ -670,7 +613,7 @@ class CashRegisterApp(MDApp):
 
         split_cash_cancel_button = Button(
             text="Cancel",
-            on_press=lambda x: self.split_on_cash_cancel,
+            on_press=lambda x: self.split_on_cash_cancel(),
             size_hint=(0.8, 0.8),
         )
 
@@ -681,12 +624,13 @@ class CashRegisterApp(MDApp):
         self.split_cash_popup_layout.add_widget(split_cash_keypad_layout)
         self.split_cash_popup_layout.add_widget(other_buttons)
         self.split_cash_popup = Popup(
-            title="Amount Tendered",
+            title="Split Payment Amount",
             content=self.split_cash_popup_layout,
             size_hint=(0.8, 0.8),
         )
-        print("end of split cash popup")
+        print("End of split cash popup")
         self.split_cash_popup.open()
+
 
     def split_on_preset_amount_press(self, instance):
         self.split_cash_input.text = instance.text.strip("$")
@@ -1045,53 +989,25 @@ class CashRegisterApp(MDApp):
         remaining_cents = cents % 100
         self.adjust_price_cash_input.text = f"{dollars}.{remaining_cents:02d}"
 
-    # def show_adjust_price_popup(self):
-    #     self.adjust_price_popup_layout = BoxLayout(orientation="vertical", spacing=10)
-    #     self.target_amount_input = TextInput(
-    #         text="",
-    #         multiline=False,
-    #         input_filter="float",
-    #         font_size=30,
-    #         size_hint_y=None,
-    #         height=50,
-    #     )
-    #     self.adjust_price_popup_layout.add_widget(self.target_amount_input)
-    #
-    #     confirm_button = self.create_md_raised_button(
-    #         "Confirm",
-    #         self.add_adjusted_price_item,
-    #     )
-    #
-    #     cancel_button = Button(
-    #         text="Cancel",
-    #         on_press=self.on_adjust_price_cancel,
-    #     )
-    #     self.adjust_price_popup_layout.add_widget(confirm_button)
-    #     self.adjust_price_popup_layout.add_widget(cancel_button)
-    #
-    #     self.adjust_price_popup = Popup(
-    #         title="Enter Target Amount",
-    #         content=self.adjust_price_popup_layout,
-    #         size_hint=(0.8, 0.4),
-    #         pos_hint={"top": 1},
-    #     )
-    #     self.adjust_price_popup.open()
 
     def show_guard_screen(self):
         if not self.is_guard_screen_displayed:
             guard_layout = BoxLayout()
-            guard_popup = Popup(
+            self.guard_popup = Popup(
                 title="Guard Screen",
                 content=guard_layout,
                 size_hint=(1, 1),
                 auto_dismiss=False,
             )
-            guard_popup.bind(on_touch_down=lambda x, touch: guard_popup.dismiss())
+            self.guard_popup.bind(on_touch_down=lambda x, touch: self.dismiss_guard_popup())
             self.is_guard_screen_displayed = True
-            guard_popup.bind(
+            self.guard_popup.bind(
                 on_dismiss=lambda x: setattr(self, "is_guard_screen_displayed", False)
             )
-            guard_popup.open()
+            self.guard_popup.open()
+    def dismiss_guard_popup(self):
+        self.guard_popup.dismiss()
+        self.turn_on_monitor()
 
     def show_lock_screen(self):
         if not self.is_lock_screen_displayed:
@@ -1191,16 +1107,7 @@ class CashRegisterApp(MDApp):
         )
         self.tools_popup.open()
 
-        ###################################################################################################################
-        ###################################################################################################################
-        ###################################################################################################################
-        ###################################################################################################################
 
-        ###########################################################################################################
-        ###########################################################################################################
-        ###########################################################################################################
-        ###########################################################################################################
-        ###########################################################################################################
 
     def show_custom_item_popup(self, barcode):
         self.custom_item_popup_layout = BoxLayout(orientation="vertical", spacing=10)
@@ -1336,8 +1243,11 @@ class CashRegisterApp(MDApp):
             size_hint=(1, 0.4),
         )
 
-        for amount in common_amounts:
-            btn = Button(text=f"${amount}", on_press=self.on_preset_amount_press)
+        placeholder_amounts = [0] * 5
+        for i, amount in enumerate(placeholder_amounts):
+            btn_text = f"${common_amounts[i]}" if i < len(common_amounts) else "-"
+            btn = Button(text=btn_text, on_press=self.on_preset_amount_press)
+            btn.disabled = i >= len(common_amounts)
             keypad_layout.add_widget(btn)
 
         custom_cash_button = self.create_md_raised_button(
@@ -1370,6 +1280,7 @@ class CashRegisterApp(MDApp):
             size_hint=(0.8, 0.8),
         )
         self.cash_popup.open()
+
 
     def open_custom_cash_popup(self, instance):
         self.custom_cash_popup_layout = BoxLayout(orientation="vertical", spacing=10)
@@ -1684,6 +1595,59 @@ class CashRegisterApp(MDApp):
             subtotal, tax, total_with_tax, discount
         )
 
+    def turn_off_monitor(self):
+        touchscreen_device = "iSolution multitouch"
+        try:
+            subprocess.run(["xinput", "disable", touchscreen_device], check=True)
+        except subprocess.CalledProcessError as e:
+            print(e)
+            subprocess.run(["xinput", "enable", touchscreen_device], check=True)
+            return
+
+        try:
+            subprocess.run(["xrandr", "--output", "HDMI-1", "--brightness", "0"], check=True)
+        except subprocess.CalledProcessError as e:
+            subprocess.run(["xrandr", "--output", "HDMI-1", "--brightness", "1"], check=True)
+            print(e)
+            return
+
+
+
+        def reenable_touchscreen():
+            time.sleep(1)
+            try:
+                subprocess.run(["xinput", "enable", touchscreen_device], check=True)
+            except subprocess.CalledProcessError as e:
+                print(e)
+
+        threading.Thread(target=reenable_touchscreen).start()
+
+    def is_monitor_off():
+        output_name = "HDMI-1"
+        try:
+            result = subprocess.run(["xrandr", "--verbose"], stdout=subprocess.PIPE, check=True)
+            output = result.stdout.decode("utf-8")
+            pattern = rf"{output_name} connected.*?Brightness: (\d+\.\d+)"
+            match = re.search(pattern, output, re.DOTALL)
+
+            if match:
+                current_brightness = float(match.group(1))
+                return current_brightness == 0.0
+            else:
+                return False
+        except Exception as e:
+            print(e)
+            return False
+
+    def turn_on_monitor(self):
+        try:
+            subprocess.run(["xrandr", "--output", "HDMI-1", "--brightness", "1"], check=True)
+        except Exception as e:
+            print(e)
+
+
+
+
     # def add_adjusted_price_item(self, instance):
     #     target_amount = self.target_amount_input.text
     #     try:
@@ -1696,14 +1660,39 @@ class CashRegisterApp(MDApp):
     #     self.update_financial_summary()
     #     self.adjust_price_popup.dismiss()
 
-    def is_monitor_off(self):
-        try:
-            result = subprocess.run(["xset", "-q"], stdout=subprocess.PIPE)
-            output = result.stdout.decode("utf-8")
-            return "Monitor is Off" in output
-        except Exception as e:
-            print(e)
-            return False
+    # def turn_off_monitor(self):
+    #     touchscreen_device = "iSolution multitouch"
+    #
+    #     try:
+    #         subprocess.run(["xinput", "disable", touchscreen_device], check=True)
+    #     except subprocess.CalledProcessError as e:
+    #         print(e)
+    #         return
+    #
+    #     try:
+    #         subprocess.run(["xset", "dpms", "force", "off"], check=True)
+    #     except subprocess.CalledProcessError as e:
+    #         print(e)
+    #         subprocess.run(["xinput", "enable", touchscreen_device])
+    #         return
+    #
+    #     def reenable_touchscreen():
+    #         time.sleep(1)
+    #         try:
+    #             subprocess.run(["xinput", "enable", touchscreen_device], check=True)
+    #         except subprocess.CalledProcessError as e:
+    #             print(e)
+    #
+    #     threading.Thread(target=reenable_touchscreen).start()
+    #
+    # def is_monitor_off(self):
+    #     try:
+    #         result = subprocess.run(["xset", "-q"], stdout=subprocess.PIPE)
+    #         output = result.stdout.decode("utf-8")
+    #         return "Monitor is Off" in output
+    #     except Exception as e:
+    #         print(e)
+    #         return False
 
     def reboot_are_you_sure(self):
         arys_layout = BoxLayout()
@@ -1731,30 +1720,7 @@ class CashRegisterApp(MDApp):
 
         popup.open()
 
-    def turn_off_monitor(self):
-        touchscreen_device = "iSolution multitouch"
 
-        try:
-            subprocess.run(["xinput", "disable", touchscreen_device], check=True)
-        except subprocess.CalledProcessError as e:
-            print(e)
-            return
-
-        try:
-            subprocess.run(["xset", "dpms", "force", "off"], check=True)
-        except subprocess.CalledProcessError as e:
-            print(e)
-            subprocess.run(["xinput", "enable", touchscreen_device])
-            return
-
-        def reenable_touchscreen():
-            time.sleep(1)
-            try:
-                subprocess.run(["xinput", "enable", touchscreen_device], check=True)
-            except subprocess.CalledProcessError as e:
-                print(e)
-
-        threading.Thread(target=reenable_touchscreen).start()
 
     def check_monitor_status(self, dt):
         if self.is_monitor_off():
@@ -1995,8 +1961,8 @@ class CashRegisterApp(MDApp):
                     print(e)
 
 
-class MarkupLabel(Label):
-    pass
+# class MarkupLabel(Label):
+#     pass
 
 
 class MoneyInput(TextInput):
@@ -2026,14 +1992,25 @@ class FocusPopup(Popup):
 
 
 class FinancialSummaryWidget(MDRaisedButton):
+
+    _instance = None
+
+    def __new__(cls, **kwargs):
+        if cls._instance is None:
+            cls._instance = super(FinancialSummaryWidget, cls).__new__(cls)
+        return cls._instance
+
     def __init__(self, **kwargs):
-        super(FinancialSummaryWidget, self).__init__(**kwargs)
-        self.size_hint_y = None
-        self.size_hint_x = 1
-        self.height = 80
-        self.orientation = "vertical"
-        self.order_mod_popup = None
-        app = App.get_running_app()
+        if not hasattr(self, '_initialized'):
+
+            super(FinancialSummaryWidget, self).__init__(**kwargs)
+            self.size_hint_y = None
+            self.size_hint_x = 1
+            self.height = 80
+            self.orientation = "vertical"
+            self.order_mod_popup = None
+            print(self)
+            app = App.get_running_app()
 
     def update_summary(self, subtotal, tax, total_with_tax, discount):
         self.text = (
@@ -2072,9 +2049,8 @@ class FinancialSummaryWidget(MDRaisedButton):
         )
         self.order_mod_popup.open()
 
-    def close_order_mod_popup(self): ###########################################################################3##
-        Clock.schedule_once(lambda dt: self.order_mod_popup.dismiss() if self.order_mod_popup else None)
-
+    def close_order_mod_popup(self):
+        self.order_mod_popup.dismiss()
 
 try:
     app = CashRegisterApp()
