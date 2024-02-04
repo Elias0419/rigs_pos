@@ -1622,7 +1622,7 @@ class CashRegisterApp(MDApp):
 
         threading.Thread(target=reenable_touchscreen).start()
 
-    def is_monitor_off():
+    def is_monitor_off(self):
         output_name = "HDMI-1"
         try:
             result = subprocess.run(["xrandr", "--verbose"], stdout=subprocess.PIPE, check=True)
