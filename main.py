@@ -226,6 +226,16 @@ class CashRegisterApp(MDApp):
         remaining_cents = cents % 100
         self.cash_input.text = f"{dollars}.{remaining_cents:02d}"
 
+    def on_split_payment_numeric_button_press(self, instance):
+        current_input = self.split_payment_numeric_cash_input.text.replace(".", "").lstrip("0")
+        new_input = current_input + instance.text
+        new_input = new_input.zfill(2)
+        cents = int(new_input)
+        dollars = cents // 100
+        remaining_cents = cents % 100
+        self.split_payment_numeric_cash_input.text = f"{dollars}.{remaining_cents:02d}"
+
+
     def on_tool_button_press(self, instance):
         if instance.text == "Clear Order":
             self.order_layout.clear_widgets()
@@ -308,6 +318,83 @@ class CashRegisterApp(MDApp):
     Split payment stuff
     """
 
+     # def show_split_payment_popup(self, subsequent_payment=False):
+    #     self.dismiss_popups(
+    #         "split_cash_confirm_popup",
+    #         "split_cash_popup",
+    #         "split_change_popup",
+    #         "finalize_order_popup",
+    #     )
+    #
+    #     split_amount_layout = BoxLayout(size_hint=(1,1),orientation="vertical")
+    #     if subsequent_payment:
+    #         amount_remaining = f"{self.split_payment_info['remaining_amount']:.2f}"
+    #         split_amount_input = MoneyInput(
+    #             text=amount_remaining,
+    #             height=20,
+    #             multiline=False,
+    #             input_filter="float",
+    #         )
+    #     else:
+    #         split_amount_input = MoneyInput(
+    #             hint_text="Enter Amount of First Payment",
+    #             height=20,
+    #             multiline=False,
+    #             input_filter="float",
+    #             )
+    #     split_amount_buttons = BoxLayout(
+    #         orientation="horizontal", spacing=5, size_hint=(1, 1)
+    #     )
+    #     split_amount_remaining = MarkupLabel(
+    #         text=str(
+    #             f"[b]Remaining Amount: {self.split_payment_info['remaining_amount']:.2f}[/b]"
+    #         )
+    #     )
+    #     self.split_amount_popup = self.create_focus_popup(
+    #         size_hint=(0.8, 0.4),
+    #         content=split_amount_layout,
+    #         pos_hint={"top": 1},
+    #         title="Split Payment",
+    #         textinput=split_amount_input
+    #     )
+    #
+    #     split_cash_btn = self.create_md_raised_button(
+    #         "Cash",
+    #         lambda x: self.handle_split_input(
+    #             amount=split_amount_input.text, method="Cash",
+    #
+    #         ),
+    #         (1,1),
+    #     )
+    #     split_credit_btn = self.create_md_raised_button(
+    #         "Credit",
+    #         lambda x: self.handle_split_input(
+    #             amount=split_amount_input.text, method="Credit",
+    #
+    #         ),
+    #          (1,1),
+    #     )
+    #     split_debit_btn = self.create_md_raised_button(
+    #         "Debit",
+    #         lambda x: self.handle_split_input(
+    #             amount=split_amount_input.text, method="Debit",
+    #
+    #         ),
+    #          (1,1),
+    #     )
+    #     split_cancel_btn = Button(
+    #         text="Cancel", on_press=lambda x: self.split_amount_popup.dismiss(),
+    #         size_hint=(1,1),
+    #     )
+    #     split_amount_buttons.add_widget(split_cash_btn)
+    #     split_amount_buttons.add_widget(split_credit_btn)
+    #     split_amount_buttons.add_widget(split_debit_btn)
+    #     split_amount_buttons.add_widget(split_cancel_btn)
+    #     split_amount_layout.add_widget(split_amount_remaining)
+    #     split_amount_layout.add_widget(split_amount_input)
+    #     split_amount_layout.add_widget(split_amount_buttons)
+    #
+    #     self.split_amount_popup.open()
     def handle_split_payment(self):
         self.dismiss_popups(
             "split_amount_popup", "split_cash_popup", "split_change_popup"
@@ -319,9 +406,11 @@ class CashRegisterApp(MDApp):
             "remaining_amount": remaining_amount,
             "payments": [],
         }
-        self.show_split_payment_popup()
+        self.show_split_payment_numeric_popup()
 
-    def show_split_payment_popup(self, subsequent_payment=False):
+
+
+    def show_split_payment_numeric_popup(self, subsequent_payment=False):
         self.dismiss_popups(
             "split_cash_confirm_popup",
             "split_cash_popup",
@@ -329,69 +418,89 @@ class CashRegisterApp(MDApp):
             "finalize_order_popup",
         )
 
-        split_amount_layout = BoxLayout(size_hint=(1,1),orientation="vertical")
-        if subsequent_payment:
-            amount_remaining = f"{self.split_payment_info['remaining_amount']:.2f}"
-            split_amount_input = TextInput(
-                text=amount_remaining,
-                height=20,
-                multiline=False,
-            )
-        else:
-            split_amount_input = TextInput(hint_text="Enter Amount of First Payment",height=20, multiline=False)
-        split_amount_buttons = BoxLayout(
-            orientation="horizontal", spacing=5, size_hint=(1, 1)
-        )
-        split_amount_remaining = MarkupLabel(
-            text=str(
-                f"[b]Remaining Amount: {self.split_payment_info['remaining_amount']:.2f}[/b]"
-            )
-        )
-        self.split_amount_popup = self.create_focus_popup(
-            size_hint=(0.8, 0.4),
-            content=split_amount_layout,
-            pos_hint={"top": 1},
-            title="Split Payment",
-            textinput=split_amount_input
-        )
 
-        split_cash_btn = self.create_md_raised_button(
+        self.split_payment_numeric_popup_layout = BoxLayout(orientation="vertical", spacing=10)
+        self.split_payment_numeric_popup = Popup(
+            title=f"Split Payment - Remaining Amount: {self.split_payment_info['remaining_amount']:.2f} ",
+            content=self.split_payment_numeric_popup_layout,
+            size_hint=(0.8, 0.8),
+        )
+        self.split_payment_numeric_cash_input = TextInput(
+            text="",
+            disabled=True,
+            multiline=False,
+            input_filter="float",
+            font_size=30,
+            size_hint_y=None,
+            height=50,
+        )
+        self.split_payment_numeric_popup_layout.add_widget(self.split_payment_numeric_cash_input)
+
+        keypad_layout = GridLayout(cols=3, rows=4, spacing=10)
+
+        numeric_buttons = [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "",
+            "0",
+            "",
+        ]
+        for button in numeric_buttons:
+            if button == "":
+                blank_space = Label(size_hint=(0.8, 0.8))
+                keypad_layout.add_widget(blank_space)
+            else:
+                btn = Button(
+                    text=button,
+                    on_press=self.on_split_payment_numeric_button_press,
+                    size_hint=(0.8, 0.8),
+                )
+                keypad_layout.add_widget(btn)
+
+        buttons_layout = GridLayout(cols=4, size_hint_y=1/7, spacing=5)
+        cash_button = self.create_md_raised_button(
             "Cash",
-            lambda x: self.handle_split_input(
-                amount=split_amount_input.text, method="Cash",
-
-            ),
-            (1,1),
+            lambda x: self.handle_split_input(self.split_payment_numeric_cash_input.text, "Cash"),
+            (0.8, 0.8),
         )
-        split_credit_btn = self.create_md_raised_button(
-            "Credit",
-            lambda x: self.handle_split_input(
-                amount=split_amount_input.text, method="Credit",
 
-            ),
-             (1,1),
-        )
-        split_debit_btn = self.create_md_raised_button(
+        debit_button = self.create_md_raised_button(
             "Debit",
-            lambda x: self.handle_split_input(
-                amount=split_amount_input.text, method="Debit",
-
-            ),
-             (1,1),
+            lambda x: self.handle_split_input(self.split_payment_numeric_cash_input.text, "Debit"),
+            (0.8, 0.8),
         )
-        split_cancel_btn = Button(
-            text="Cancel", on_press=lambda x: self.split_amount_popup.dismiss(),
-            size_hint=(1,1),
+        credit_button = self.create_md_raised_button(
+            "Credit",
+            lambda x: self.handle_split_input(self.split_payment_numeric_cash_input.text, "Credit"),
+            (0.8, 0.8),
         )
-        split_amount_buttons.add_widget(split_cash_btn)
-        split_amount_buttons.add_widget(split_credit_btn)
-        split_amount_buttons.add_widget(split_debit_btn)
-        split_amount_buttons.add_widget(split_cancel_btn)
-        split_amount_layout.add_widget(split_amount_remaining)
-        split_amount_layout.add_widget(split_amount_input)
-        split_amount_layout.add_widget(split_amount_buttons)
 
-        self.split_amount_popup.open()
+        cancel_button = Button(
+            text="Cancel",
+            on_press=lambda x: self.split_payment_numeric_popup.dismiss(),
+            size_hint=(0.8, 0.8),
+        )
+
+
+        buttons_layout.add_widget(cash_button)
+        buttons_layout.add_widget(debit_button)
+        buttons_layout.add_widget(credit_button)
+        buttons_layout.add_widget(cancel_button)
+
+        self.split_payment_numeric_popup_layout.add_widget(keypad_layout)
+        self.split_payment_numeric_popup_layout.add_widget(buttons_layout)
+
+        self.split_payment_numeric_popup.open()
+
+
+
 
     def handle_split_input(self, amount, method):
         if not amount.strip():
@@ -414,13 +523,13 @@ class CashRegisterApp(MDApp):
         if method == "Cash":
             print("method", method)
             self.show_split_cash_popup(amount)
-            self.split_amount_popup.dismiss()
+            self.split_payment_numeric_popup.dismiss()
         elif method == "Debit":
             self.show_split_card_confirm(amount, method)
-            self.split_amount_popup.dismiss()
+            self.split_payment_numeric_popup.dismiss()
         elif method == "Credit":
             self.show_split_card_confirm(amount, method)
-            self.split_amount_popup.dismiss()
+            self.split_payment_numeric_popup.dismiss()
 
     def split_cash_continue(self, amount):
         tolerance = 0.001
@@ -431,7 +540,7 @@ class CashRegisterApp(MDApp):
         if abs(self.split_payment_info["remaining_amount"]) <= tolerance:
             self.finalize_split_payment()
         else:
-            self.show_split_payment_popup(subsequent_payment=True)
+            self.show_split_payment_numeric_popup(subsequent_payment=True)
 
     def split_card_continue(self, amount, method):
         print("split_card_continue", amount, method)
@@ -446,7 +555,7 @@ class CashRegisterApp(MDApp):
     def show_split_card_confirm(self, amount, method):
         open_cash_drawer()
         split_card_confirm = BoxLayout()
-        split_card_confirm_text = Label(text=f"{amount} {method} payment confirmed")
+        split_card_confirm_text = Label(text=f"{amount} {method} Payment Confirmed")
         tolerance = 0.001
 
         if abs(self.split_payment_info["remaining_amount"]) <= tolerance:
@@ -462,14 +571,15 @@ class CashRegisterApp(MDApp):
         split_card_confirm.add_widget(split_card_confirm_text)
         split_card_confirm.add_widget(split_card_confirm_next_btn)
         self.split_card_confirm_popup = Popup(
+            title="Payment Confirmation",
             content=split_card_confirm,
-            size_hint=(0.4, 0.4),
+            size_hint=(0.4, 0.2),
         )
         self.split_card_confirm_popup.open()
 
     def show_split_cash_confirm(self, amount):
         split_cash_confirm = BoxLayout()
-        split_cash_confirm_text = Label(text=f"{amount} cash payment confirmed")
+        split_cash_confirm_text = Label(text=f"{amount} Cash Payment Confirmed")
         tolerance = 0.001
 
         if abs(self.split_payment_info["remaining_amount"]) <= tolerance:
@@ -486,6 +596,7 @@ class CashRegisterApp(MDApp):
         split_cash_confirm.add_widget(split_cash_confirm_text)
         split_cash_confirm.add_widget(split_cash_confirm_next_btn)
         self.split_cash_confirm_popup = Popup(
+            title="Payment Confirmation",
             content=split_cash_confirm,
             size_hint=(0.4, 0.4),
         )
@@ -974,6 +1085,22 @@ class CashRegisterApp(MDApp):
             separator_height=0,
         )
         self.tools_popup.open()
+
+        ###################################################################################################################
+        ###################################################################################################################
+        ###################################################################################################################
+        ###################################################################################################################
+
+
+
+
+
+
+        ###########################################################################################################
+        ###########################################################################################################
+        ###########################################################################################################
+        ###########################################################################################################
+        ###########################################################################################################
 
     def show_custom_item_popup(self, barcode):
         self.custom_item_popup_layout = BoxLayout(orientation="vertical", spacing=10)
@@ -1762,16 +1889,41 @@ class MarkupLabel(Label):
     pass
 
 
+# class MoneyInput(TextInput):
+#     def insert_text(self, substring, from_undo=False):
+#         if not from_undo:
+#             current_text = self.text.replace(".", "") + substring
+#             current_text = current_text.zfill(3)
+#             new_text = current_text[:-2] + "." + current_text[-2:]
+#             super(MoneyInput, self).insert_text(new_text, from_undo=from_undo)
+#             return True
+#         else:
+#             return super(MoneyInput, self).insert_text(substring, from_undo=from_undo)
 class MoneyInput(TextInput):
     def insert_text(self, substring, from_undo=False):
+        # Only process the insertion if it's not from an undo operation
         if not from_undo:
+            # Remove any existing decimal point and append the new substring
             current_text = self.text.replace(".", "") + substring
+
+            # Ensure the string has at least three characters, padding with zeros if necessary
             current_text = current_text.zfill(3)
+
+            # Re-insert the decimal point in the correct position
             new_text = current_text[:-2] + "." + current_text[-2:]
-            super(MoneyInput, self).insert_text(new_text, from_undo=from_undo)
-            return True
+
+            # Remove leading zeros, but ensure at least one zero before the decimal point if necessary
+            new_text = str(float(new_text)).rstrip('0').rstrip('.') if '.' in new_text else new_text
+
+            # Clear the current text and insert the new formatted text
+            self.text = ''  # Clear the current text to avoid duplication
+            # Insert the newly formatted text. Note: No need to use super() here as we're directly modifying self.text
+            self.text = new_text
         else:
-            return super(MoneyInput, self).insert_text(substring, from_undo=from_undo)
+            # If the operation is from an undo, call the base class method without modification
+            super(MoneyInput, self).insert_text(substring, from_undo=from_undo)
+
+
 
 class FocusPopup(Popup):
     def focus_on_textinput(self, textinput):
