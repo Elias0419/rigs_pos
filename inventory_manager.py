@@ -51,6 +51,9 @@ class InventoryManagementView(BoxLayout):
         else:
             self.show_add_item_popup(barcode)
 
+    def handle_scanned_barcode_item(self,barcode):
+        barcode = barcode.strip()
+        self.barcode_input.text = barcode
 
     def generate_unique_barcode(self):
         while True:
@@ -98,6 +101,10 @@ class InventoryManagementView(BoxLayout):
                 print(e)
 
     def inventory_item_popup(self, barcode=None):
+        app = App.get_running_app()
+        print("before", app.current_context)
+        app.current_context = "inventory_item"
+        print("before", app.current_context)
         content = BoxLayout(orientation="vertical", padding=10)
         name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         name_input = TextInput(text=self.name)
@@ -105,11 +112,11 @@ class InventoryManagementView(BoxLayout):
         name_layout.add_widget(name_input)
 
         barcode_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        barcode_input = TextInput(
+        self.barcode_input = TextInput(
             input_filter="int", text=self.barcode if self.barcode else ""
         )
         barcode_layout.add_widget(Label(text="Barcode", size_hint_x=0.2))
-        barcode_layout.add_widget(barcode_input)
+        barcode_layout.add_widget(self.barcode_input)
 
         price_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         price_input = TextInput(text=self.price, input_filter="float")
@@ -131,13 +138,14 @@ class InventoryManagementView(BoxLayout):
         category_input = TextInput(text=self.category)
         category_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
 
-        category_layout.add_widget(sku_layout)
+        category_layout.add_widget(category_input)
 
         content.add_widget(name_layout)
         content.add_widget(barcode_layout)
         content.add_widget(price_layout)
         content.add_widget(cost_layout)
         content.add_widget(sku_layout)
+        content.add_widget(category_layout)
 
         button_layout = BoxLayout(
             orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
@@ -158,7 +166,7 @@ class InventoryManagementView(BoxLayout):
         button_layout.add_widget(
             MDRaisedButton(
                 text="Generate Barcode",
-                on_press=lambda *args: self.set_generated_barcode(barcode_input),
+                on_press=lambda *args: self.set_generated_barcode(self.barcode_input),
             )
         )
 
@@ -170,7 +178,14 @@ class InventoryManagementView(BoxLayout):
             content=content,
             size_hint=(0.8, 0.4),
         )
+
+        popup.bind(on_dismiss=lambda x: self.reset_inventory_context())
+        self.refresh_inventory()
         popup.open()
+
+    def reset_inventory_context(self):
+        app = App.get_running_app()
+        app.current_context = "inventory"
 
     def confirm_and_close(
         self,
@@ -198,7 +213,7 @@ class InventoryManagementView(BoxLayout):
 
     def set_generated_barcode(self, barcode_input):
         unique_barcode = self.generate_unique_barcode()
-        barcode_input.text = unique_barcode
+        self.barcode_input.text = unique_barcode
 
     def open_inventory_manager(self):
         self.inventory_item_popup()

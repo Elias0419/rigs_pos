@@ -72,6 +72,7 @@ class CashRegisterApp(MDApp):
         self.theme_cls.theme_style = "Light"
         self.theme_cls.primary_palette = "Brown"
         self.load_settings()
+        #self._test_current_context_thread()
 
     def build(self):
         self.barcode_scanner = BarcodeScanner()
@@ -145,6 +146,15 @@ class CashRegisterApp(MDApp):
 
         return main_layout
 
+    def _test_current_context(self):
+        while True:
+            print(self.current_context)
+            time.sleep(1)
+    def _test_current_context_thread(self):
+        test_thread = threading.Thread(target=self._test_current_context)
+        test_thread.daemon = True
+        test_thread.start()
+
     def check_inactivity(self, *args):
         try:
 
@@ -202,6 +212,8 @@ class CashRegisterApp(MDApp):
             self.inventory_manager.handle_scanned_barcode(barcode)
         elif self.current_context == "label":
             self.label_manager.handle_scanned_barcode(barcode)
+        elif self.current_context == "inventory_item":
+            self.inventory_manager.handle_scanned_barcode_item(barcode)
         else:
             self.handle_scanned_barcode(barcode)
 
