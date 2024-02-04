@@ -71,10 +71,12 @@ class CashRegisterApp(MDApp):
         self.current_context = "main"
         self.theme_cls.theme_style = "Light"
         self.theme_cls.primary_palette = "Brown"
+        self.categories = self.initialze_categories()
         self.load_settings()
         #self._test_current_context_thread()
 
     def build(self):
+        print(self.categories)
         self.barcode_scanner = BarcodeScanner()
         self.db_manager = DatabaseManager("inventory.db")
         self.financial_summary = FinancialSummaryWidget()
@@ -129,7 +131,9 @@ class CashRegisterApp(MDApp):
         )
         btn_tools = self.create_md_raised_button(
             "Tools",
-            self.on_button_press,
+            self.on_button_press,  #################
+            #lambda x: self.show_add_or_bypass_popup("210973141121"),
+            #lambda x: self.open_category_button_popup(),
             (8, 8),
             "H6",
         )
@@ -197,6 +201,54 @@ class CashRegisterApp(MDApp):
         financial_layout.add_widget(self.financial_summary_widget)
 
         return financial_layout
+
+    def initialze_categories(self):
+        categories = [
+                    'Cdb',
+                    'Rig',
+                    'Nails',
+                    'Tubes',
+                    'Hand Pipes',
+                    'Chillum',
+                    'Ecig',
+                    'Butane',
+                    'Torch',
+                    'Toro',
+                    'Slides H',
+                    'Quartz',
+                    'Vaporizers',
+                    'Lighter',
+                    '9mm Thick',
+                    'Cleaning',
+                    'Edible',
+                    'Bubbler',
+                    'Sherlock',
+                    'Spoon',
+                    'Silicone',
+                    'Scales',
+                    'Slides',
+
+                    'Imported Glass',
+
+
+                    'Ash Catcher',
+                    'Soft Glass',
+
+
+                    'Vaporizers',
+
+
+                    'Pendant',
+                    'Smoker Accessory',
+
+                    'Ecig Accessories',
+                    'Happy Fruit',
+                    'Concentrate Accessories',
+                    'Conc. Devices, Atomizers',
+                    'Erigs And Accessory',
+                    'Mods Batteries Kits',
+                    ]
+        return categories
 
     """
     Barcode functions
@@ -612,7 +664,7 @@ class CashRegisterApp(MDApp):
 
         split_cash_keypad_layout = GridLayout(cols=2, spacing=5)
 
-        #
+
         placeholder_amounts = [0] * 5
         for i, placeholder in enumerate(placeholder_amounts):
 
@@ -707,6 +759,49 @@ class CashRegisterApp(MDApp):
     Popup display functions
     """
 
+    def open_category_button_popup(self):
+        self.selected_categories = []
+        category_button_layout = GridLayout(size_hint=(1, 0.8), pos_hint={"top":1},cols=7, spacing=5)
+        for category in self.categories:
+            btn = MDRaisedButton(
+                text=category,
+                on_release=lambda instance, cat=category: self.toggle_category_selection(instance, cat),
+                size_hint=(1,0.8)
+                )
+            category_button_layout.add_widget(btn)
+        category_popup_layout = BoxLayout()
+        confirm_button = MDRaisedButton(
+            text="Confirm",
+            on_release=lambda instance: self.apply_categories()
+            )
+        cancel_button = MDRaisedButton(
+            text="Cancel",
+            on_release=lambda instance: self.category_button_popup.dismiss()
+            )
+        category_popup_layout.add_widget(category_button_layout)
+        category_popup_layout.add_widget(confirm_button)
+        category_popup_layout.add_widget(cancel_button)
+
+        self.category_button_popup = Popup(
+            content=category_popup_layout,
+            size_hint=(0.9,0.9)
+            )
+        self.category_button_popup.open()
+
+    def toggle_category_selection(self, instance, category):
+        if category in self.selected_categories:
+            self.selected_categories.remove(category)
+            instance.text = category
+        else:
+            self.selected_categories.append(category)
+            instance.text = f"{category}\n (Selected)"
+
+    def apply_categories(self):
+        categories_str = ', '.join(self.selected_categories)
+        self.add_to_db_category_input.text = categories_str
+        print("Applying categories:", self.selected_categories)
+        self.category_button_popup.dismiss()
+
     def show_add_or_bypass_popup(self, barcode):
         popup_layout = BoxLayout(orientation="vertical", spacing=5)
         popup_layout.add_widget(Label(text=f"Barcode: {barcode}"))
@@ -723,7 +818,7 @@ class CashRegisterApp(MDApp):
         popup_layout.add_widget(button_layout)
 
         self.popup = Popup(
-            title="Item Not Found", content=popup_layout, size_hint=(0.8, 0.6)
+            title="Item Not Found", content=popup_layout, size_hint=(0.6, 0.4)
         )
         self.popup.open()
 
@@ -1429,16 +1524,16 @@ class CashRegisterApp(MDApp):
         )
         self.change_popup.open()
 
-    def show_add_to_database_popup(self, barcode):
+    def show_add_to_database_popup(self, barcode, categories=None):
         content = BoxLayout(orientation="vertical", padding=10)
-
         name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         name_input = TextInput()
         name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
         name_layout.add_widget(name_input)
-
         barcode_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        barcode_input = TextInput(input_filter="int", text=barcode)
+        barcode_input = TextInput(
+            input_filter="int", text=barcode if barcode else ""
+        )
         barcode_layout.add_widget(Label(text="Barcode", size_hint_x=0.2))
         barcode_layout.add_widget(barcode_input)
 
@@ -1457,11 +1552,18 @@ class CashRegisterApp(MDApp):
         sku_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
         sku_layout.add_widget(sku_input)
 
+        category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        self.add_to_db_category_input = TextInput(disabled=True)
+        #category = self.add_to_db_category_input.text
+        category_layout.add_widget(Label(text="Categories", size_hint_x=0.2))
+        category_layout.add_widget(self.add_to_db_category_input)
+
         content.add_widget(name_layout)
         content.add_widget(barcode_layout)
         content.add_widget(price_layout)
         content.add_widget(cost_layout)
         content.add_widget(sku_layout)
+        content.add_widget(category_layout)
 
         button_layout = BoxLayout(
             orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
@@ -1470,33 +1572,36 @@ class CashRegisterApp(MDApp):
         button_layout.add_widget(
             MDRaisedButton(
                 text="Confirm",
-                on_press=lambda x: self.add_item_to_database(
-                    barcode,
+                on_press=lambda _: self.add_item_to_database(
+                    barcode_input.text,
                     name_input.text,
                     price_input.text,
                     cost_input.text,
                     sku_input.text,
+                    self.add_to_db_category_input.text,
+
                 ),
             )
         )
 
         button_layout.add_widget(
-            Button(
-                text="Cancel", on_press=lambda x: self.close_add_to_database_popup(x)
-            )
+            MDRaisedButton(text="Close", on_press=lambda *args: self.add_to_db_popup.dismiss())
         )
+        button_layout.add_widget(
+            MDRaisedButton(text="Categories", on_press=lambda x: self.open_category_button_popup())
+        )
+
 
         content.add_widget(button_layout)
 
         self.add_to_db_popup = Popup(
-            title="Add to Database",
+            title="Item details",
+            pos_hint={"top": 1},
             content=content,
             size_hint=(0.8, 0.4),
-            auto_dismiss=False,
-            pos_hint={"top": 1},
         )
-
         self.add_to_db_popup.open()
+
 
     """
     Accessory functions
@@ -1672,53 +1777,6 @@ class CashRegisterApp(MDApp):
 
 
 
-
-    # def add_adjusted_price_item(self, instance):
-    #     target_amount = self.target_amount_input.text
-    #     try:
-    #         target_amount = float(target_amount)
-    #     except ValueError as e:
-    #         print(e)
-    #
-    #     self.order_manager.adjust_order_to_target_total(target_amount)
-    #     self.update_display()
-    #     self.update_financial_summary()
-    #     self.adjust_price_popup.dismiss()
-
-    # def turn_off_monitor(self):
-    #     touchscreen_device = "iSolution multitouch"
-    #
-    #     try:
-    #         subprocess.run(["xinput", "disable", touchscreen_device], check=True)
-    #     except subprocess.CalledProcessError as e:
-    #         print(e)
-    #         return
-    #
-    #     try:
-    #         subprocess.run(["xset", "dpms", "force", "off"], check=True)
-    #     except subprocess.CalledProcessError as e:
-    #         print(e)
-    #         subprocess.run(["xinput", "enable", touchscreen_device])
-    #         return
-    #
-    #     def reenable_touchscreen():
-    #         time.sleep(1)
-    #         try:
-    #             subprocess.run(["xinput", "enable", touchscreen_device], check=True)
-    #         except subprocess.CalledProcessError as e:
-    #             print(e)
-    #
-    #     threading.Thread(target=reenable_touchscreen).start()
-    #
-    # def is_monitor_off(self):
-    #     try:
-    #         result = subprocess.run(["xset", "-q"], stdout=subprocess.PIPE)
-    #         output = result.stdout.decode("utf-8")
-    #         return "Monitor is Off" in output
-    #     except Exception as e:
-    #         print(e)
-    #         return False
-
     def reboot_are_you_sure(self):
         arys_layout = BoxLayout()
 
@@ -1885,15 +1943,14 @@ class CashRegisterApp(MDApp):
             order_details["change_given"],
         )
 
-    def add_item_to_database(self, barcode, name, price, cost=0.0, sku=None):
+    def add_item_to_database(self, barcode, name, price, cost=0.0, sku=None, categories=None):
         if barcode and name and price:
             try:
-                self.db_manager.add_item(barcode, name, price, cost, sku)
+                self.db_manager.add_item(barcode, name, price, cost, sku, categories)
                 self.add_to_db_popup.dismiss()
             except Exception as e:
                 print(e)
-        else:
-            print("must have barcode and name and price")
+
 
     def reboot(self, instance):
         try:
