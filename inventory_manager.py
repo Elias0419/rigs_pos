@@ -135,8 +135,8 @@ class InventoryManagementView(BoxLayout):
         sku_layout.add_widget(sku_input)
 
         category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        category_input = TextInput(text=self.category)
-        category_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
+        category_input = TextInput(text=self.category, disabled=True)
+        category_layout.add_widget(Label(text="Category", size_hint_x=0.2))
 
         category_layout.add_widget(category_input)
 
@@ -155,7 +155,7 @@ class InventoryManagementView(BoxLayout):
             MDRaisedButton(
                 text="Confirm",
                 on_press=lambda *args: self.confirm_and_close(
-                    barcode_input, name_input, price_input, cost_input, sku_input, category_input, popup
+                    self.barcode_input, name_input, price_input, cost_input, sku_input, category_input, popup
                 ),
             )
         )
@@ -416,7 +416,7 @@ class InventoryView(BoxLayout):
             filtered_items = [
                 item
                 for item in self.full_inventory
-                if query in str(item[0]).lower() or query in item[1].lower()
+                if query in item[1].lower()
             ]
         else:
             filtered_items = self.full_inventory
