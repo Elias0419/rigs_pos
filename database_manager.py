@@ -79,6 +79,7 @@ class DatabaseManager:
         category=None,
         parent_barcode=None,
     ):
+        print("db add_item", "barcode",barcode,"name",name,"price",price,"cost",cost,"sku",sku,"category",category)
         self.create_items_table()
 
 
@@ -136,6 +137,7 @@ class DatabaseManager:
         return item
 
     def get_all_items(self):
+        print("db manager get all")
         conn = self._get_connection()
         cursor = conn.cursor()
         try:

@@ -165,7 +165,6 @@ class CashRegisterApp(MDApp):
             result = subprocess.run(["xprintidle"], stdout=subprocess.PIPE, check=True)
             inactive_time = int(result.stdout.decode().strip())
 
-
             if inactive_time > 600000:
                 self.turn_off_monitor()
 
@@ -227,20 +226,12 @@ class CashRegisterApp(MDApp):
                     'Silicone',
                     'Scales',
                     'Slides',
-
                     'Imported Glass',
-
-
                     'Ash Catcher',
                     'Soft Glass',
-
-
                     'Vaporizers',
-
-
                     'Pendant',
                     'Smoker Accessory',
-
                     'Ecig Accessories',
                     'Happy Fruit',
                     'Concentrate Accessories',
@@ -319,6 +310,15 @@ class CashRegisterApp(MDApp):
         dollars = cents // 100
         remaining_cents = cents % 100
         self.split_payment_numeric_cash_input.text = f"{dollars}.{remaining_cents:02d}"
+
+    def on_add_discount_numeric_button_press(self, instance):
+        current_input = self.discount_amount_input.text.replace(".", "").lstrip("0")
+        new_input = current_input + instance.text
+        new_input = new_input.zfill(2)
+        cents = int(new_input)
+        dollars = cents // 100
+        remaining_cents = cents % 100
+        self.discount_amount_input.text = f"{dollars}.{remaining_cents:02d}"
 
     def on_tool_button_press(self, instance):
         if instance.text == "Clear Order":
@@ -593,7 +593,7 @@ class CashRegisterApp(MDApp):
 
     def show_split_card_confirm(self, amount, method):
         open_cash_drawer()
-        split_card_confirm = BoxLayout()
+        split_card_confirm = BoxLayout(orientation="vertical")
         split_card_confirm_text = Label(text=f"{amount} {method} Payment Confirmed")
         tolerance = 0.001
 
@@ -601,23 +601,25 @@ class CashRegisterApp(MDApp):
             split_card_confirm_next_btn = self.create_md_raised_button(
                 "Done",
                 lambda x: self.split_card_continue(amount, method),
+                (1,0.4),
             )
         else:
             split_card_confirm_next_btn = self.create_md_raised_button(
                 "Next",
                 lambda x: self.split_card_continue(amount, method),
+                (1,0.4)
             )
         split_card_confirm.add_widget(split_card_confirm_text)
         split_card_confirm.add_widget(split_card_confirm_next_btn)
         self.split_card_confirm_popup = Popup(
             title="Payment Confirmation",
             content=split_card_confirm,
-            size_hint=(0.4, 0.2),
+            size_hint=(0.4, 0.4),
         )
         self.split_card_confirm_popup.open()
 
     def show_split_cash_confirm(self, amount):
-        split_cash_confirm = BoxLayout()
+        split_cash_confirm = BoxLayout(orientation="vertical")
         split_cash_confirm_text = Label(text=f"{amount} Cash Payment Confirmed")
         tolerance = 0.001
 
@@ -625,11 +627,13 @@ class CashRegisterApp(MDApp):
             split_cash_confirm_next_btn = self.create_md_raised_button(
                 "Done",
                 lambda x: self.split_cash_continue(amount),
+                (1,0.4)
             )
         else:
             split_cash_confirm_next_btn = self.create_md_raised_button(
                 "Next",
                 lambda x: self.split_cash_continue(amount),
+                (1,0.4)
             )
 
         split_cash_confirm.add_widget(split_cash_confirm_text)
@@ -702,7 +706,7 @@ class CashRegisterApp(MDApp):
         self.split_cash_popup_layout.add_widget(split_cash_keypad_layout)
         self.split_cash_popup_layout.add_widget(other_buttons)
         self.split_cash_popup = Popup(
-            title="Split Payment Amount",
+            title="Amount Tendered",
             content=self.split_cash_popup_layout,
             size_hint=(0.8, 0.8),
         )
@@ -735,7 +739,7 @@ class CashRegisterApp(MDApp):
         split_done_button = self.create_md_raised_button(
             "Done",
             lambda x: self.split_cash_continue(amount),
-            size_hint=(None, None),
+            size_hint=(1, 0.4),
             height=50,
         )
         split_change_layout.add_widget(split_done_button)
@@ -889,52 +893,85 @@ class CashRegisterApp(MDApp):
         )
         self.item_popup.open()
 
+
+
     def add_discount_popup(self, item_name, item_price):
-        discount_layout = BoxLayout(
-            orientation="vertical", size_hint_x=0.8, size_hint_y=0.8
-        )
-
-        percent_layout = BoxLayout(orientation="horizontal", size_hint_y=0.1)
-        percent_input = TextInput(multiline=False, hint_text="Percent")
-        percent_layout.add_widget(percent_input)
-
-        amount_layout = BoxLayout(orientation="horizontal", size_hint_y=0.1)
-        amount_input = TextInput(multiline=False, hint_text="Amount")
-        amount_layout.add_widget(amount_input)
-
-        button_layout = BoxLayout(
-            orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
-        )
-        button_layout.add_widget(
-            self.create_md_raised_button(
-                "Confirm",
-                lambda x: self.discount_single_item(
-                    discount_amount=amount_input.text,
-                    discount_percentage=percent_input.text,
-                    discount_popup=popup,
-                ),
-                (0.8, 0.8),
-            )
-        )
-        button_layout.add_widget(
-            self.Button(
-                text="Cancel",
-                on_press=lambda x: self.dismiss_add_discount_popup(
-                    discount_popup=popup
-                ),
-            )
-        )
-        discount_layout.add_widget(percent_layout)
-        discount_layout.add_widget(amount_layout)
-        discount_layout.add_widget(button_layout)
-
-        popup = Popup(
+        discount_popup_layout = BoxLayout(orientation="vertical", spacing=10)
+        self.discount_popup = Popup(
             title="Add Discount",
-            pos_hint={"top": 1},
-            content=discount_layout,
-            size_hint=(0.8, 0.4),
+            content=discount_popup_layout,
+            size_hint=(0.8, 0.8),
         )
-        popup.open()
+        self.discount_amount_input = TextInput(
+            text="",
+            disabled=True,
+            multiline=False,
+            input_filter="float",
+            font_size=30,
+            size_hint_y=None,
+            height=50,
+        )
+        discount_popup_layout.add_widget(self.discount_amount_input)
+
+        keypad_layout = GridLayout(cols=3, spacing=10)
+
+        numeric_buttons = [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "",
+            "0",
+            "",
+        ]
+        for button in numeric_buttons:
+
+            if button == "":
+                blank_space = Label(size_hint=(0.8, 0.8))
+                keypad_layout.add_widget(blank_space)
+            else:
+                btn = Button(
+                    text=button,
+                    on_press=self.on_add_discount_numeric_button_press,
+                    size_hint=(0.8, 0.8),
+                )
+                keypad_layout.add_widget(btn)
+
+        amount_button = self.create_md_raised_button(
+            "Amount",
+            lambda x: self.discount_single_item(
+                    discount_amount=self.discount_amount_input.text,
+
+                ),
+            (0.8, 0.8),
+        )
+        percent_button = self.create_md_raised_button(
+            "Percent",
+            lambda x: self.discount_single_item(
+                    discount_amount=self.discount_amount_input.text,
+                    percent=True
+                ),
+            (0.8, 0.8),
+        )
+
+        cancel_button = Button(
+            text="Cancel",
+            on_press=lambda x:  self.discount_popup.dismiss(),
+            size_hint=(0.8, 0.8),
+        )
+
+        keypad_layout.add_widget(amount_button)
+        keypad_layout.add_widget(percent_button)
+        keypad_layout.add_widget(cancel_button)
+        discount_popup_layout.add_widget(keypad_layout)
+
+        self.discount_popup.open()
+
 
     def show_theme_change_popup(self):
         layout = GridLayout(cols=4, rows=8, orientation="lr-tb")
@@ -1195,6 +1232,7 @@ class CashRegisterApp(MDApp):
             content=inventory_view,
             textinput=inventory_view.ids.label_search_input,
             size_hint=(0.9, 0.9),
+            pos_hint={"top": 1}
         )
         popup.open()
 
@@ -1290,8 +1328,9 @@ class CashRegisterApp(MDApp):
         self.custom_item_popup.open()
 
     def show_order_popup(self, order_summary):
+        order_details = self.order_manager.get_order_details()
         popup_layout = BoxLayout(orientation="vertical", spacing=10)
-        popup_layout.add_widget(Label(text=order_summary))
+        popup_layout.add_widget(MarkupLabel(text=order_summary, halign="left"))
 
         button_layout = BoxLayout(
             size_hint_y=None,
@@ -1336,7 +1375,7 @@ class CashRegisterApp(MDApp):
         popup_layout.add_widget(button_layout)
 
         self.finalize_order_popup = Popup(
-            title="Finalize Order", content=popup_layout, size_hint=(0.6, 0.8)
+            title=f"Finalize Order - {order_details['order_id']}", content=popup_layout, size_hint=(0.6, 0.8)
         )
         self.finalize_order_popup.open()
 
@@ -1345,7 +1384,7 @@ class CashRegisterApp(MDApp):
         common_amounts = self.calculate_common_amounts(total_with_tax)
 
         self.cash_popup_layout = BoxLayout(orientation="vertical", spacing=10)
-        self.cash_input = MoneyInput(
+        self.cash_payment_input = MoneyInput(
             text=f"{total_with_tax:.2f}",
             disabled=True,
             input_type="number",
@@ -1356,7 +1395,7 @@ class CashRegisterApp(MDApp):
             size_hint_x=0.3,
             height=50,
         )
-        self.cash_popup_layout.add_widget(self.cash_input)
+        self.cash_popup_layout.add_widget(self.cash_payment_input)
 
         keypad_layout = GridLayout(cols=2, spacing=5)
         other_buttons = BoxLayout(
@@ -1468,6 +1507,7 @@ class CashRegisterApp(MDApp):
             spacing=10,
         )
         total_with_tax = self.order_manager.calculate_total_with_tax()
+        order_details = self.order_manager.get_order_details()
         order_summary = "Order Complete:\n\n"
 
         for item_id, item_details in self.order_manager.items.items():
@@ -1481,9 +1521,9 @@ class CashRegisterApp(MDApp):
                 print(e)
                 continue
 
-            order_summary += f"{item_name} x{quantity}  ${total_price_float:.2f}\n"
+            order_summary += f"{item_name} x{quantity}\n"
 
-        order_summary += f"Total with Tax: ${total_with_tax:.2f}"
+        order_summary += f"\n${total_with_tax:.2f} paid with {order_details['payment_method']}"
         confirmation_layout.add_widget(Label(text=order_summary))
 
         done_button = self.create_md_raised_button(
@@ -1516,6 +1556,7 @@ class CashRegisterApp(MDApp):
         done_button = self.create_md_raised_button(
             "Done",
             self.on_change_done,
+            (1,0.4)
         )
         change_layout.add_widget(done_button)
 
@@ -1657,26 +1698,19 @@ class CashRegisterApp(MDApp):
         self.update_financial_summary()
 
     def discount_single_item(
-        self, discount_popup, discount_amount=None, discount_percentage=None
+        self, discount_amount, percent=False
     ):
-        try:
-            discount_amount = float(discount_amount) if discount_amount else None
-            discount_percentage = (
-                float(discount_percentage) if discount_percentage else None
-            )
-        except ValueError as e:
-            print(e)
+        if percent:
 
-        if discount_amount is not None:
-            self.order_manager.add_discount(discount_amount=discount_amount)
+            self.order_manager.add_discount(discount_amount, percent=True)
             self.update_display()
             self.update_financial_summary()
-        elif discount_percentage is not None:
-            self.order_manager.add_discount(discount_percentage=discount_percentage)
-
+        else:
+            self.order_manager.add_discount(discount_amount)
             self.update_display()
             self.update_financial_summary()
-        discount_popup.dismiss()
+
+        self.discount_popup.dismiss()
         if hasattr(self, "item_popup") and self.item_popup is not None:
             self.item_popup.dismiss()
 
@@ -1814,11 +1848,17 @@ class CashRegisterApp(MDApp):
             self.is_guard_screen_displayed = False
             self.is_lock_screen_displayed = False
 
-    def finalize_order(self):
-        total_with_tax = self.order_manager.calculate_total_with_tax()
+    def create_order_summary_item(self, item_name, quantity, total_price):
 
-        order_summary = "Order Summary:\n\n"
-        for item_id, item_details in self.order_manager.items.items():
+        return f"[b]{item_name}[/b] x{quantity} ${total_price:.2f}\n"
+
+
+    def finalize_order(self):
+        order_details = self.order_manager.get_order_details()
+
+        order_summary = f"[size=18][b]Order Summary:[/b][/size]\n\n"
+
+        for item_id, item_details in order_details['items'].items():
             item_name = item_details["name"]
             quantity = item_details["quantity"]
             total_price_for_item = item_details["total_price"]
@@ -1829,8 +1869,13 @@ class CashRegisterApp(MDApp):
                 print(e)
                 continue
 
-            order_summary += f"{item_name} x{quantity}  ${total_price_float:.2f}\n"
-        order_summary += f"Total with Tax: ${total_with_tax:.2f}"
+            order_summary += self.create_order_summary_item(item_name, quantity, total_price_float)
+
+        order_summary += f"\nSubtotal: ${order_details['subtotal']:.2f}"
+        order_summary += f"\nTax: ${order_details['tax_amount']:.2f}"
+        if order_details['discount'] > 0:
+            order_summary += f"\nDiscount: ${order_details['discount']:.2f}"
+        order_summary += f"\n\n[size=20]Total: [b]${order_details['total_with_tax']:.2f}[/b][/size]"
 
         self.show_order_popup(order_summary)
 
@@ -1873,7 +1918,7 @@ class CashRegisterApp(MDApp):
         self.show_payment_confirmation_popup()
 
     def on_cash_confirm(self, instance):
-        amount_tendered = float(self.cash_input.text)
+        amount_tendered = float(self.cash_payment_input.text)
         total_with_tax = self.order_manager.calculate_total_with_tax()
         change = amount_tendered - total_with_tax
         if hasattr(self, "cash_popup"):
@@ -1900,7 +1945,7 @@ class CashRegisterApp(MDApp):
         self.adjust_price_popup.dismiss()
 
     def on_preset_amount_press(self, instance):
-        self.cash_input.text = instance.text.strip("$")
+        self.cash_payment_input.text = instance.text.strip("$")
 
     def add_custom_item(self, instance):
         price = self.cash_input.text
@@ -2043,8 +2088,8 @@ class CashRegisterApp(MDApp):
                     print(e)
 
 
-# class MarkupLabel(Label):
-#     pass
+class MarkupLabel(Label):
+    pass
 
 
 class MoneyInput(TextInput):
