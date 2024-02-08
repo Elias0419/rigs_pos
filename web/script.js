@@ -64,3 +64,8 @@ const chartData = {
     });
 }
 fetchAndDisplayData();
+
+
+document.getElementById('closeBrowser').addEventListener('click', function() {
+  window.close();
+});

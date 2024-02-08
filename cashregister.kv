@@ -32,7 +32,7 @@
     rv: rv
     BoxLayout:
         size_hint_y: None
-        height: '48dp'
+        height: '32dp'
         TextInput:
             id: label_search_input
             size_hint_x: 0.8
@@ -190,7 +190,7 @@
     Button:
         text: "Details"
         size_hint_x: 0.1
-        on_press: root.open_inventory_manager()
+        on_press: root.open_inventory_manager_row()
 
 <InventoryManagementView>:
     orientation: 'vertical'

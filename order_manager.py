@@ -126,7 +126,6 @@ class OrderManager:
 
     def adjust_order_to_target_total(self, target_total_with_tax):
         adjusted_subtotal = target_total_with_tax / (1 + self.tax_rate)
-
         discount = self.subtotal - adjusted_subtotal
 
         if discount < 0 or discount > self.subtotal:
@@ -135,21 +134,19 @@ class OrderManager:
         self.subtotal = adjusted_subtotal
         self.total = adjusted_subtotal
         self.order_discount += discount
-
         self.tax_amount = self.total * self.tax_rate
         self._total_with_tax = self.total + self.tax_amount
 
         return True
 
-    def add_discount(self, discount_amount=None, discount_percentage=None):
-        if discount_amount is not None:
-            self.order_discount += min(discount_amount, self.subtotal)
-        elif discount_percentage is not None:
-            discount = self.subtotal * (discount_percentage / 100)
+    def add_discount(self, discount_amount, percent=False):
+        discount_amount = float(discount_amount)
+        if percent:
+            discount = self.subtotal * (discount_amount / 100)
             self.order_discount += discount
-        else:
-            return
 
+        else:
+            self.order_discount += min(discount_amount, self.subtotal)
         self.total = max(self.subtotal - self.order_discount, 0)
         self.update_tax_amount()
         self._update_total_with_tax()

@@ -2,6 +2,8 @@ from kivy.app import App
 
 from kivy.clock import Clock
 from kivymd.uix.boxlayout import BoxLayout
+from kivymd.uix.gridlayout import GridLayout
+#
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.properties import StringProperty, ListProperty, ObjectProperty
@@ -34,6 +36,7 @@ class InventoryManagementView(BoxLayout):
             super(InventoryManagementView, self).__init__(**kwargs)
             self.full_inventory = []
             self.database_manager = DatabaseManager("inventory.db")
+            self.app = App.get_running_app()
             self._init = True
 
     def detach_from_parent(self):
@@ -72,6 +75,7 @@ class InventoryManagementView(BoxLayout):
 
     def show_inventory_for_manager(self, inventory_items):
         self.full_inventory = inventory_items
+
         self.rv.data = self.generate_data_for_rv(inventory_items)
 
     def refresh_inventory(self):
@@ -87,7 +91,7 @@ class InventoryManagementView(BoxLayout):
         sku_input,
         category_input,
     ):
-        if barcode_input and name_input and price_input:
+        if name_input:
             try:
                 self.database_manager.add_item(
                     barcode_input.text,
@@ -101,10 +105,10 @@ class InventoryManagementView(BoxLayout):
                 print(e)
 
     def inventory_item_popup(self, barcode=None):
-        app = App.get_running_app()
-        print("before", app.current_context)
-        app.current_context = "inventory_item"
-        print("before", app.current_context)
+
+
+        self.app.current_context = "inventory_item"
+
         content = BoxLayout(orientation="vertical", padding=10)
         name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         name_input = TextInput(text=self.name)
@@ -135,10 +139,10 @@ class InventoryManagementView(BoxLayout):
         sku_layout.add_widget(sku_input)
 
         category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        category_input = TextInput(text=self.category, disabled=True)
+        self.add_to_db_category_input = TextInput(text=self.category, disabled=True)
         category_layout.add_widget(Label(text="Category", size_hint_x=0.2))
 
-        category_layout.add_widget(category_input)
+        category_layout.add_widget(self.add_to_db_category_input)
 
         content.add_widget(name_layout)
         content.add_widget(barcode_layout)
@@ -154,14 +158,10 @@ class InventoryManagementView(BoxLayout):
         button_layout.add_widget(
             MDRaisedButton(
                 text="Confirm",
-                on_press=lambda *args: self.confirm_and_close(
-                    self.barcode_input, name_input, price_input, cost_input, sku_input, category_input, popup
+                on_press=lambda x: self.confirm_and_close(
+                    self.barcode_input, name_input, price_input, cost_input, sku_input, self.add_to_db_category_input, popup
                 ),
             )
-        )
-
-        button_layout.add_widget(
-            MDRaisedButton(text="Cancel", on_press=lambda *args: popup.dismiss())
         )
         button_layout.add_widget(
             MDRaisedButton(
@@ -169,6 +169,16 @@ class InventoryManagementView(BoxLayout):
                 on_press=lambda *args: self.set_generated_barcode(self.barcode_input),
             )
         )
+        button_layout.add_widget(
+            MDRaisedButton(
+                text="Categories",
+                on_press=lambda *args: self.open_category_button_popup(),
+            )
+        )
+        button_layout.add_widget(
+            MDRaisedButton(text="Cancel", on_press=lambda *args: popup.dismiss())
+        )
+
 
         content.add_widget(button_layout)
 
@@ -183,9 +193,51 @@ class InventoryManagementView(BoxLayout):
         self.refresh_inventory()
         popup.open()
 
+    def open_category_button_popup(self):
+        self.selected_categories = []
+        category_button_layout = GridLayout(size_hint=(1, 0.8), pos_hint={"top":1},cols=7, spacing=5)
+        for category in self.app.categories:
+            btn = MDRaisedButton(
+                text=category,
+                on_release=lambda instance, cat=category: self.toggle_category_selection(instance, cat),
+                size_hint=(1,0.8)
+                )
+            category_button_layout.add_widget(btn)
+        category_popup_layout = BoxLayout()
+        confirm_button = MDRaisedButton(
+            text="Confirm",
+            on_release=lambda instance: self.apply_categories()
+            )
+        cancel_button = MDRaisedButton(
+            text="Cancel",
+            on_release=lambda instance: self.category_button_popup.dismiss()
+            )
+        category_popup_layout.add_widget(category_button_layout)
+        category_popup_layout.add_widget(confirm_button)
+        category_popup_layout.add_widget(cancel_button)
+
+        self.category_button_popup = Popup(
+            content=category_popup_layout,
+            size_hint=(0.9,0.9)
+            )
+        self.category_button_popup.open()
+
+    def apply_categories(self):
+        categories_str = ', '.join(self.selected_categories)
+        self.add_to_db_category_input.text = categories_str
+        self.category_button_popup.dismiss()
+
+    def toggle_category_selection(self, instance, category):
+        if category in self.selected_categories:
+            self.selected_categories.remove(category)
+            instance.text = category
+        else:
+            self.selected_categories.append(category)
+            instance.text = f"{category}\n (Selected)"
+
     def reset_inventory_context(self):
-        app = App.get_running_app()
-        app.current_context = "inventory"
+
+        self.app.current_context = "inventory"
 
     def confirm_and_close(
         self,
@@ -197,16 +249,20 @@ class InventoryManagementView(BoxLayout):
         category_input,
         popup,
     ):
-        self.add_item_to_database(
-            barcode_input,
-            name_input,
-            price_input,
-            cost_input,
-            sku_input,
-            category_input,
-        )
-        self.refresh_inventory()
-        popup.dismiss()
+
+        if len(name_input.text) > 0:
+
+            self.add_item_to_database(
+                barcode_input,
+                name_input,
+                price_input,
+                cost_input,
+                sku_input,
+                category_input,
+            )
+            self.refresh_inventory()
+            popup.dismiss()
+
 
     def clear_search(self):
         self.ids.inv_search_input.text = ""
@@ -216,6 +272,7 @@ class InventoryManagementView(BoxLayout):
         self.barcode_input.text = unique_barcode
 
     def open_inventory_manager(self):
+
         self.inventory_item_popup()
 
     def generate_data_for_rv(self, items):
@@ -226,6 +283,7 @@ class InventoryManagementView(BoxLayout):
                 "price": str(item[2]),
                 "cost": str(item[3]),
                 "sku": str(item[4]),
+                "category": str(item[5])
             }
             for item in items
         ]
@@ -261,7 +319,9 @@ class InventoryManagementRow(BoxLayout):
         self.database_manager = DatabaseManager("inventory.db")
         self.inventory_management_view = InventoryManagementView()
 
-    def inventory_item_popup(self):
+
+    def inventory_item_popup_row(self):
+
         content = BoxLayout(orientation="vertical", padding=10)
         name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         name_input = TextInput(text=self.name)
@@ -343,8 +403,9 @@ class InventoryManagementRow(BoxLayout):
         self.inventory_management_view.refresh_inventory()
         popup.dismiss()
 
-    def open_inventory_manager(self):
-        self.inventory_item_popup()
+    def open_inventory_manager_row(self):
+
+        self.inventory_item_popup_row()
 
     def update_item_in_database(
         self, barcode_input, name_input, price_input, cost_input, sku_input, category_input
@@ -372,26 +433,25 @@ class InventoryRow(BoxLayout):
     def __init__(self, **kwargs):
         super(InventoryRow, self).__init__(**kwargs)
         self.order_manager = OrderManager()
-
+        self.app = App.get_running_app()
     def add_to_order(self):
-        print(self.price)
-        print(type(self.price))
+
         try:
             price_float = float(self.price)
         except ValueError as e:
             print(e)
             pass
         self.order_manager.add_item(self.name, price_float)
-        app = App.get_running_app()
-        app.update_display()
-        app.update_financial_summary()
+
+        self.app.update_display()
+        self.app.update_financial_summary()
 
 
 class InventoryView(BoxLayout):
     def __init__(self, order_manager, **kwargs):
         super(InventoryView, self).__init__(**kwargs)
         self.order_manager = order_manager
-
+        self.pos_hint = {"top": 1}
     def show_inventory(self, inventory_items):
         self.full_inventory = inventory_items
         data = self.generate_data_for_rv(inventory_items)
