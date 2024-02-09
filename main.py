@@ -73,7 +73,7 @@ class CashRegisterApp(MDApp):
         self.theme_cls.primary_palette = "Brown"
         self.categories = self.initialze_categories()
         self.load_settings()
-        #self._test_current_context_thread()
+        # self._test_current_context_thread()
 
     def build(self):
         print(self.categories)
@@ -132,8 +132,8 @@ class CashRegisterApp(MDApp):
         btn_tools = self.create_md_raised_button(
             "Tools",
             self.on_button_press,  #################
-            #lambda x: self.show_add_or_bypass_popup("210973141121"),
-            #lambda x: self.open_category_button_popup(),
+            # lambda x: self.show_add_or_bypass_popup("210973141121"),
+            # lambda x: self.open_category_button_popup(),
             (8, 8),
             "H6",
         )
@@ -149,28 +149,6 @@ class CashRegisterApp(MDApp):
             self.monitor_check_scheduled = True
 
         return main_layout
-
-    def _test_current_context(self):
-        while True:
-            print(self.current_context)
-            time.sleep(1)
-    def _test_current_context_thread(self):
-        test_thread = threading.Thread(target=self._test_current_context)
-        test_thread.daemon = True
-        test_thread.start()
-
-    def check_inactivity(self, *args):
-        try:
-
-            result = subprocess.run(["xprintidle"], stdout=subprocess.PIPE, check=True)
-            inactive_time = int(result.stdout.decode().strip())
-
-            if inactive_time > 600000:
-                self.turn_off_monitor()
-
-        except Exception as e:
-            print(e)
-
 
     def create_clock_layout(self):
         clock_layout = BoxLayout(orientation="vertical", size_hint_x=1 / 3)
@@ -203,42 +181,42 @@ class CashRegisterApp(MDApp):
 
     def initialze_categories(self):
         categories = [
-                    'Cdb',
-                    'Rig',
-                    'Nails',
-                    'Tubes',
-                    'Hand Pipes',
-                    'Chillum',
-                    'Ecig',
-                    'Butane',
-                    'Torch',
-                    'Toro',
-                    'Slides H',
-                    'Quartz',
-                    'Vaporizers',
-                    'Lighter',
-                    '9mm Thick',
-                    'Cleaning',
-                    'Edible',
-                    'Bubbler',
-                    'Sherlock',
-                    'Spoon',
-                    'Silicone',
-                    'Scales',
-                    'Slides',
-                    'Imported Glass',
-                    'Ash Catcher',
-                    'Soft Glass',
-                    'Vaporizers',
-                    'Pendant',
-                    'Smoker Accessory',
-                    'Ecig Accessories',
-                    'Happy Fruit',
-                    'Concentrate Accessories',
-                    'Conc. Devices, Atomizers',
-                    'Erigs And Accessory',
-                    'Mods Batteries Kits',
-                    ]
+            "Cdb",
+            "Rig",
+            "Nails",
+            "Tubes",
+            "Hand Pipes",
+            "Chillum",
+            "Ecig",
+            "Butane",
+            "Torch",
+            "Toro",
+            "Slides H",
+            "Quartz",
+            "Vaporizers",
+            "Lighter",
+            "9mm Thick",
+            "Cleaning",
+            "Edible",
+            "Bubbler",
+            "Sherlock",
+            "Spoon",
+            "Silicone",
+            "Scales",
+            "Slides",
+            "Imported Glass",
+            "Ash Catcher",
+            "Soft Glass",
+            "Vaporizers",
+            "Pendant",
+            "Smoker Accessory",
+            "Ecig Accessories",
+            "Happy Fruit",
+            "Concentrate Accessories",
+            "Conc. Devices, Atomizers",
+            "Erigs And Accessory",
+            "Mods Batteries Kits",
+        ]
         return categories
 
     """
@@ -396,10 +374,21 @@ class CashRegisterApp(MDApp):
             else:
                 self.entered_pin = ""
 
+    def on_adjust_price_numeric_button_press(self, instance):
+        current_input = self.adjust_price_cash_input.text.replace(".", "").lstrip("0")
+        new_input = current_input + instance.text
+        new_input = new_input.zfill(2)
+        cents = int(new_input)
+        dollars = cents // 100
+        remaining_cents = cents % 100
+        self.adjust_price_cash_input.text = f"{dollars}.{remaining_cents:02d}"
+
+    def on_preset_amount_press(self, instance):
+        self.cash_payment_input.text = instance.text.strip("$")
+
     """
     Split payment stuff
     """
-
 
     def handle_split_payment(self):
         self.dismiss_popups(
@@ -478,13 +467,12 @@ class CashRegisterApp(MDApp):
             if button == "":
                 blank_space = Label(size_hint=(0.8, 0.8))
                 keypad_layout.add_widget(blank_space)
-            elif button =="Clear":
+            elif button == "Clear":
                 clr_button = Button(
                     text=button,
                     on_press=lambda x: self.clear_split_numeric_input(),
                     size_hint=(0.8, 0.8),
-
-                    )
+                )
                 keypad_layout.add_widget(clr_button)
             else:
                 btn = Button(
@@ -536,10 +524,6 @@ class CashRegisterApp(MDApp):
 
     def clear_split_numeric_input(self):
         self.split_payment_numeric_cash_input.text = ""
-
-    def split_cancel(self):
-        self.split_payment_numeric_popup.dismiss()
-        self.finalize_order_popup.open()
 
     def handle_split_input(self, amount, method):
         if not amount.strip():
@@ -601,13 +585,11 @@ class CashRegisterApp(MDApp):
             split_card_confirm_next_btn = self.create_md_raised_button(
                 "Done",
                 lambda x: self.split_card_continue(amount, method),
-                (1,0.4),
+                (1, 0.4),
             )
         else:
             split_card_confirm_next_btn = self.create_md_raised_button(
-                "Next",
-                lambda x: self.split_card_continue(amount, method),
-                (1,0.4)
+                "Next", lambda x: self.split_card_continue(amount, method), (1, 0.4)
             )
         split_card_confirm.add_widget(split_card_confirm_text)
         split_card_confirm.add_widget(split_card_confirm_next_btn)
@@ -625,15 +607,11 @@ class CashRegisterApp(MDApp):
 
         if abs(self.split_payment_info["remaining_amount"]) <= tolerance:
             split_cash_confirm_next_btn = self.create_md_raised_button(
-                "Done",
-                lambda x: self.split_cash_continue(amount),
-                (1,0.4)
+                "Done", lambda x: self.split_cash_continue(amount), (1, 0.4)
             )
         else:
             split_cash_confirm_next_btn = self.create_md_raised_button(
-                "Next",
-                lambda x: self.split_cash_continue(amount),
-                (1,0.4)
+                "Next", lambda x: self.split_cash_continue(amount), (1, 0.4)
             )
 
         split_cash_confirm.add_widget(split_cash_confirm_text)
@@ -667,7 +645,6 @@ class CashRegisterApp(MDApp):
         self.split_cash_popup_layout.add_widget(self.split_cash_input)
 
         split_cash_keypad_layout = GridLayout(cols=2, spacing=5)
-
 
         placeholder_amounts = [0] * 5
         for i, placeholder in enumerate(placeholder_amounts):
@@ -713,12 +690,8 @@ class CashRegisterApp(MDApp):
         print("End of split cash popup")
         self.split_cash_popup.open()
 
-
     def split_on_preset_amount_press(self, instance):
         self.split_cash_input.text = instance.text.strip("$")
-
-    def split_open_custom_cash_popup(self, instance):
-        pass
 
     def split_on_cash_confirm(self, instance, amount):
         self.split_cash_popup.dismiss()
@@ -760,51 +733,39 @@ class CashRegisterApp(MDApp):
         print("finalize")
 
     """
-    Popup display functions
+    Popups
     """
 
     def open_category_button_popup(self):
         self.selected_categories = []
-        category_button_layout = GridLayout(size_hint=(1, 0.8), pos_hint={"top":1},cols=7, spacing=5)
+        category_button_layout = GridLayout(
+            size_hint=(1, 0.8), pos_hint={"top": 1}, cols=7, spacing=5
+        )
         for category in self.categories:
             btn = MDRaisedButton(
                 text=category,
-                on_release=lambda instance, cat=category: self.toggle_category_selection(instance, cat),
-                size_hint=(1,0.8)
-                )
+                on_release=lambda instance, cat=category: self.toggle_category_selection(
+                    instance, cat
+                ),
+                size_hint=(1, 0.8),
+            )
             category_button_layout.add_widget(btn)
         category_popup_layout = BoxLayout()
         confirm_button = MDRaisedButton(
-            text="Confirm",
-            on_release=lambda instance: self.apply_categories()
-            )
+            text="Confirm", on_release=lambda instance: self.apply_categories()
+        )
         cancel_button = MDRaisedButton(
             text="Cancel",
-            on_release=lambda instance: self.category_button_popup.dismiss()
-            )
+            on_release=lambda instance: self.category_button_popup.dismiss(),
+        )
         category_popup_layout.add_widget(category_button_layout)
         category_popup_layout.add_widget(confirm_button)
         category_popup_layout.add_widget(cancel_button)
 
         self.category_button_popup = Popup(
-            content=category_popup_layout,
-            size_hint=(0.9,0.9)
-            )
+            content=category_popup_layout, size_hint=(0.9, 0.9)
+        )
         self.category_button_popup.open()
-
-    def toggle_category_selection(self, instance, category):
-        if category in self.selected_categories:
-            self.selected_categories.remove(category)
-            instance.text = category
-        else:
-            self.selected_categories.append(category)
-            instance.text = f"{category}\n (Selected)"
-
-    def apply_categories(self):
-        categories_str = ', '.join(self.selected_categories)
-        self.add_to_db_category_input.text = categories_str
-        print("Applying categories:", self.selected_categories)
-        self.category_button_popup.dismiss()
 
     def show_add_or_bypass_popup(self, barcode):
         popup_layout = BoxLayout(orientation="vertical", spacing=5)
@@ -893,8 +854,6 @@ class CashRegisterApp(MDApp):
         )
         self.item_popup.open()
 
-
-
     def add_discount_popup(self, item_name, item_price):
         discount_popup_layout = BoxLayout(orientation="vertical", spacing=10)
         self.discount_popup = Popup(
@@ -945,23 +904,21 @@ class CashRegisterApp(MDApp):
         amount_button = self.create_md_raised_button(
             "Amount",
             lambda x: self.discount_single_item(
-                    discount_amount=self.discount_amount_input.text,
-
-                ),
+                discount_amount=self.discount_amount_input.text,
+            ),
             (0.8, 0.8),
         )
         percent_button = self.create_md_raised_button(
             "Percent",
             lambda x: self.discount_single_item(
-                    discount_amount=self.discount_amount_input.text,
-                    percent=True
-                ),
+                discount_amount=self.discount_amount_input.text, percent=True
+            ),
             (0.8, 0.8),
         )
 
         cancel_button = Button(
             text="Cancel",
-            on_press=lambda x:  self.discount_popup.dismiss(),
+            on_press=lambda x: self.discount_popup.dismiss(),
             size_hint=(0.8, 0.8),
         )
 
@@ -971,7 +928,6 @@ class CashRegisterApp(MDApp):
         discount_popup_layout.add_widget(keypad_layout)
 
         self.discount_popup.open()
-
 
     def show_theme_change_popup(self):
         layout = GridLayout(cols=4, rows=8, orientation="lr-tb")
@@ -1105,7 +1061,6 @@ class CashRegisterApp(MDApp):
         confirm_button = self.create_md_raised_button(
             "Confirm",
             lambda x: self.add_adjusted_price_item(),
-
             (0.8, 0.8),
         )
 
@@ -1123,31 +1078,6 @@ class CashRegisterApp(MDApp):
 
         self.adjust_price_popup.open()
 
-    def add_adjusted_price_item(self):
-        target_amount = self.adjust_price_cash_input.text
-        try:
-            target_amount = float(target_amount)
-        except ValueError as e:
-            print(e)
-
-        self.order_manager.adjust_order_to_target_total(target_amount)
-        self.update_display()
-        self.update_financial_summary()
-        self.adjust_price_popup.dismiss()
-        self.financial_summary.close_order_mod_popup()
-
-    def on_adjust_price_numeric_button_press(self, instance):
-        current_input = self.adjust_price_cash_input.text.replace(
-            ".", ""
-        ).lstrip("0")
-        new_input = current_input + instance.text
-        new_input = new_input.zfill(2)
-        cents = int(new_input)
-        dollars = cents // 100
-        remaining_cents = cents % 100
-        self.adjust_price_cash_input.text = f"{dollars}.{remaining_cents:02d}"
-
-
     def show_guard_screen(self):
         if not self.is_guard_screen_displayed:
             guard_layout = BoxLayout()
@@ -1157,16 +1087,14 @@ class CashRegisterApp(MDApp):
                 size_hint=(1, 1),
                 auto_dismiss=False,
             )
-            self.guard_popup.bind(on_touch_down=lambda x, touch: self.dismiss_guard_popup())
+            self.guard_popup.bind(
+                on_touch_down=lambda x, touch: self.dismiss_guard_popup()
+            )
             self.is_guard_screen_displayed = True
             self.guard_popup.bind(
                 on_dismiss=lambda x: setattr(self, "is_guard_screen_displayed", False)
             )
             self.guard_popup.open()
-
-    def dismiss_guard_popup(self):
-        self.guard_popup.dismiss()
-        self.turn_on_monitor()
 
     def show_lock_screen(self):
         if not self.is_lock_screen_displayed:
@@ -1232,7 +1160,7 @@ class CashRegisterApp(MDApp):
             content=inventory_view,
             textinput=inventory_view.ids.label_search_input,
             size_hint=(0.9, 0.9),
-            pos_hint={"top": 1}
+            pos_hint={"top": 1},
         )
         popup.open()
 
@@ -1266,8 +1194,6 @@ class CashRegisterApp(MDApp):
             separator_height=0,
         )
         self.tools_popup.open()
-
-
 
     def show_custom_item_popup(self, barcode):
         self.custom_item_popup_layout = BoxLayout(orientation="vertical", spacing=10)
@@ -1375,7 +1301,9 @@ class CashRegisterApp(MDApp):
         popup_layout.add_widget(button_layout)
 
         self.finalize_order_popup = Popup(
-            title=f"Finalize Order - {order_details['order_id']}", content=popup_layout, size_hint=(0.6, 0.8)
+            title=f"Finalize Order - {order_details['order_id']}",
+            content=popup_layout,
+            size_hint=(0.6, 0.8),
         )
         self.finalize_order_popup.open()
 
@@ -1441,7 +1369,6 @@ class CashRegisterApp(MDApp):
             size_hint=(0.8, 0.8),
         )
         self.cash_popup.open()
-
 
     def open_custom_cash_popup(self, instance):
         self.custom_cash_popup_layout = BoxLayout(orientation="vertical", spacing=10)
@@ -1523,7 +1450,9 @@ class CashRegisterApp(MDApp):
 
             order_summary += f"{item_name} x{quantity}\n"
 
-        order_summary += f"\n${total_with_tax:.2f} paid with {order_details['payment_method']}"
+        order_summary += (
+            f"\n${total_with_tax:.2f} paid with {order_details['payment_method']}"
+        )
         confirmation_layout.add_widget(Label(text=order_summary))
 
         done_button = self.create_md_raised_button(
@@ -1554,9 +1483,7 @@ class CashRegisterApp(MDApp):
         change_layout.add_widget(Label(text=f"Change to return: ${change:.2f}"))
 
         done_button = self.create_md_raised_button(
-            "Done",
-            self.on_change_done,
-            (1,0.4)
+            "Done", self.on_change_done, (1, 0.4)
         )
         change_layout.add_widget(done_button)
 
@@ -1572,9 +1499,7 @@ class CashRegisterApp(MDApp):
         name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
         name_layout.add_widget(name_input)
         barcode_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        barcode_input = TextInput(
-            input_filter="int", text=barcode if barcode else ""
-        )
+        barcode_input = TextInput(input_filter="int", text=barcode if barcode else "")
         barcode_layout.add_widget(Label(text="Barcode", size_hint_x=0.2))
         barcode_layout.add_widget(barcode_input)
 
@@ -1595,7 +1520,6 @@ class CashRegisterApp(MDApp):
 
         category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         self.add_to_db_category_input = TextInput(disabled=True)
-        #category = self.add_to_db_category_input.text
         category_layout.add_widget(Label(text="Categories", size_hint_x=0.2))
         category_layout.add_widget(self.add_to_db_category_input)
 
@@ -1620,18 +1544,20 @@ class CashRegisterApp(MDApp):
                     cost_input.text,
                     sku_input.text,
                     self.add_to_db_category_input.text,
-
                 ),
             )
         )
 
         button_layout.add_widget(
-            MDRaisedButton(text="Close", on_press=lambda *args: self.add_to_db_popup.dismiss())
+            MDRaisedButton(
+                text="Close", on_press=lambda *args: self.add_to_db_popup.dismiss()
+            )
         )
         button_layout.add_widget(
-            MDRaisedButton(text="Categories", on_press=lambda x: self.open_category_button_popup())
+            MDRaisedButton(
+                text="Categories", on_press=lambda x: self.open_category_button_popup()
+            )
         )
-
 
         content.add_widget(button_layout)
 
@@ -1645,8 +1571,283 @@ class CashRegisterApp(MDApp):
 
 
     """
-    Accessory functions
+    Orders
     """
+
+    def handle_credit_payment(self):
+        open_cash_drawer()
+        self.order_manager.set_payment_method("Credit")
+        self.show_payment_confirmation_popup()
+
+    def handle_debit_payment(self):
+        open_cash_drawer()
+        self.order_manager.set_payment_method("Debit")
+        self.show_payment_confirmation_popup()
+
+    def on_cash_confirm(self, instance):
+        amount_tendered = float(self.cash_payment_input.text)
+        total_with_tax = self.order_manager.calculate_total_with_tax()
+        change = amount_tendered - total_with_tax
+        if hasattr(self, "cash_popup"):
+            self.cash_popup.dismiss()
+        if hasattr(self, "custom_cash_popup"):
+            self.custom_cash_popup.dismiss()
+        open_cash_drawer()
+        self.order_manager.set_payment_method("Cash")
+        self.order_manager.set_payment_details(amount_tendered, change)
+        self.show_make_change_popup(change)
+
+
+    def add_adjusted_price_item(self):
+        target_amount = self.adjust_price_cash_input.text
+        try:
+            target_amount = float(target_amount)
+        except ValueError as e:
+            print(e)
+
+        self.order_manager.adjust_order_to_target_total(target_amount)
+        self.update_display()
+        self.update_financial_summary()
+        self.adjust_price_popup.dismiss()
+        self.financial_summary.close_order_mod_popup()
+
+    def remove_item(self, item_name, item_price):
+        self.order_manager.remove_item(item_name)
+        self.update_display()
+        self.update_financial_summary()
+        self.close_item_popup()
+
+    def adjust_item_quantity(self, item_id, adjustment):
+        self.order_manager.adjust_item_quantity(item_id, adjustment)
+        self.item_popup.dismiss()
+        self.on_item_click(item_id)
+        self.update_display()
+        self.update_financial_summary()
+
+    def discount_single_item(self, discount_amount, percent=False):
+        if percent:
+
+            self.order_manager.add_discount(discount_amount, percent=True)
+            self.update_display()
+            self.update_financial_summary()
+        else:
+            self.order_manager.add_discount(discount_amount)
+            self.update_display()
+            self.update_financial_summary()
+
+        self.discount_popup.dismiss()
+        if hasattr(self, "item_popup") and self.item_popup is not None:
+            self.item_popup.dismiss()
+
+    def create_order_summary_item(self, item_name, quantity, total_price):
+        return f"[b]{item_name}[/b] x{quantity} ${total_price:.2f}\n"
+
+    def finalize_order(self):
+        order_details = self.order_manager.get_order_details()
+
+        order_summary = f"[size=18][b]Order Summary:[/b][/size]\n\n"
+
+        for item_id, item_details in order_details["items"].items():
+            item_name = item_details["name"]
+            quantity = item_details["quantity"]
+            total_price_for_item = item_details["total_price"]
+
+            try:
+                total_price_float = float(total_price_for_item)
+            except ValueError as e:
+                print(e)
+                continue
+
+            order_summary += self.create_order_summary_item(
+                item_name, quantity, total_price_float
+            )
+
+        order_summary += f"\nSubtotal: ${order_details['subtotal']:.2f}"
+        order_summary += f"\nTax: ${order_details['tax_amount']:.2f}"
+        if order_details["discount"] > 0:
+            order_summary += f"\nDiscount: ${order_details['discount']:.2f}"
+        order_summary += (
+            f"\n\n[size=20]Total: [b]${order_details['total_with_tax']:.2f}[/b][/size]"
+        )
+
+        self.show_order_popup(order_summary)
+
+    def add_custom_item(self, instance):
+        price = self.cash_input.text
+        try:
+            price = float(price)
+        except ValueError:
+            return
+
+        custom_item_name = "Custom Item"
+        self.order_manager.add_item(custom_item_name, price)
+        self.update_display()
+        self.update_financial_summary()
+        self.custom_item_popup.dismiss()
+
+    """
+    Database
+    """
+
+    def send_order_to_history_database(self, order_details, order_manager, db_manager):
+        tax = order_details["total_with_tax"] - order_details["total"]
+        timestamp = datetime.now()
+
+        items_for_db = [
+            {**{"name": item_name}, **item_details}
+            for item_name, item_details in order_details["items"].items()
+        ]
+
+        db_manager.add_order_history(
+            order_details["order_id"],
+            json.dumps(items_for_db),
+            order_details["total"],
+            tax,
+            order_details["discount"],
+            order_details["total_with_tax"],
+            timestamp,
+            order_details["payment_method"],
+            order_details["amount_tendered"],
+            order_details["change_given"],
+        )
+
+    def add_item_to_database(
+        self, barcode, name, price, cost=0.0, sku=None, categories=None
+    ):
+        if barcode and name and price:
+            try:
+                self.db_manager.add_item(barcode, name, price, cost, sku, categories)
+                self.add_to_db_popup.dismiss()
+            except Exception as e:
+                print(e)
+
+    """
+    Utilities
+    """
+
+    def toggle_category_selection(self, instance, category):
+        if category in self.selected_categories:
+            self.selected_categories.remove(category)
+            instance.text = category
+        else:
+            self.selected_categories.append(category)
+            instance.text = f"{category}\n (Selected)"
+
+    def apply_categories(self):
+        categories_str = ", ".join(self.selected_categories)
+        self.add_to_db_category_input.text = categories_str
+        print("Applying categories:", self.selected_categories)
+        self.category_button_popup.dismiss()
+
+    def reset_pin_timer(self):
+        if self.pin_reset_timer is not None:
+            self.pin_reset_timer.cancel()
+
+        self.pin_reset_timer = threading.Timer(5.0, self.reset_pin)
+        self.pin_reset_timer.start()
+
+    def reset_pin(self):
+        self.entered_pin = ""
+
+    def calculate_common_amounts(self, total):
+        amounts = []
+        for base in [1, 5, 10, 20, 50, 100]:
+            amount = total - (total % base) + base
+            if amount not in amounts and amount >= total:
+                amounts.append(amount)
+        return amounts
+
+    def on_input_focus(self, instance, value):
+        if value:
+            instance.show_keyboard()
+        else:
+            instance.hide_keyboard()
+
+    def update_clock(self, *args):
+        self.clock_label.text = time.strftime("%I:%M %p\n%A\n%B %d, %Y\n")
+        self.clock_label.color = self.get_text_color()
+
+    def get_text_color(self):
+        if self.theme_cls.theme_style == "Dark":
+            return (1, 1, 1, 1)
+        else:
+            return (0, 0, 0, 1)
+
+    def reset_to_main_context(self, instance):
+        self.current_context = "main"
+        try:
+            self.inventory_manager.detach_from_parent()
+            self.label_manager.detach_from_parent()
+        except Exception as e:
+            print(e)
+
+    def create_focus_popup(self, title, content, textinput, size_hint, pos_hint={}):
+        popup = FocusPopup(
+            title=title, content=content, size_hint=size_hint, pos_hint=pos_hint
+        )
+        popup.focus_on_textinput(textinput)
+        return popup
+
+    def create_md_raised_button(
+        self,
+        text,
+        on_press_action,
+        size_hint=(None, None),
+        font_style="Body1",
+        height=50,
+    ):
+        button = MDRaisedButton(
+            text=text,
+            on_press=on_press_action,
+            size_hint=size_hint,
+            font_style=font_style,
+            height=height,
+        )
+        return button
+
+    def dismiss_popups(self, *popups):
+        for popup_attr in popups:
+            if hasattr(self, popup_attr):
+                try:
+                    popup = getattr(self, popup_attr)
+                    if popup._is_open:
+                        popup.dismiss()
+                except Exception as e:
+                    print(e)
+
+    def update_display(self):
+        print("called update display")
+        self.order_layout.clear_widgets()
+        for item_id, item_info in self.order_manager.items.items():
+            item_name = item_info["name"]
+            item_quantity = item_info["quantity"]
+            item_total_price = item_info["total_price"]
+
+            if item_quantity > 1:
+                item_display_text = (
+                    f"{item_name} x{item_quantity} ${item_total_price:.2f}"
+                )
+            else:
+                item_display_text = f"{item_name} ${item_total_price:.2f}"
+
+            item_button = MDRaisedButton(
+                text=item_display_text,
+                size_hint=(0.1, 0.1),
+                halign="center",
+                valign="center",
+            )
+            item_button.bind(on_press=lambda instance, x=item_id: self.on_item_click(x))
+            self.order_layout.add_widget(item_button)
+
+    def update_financial_summary(self):
+        subtotal = self.order_manager.subtotal
+        total_with_tax = self.order_manager.calculate_total_with_tax()
+        tax = self.order_manager.tax_amount
+        discount = self.order_manager.order_discount
+
+        self.financial_summary_widget.update_summary(
+            subtotal, tax, total_with_tax, discount
+        )
 
     def manual_override(self, instance):
         current_time = time.time()
@@ -1666,100 +1867,86 @@ class CashRegisterApp(MDApp):
             self.theme_cls.theme_style = "Dark"
         self.save_settings()
 
-    def remove_item(self, item_name, item_price):
-        self.order_manager.remove_item(item_name)
-        self.update_display()
-        self.update_financial_summary()
-        self.close_item_popup()
-
-    def close_item_popup(self):
-        if self.item_popup:
-            self.item_popup.dismiss()
-
-    def dismiss_add_discount_popup(self, discount_popup):
-        if discount_popup:
-            discount_popup.dismiss()
-
-    def reset_pin_timer(self):
-        if self.pin_reset_timer is not None:
-            self.pin_reset_timer.cancel()
-
-        self.pin_reset_timer = threading.Timer(5.0, self.reset_pin)
-        self.pin_reset_timer.start()
-
-    def reset_pin(self):
-        self.entered_pin = ""
-
-    def adjust_item_quantity(self, item_id, adjustment):
-        self.order_manager.adjust_item_quantity(item_id, adjustment)
-        self.item_popup.dismiss()
-        self.on_item_click(item_id)
-        self.update_display()
-        self.update_financial_summary()
-
-    def discount_single_item(
-        self, discount_amount, percent=False
-    ):
-        if percent:
-
-            self.order_manager.add_discount(discount_amount, percent=True)
-            self.update_display()
-            self.update_financial_summary()
-        else:
-            self.order_manager.add_discount(discount_amount)
-            self.update_display()
-            self.update_financial_summary()
-
-        self.discount_popup.dismiss()
-        if hasattr(self, "item_popup") and self.item_popup is not None:
-            self.item_popup.dismiss()
-
-    def dismiss_bypass_popup(self, instance, barcode):
-        self.on_add_or_bypass_choice(instance.text, barcode)
-        self.popup.dismiss()
-
     def on_add_or_bypass_choice(self, choice_text, barcode):
         if choice_text == "Add Custom Item":
             self.show_custom_item_popup(barcode)
         elif choice_text == "Add to Database":
             self.show_add_to_database_popup(barcode)
 
-    def calculate_common_amounts(self, total):
-        amounts = []
-        for base in [1, 5, 10, 20, 50, 100]:
-            amount = total - (total % base) + base
-            if amount not in amounts and amount >= total:
-                amounts.append(amount)
-        return amounts
+    def dismiss_guard_popup(self):
+        self.dismiss_popups('guard_popup')
+        self.turn_on_monitor()
 
-    def on_input_focus(self, instance, value):
-        if value:
-            instance.show_keyboard()
+    def close_item_popup(self):
+        self.dismiss_popups('item_popup')
+
+    def dismiss_add_discount_popup(self):
+        self.dismiss_popups('discount_popup')
+
+    def dismiss_bypass_popup(self, instance, barcode):
+        self.on_add_or_bypass_choice(instance.text, barcode)
+        self.dismiss_popups('popup')
+
+    def close_add_to_database_popup(self):
+        self.dismiss_popups('add_to_db_popup')
+
+    def on_cash_cancel(self):
+        self.dismiss_popups('cash_popup')
+
+    def on_adjust_price_cancel(self):
+        self.dismiss_popups('adjust_price_popup')
+
+    def on_custom_item_cancel(self):
+        self.dismiss_popups('custom_item_popup')
+
+    def on_custom_cash_cancel(self):
+        self.dismiss_popups('custom_cash_popup')
+
+    def on_change_done(self):
+        self.dismiss_popups('change_popup')
+        self.show_payment_confirmation_popup()
+
+    def split_cancel(self):
+        self.dismiss_popups('split_payment_numeric_popup')
+        self.finalize_order_popup.open()
+
+    """
+    System
+    """
+
+    def check_monitor_status(self, dt):
+        if self.is_monitor_off():
+            if not self.is_guard_screen_displayed and not self.is_lock_screen_displayed:
+                self.show_lock_screen()
+                self.show_guard_screen()
         else:
-            instance.hide_keyboard()
+            self.is_guard_screen_displayed = False
+            self.is_lock_screen_displayed = False
 
-    def close_add_to_database_popup(self, instance):
-        self.add_to_db_popup.dismiss()
+    def reboot(self, instance):
+        try:
+            subprocess.run(["systemctl", "reboot"])
+        except Exception as e:
+            print(e)
 
-    def update_clock(self, *args):
-        self.clock_label.text = time.strftime("%I:%M %p\n%A\n%B %d, %Y\n")
-        self.clock_label.color = self.get_text_color()
+    def save_settings(self):
+        settings = {
+            "primary_palette": self.theme_cls.primary_palette,
+            "theme_style": self.theme_cls.theme_style,
+        }
+        with open("settings.json", "w") as f:
+            json.dump(settings, f)
 
-    def get_text_color(self):
-        if self.theme_cls.theme_style == "Dark":
-            return (1, 1, 1, 1)
-        else:
-            return (0, 0, 0, 1)
-
-    def update_financial_summary(self):
-        subtotal = self.order_manager.subtotal
-        total_with_tax = self.order_manager.calculate_total_with_tax()
-        tax = self.order_manager.tax_amount
-        discount = self.order_manager.order_discount
-
-        self.financial_summary_widget.update_summary(
-            subtotal, tax, total_with_tax, discount
-        )
+    def load_settings(self):
+        try:
+            with open("settings.json", "r") as f:
+                settings = json.load(f)
+                self.theme_cls.primary_palette = settings.get(
+                    "primary_palette", "Brown"
+                )
+                self.theme_cls.theme_style = settings.get("theme_style", "Light")
+        except FileNotFoundError as e:
+            print(e)
 
     def turn_off_monitor(self):
         touchscreen_device = "iSolution multitouch"
@@ -1771,9 +1958,13 @@ class CashRegisterApp(MDApp):
             return
 
         try:
-            subprocess.run(["xrandr", "--output", "HDMI-1", "--brightness", "0"], check=True)
+            subprocess.run(
+                ["xrandr", "--output", "HDMI-1", "--brightness", "0"], check=True
+            )
         except subprocess.CalledProcessError as e:
-            subprocess.run(["xrandr", "--output", "HDMI-1", "--brightness", "1"], check=True)
+            subprocess.run(
+                ["xrandr", "--output", "HDMI-1", "--brightness", "1"], check=True
+            )
             print(e)
             return
 
@@ -1789,7 +1980,9 @@ class CashRegisterApp(MDApp):
     def is_monitor_off(self):
         output_name = "HDMI-1"
         try:
-            result = subprocess.run(["xrandr", "--verbose"], stdout=subprocess.PIPE, check=True)
+            result = subprocess.run(
+                ["xrandr", "--verbose"], stdout=subprocess.PIPE, check=True
+            )
             output = result.stdout.decode("utf-8")
             pattern = rf"{output_name} connected.*?Brightness: (\d+\.\d+)"
             match = re.search(pattern, output, re.DOTALL)
@@ -1805,11 +1998,11 @@ class CashRegisterApp(MDApp):
 
     def turn_on_monitor(self):
         try:
-            subprocess.run(["xrandr", "--output", "HDMI-1", "--brightness", "1"], check=True)
+            subprocess.run(
+                ["xrandr", "--output", "HDMI-1", "--brightness", "1"], check=True
+            )
         except Exception as e:
             print(e)
-
-
 
     def reboot_are_you_sure(self):
         arys_layout = BoxLayout()
@@ -1837,190 +2030,31 @@ class CashRegisterApp(MDApp):
 
         popup.open()
 
+    def _test_current_context(self):
+        while True:
+            print(self.current_context)
+            time.sleep(1)
 
+    def _test_current_context_thread(self):
+        test_thread = threading.Thread(target=self._test_current_context)
+        test_thread.daemon = True
+        test_thread.start()
 
-    def check_monitor_status(self, dt):
-        if self.is_monitor_off():
-            if not self.is_guard_screen_displayed and not self.is_lock_screen_displayed:
-                self.show_lock_screen()
-                self.show_guard_screen()
-        else:
-            self.is_guard_screen_displayed = False
-            self.is_lock_screen_displayed = False
-
-    def create_order_summary_item(self, item_name, quantity, total_price):
-
-        return f"[b]{item_name}[/b] x{quantity} ${total_price:.2f}\n"
-
-
-    def finalize_order(self):
-        order_details = self.order_manager.get_order_details()
-
-        order_summary = f"[size=18][b]Order Summary:[/b][/size]\n\n"
-
-        for item_id, item_details in order_details['items'].items():
-            item_name = item_details["name"]
-            quantity = item_details["quantity"]
-            total_price_for_item = item_details["total_price"]
-
-            try:
-                total_price_float = float(total_price_for_item)
-            except ValueError as e:
-                print(e)
-                continue
-
-            order_summary += self.create_order_summary_item(item_name, quantity, total_price_float)
-
-        order_summary += f"\nSubtotal: ${order_details['subtotal']:.2f}"
-        order_summary += f"\nTax: ${order_details['tax_amount']:.2f}"
-        if order_details['discount'] > 0:
-            order_summary += f"\nDiscount: ${order_details['discount']:.2f}"
-        order_summary += f"\n\n[size=20]Total: [b]${order_details['total_with_tax']:.2f}[/b][/size]"
-
-        self.show_order_popup(order_summary)
-
-    def update_display(self):
-        print("called update display")
-        self.order_layout.clear_widgets()
-        for item_id, item_info in self.order_manager.items.items():
-            item_name = item_info["name"]
-            item_quantity = item_info["quantity"]
-            item_total_price = item_info["total_price"]
-
-            if item_quantity > 1:
-                item_display_text = (
-                    f"{item_name} x{item_quantity} ${item_total_price:.2f}"
-                )
-            else:
-                item_display_text = f"{item_name} ${item_total_price:.2f}"
-
-            item_button = MDRaisedButton(
-                text=item_display_text,
-                size_hint=(0.1, 0.1),
-                halign="center",
-                valign="center",
-            )
-            item_button.bind(on_press=lambda instance, x=item_id: self.on_item_click(x))
-            self.order_layout.add_widget(item_button)
-
-    def handle_credit_payment(self):
-        open_cash_drawer()
-        self.order_manager.set_payment_method("Credit")
-        self.show_payment_confirmation_popup()
-
-    def handle_debit_payment(self):
-        open_cash_drawer()
-        self.order_manager.set_payment_method("Debit")
-        self.show_payment_confirmation_popup()
-
-    def on_change_done(self, instance):
-        self.change_popup.dismiss()
-        self.show_payment_confirmation_popup()
-
-    def on_cash_confirm(self, instance):
-        amount_tendered = float(self.cash_payment_input.text)
-        total_with_tax = self.order_manager.calculate_total_with_tax()
-        change = amount_tendered - total_with_tax
-        if hasattr(self, "cash_popup"):
-            self.cash_popup.dismiss()
-        if hasattr(self, "custom_cash_popup"):
-            self.custom_cash_popup.dismiss()
-        open_cash_drawer()
-        self.order_manager.set_payment_method("Cash")
-        self.order_manager.set_payment_details(amount_tendered, change)
-        self.show_make_change_popup(change)
-
-    def on_cash_cancel(self, instance):
-        self.cash_popup.dismiss()
-
-    def reset_to_main_context(self, instance):
-        self.current_context = "main"
+    def check_inactivity(self, *args):
         try:
-            self.inventory_manager.detach_from_parent()
-            self.label_manager.detach_from_parent()
+
+            result = subprocess.run(["xprintidle"], stdout=subprocess.PIPE, check=True)
+            inactive_time = int(result.stdout.decode().strip())
+
+            if inactive_time > 600000:
+                self.turn_off_monitor()
+
         except Exception as e:
             print(e)
 
-    def on_adjust_price_cancel(self, instance):
-        self.adjust_price_popup.dismiss()
-
-    def on_preset_amount_press(self, instance):
-        self.cash_payment_input.text = instance.text.strip("$")
-
-    def add_custom_item(self, instance):
-        price = self.cash_input.text
-        try:
-            price = float(price)
-        except ValueError:
-            return
-
-        custom_item_name = "Custom Item"
-        self.order_manager.add_item(custom_item_name, price)
-        self.update_display()
-        self.update_financial_summary()
-        self.custom_item_popup.dismiss()
-
-    def on_custom_item_cancel(self, instance):
-        self.custom_item_popup.dismiss()
-
-    def on_custom_cash_cancel(self, instance):
-        self.custom_cash_popup.dismiss()
-
-    def send_order_to_history_database(self, order_details, order_manager, db_manager):
-        tax = order_details["total_with_tax"] - order_details["total"]
-        timestamp = datetime.now()
-
-        items_for_db = [
-            {**{"name": item_name}, **item_details}
-            for item_name, item_details in order_details["items"].items()
-        ]
-
-        db_manager.add_order_history(
-            order_details["order_id"],
-            json.dumps(items_for_db),
-            order_details["total"],
-            tax,
-            order_details["discount"],
-            order_details["total_with_tax"],
-            timestamp,
-            order_details["payment_method"],
-            order_details["amount_tendered"],
-            order_details["change_given"],
-        )
-
-    def add_item_to_database(self, barcode, name, price, cost=0.0, sku=None, categories=None):
-        if barcode and name and price:
-            try:
-                self.db_manager.add_item(barcode, name, price, cost, sku, categories)
-                self.add_to_db_popup.dismiss()
-            except Exception as e:
-                print(e)
-
-
-    def reboot(self, instance):
-        try:
-            subprocess.run(["systemctl", "reboot"])
-        except Exception as e:
-            print(e)
-
-    def save_settings(self):
-        settings = {
-            "primary_palette": self.theme_cls.primary_palette,
-            "theme_style": self.theme_cls.theme_style,
-        }
-        with open("settings.json", "w") as f:
-            json.dump(settings, f)
-
-    def load_settings(self):
-        try:
-            with open("settings.json", "r") as f:
-                settings = json.load(f)
-                self.theme_cls.primary_palette = settings.get(
-                    "primary_palette", "Brown"
-                )
-                self.theme_cls.theme_style = settings.get("theme_style", "Light")
-        except FileNotFoundError as e:
-            print(e)
+    """
+    Web
+    """
 
     @eel.expose
     @staticmethod
@@ -2049,43 +2083,9 @@ class CashRegisterApp(MDApp):
         print("start eel")
         eel.start("index.html")
 
-    def create_focus_popup(self, title, content, textinput, size_hint, pos_hint={}):
-        popup = FocusPopup(
-            title=title, content=content, size_hint=size_hint, pos_hint=pos_hint
-        )
-        popup.focus_on_textinput(textinput)
-        return popup
 
-    def create_md_raised_button(
-        self,
-        text,
-        on_press_action,
-        size_hint=(None, None),
-        font_style="Body1",
-        height=50,
-        # size_hint_y=None,
-        # size_hint_x=None,
-    ):
-        button = MDRaisedButton(
-            text=text,
-            on_press=on_press_action,
-            size_hint=size_hint,
-            font_style=font_style,
-            height=height,
-            # size_hint_y=size_hint_y,
-            # size_hint_x=size_hint_x,
-        )
-        return button
 
-    def dismiss_popups(self, *popups):
-        for popup_attr in popups:
-            if hasattr(self, popup_attr):
-                try:
-                    popup = getattr(self, popup_attr)
-                    if popup._is_open:
-                        popup.dismiss()
-                except Exception as e:
-                    print(e)
+
 
 
 class MarkupLabel(Label):
@@ -2128,7 +2128,7 @@ class FinancialSummaryWidget(MDRaisedButton):
         return cls._instance
 
     def __init__(self, **kwargs):
-        if not hasattr(self, '_initialized'):
+        if not hasattr(self, "_initialized"):
 
             super(FinancialSummaryWidget, self).__init__(**kwargs)
             self.size_hint_y = None
@@ -2172,12 +2172,13 @@ class FinancialSummaryWidget(MDRaisedButton):
             title="",
             content=order_mod_layout,
             size_hint=(0.2, 0.2),
-            # size=(400, 400),
+
         )
         self.order_mod_popup.open()
 
     def close_order_mod_popup(self):
         self.order_mod_popup.dismiss()
+
 
 try:
     app = CashRegisterApp()
