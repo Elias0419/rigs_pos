@@ -86,8 +86,15 @@ class LabelPrintingView(BoxLayout):
         self.ids.label_rv.data = self.generate_data_for_rv(inventory_items)
 
     def remove_from_queue(self, item_name):
-        self.label_printer.remove_from_queue(item_name)
-        self.show_print_queue()
+        removed, is_empty = self.label_printer.remove_from_queue(item_name)
+        if removed:
+            if is_empty:
+                self.print_queue_popup.dismiss()
+            else:
+                self.print_queue_popup.dismiss()
+                self.show_print_queue()
+        else:
+            print("Item not found in queue")
 
 
     def handle_scanned_barcode(self, barcode):
@@ -188,7 +195,7 @@ class LabelPrinter:
 
     def clear_queue(self):
         self.print_queue.clear()
-        print("Print queue cleared")  # Debugging print
+
 
 
     def print_barcode_label(self, barcode_data, item_price, save_path):
@@ -239,7 +246,14 @@ class LabelPrinter:
                 self.print_barcode_label(
                     item["barcode"], item["price"], f"{item['name']}_label.png"
                 )
-        self.print_queue.clear()
+        self.print_queue.clear() #TODO don't clear the queue if printing fails
+
+    def remove_from_queue(self, name):
+        for i, item in enumerate(self.print_queue):
+            if item['name'] == name:
+                self.print_queue.pop(i)
+                return True, len(self.print_queue) == 0
+        return False, False
 
 class PrintQueueRow(BoxLayout):
     name = StringProperty()
