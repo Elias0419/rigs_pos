@@ -7,9 +7,11 @@ import textwrap
 import io
 
 class ReceiptPrinter:
-    def __init__(self, config_path):
+    def __init__(self, ref, config_path):
         self.config_handler = Config()
         self.config_handler.load(config_path)
+        self.app = ref
+
         try:
             self.printer = self.config_handler.printer()
         except Exception as e:
@@ -19,9 +21,17 @@ class ReceiptPrinter:
 
 
     def print_receipt(self, order_details):
+        print(order_details)
         logo = Image.open("logo.png")
         try:
-            self.printer.image(logo, (100, -60))
+            split_payments = self.app.popup_manager.split_payment_info['payments']
+            print("tacos",split_payments)
+        except Exception as e:
+            print("exception in receipt printer, get split payment info", e)
+
+
+        try:
+            self.printer.image(logo, (200, -60))
 
             date = str(datetime.now().replace(microsecond=0))
             self.printer.set(align="center", font="a")
@@ -42,7 +52,7 @@ class ReceiptPrinter:
 
                 self.printer.textln(item_line)
                 self.printer.textln()
-            self.printer.set(align="center", font="a", bold=True)
+            self.printer.set(align="right", font="a", bold=True)
             self.printer.textln()
             self.printer.textln(f"Subtotal: ${order_details['subtotal']:.2f}")
 
@@ -51,16 +61,29 @@ class ReceiptPrinter:
 
             self.printer.textln(f"Tax: ${order_details['tax_amount']:.2f}")
             self.printer.textln(f"Total: ${order_details['total_with_tax']:.2f}")
+            if order_details["payment_method"] == "Cash":
+                self.printer.textln(f"Cash: ${order_details['amount_tendered']:.2f}")
+                self.printer.textln(f"Change: ${order_details['change_given']:.2f}")
+            if order_details["payment_method"] == "Credit":
+                self.printer.textln(f"Credit Card Payment: ${order_details['total_with_tax']:.2f}")
+            if order_details["payment_method"] == "Debit":
+                self.printer.textln(f"Debit Card Payment: ${order_details['total_with_tax']:.2f}")
+            if order_details["payment_method"] == "Split":
+                self.printer.textln("Split Payment:")
+                for payment in split_payments:
+                    method = payment['method']
+                    amount = payment['amount']
+                    self.printer.textln(f"{method}: ${amount:.2f}")
+
 
             self.printer.set(align="center", font="b", bold=False)
             self.printer.textln()
             #barcode_data = "{Bwhat_the_fuck"
+            self.printer.textln()
             barcode_data = str(order_details["order_id"])
-            short_uuid = barcode_data[:14]   # test truncation length
+            short_uuid = barcode_data[:13]   # test truncation length
             barcode_data_short = "{B" + short_uuid
-            self.printer.barcode(barcode_data_short, "CODE128")
-
-
+            self.printer.barcode(barcode_data_short, "CODE128", pos="OFF")
 
             self.printer.textln()
             self.printer.textln(order_details["order_id"])
