@@ -179,45 +179,6 @@ class CashRegisterApp(MDApp):
 
         return financial_layout
 
-    def initialze_categories(self):
-        categories = [
-            "Cdb",
-            "Rig",
-            "Nails",
-            "Tubes",
-            "Hand Pipes",
-            "Chillum",
-            "Ecig",
-            "Butane",
-            "Torch",
-            "Toro",
-            "Slides H",
-            "Quartz",
-            "Vaporizers",
-            "Lighter",
-            "9mm Thick",
-            "Cleaning",
-            "Edible",
-            "Bubbler",
-            "Sherlock",
-            "Spoon",
-            "Silicone",
-            "Scales",
-            "Slides",
-            "Imported Glass",
-            "Ash Catcher",
-            "Soft Glass",
-            "Vaporizers",
-            "Pendant",
-            "Smoker Accessory",
-            "Ecig Accessories",
-            "Happy Fruit",
-            "Concentrate Accessories",
-            "Conc. Devices, Atomizers",
-            "Erigs And Accessory",
-            "Mods Batteries Kits",
-        ]
-        return categories
 
     """
     Barcode functions
@@ -1872,6 +1833,47 @@ class CashRegisterApp(MDApp):
             self.show_custom_item_popup(barcode)
         elif choice_text == "Add to Database":
             self.show_add_to_database_popup(barcode)
+
+    def initialze_categories(self):
+        categories = [
+            "Cdb",
+            "Rig",
+            "Nails",
+            "Tubes",
+            "Hand Pipes",
+            "Chillum",
+            "Ecig",
+            "Butane",
+            "Torch",
+            "Toro",
+            "Slides H",
+            "Quartz",
+            "Vaporizers",
+            "Lighter",
+            "9mm Thick",
+            "Cleaning",
+            "Edible",
+            "Bubbler",
+            "Sherlock",
+            "Spoon",
+            "Silicone",
+            "Scales",
+            "Slides",
+            "Imported Glass",
+            "Ash Catcher",
+            "Soft Glass",
+            "Vaporizers",
+            "Pendant",
+            "Smoker Accessory",
+            "Ecig Accessories",
+            "Happy Fruit",
+            "Concentrate Accessories",
+            "Conc. Devices, Atomizers",
+            "Erigs And Accessory",
+            "Mods Batteries Kits",
+        ]
+        return categories
+
 
     def dismiss_guard_popup(self):
         self.dismiss_popups('guard_popup')
