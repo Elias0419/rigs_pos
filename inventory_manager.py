@@ -443,8 +443,8 @@ class InventoryRow(BoxLayout):
             pass
         self.order_manager.add_item(self.name, price_float)
 
-        self.app.update_display()
-        self.app.update_financial_summary()
+        self.app.utilities.update_display()
+        self.app.utilities.update_financial_summary()
 
 
 class InventoryView(BoxLayout):

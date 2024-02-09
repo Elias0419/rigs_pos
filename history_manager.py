@@ -33,7 +33,7 @@ class HistoryPopup(Popup):
     def __init__(self, **kwargs):
         super(HistoryPopup, self).__init__(**kwargs)
         self.db_manager = DatabaseManager("inventory.db")
-        self.history_view = HistoryView()
+        #self.history_view = HistoryView()
     def show_hist_reporting_popup(self):
         order_history = self.db_manager.get_order_history()
         # print(order_history)
@@ -64,26 +64,40 @@ class HistoryRow(BoxLayout):
 
 
 class HistoryView(BoxLayout):
-    def __init__(self, **kwargs):
-        super(HistoryView, self).__init__(**kwargs)
-        self.order_history = []
-        self.orientation = "vertical"
-        self.current_filter = "today"
+    _instance = None
 
-        self.receipt_printer = ReceiptPrinter("receipt_printer_config.yaml")
-        print("historyview init", self)
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super(HistoryView, cls).__new__(cls)
+        return cls._instance
 
-        self.totals_layout = BoxLayout(orientation="horizontal", size_hint=(1, 0.1))
-        self.total_amount_label = Label(text="Total: $0.00")
-        self.totals_layout.add_widget(self.total_amount_label)
+    def __init__(self, ref=None, **kwargs):
+        if not hasattr(self, "_init"):
+            super(HistoryView, self).__init__(**kwargs)
+            self._init = True
+            self.order_history = []
+            self.orientation = "vertical"
+            self.current_filter = "today"
 
-        self.button_layout = BoxLayout(orientation="horizontal", size_hint=(1, 0.4))
-        self.initialize_buttons()
+        if ref is not None:
+            self.app = ref
 
-        self.add_widget(self.totals_layout)
-        self.add_widget(self.button_layout)
+            self.receipt_printer = ReceiptPrinter(self, "receipt_printer_config.yaml")
+            print("historyview init", self)
 
-        Clock.schedule_once(self.init_filter, 0.1)
+            self.totals_layout = BoxLayout(orientation="horizontal", size_hint=(1, 0.1))
+            self.total_amount_label = Label(text="Total: $0.00")
+            self.totals_layout.add_widget(self.total_amount_label)
+
+            self.button_layout = BoxLayout(orientation="horizontal", size_hint=(1, 0.4))
+            self.initialize_buttons()
+
+            self.add_widget(self.totals_layout)
+            self.add_widget(self.button_layout)
+
+            Clock.schedule_once(self.init_filter, 0.1)
+
+
 
 
     def initialize_buttons(self):
@@ -315,6 +329,40 @@ class HistoryView(BoxLayout):
 
             popup.open()
 
+    def display_order_details_from_barcode_scan(self, barcode):
+        try:
+
+            barcode_str = str(barcode)
+            order_history = self.app.db_manager.get_order_history()
+            specific_order = next(
+                (
+                    order
+                    for order in order_history
+                    if str(order[0]).startswith(barcode_str)
+                ),
+                None,
+            )
+
+            if specific_order:
+                popup = OrderDetailsPopup(specific_order, self.receipt_printer)
+                popup.open()
+            else:
+                self.order_not_found_popup(barcode_str) # needs testing
+
+        except Exception as e:
+            print(e)
+
+    def order_not_found_popup(self, order):
+        not_found_layout = BoxLayout(size_hint=(1,1))
+        not_found_label = Label(text=f"Order {order} Not Found")
+        not_found_button = MDRaisedButton(text="Dismiss", on_press=lambda x: self.not_found_popup.dismiss())
+        not_found_layout.add_widget(not_found_label)
+        not_found_layout.add_widget(not_found_button)
+        self.not_found_popup = Popup(content=not_found_layout, size_hint=(0.4,0.4))
+        self.not_found_popup.open()
+
+
+
 
     def show_order_details(self, order_id):
         specific_order = next(
@@ -451,7 +499,8 @@ class OrderDetailsPopup(Popup):
             print(e)
 
     def convert_order_to_dict(self, order_tuple):
-        order_id, items_json, total, tax, total_with_tax, timestamp = order_tuple
+        #print(order_tuple)
+        order_id, items_json, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given = order_tuple
         try:
             items = json.loads(items_json)
         except json.JSONDecodeError:
@@ -469,7 +518,7 @@ class OrderDetailsPopup(Popup):
             "tax_amount": tax,
             "total_with_tax": total_with_tax,
             "timestamp": timestamp,
-            "discount": 0.0,
+            "discount": discount,
         }
 
         return order_dict
