@@ -37,10 +37,10 @@ def run_app(script_path, recipient, max_restarts, restart_window):
             if recent_restarts >= max_restarts:
                 send_email("App has failed!",f"Script exited with returncode {result.returncode}. Recent restart count: {recent_restarts}.", recipient )
 #                 try:
-#                     result = subprocess.run(["../1/bin/python", "/net/fallback/main_fallback.py"])
+        #             result = subprocess.run(["../1/bin/python", "/net/fallback/main_fallback.py"])
 #
 #                 except:
-                    sys.exit(43)
+                sys.exit(43)
             continue
         elif result.returncode == 43:
             send_email("Alert","Script has been stopped with adminstrator's return code", recipient )
