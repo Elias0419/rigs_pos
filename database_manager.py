@@ -1,6 +1,6 @@
 import sqlite3
-
-
+from datetime import datetime
+import json
 class DatabaseManager:
     _instance = None
 
@@ -9,10 +9,11 @@ class DatabaseManager:
             cls._instance = super(DatabaseManager, cls).__new__(cls)
         return cls._instance
 
-    def __init__(self, db_path):
+    def __init__(self, db_path, ref):
         if not hasattr(self, "_init"):
             self.db_path = db_path
             self.ensure_tables_exist()
+            self.app = ref
             self._init = True
 
     def _get_connection(self):
@@ -127,6 +128,38 @@ class DatabaseManager:
         order_history = cursor.fetchall()
         conn.close()
         return order_history
+
+    def send_order_to_history_database(self, order_details, order_manager, db_manager):
+        tax = order_details["total_with_tax"] - order_details["total"]
+        timestamp = datetime.now()
+
+        items_for_db = [
+            {**{"name": item_name}, **item_details}
+            for item_name, item_details in order_details["items"].items()
+        ]
+
+        self.add_order_history(
+            order_details["order_id"],
+            json.dumps(items_for_db),
+            order_details["total"],
+            tax,
+            order_details["discount"],
+            order_details["total_with_tax"],
+            timestamp,
+            order_details["payment_method"],
+            order_details["amount_tendered"],
+            order_details["change_given"],
+        )
+
+    def add_item_to_database(
+        self, barcode, name, price, cost=0.0, sku=None, categories=None
+    ):
+        if barcode and name and price:
+            try:
+                self.add_item(barcode, name, price, cost, sku, categories)
+                self.app.popup_manager.add_to_db_popup.dismiss()
+            except Exception as e:
+                print(e)
 
     def get_item_details(self, barcode):
         conn = self._get_connection()

@@ -45,8 +45,7 @@ class BarcodeScanner:
         self.barcode_ready.clear()
         return barcode
 
-    def on_barcode_scanned(self, barcode):
-        pass
+
 
     def close(self):
         self.listener.stop()

@@ -4,7 +4,7 @@ import time
 import subprocess
 import re
 import threading
-
+from open_cash_drawer import open_cash_drawer
 class Utilities:
     def __init__(self, ref):
         self.app = ref
@@ -351,3 +351,92 @@ class Utilities:
 
         except Exception as e:
             print(e)
+
+
+    def clear_split_numeric_input(self):
+        self.app.popup_manager.split_payment_numeric_cash_input.text = ""
+
+    def handle_split_input(self, amount, method):
+        if not amount.strip():
+            pass
+        else:
+            try:
+                amount = float(amount)
+                self.on_split_payment_confirm(amount=amount, method=method)
+            except ValueError as e:
+                print(e)
+
+    def on_split_payment_confirm(self, amount, method):
+        amount = float(f"{amount:.2f}")
+
+        self.app.popup_manager.split_payment_info["total_paid"] += amount
+        self.app.popup_manager.split_payment_info["remaining_amount"] -= amount
+        self.app.popup_manager.split_payment_info["payments"].append(
+            {"method": method, "amount": amount}
+        )
+
+        if method == "Cash":
+            print("method", method)
+            self.app.popup_manager.show_split_cash_popup(amount)
+            self.app.popup_manager.split_payment_numeric_popup.dismiss()
+        elif method == "Debit":
+            self.app.popup_manager.show_split_card_confirm(amount, method)
+            self.app.popup_manager.split_payment_numeric_popup.dismiss()
+        elif method == "Credit":
+            self.app.popup_manager.show_split_card_confirm(amount, method)
+            self.app.popup_manager.split_payment_numeric_popup.dismiss()
+
+    def split_cash_continue(self, instance):
+        tolerance = 0.001
+        self.app.popup_manager.dismiss_popups(
+            "split_cash_popup", "split_cash_confirm_popup", "split_change_popup"
+        )
+
+        if abs(self.app.popup_manager.split_payment_info["remaining_amount"]) <= tolerance:
+            self.finalize_split_payment()
+        else:
+            self.app.popup_manager.show_split_payment_numeric_popup(subsequent_payment=True)
+
+    def split_card_continue(self, amount, method):
+
+        tolerance = 0.001
+        self.app.popup_manager.dismiss_popups("split_card_confirm_popup")
+
+        if abs(self.app.popup_manager.split_payment_info["remaining_amount"]) <= tolerance:
+            self.finalize_split_payment()
+        else:
+            self.app.popup_manager.show_split_payment_numeric_popup(subsequent_payment=True)
+
+    def finalize_split_payment(self):
+        self.app.order_manager.set_payment_method("Split")
+        self.app.popup_manager.show_payment_confirmation_popup()
+
+    def split_on_custom_cash_confirm(self, amount):
+
+        self.app.popup_manager.split_custom_cash_popup.dismiss()
+        input_amount = float(self.app.popup_manager.split_custom_cash_input.text)
+
+        amount = float(amount)
+
+        if input_amount > amount:
+
+            open_cash_drawer()
+            change = float(self.app.popup_manager.split_custom_cash_input.text) - amount
+
+            self.app.popup_manager.split_cash_make_change(change, amount)
+        else:
+
+            open_cash_drawer()
+            self.app.popup_manager.show_split_cash_confirm(amount)
+
+    def split_on_cash_confirm(self, amount):
+        self.app.popup_manager.split_cash_popup.dismiss()
+        if float(self.app.popup_manager.split_cash_input.text) > amount:
+            open_cash_drawer()
+            change = float(self.app.popup_manager.split_cash_input.text) - amount
+
+            self.app.popup_manager.split_cash_make_change(change, amount)
+        else:
+
+            open_cash_drawer()
+            self.app.popup_manager.show_split_cash_confirm(amount)
