@@ -32,7 +32,7 @@ class NullableStringProperty(StringProperty):
 class HistoryPopup(Popup):
     def __init__(self, **kwargs):
         super(HistoryPopup, self).__init__(**kwargs)
-        self.db_manager = DatabaseManager("inventory.db")
+        self.db_manager = DatabaseManager("inventory.db", self)
         #self.history_view = HistoryView()
     def show_hist_reporting_popup(self):
         order_history = self.db_manager.get_order_history()

@@ -35,7 +35,7 @@ class InventoryManagementView(BoxLayout):
         if not hasattr(self, "_init"):
             super(InventoryManagementView, self).__init__(**kwargs)
             self.full_inventory = []
-            self.database_manager = DatabaseManager("inventory.db")
+            self.database_manager = DatabaseManager("inventory.db",self)
             self.app = App.get_running_app()
             self._init = True
 
@@ -318,7 +318,7 @@ class InventoryManagementRow(BoxLayout):
         super(InventoryManagementRow, self).__init__(**kwargs)
         self.database_manager = DatabaseManager("inventory.db")
         self.inventory_management_view = InventoryManagementView()
-
+        self.app = App.get_running_app()
 
     def inventory_item_popup_row(self):
 
@@ -350,9 +350,9 @@ class InventoryManagementRow(BoxLayout):
         sku_layout.add_widget(sku_input)
 
         category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        category_input = TextInput(text=self.category, disabled=True)
+        self.update_category_input = TextInput(text=self.category, disabled=True)
         category_layout.add_widget(Label(text="Categories", size_hint_x=0.2))
-        category_layout.add_widget(category_input)
+        category_layout.add_widget(self.update_category_input)
 
         content.add_widget(name_layout)
         content.add_widget(barcode_layout)
@@ -368,20 +368,26 @@ class InventoryManagementRow(BoxLayout):
         button_layout.add_widget(
             MDRaisedButton(
                 text="Update Details",
-                on_press=lambda _: self.confirm_and_close(
+                on_press=lambda x: self.confirm_and_close(
                     barcode_input,
                     name_input,
                     price_input,
                     cost_input,
                     sku_input,
-                    category_input,
+                    self.update_category_input,
                     popup,
                 ),
             )
         )
+        button_layout.add_widget(
+            MDRaisedButton(
+                text="Categories",
+                on_press=lambda x: self.open_update_category_button_popup(),
+            )
+        )
 
         button_layout.add_widget(
-            MDRaisedButton(text="Close", on_press=lambda *args: popup.dismiss())
+            MDRaisedButton(text="Close", on_press=lambda x: popup.dismiss())
         )
 
         content.add_widget(button_layout)
@@ -393,6 +399,48 @@ class InventoryManagementRow(BoxLayout):
             size_hint=(0.8, 0.4),
         )
         popup.open()
+
+    def open_update_category_button_popup(self):
+        self.update_selected_categories = []
+        category_button_layout = GridLayout(size_hint=(1, 0.8), pos_hint={"top":1},cols=7, spacing=5)
+        for category in self.app.categories:
+            btn = MDRaisedButton(
+                text=category,
+                on_release=lambda x, cat=category: self.update_toggle_category_selection(x, cat),
+                size_hint=(1,0.8)
+                )
+            category_button_layout.add_widget(btn)
+        category_popup_layout = BoxLayout()
+        confirm_button = MDRaisedButton(
+            text="Confirm",
+            on_release=lambda x: self.update_apply_categories()
+            )
+        cancel_button = MDRaisedButton(
+            text="Cancel",
+            on_release=lambda x: self.update_category_button_popup.dismiss()
+            )
+        category_popup_layout.add_widget(category_button_layout)
+        category_popup_layout.add_widget(confirm_button)
+        category_popup_layout.add_widget(cancel_button)
+
+        self.update_category_button_popup = Popup(
+            content=category_popup_layout,
+            size_hint=(0.9,0.9)
+            )
+        self.update_category_button_popup.open()
+
+    def update_apply_categories(self):
+        categories_str = ', '.join(self.update_selected_categories)
+        self.update_category_input.text = categories_str
+        self.update_category_button_popup.dismiss()
+
+    def update_toggle_category_selection(self, instance, category):
+        if category in self.update_selected_categories:
+            self.update_selected_categories.remove(category)
+            instance.text = category
+        else:
+            self.update_selected_categories.append(category)
+            instance.text = f"{category}\n (Selected)"
 
     def confirm_and_close(
         self, barcode_input, name_input, price_input, cost_input, sku_input, category_input, popup
@@ -432,7 +480,7 @@ class InventoryRow(BoxLayout):
 
     def __init__(self, **kwargs):
         super(InventoryRow, self).__init__(**kwargs)
-        self.order_manager = OrderManager()
+        self.order_manager = OrderManager(self)
         self.app = App.get_running_app()
     def add_to_order(self):
 

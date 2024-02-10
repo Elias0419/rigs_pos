@@ -27,9 +27,9 @@ class ButtonHandler:
         if "Pay Cash" in instance.text:
             self.app.popup_manager.show_cash_payment_popup()
         elif "Pay Debit" in instance.text:
-            self.app.handle_debit_payment()
+            self.app.order_manager.handle_debit_payment()
         elif "Pay Credit" in instance.text:
-            self.app.handle_credit_payment()
+            self.app.order_manager.handle_credit_payment()
         elif "Split" in instance.text:
             self.app.popup_manager.handle_split_payment()
         elif "Cancel" in instance.text:
@@ -121,7 +121,7 @@ class ButtonHandler:
             self.app.order_manager.clear_order()
         elif button_text == "Pay":
             if total > 0:
-                self.app.finalize_order()
+                self.app.order_manager.finalize_order()
         elif button_text == "Custom":
             self.app.popup_manager.show_custom_item_popup(barcode="1234567890")
         elif button_text == "Tools":
@@ -131,7 +131,7 @@ class ButtonHandler:
 
     def on_done_button_press(self, instance):
         order_details = self.app.order_manager.get_order_details()
-        self.app.send_order_to_history_database(
+        self.app.db_manager.send_order_to_history_database(
             order_details, self.app.order_manager, self.app.db_manager
         )
         self.app.order_manager.clear_order()

@@ -1,16 +1,16 @@
 import uuid
-
+from open_cash_drawer import open_cash_drawer
 
 class OrderManager:
     _instance = None
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
-            cls._instance = super(OrderManager, cls).__new__(cls, *args, **kwargs)
+            cls._instance = super(OrderManager, cls).__new__(cls)
         return cls._instance
 
 
-    def __init__(self, tax_rate=0.07):
+    def __init__(self, ref, tax_rate=0.07):
         if not hasattr(self, "_init"):
             print("order manager init", self)
             self.items = {}
@@ -24,7 +24,7 @@ class OrderManager:
             self.payment_method = None
             self._total_with_tax = None
             self.order_id = str(uuid.uuid4())
-
+            self.app = ref
             self._init = True
 
     def _update_total_with_tax(self):
@@ -159,3 +159,116 @@ class OrderManager:
     def set_payment_details(self, amount_tendered=None, change=None):
         self.amount_tendered = amount_tendered if amount_tendered is not None else 0.0
         self.change_given = change if change is not None else 0.0
+
+    def add_custom_item(self, instance):
+        price = self.app.popup_manager.cash_input.text
+        try:
+            price = float(price)
+        except Exception as e:
+            print("Exception in add custom item order_manager.py,", e)
+
+        custom_item_name = "Custom Item"
+        self.add_item(custom_item_name, price)
+        self.app.utilities.update_display()
+        self.app.utilities.update_financial_summary()
+        self.app.popup_manager.custom_item_popup.dismiss()
+
+    def finalize_order(self):
+        order_details = self.get_order_details()
+
+        order_summary = f"[size=18][b]Order Summary:[/b][/size]\n\n"
+
+        for item_id, item_details in order_details["items"].items():
+            item_name = item_details["name"]
+            quantity = item_details["quantity"]
+            total_price_for_item = item_details["total_price"]
+
+            try:
+                total_price_float = float(total_price_for_item)
+            except ValueError as e:
+                print(e)
+                continue
+
+            order_summary += self.create_order_summary_item(
+                item_name, quantity, total_price_float
+            )
+
+        order_summary += f"\nSubtotal: ${order_details['subtotal']:.2f}"
+        order_summary += f"\nTax: ${order_details['tax_amount']:.2f}"
+        if order_details["discount"] > 0:
+            order_summary += f"\nDiscount: ${order_details['discount']:.2f}"
+        order_summary += (
+            f"\n\n[size=20]Total: [b]${order_details['total_with_tax']:.2f}[/b][/size]"
+        )
+
+        self.app.popup_manager.show_order_popup(order_summary)
+
+    def create_order_summary_item(self, item_name, quantity, total_price):
+        return f"[b]{item_name}[/b] x{quantity} ${total_price:.2f}\n"
+
+    def discount_single_item(self, discount_amount, percent=False):
+        if percent:
+
+            self.add_discount(discount_amount, percent=True)
+            self.app.utilities.update_display()
+            self.app.utilities.update_financial_summary()
+        else:
+            self.add_discount(discount_amount)
+            self.app.utilities.update_display()
+            self.app.utilities.update_financial_summary()
+
+        self.app.popup_manager.discount_popup.dismiss()
+        self.app.popup_manager.item_popup.dismiss()
+        if hasattr(self.app.popup_manager, "item_popup") and self.app.popup_manager.item_popup is not None:
+            self.app.popup_manager.item_popup.dismiss()
+
+    def add_adjusted_price_item(self):
+        target_amount = self.app.popup_manager.adjust_price_cash_input.text
+        try:
+            target_amount = float(target_amount)
+        except ValueError as e:
+            print(e)
+
+        self.adjust_order_to_target_total(target_amount)
+        self.app.utilities.update_display()
+        self.app.utilities.update_financial_summary()
+        self.app.popup_manager.adjust_price_popup.dismiss()
+        self.app.financial_summary.order_mod_popup.dismiss()
+
+    def remove_item_in(self, item_name, item_price):
+        self.remove_item(item_name)
+        self.app.utilities.update_display()
+        self.app.utilities.update_financial_summary()
+        self.app.popup_manager.item_popup.dismiss()
+
+    def adjust_item_quantity_in(self, item_id, adjustment):
+        self.adjust_item_quantity(item_id, adjustment)
+        self.app.popup_manager.item_popup.dismiss()
+        self.app.popup_manager.show_item_details_popup(item_id)
+        self.app.utilities.update_display()
+        self.app.utilities.update_financial_summary()
+
+
+    def handle_credit_payment(self):
+        open_cash_drawer()
+        self.set_payment_method("Credit")
+        self.app.popup_manager.show_payment_confirmation_popup()
+
+    def handle_debit_payment(self):
+        open_cash_drawer()
+        self.set_payment_method("Debit")
+        self.app.popup_manager.show_payment_confirmation_popup()
+
+    def on_cash_confirm(self, instance):
+        amount_tendered = float(self.app.popup_manager.cash_payment_input.text)
+        total_with_tax = self.app.order_manager.calculate_total_with_tax()
+        change = amount_tendered - total_with_tax
+        if hasattr(self.app.popup_manager, "cash_popup"):
+            self.app.popup_manager.cash_popup.dismiss()
+        if hasattr(self.app.popup_manager, "custom_cash_popup"):
+            self.app.popup_manager.custom_cash_popup.dismiss()
+        open_cash_drawer()
+        self.set_payment_method("Cash")
+        self.set_payment_details(amount_tendered, change)
+        self.app.popup_manager.show_make_change_popup(change)
+
