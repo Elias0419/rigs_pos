@@ -283,7 +283,7 @@ class PopupManager:
 
     def show_label_printing_view(self):
         inventory = self.app.db_manager.get_all_items()
-        label_printing_view = LabelPrintingView()
+        label_printing_view = self.app.label_manager
         self.app.current_context = "label"
 
         label_printing_view.show_inventory_for_label_printing(inventory)
@@ -1238,6 +1238,16 @@ class PopupManager:
         popup.focus_on_textinput(textinput)
         return popup
 
+    def catch_label_printing_errors(self, e):
+        label_errors_layout = BoxLayout(orientation="vertical")
+        label_errors_text = Label(text=f"The system can't find the label printer. \nIs it plugged in and turned on?\n\n{e}")
+        label_errors_button = MDRaisedButton(text="Dismiss", on_press=lambda x: self.label_errors_popup.dismiss())
+        label_errors_layout.add_widget(label_errors_text)
+        label_errors_layout.add_widget(label_errors_button)
+
+        self.label_errors_popup = Popup(content=label_errors_layout, size_hint=(0.4,0.4))
+        self.label_errors_popup.open()
+
 
 class MarkupLabel(Label):
     pass
@@ -1258,6 +1268,8 @@ class MoneyInput(TextInput):
             self.text = new_text
         else:
             super(MoneyInput, self).insert_text(substring, from_undo=from_undo)
+
+
 
 
 class FocusPopup(Popup):
