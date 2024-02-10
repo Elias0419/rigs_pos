@@ -380,7 +380,7 @@ class PopupManager:
                 auto_dismiss=False,
             )
             self.guard_popup.bind(
-                on_touch_down=lambda x, touch: self.app.dismiss_guard_popup()
+                on_touch_down=lambda x, touch: self.app.utilities.dismiss_guard_popup()
             )
             self.is_guard_screen_displayed = True
             self.guard_popup.bind(
