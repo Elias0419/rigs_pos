@@ -316,7 +316,7 @@ class InventoryManagementRow(BoxLayout):
 
     def __init__(self, **kwargs):
         super(InventoryManagementRow, self).__init__(**kwargs)
-        self.database_manager = DatabaseManager("inventory.db")
+        self.database_manager = DatabaseManager("inventory.db", self)
         self.inventory_management_view = InventoryManagementView()
         self.app = App.get_running_app()
 
