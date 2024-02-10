@@ -149,7 +149,7 @@ class ButtonHandler:
             self.app.entered_pin = ""
         else:
             self.app.entered_pin += instance.text
-            self.app.reset_pin_timer()
+            self.app.utilities.reset_pin_timer()
 
         if len(self.app.entered_pin) == 4:
             if self.app.entered_pin == self.app.correct_pin:
