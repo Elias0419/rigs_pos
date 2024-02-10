@@ -284,19 +284,19 @@ class LabelPrinter:
                 font=additional_font,
             )
 
-        label_image.show()
-        # qlr = brother_ql.BrotherQLRaster("QL-710W")
-        # qlr.exception_on_warning = True
-        # convert(qlr=qlr, images=[label_image], label="23x23", cut=False)
-        # try:
-        #     send(
-        #         instructions=qlr.data,
-        #         printer_identifier="usb://0x04F9:0x2043",
-        #         backend_identifier="pyusb",
-        #     )
-        # except ValueError as e:
-        #     print(e)
-        #     pass
+        #label_image.show()
+        qlr = brother_ql.BrotherQLRaster("QL-710W")
+        qlr.exception_on_warning = True
+        convert(qlr=qlr, images=[label_image], label="23x23", cut=False)
+        try:
+            send(
+                instructions=qlr.data,
+                printer_identifier="usb://0x04F9:0x2043",
+                backend_identifier="pyusb",
+            )
+        except ValueError as e:
+            print(e)
+            pass
 
     def process_queue(self):
 
