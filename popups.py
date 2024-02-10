@@ -10,7 +10,10 @@ from kivy.uix.floatlayout import FloatLayout
 from label_printer import LabelPrintingView
 from inventory_manager import InventoryManagementView, InventoryView
 from open_cash_drawer import open_cash_drawer
-
+from kivy.clock import Clock
+from kivymd.uix.label import MDLabel
+from kivy.uix.image import Image
+import os
 
 class PopupManager:
     def __init__(self, ref):
@@ -392,7 +395,8 @@ class PopupManager:
 
     def show_lock_screen(self):
         if not self.app.is_lock_screen_displayed:
-            lock_layout = BoxLayout(orientation="vertical")
+            lock_layout = BoxLayout(orientation="horizontal", size_hint=(1, 1))
+            lock_button_layout = BoxLayout(orientation="vertical", size_hint=(0.5, 1))
             keypad_layout = GridLayout(cols=3)
 
             numeric_buttons = [
@@ -428,9 +432,10 @@ class PopupManager:
                     )
                     btn_2.bind(on_press=self.app.utilities.manual_override)
                     keypad_layout.add_widget(btn_2)
-
-            lock_layout.add_widget(keypad_layout)
-
+            clock_layout = self.create_clock_layout()
+            lock_button_layout.add_widget(keypad_layout)
+            lock_layout.add_widget(lock_button_layout)
+            lock_layout.add_widget(clock_layout)
             self.lock_popup = Popup(
                 title="Lock Screen",
                 content=lock_layout,
@@ -444,6 +449,29 @@ class PopupManager:
                 )
             )
             self.lock_popup.open()
+
+    def create_clock_layout(self):
+        clock_layout = BoxLayout(orientation="vertical", size_hint_x=1 / 3)
+        image_path = 'RIGS2.png'
+        if os.path.exists(image_path):
+            img = Image(source=image_path, size_hint=(0.9, 0.75))
+        else:
+
+            img = Label(text="", size_hint=(1, 0.75), halign='center')
+        self.clock_label = MDLabel(
+            text="Loading...",
+            size_hint_y=None,
+            font_style="H6",
+            height=80,
+            color=self.app.utilities.get_text_color(),
+            halign="center",
+        )
+
+
+        Clock.schedule_interval(self.app.utilities.update_lockscreen_clock, 1)
+        clock_layout.add_widget(img)
+        clock_layout.add_widget(self.clock_label)
+        return clock_layout
 
     def show_inventory(self):
         inventory = self.app.db_manager.get_all_items()
