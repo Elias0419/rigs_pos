@@ -51,6 +51,11 @@ class Utilities:
         self.app.clock_label.text = time.strftime("%I:%M %p\n%A\n%B %d, %Y\n")
         self.app.clock_label.color = self.get_text_color()
 
+    def update_lockscreen_clock(self, *args):
+        # self.app.popup_manager.clock_label.text = time.strftime("%I:%M %p\n%A\n%B %d, %Y\n")
+        self.app.popup_manager.clock_label.text = time.strftime("%I:%M %p")
+        self.app.popup_manager.clock_label.color = self.get_text_color()
+
     def get_text_color(self):
         if self.app.theme_cls.theme_style == "Dark":
             return (1, 1, 1, 1)
@@ -130,11 +135,13 @@ class Utilities:
         )
 
     def manual_override(self, instance):
+
         current_time = time.time()
-        if current_time - self.override_tap_time < 1:
+        print(f"{current_time}\n{self.app.override_tap_time}")
+        if current_time - self.app.override_tap_time < 0.5:
             sys.exit(42)
-        else:
-            self.override_tap_time = current_time
+
+        self.app.override_tap_time = current_time
 
     def set_primary_palette(self, color_name):
         self.app.theme_cls.primary_palette = color_name
