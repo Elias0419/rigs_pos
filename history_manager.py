@@ -38,7 +38,9 @@ class HistoryPopup(Popup):
         order_history = self.db_manager.get_order_history()
         # print(order_history)
         history_view = HistoryView()
+
         history_view.show_reporting_popup(order_history)
+        history_view.filter_today()
         self.content = history_view
         self.size_hint = (0.9, 0.9)
         self.title = "Order History"
@@ -104,7 +106,7 @@ class HistoryView(BoxLayout):
         self.button_layout = BoxLayout(orientation="horizontal", size_hint=(1, 0.2))
         self.button_layout.add_widget(
             MDRaisedButton(
-                text="Today", size_hint=(1, 1), on_press=self.filter_today
+                text="Today", size_hint=(1, 1), on_press=lambda x: self.filter_today()
             )
         )
         self.button_layout.add_widget(
@@ -140,7 +142,7 @@ class HistoryView(BoxLayout):
 
 
     def init_filter(self, dt):
-        self.filter_today(None)
+        self.filter_today()
         self.update_totals()
 
     def update_totals(self):
@@ -262,7 +264,7 @@ class HistoryView(BoxLayout):
     def is_today(self, date_obj):
         return date_obj.date() == datetime.today().date()
 
-    def filter_today(self, instance):
+    def filter_today(self):
         print("filtered today")
         self.current_filter = "today"
         filtered_history = [
