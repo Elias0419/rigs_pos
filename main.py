@@ -113,12 +113,7 @@ class CashRegisterApp(MDApp):
         )
         btn_tools = self.utilities.create_md_raised_button(
             "Tools",
-            #lambda x: self.popup_manager.show_lock_screen(),
-            #self.button_handler.on_button_press,  #################
-            lambda x: sys.exit(42),
-            # lambda x: self.show_add_or_bypass_popup("210973141121"),
-            #lambda x: self.popup_manager.show_add_or_bypass_popup("220973141121"),
-            # lambda x: self.open_category_button_popup(),
+            self.button_handler.on_button_press,
             (8, 8),
             "H6",
         )

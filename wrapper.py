@@ -15,7 +15,6 @@ def load_config():
         with open('/home/rigs/rigs_pos/wrapper_config.json', 'r') as f:
             config = json.load(f)
     except Exception as e:
-        print(f"XXX\nXXX\nXXX\nXXX\ng{e}")
         config = DEFAULT_CONFIG
     return config
 
