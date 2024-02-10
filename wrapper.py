@@ -12,7 +12,7 @@ DEFAULT_CONFIG = {
 
 def load_config():
     try:
-        with open('wrapper_config.json', 'r') as f:
+        with open('/home/rigs/rigs_pos/wrapper_config.json', 'r') as f:
             config = json.load(f)
     except Exception as e:
         config = DEFAULT_CONFIG
