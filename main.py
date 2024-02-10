@@ -146,7 +146,7 @@ class CashRegisterApp(MDApp):
         padlock_button = MDIconButton(
             icon="lock",
             pos_hint={"right": 1},
-            on_press=lambda x: self.turn_off_monitor(),
+            on_press=lambda x: self.utilities.turn_off_monitor(),
         )
         clock_layout.add_widget(padlock_button)
 
