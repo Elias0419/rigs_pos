@@ -195,7 +195,7 @@ class Utilities:
 
     def dismiss_guard_popup(self):
         self.app.popup_manager.guard_popup.dismiss()
-        #self.turn_on_monitor() ###############################################
+        self.turn_on_monitor()
 
     def close_item_popup(self):
         self.dismiss_popups("item_popup")
