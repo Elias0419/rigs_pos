@@ -417,7 +417,7 @@ class PopupManager:
                         text_color=(0, 0, 0, 1),
                         font_style="H4",
                         size_hint=(0.8, 0.8),
-                        on_press=self.app.on_lock_screen_button_press,
+                        on_press=self.app.button_handler.on_lock_screen_button_press,
                     )
                     keypad_layout.add_widget(btn)
                 else:
