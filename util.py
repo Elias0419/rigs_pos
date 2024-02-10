@@ -5,6 +5,7 @@ import subprocess
 import re
 import threading
 from open_cash_drawer import open_cash_drawer
+import sys
 class Utilities:
     def __init__(self, ref):
         self.app = ref

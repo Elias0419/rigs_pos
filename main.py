@@ -21,7 +21,7 @@ from kivymd.uix.label import MDLabel
 
 from barcode_scanner import BarcodeScanner
 from database_manager import DatabaseManager
-from label_printer import LabelPrintingView
+from label_printer import LabelPrintingView, LabelPrinter
 from open_cash_drawer import open_cash_drawer
 from order_manager import OrderManager
 from history_manager import HistoryView, HistoryPopup
@@ -59,7 +59,9 @@ class CashRegisterApp(MDApp):
         self.history_popup = HistoryPopup()
         self.receipt_printer = ReceiptPrinter(self, "receipt_printer_config.yaml")
         self.inventory_manager = InventoryManagementView()
-        self.label_manager = LabelPrintingView()
+        self.label_printer = LabelPrinter(self)
+        self.label_manager = LabelPrintingView(self)
+
         self.popup_manager = PopupManager(self)
         self.button_handler = ButtonHandler(self)
         self.utilities = Utilities(self)

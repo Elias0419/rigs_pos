@@ -47,13 +47,17 @@ class LabelPrintingRow(BoxLayout):
             size_hint=(0.4, 0.4),
             pos_hint={"top": 1},
         )
-        btn_layout.add_widget(
-            MDRaisedButton(
+
+
+        add_button = MDRaisedButton(
                 text="Add",
                 size_hint=(0.2, 0.8),
                 on_press=lambda x: self.on_add_button_press(quantity_input, popup),
+                disabled=True
             )
-        )
+
+        btn_layout.add_widget(add_button)
+
         btn_layout.add_widget(
             MDRaisedButton(
                 text="Cancel",
@@ -62,6 +66,13 @@ class LabelPrintingRow(BoxLayout):
             )
         )
         content.add_widget(btn_layout)
+        def on_text(instance, value):
+
+            add_button.disabled = not(value.isdigit() and int(value) > 0)
+
+
+        quantity_input.bind(text=on_text)
+
 
         popup.open()
 
@@ -70,7 +81,8 @@ class LabelPrintingRow(BoxLayout):
         popup.dismiss()
 
     def add_quantity_to_queue(self, quantity):
-        self.label_printer.add_to_queue(self.barcode, self.name, self.price, quantity)
+        if quantity.isdigit() and int(quantity) > 0:
+            self.label_printer.add_to_queue(self.barcode, self.name, self.price, quantity)
 
 
 class LabelPrintingView(BoxLayout):
@@ -81,11 +93,12 @@ class LabelPrintingView(BoxLayout):
             cls._instance = super(LabelPrintingView, cls).__new__(cls, *args, **kwargs)
         return cls._instance
 
-    def __init__(self, **kwargs):
+    def __init__(self, ref, **kwargs):
         if not hasattr(self, "_init"):
             super(LabelPrintingView, self).__init__(**kwargs)
             self.full_inventory = []
-            self.label_printer = LabelPrinter()
+            self.app = ref
+            self.label_printer = self.app.label_printer
 
             self._init = True
 
@@ -175,7 +188,7 @@ class LabelPrintingView(BoxLayout):
 
     def print_now(self, instance):
         self.label_printer.process_queue()
-        self.print_queue_popup.dismiss()
+
 
     def cancel_print(self, instance):
         self.print_queue_popup.dismiss()
@@ -207,19 +220,24 @@ class LabelPrintingView(BoxLayout):
 
 
 class LabelPrinter:
-    def __init__(self):
+    def __init__(self, ref):
         self.print_queue = []
+        self.app = ref
+
 
     def add_to_queue(self, barcode, name, price, quantity):
-        self.print_queue.append(
-            {
-                "barcode": barcode,
-                "name": name,
-                "price": price,
-                "quantity": int(quantity),
-                "optional_text": "",
-            }
-        )
+        try:
+            self.print_queue.append(
+                {
+                    "barcode": barcode,
+                    "name": name,
+                    "price": price,
+                    "quantity": int(quantity),
+                    "optional_text": "",
+                }
+            )
+        except Exception as e:
+            print(f"Error adding labels to the queue. Probably tried to add 0 \n{e}")
 
     def update_queue_item_quantity(self, name, new_quantity):
         for item in self.print_queue:
@@ -294,25 +312,31 @@ class LabelPrinter:
                 printer_identifier="usb://0x04F9:0x2043",
                 backend_identifier="pyusb",
             )
+            return True
         except ValueError as e:
-            print(e)
-            pass
+            self.app.popup_manager.catch_label_printing_errors(e)
+            return False
 
     def process_queue(self):
+        self.print_success = True
 
         for item in self.print_queue:
             include_text = "optional_text" in item and item["optional_text"] != ""
             optional_text = item.get("optional_text", "")
             for _ in range(item["quantity"]):
-                self.print_barcode_label(
+                success = self.print_barcode_label(
                     item["barcode"],
                     item["price"],
                     f"{item['name']}_label.png",
                     include_text=include_text,
                     optional_text=optional_text,
                 )
+                if not success:
+                    self.print_success = False
 
-        self.print_queue.clear()
+        if self.print_success:
+            self.print_queue.clear()
+            self.app.label_manager.print_queue_popup.dismiss()
 
     def remove_from_queue(self, name):
         for i, item in enumerate(self.print_queue):
