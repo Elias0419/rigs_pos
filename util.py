@@ -195,7 +195,7 @@ class Utilities:
 
     def dismiss_guard_popup(self):
         self.app.popup_manager.guard_popup.dismiss()
-        self.turn_on_monitor()
+        #self.turn_on_monitor() ###############################################
 
     def close_item_popup(self):
         self.dismiss_popups("item_popup")
@@ -331,15 +331,6 @@ class Utilities:
 
 
 
-    def _test_current_context(self):
-        while True:
-            print(self.current_context)
-            time.sleep(1)
-
-    def _test_current_context_thread(self):
-        test_thread = threading.Thread(target=self._test_current_context)
-        test_thread.daemon = True
-        test_thread.start()
 
     def check_inactivity(self, *args):
         try:
