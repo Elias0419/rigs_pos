@@ -204,7 +204,7 @@ class Utilities:
 
     def dismiss_guard_popup(self):
         self.app.popup_manager.guard_popup.dismiss()
-        self.turn_on_monitor()
+        #self.turn_on_monitor()
 
     def close_item_popup(self):
         self.dismiss_popups("item_popup")
@@ -246,7 +246,10 @@ class Utilities:
     def on_split_custom_cash_cancel(self, instance):
         self.app.popup_manager.dismiss_popups("split_custom_cash_popup")
 
-
+    def trigger_guard_and_lock(self):
+        if not self.app.is_guard_screen_displayed and not self.app.is_lock_screen_displayed:
+                self.app.popup_manager.show_lock_screen(self)
+                self.app.popup_manager.show_guard_screen()
 
     def check_monitor_status(self, dt):
         if self.is_monitor_off():
@@ -263,24 +266,6 @@ class Utilities:
         except Exception as e:
             print(e)
 
-    def save_settings(self):
-        settings = {
-            "primary_palette": self.app.theme_cls.primary_palette,
-            "theme_style": self.app.theme_cls.theme_style,
-        }
-        with open("settings.json", "w") as f:
-            json.dump(settings, f)
-
-    def load_settings(self):
-        try:
-            with open("settings.json", "r") as f:
-                settings = json.load(f)
-                self.app.theme_cls.primary_palette = settings.get(
-                    "primary_palette", "Brown"
-                )
-                self.app.theme_cls.theme_style = settings.get("theme_style", "Light")
-        except FileNotFoundError as e:
-            print(e)
 
     def turn_off_monitor(self):
         touchscreen_device = "iSolution multitouch"
@@ -326,9 +311,30 @@ class Utilities:
                 return current_brightness == 0.0
             else:
                 return False
+
         except Exception as e:
             print(e)
             return False
+
+
+    def save_settings(self):
+        settings = {
+            "primary_palette": self.app.theme_cls.primary_palette,
+            "theme_style": self.app.theme_cls.theme_style,
+        }
+        with open("settings.json", "w") as f:
+            json.dump(settings, f)
+
+    def load_settings(self):
+        try:
+            with open("settings.json", "r") as f:
+                settings = json.load(f)
+                self.app.theme_cls.primary_palette = settings.get(
+                    "primary_palette", "Brown"
+                )
+                self.app.theme_cls.theme_style = settings.get("theme_style", "Light")
+        except FileNotFoundError as e:
+            print(e)
 
     def turn_on_monitor(self):
         try:
