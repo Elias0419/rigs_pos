@@ -247,6 +247,9 @@ class Utilities:
         self.app.popup_manager.dismiss_popups("split_custom_cash_popup")
 
     def trigger_guard_and_lock(self):
+        print("trigger")
+        print("self.app.is_guard_screen_displayed", self.app.is_guard_screen_displayed)
+        print("self.app.is_lock_screen_displayed", self.app.is_lock_screen_displayed)
         if not self.app.is_guard_screen_displayed and not self.app.is_lock_screen_displayed:
                 self.app.popup_manager.show_lock_screen(self)
                 self.app.popup_manager.show_guard_screen()
@@ -260,11 +263,7 @@ class Utilities:
             self.app.is_guard_screen_displayed = False
             self.app.is_lock_screen_displayed = False
 
-    def reboot(self, instance):
-        try:
-            subprocess.run(["systemctl", "reboot"])
-        except Exception as e:
-            print(e)
+
 
 
     def turn_off_monitor(self):
@@ -316,6 +315,11 @@ class Utilities:
             print(e)
             return False
 
+    def reboot(self, instance):
+        try:
+            subprocess.run(["systemctl", "reboot"])
+        except Exception as e:
+            print(e)
 
     def save_settings(self):
         settings = {
