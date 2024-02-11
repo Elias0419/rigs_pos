@@ -251,7 +251,7 @@ class Utilities:
     def check_monitor_status(self, dt):
         if self.is_monitor_off():
             if not self.app.is_guard_screen_displayed and not self.app.is_lock_screen_displayed:
-                self.app.popup_manager.show_lock_screen()
+                self.app.popup_manager.show_lock_screen(self)
                 self.app.popup_manager.show_guard_screen()
         else:
             self.app.is_guard_screen_displayed = False
