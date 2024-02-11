@@ -4,6 +4,7 @@ import time
 import subprocess
 import re
 import threading
+import dbus
 from open_cash_drawer import open_cash_drawer
 import sys
 from kivy.clock import Clock
@@ -351,14 +352,19 @@ class Utilities:
 
 
 
+
     def check_inactivity(self, *args):
         try:
 
-            result = subprocess.run(["xprintidle"], stdout=subprocess.PIPE, check=True)
-            inactive_time = int(result.stdout.decode().strip())
+            bus = dbus.SessionBus()
+            screensaver_proxy = bus.get_object("org.freedesktop.ScreenSaver", "/org/freedesktop/ScreenSaver")
+            screensaver_interface = dbus.Interface(screensaver_proxy, dbus_interface="org.freedesktop.ScreenSaver")
+            idle_time = screensaver_interface.GetSessionIdleTime()
 
-            if inactive_time > 600000:
-                self.turn_off_monitor()
+            if idle_time > 600000:
+                self.trigger_guard_and_lock()
+
+           return idle_time
 
         except Exception as e:
             print(e)

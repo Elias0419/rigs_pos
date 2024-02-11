@@ -125,7 +125,7 @@ class CashRegisterApp(MDApp):
         button_layout.add_widget(btn_tools)
         main_layout.add_widget(button_layout)
 
-        # Clock.schedule_interval(self.utilities.check_inactivity, 10)
+        Clock.schedule_interval(self.utilities.check_inactivity, 10)
         Clock.schedule_interval(self.check_for_scanned_barcode, 0.1)
 
         # if not hasattr(self, "monitor_check_scheduled"):
