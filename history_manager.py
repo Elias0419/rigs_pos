@@ -151,9 +151,7 @@ class HistoryView(BoxLayout):
         total_tax = sum(float(order["tax"]) for order in self.rv_data)
         total_with_tax = sum(float(order["total_with_tax"]) for order in self.rv_data)
 
-        #date_range_str = self.get_date_range_str()
 
-        # self.total_amount_label.text = f"{date_range_str} Total: ${total_amount:.2f}, Total Tax: ${total_tax:.2f}, Total with Tax: ${total_with_tax:.2f}"
         self.total_amount_label.text = f"${total_amount:.2f} + ${total_tax:.2f} tax = ${total_with_tax:.2f}"
 
 

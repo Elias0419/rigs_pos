@@ -14,6 +14,7 @@ from kivy.clock import Clock
 from kivymd.uix.label import MDLabel
 from kivy.uix.image import Image
 import os
+from functools import partial
 
 class PopupManager:
     def __init__(self, ref):
@@ -254,7 +255,7 @@ class PopupManager:
             title="",
             content=layout,
             size_hint=(0.6, 0.6),
-            background="transparent.png",
+            background="images/transparent.png",
             background_color=(0, 0, 0, 0),
             separator_height=0,
         )
@@ -278,7 +279,7 @@ class PopupManager:
             content=float_layout,
             size_hint=(0.6, 0.6),
             title="",
-            background="transparent.png",
+            background="images/transparent.png",
             background_color=(0, 0, 0, 0),
             separator_height=0,
         )
@@ -393,11 +394,11 @@ class PopupManager:
             )
             self.guard_popup.open()
 
-    def show_lock_screen(self):
+    def show_lock_screen(self, x):
         if not self.app.is_lock_screen_displayed:
             lock_layout = BoxLayout(orientation="horizontal", size_hint=(1, 1))
             lock_button_layout = BoxLayout(orientation="vertical", size_hint=(0.5, 1))
-            keypad_layout = GridLayout(cols=3)
+            self.lockscreen_keypad_layout = GridLayout(cols=3, spacing=1)
 
             numeric_buttons = [
                 "1",
@@ -416,14 +417,16 @@ class PopupManager:
 
             for button in numeric_buttons:
                 if button != " ":
-                    btn = MDFlatButton(
-                        text=button,
-                        text_color=(0, 0, 0, 1),
-                        font_style="H4",
+                    btn = MarkupButton(
+                        text=f"[b][size=20]{button}[/size][/b]",
+                        color=(1, 1, 1, 1),
                         size_hint=(0.8, 0.8),
-                        on_press=self.app.button_handler.on_lock_screen_button_press,
+                        on_press=partial(self.app.button_handler.on_lock_screen_button_press, button),
+                        background_normal='images/lockscreen_background_up.png',
+                        background_down='images/lockscreen_background_down.png'
                     )
-                    keypad_layout.add_widget(btn)
+                    self.lockscreen_keypad_layout.add_widget(btn)
+
                 else:
                     btn_2 = Button(
                         size_hint=(0.8, 0.8),
@@ -431,16 +434,17 @@ class PopupManager:
                         background_color=(0, 0, 0, 0),
                     )
                     btn_2.bind(on_press=self.app.utilities.manual_override)
-                    keypad_layout.add_widget(btn_2)
+                    self.lockscreen_keypad_layout.add_widget(btn_2)
             clock_layout = self.create_clock_layout()
-            lock_button_layout.add_widget(keypad_layout)
+            lock_button_layout.add_widget(self.lockscreen_keypad_layout)
             lock_layout.add_widget(lock_button_layout)
             lock_layout.add_widget(clock_layout)
             self.lock_popup = Popup(
-                title="Lock Screen",
+                title="",
                 content=lock_layout,
                 size_hint=(1, 1),
                 auto_dismiss=False,
+                background_color=(0.78, 0.78, 0.78, 1)
             )
             self.app.is_lock_screen_displayed = True
             self.lock_popup.bind(
@@ -450,16 +454,24 @@ class PopupManager:
             )
             self.lock_popup.open()
 
+    def flash_buttons_red(self):
+
+        for btn in self.lockscreen_keypad_layout.children:
+            original_background = btn.background_normal
+            btn.background_normal = 'red_background.png'
+
+            Clock.schedule_once(lambda dt, btn=btn, original=original_background: setattr(btn, 'background_normal', original), 0.5)
+
     def create_clock_layout(self):
         clock_layout = BoxLayout(orientation="vertical", size_hint_x=1 / 3)
-        image_path = 'RIGS2.png'
+        image_path = 'images/RIGS2.png'
         if os.path.exists(image_path):
-            img = Image(source=image_path, size_hint=(0.9, 0.75))
+            img = Image(source=image_path, size_hint=(1, 0.75))
         else:
 
             img = Label(text="", size_hint=(1, 0.75), halign='center')
         self.clock_label = MDLabel(
-            text="Loading...",
+            text="",
             size_hint_y=None,
             font_style="H6",
             height=80,
@@ -511,7 +523,7 @@ class PopupManager:
             content=float_layout,
             size_hint=(0.6, 0.6),
             title="",
-            background="transparent.png",
+            background="images/transparent.png",
             background_color=(0, 0, 0, 0),
             separator_height=0,
         )
@@ -1279,7 +1291,8 @@ class PopupManager:
 
 class MarkupLabel(Label):
     pass
-
+class MarkupButton(Button):
+    pass
 
 class MoneyInput(TextInput):
     def insert_text(self, substring, from_undo=False):

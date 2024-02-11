@@ -144,19 +144,20 @@ class ButtonHandler:
         order_details = self.app.order_manager.get_order_details()
         printer.print_receipt(order_details)
 
-    def on_lock_screen_button_press(self, instance):
-        if instance.text == "Reset":
+    def on_lock_screen_button_press(self, button_text, instance):
+        if button_text == "Reset":
             self.app.entered_pin = ""
         else:
-            self.app.entered_pin += instance.text
+            self.app.entered_pin += button_text
             self.app.utilities.reset_pin_timer()
 
         if len(self.app.entered_pin) == 4:
             if self.app.entered_pin == self.app.correct_pin:
                 self.app.popup_manager.lock_popup.dismiss()
-                self.app.entered_pin = ""
             else:
-                self.app.entered_pin = ""
+                self.app.utilities.indicate_incorrect_pin(self.app.popup_manager.lock_popup)
+                self.app.popup_manager.flash_buttons_red()
+            self.app.entered_pin = ""
 
     def on_preset_amount_press(self, instance):
         self.app.popup_manager.cash_payment_input.text = instance.text.strip("$")
