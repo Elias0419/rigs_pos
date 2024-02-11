@@ -247,74 +247,75 @@ class Utilities:
     def on_split_custom_cash_cancel(self, instance):
         self.app.popup_manager.dismiss_popups("split_custom_cash_popup")
 
-    def trigger_guard_and_lock(self):
-        print("trigger")
-        print("self.app.is_guard_screen_displayed", self.app.is_guard_screen_displayed)
-        print("self.app.is_lock_screen_displayed", self.app.is_lock_screen_displayed)
-        if not self.app.is_guard_screen_displayed and not self.app.is_lock_screen_displayed:
-                self.app.popup_manager.show_lock_screen(self)
-                self.app.popup_manager.show_guard_screen()
+    def trigger_guard_and_lock(self, trigger=False):
+        if trigger:
+            self.app.popup_manager.show_lock_screen(self)
+        elif not self.app.is_guard_screen_displayed and not self.app.is_lock_screen_displayed:
+            self.app.popup_manager.show_lock_screen(self)
+            self.app.popup_manager.show_guard_screen()
+        elif self.app.is_lock_screen_displayed and not self.app.is_guard_screen_displayed:
+            self.app.popup_manager.show_guard_screen()
 
-    def check_monitor_status(self, dt):
-        if self.is_monitor_off():
-            if not self.app.is_guard_screen_displayed and not self.app.is_lock_screen_displayed:
-                self.app.popup_manager.show_lock_screen(self)
-                self.app.popup_manager.show_guard_screen()
-        else:
-            self.app.is_guard_screen_displayed = False
-            self.app.is_lock_screen_displayed = False
-
-
-
-
-    def turn_off_monitor(self):
-        touchscreen_device = "iSolution multitouch"
-        try:
-            subprocess.run(["xinput", "disable", touchscreen_device], check=True)
-        except subprocess.CalledProcessError as e:
-            print(e)
-            subprocess.run(["xinput", "enable", touchscreen_device], check=True)
-            return
-
-        try:
-            subprocess.run(
-                ["xrandr", "--output", "HDMI-1", "--brightness", "0"], check=True
-            )
-        except subprocess.CalledProcessError as e:
-            subprocess.run(
-                ["xrandr", "--output", "HDMI-1", "--brightness", "1"], check=True
-            )
-            print(e)
-            return
-
-        def reenable_touchscreen():
-            time.sleep(1)
-            try:
-                subprocess.run(["xinput", "enable", touchscreen_device], check=True)
-            except subprocess.CalledProcessError as e:
-                print(e)
-
-        threading.Thread(target=reenable_touchscreen).start()
-
-    def is_monitor_off(self):
-        output_name = "HDMI-1"
-        try:
-            result = subprocess.run(
-                ["xrandr", "--verbose"], stdout=subprocess.PIPE, check=True
-            )
-            output = result.stdout.decode("utf-8")
-            pattern = rf"{output_name} connected.*?Brightness: (\d+\.\d+)"
-            match = re.search(pattern, output, re.DOTALL)
-
-            if match:
-                current_brightness = float(match.group(1))
-                return current_brightness == 0.0
-            else:
-                return False
-
-        except Exception as e:
-            print(e)
-            return False
+    # def check_monitor_status(self, dt):
+    #     if self.is_monitor_off():
+    #         if not self.app.is_guard_screen_displayed and not self.app.is_lock_screen_displayed:
+    #             self.app.popup_manager.show_lock_screen(self)
+    #             self.app.popup_manager.show_guard_screen()
+    #     else:
+    #         self.app.is_guard_screen_displayed = False
+    #         self.app.is_lock_screen_displayed = False
+    #
+    #
+    #
+    #
+    # def turn_off_monitor(self):
+    #     touchscreen_device = "iSolution multitouch"
+    #     try:
+    #         subprocess.run(["xinput", "disable", touchscreen_device], check=True)
+    #     except subprocess.CalledProcessError as e:
+    #         print(e)
+    #         subprocess.run(["xinput", "enable", touchscreen_device], check=True)
+    #         return
+    #
+    #     try:
+    #         subprocess.run(
+    #             ["xrandr", "--output", "HDMI-1", "--brightness", "0"], check=True
+    #         )
+    #     except subprocess.CalledProcessError as e:
+    #         subprocess.run(
+    #             ["xrandr", "--output", "HDMI-1", "--brightness", "1"], check=True
+    #         )
+    #         print(e)
+    #         return
+    #
+    #     def reenable_touchscreen():
+    #         time.sleep(1)
+    #         try:
+    #             subprocess.run(["xinput", "enable", touchscreen_device], check=True)
+    #         except subprocess.CalledProcessError as e:
+    #             print(e)
+    #
+    #     threading.Thread(target=reenable_touchscreen).start()
+    #
+    # def is_monitor_off(self):
+    #     output_name = "HDMI-1"
+    #     try:
+    #         result = subprocess.run(
+    #             ["xrandr", "--verbose"], stdout=subprocess.PIPE, check=True
+    #         )
+    #         output = result.stdout.decode("utf-8")
+    #         pattern = rf"{output_name} connected.*?Brightness: (\d+\.\d+)"
+    #         match = re.search(pattern, output, re.DOTALL)
+    #
+    #         if match:
+    #             current_brightness = float(match.group(1))
+    #             return current_brightness == 0.0
+    #         else:
+    #             return False
+    #
+    #     except Exception as e:
+    #         print(e)
+    #         return False
 
     def reboot(self, instance):
         try:
@@ -362,7 +363,7 @@ class Utilities:
             idle_time = screensaver_interface.GetSessionIdleTime()
 
             if idle_time > 600000:
-                self.trigger_guard_and_lock()
+                self.trigger_guard_and_lock(trigger=False)
 
             #return idle_time
 

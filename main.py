@@ -170,7 +170,7 @@ class CashRegisterApp(MDApp):
         padlock_button = MDIconButton(
             icon="lock",
             pos_hint={"right": 1},
-            on_press=lambda x: self.utilities.trigger_guard_and_lock(),
+            on_press=lambda x: self.utilities.trigger_guard_and_lock(trigger=True),
             # on_press=lambda x: self.utilities.turn_off_monitor(),
         )
         clock_layout.add_widget(padlock_button)
