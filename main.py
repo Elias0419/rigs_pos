@@ -125,18 +125,18 @@ class CashRegisterApp(MDApp):
         button_layout.add_widget(btn_tools)
         main_layout.add_widget(button_layout)
 
-        Clock.schedule_interval(self.utilities.check_inactivity, 10)
+        # Clock.schedule_interval(self.utilities.check_inactivity, 10)
         Clock.schedule_interval(self.check_for_scanned_barcode, 0.1)
 
-        if not hasattr(self, "monitor_check_scheduled"):
-            Clock.schedule_interval(self.utilities.check_monitor_status, 5)
-            self.monitor_check_scheduled = True
+        # if not hasattr(self, "monitor_check_scheduled"):
+        #     Clock.schedule_interval(self.utilities.check_monitor_status, 5)
+        #     self.monitor_check_scheduled = True
 
         base_layout = FloatLayout()
 
         try:
             if self.theme_cls.theme_style == "Light":
-                bg_image = Image(source='images/textured-background.jpg', allow_stretch=True, keep_ratio=False)
+                bg_image = Image(source='images/gradient_wallpaper.png', allow_stretch=True, keep_ratio=False)
                 base_layout.add_widget(bg_image)
             else:
                 bg_image = Image(source='images/grey_mountains.jpg', allow_stretch=True, keep_ratio=False)
@@ -170,7 +170,8 @@ class CashRegisterApp(MDApp):
         padlock_button = MDIconButton(
             icon="lock",
             pos_hint={"right": 1},
-            on_press=lambda x: self.utilities.turn_off_monitor(),
+            on_press=lambda x: self.utilities.trigger_guard_and_lock(),
+            # on_press=lambda x: self.utilities.turn_off_monitor(),
         )
         clock_layout.add_widget(padlock_button)
 
