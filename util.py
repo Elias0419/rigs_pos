@@ -364,7 +364,7 @@ class Utilities:
             if idle_time > 600000:
                 self.trigger_guard_and_lock()
 
-           return idle_time
+            #return idle_time
 
         except Exception as e:
             print(e)
