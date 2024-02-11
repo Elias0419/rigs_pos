@@ -1,19 +1,24 @@
-from datetime import datetime
+# import logging
+# from logger_conf import setup_logging
+# setup_logging()
+# logger = logging.getLogger(__name__)
+# logger.info("Application starting..")
+
 import json
+import subprocess
+from datetime import datetime
+import eel
 
-from kivy.modules import monitor
 from kivy.config import Config
-
 Config.set("kivy", "keyboard_mode", "systemanddock")
 
-import eel
 from kivy.clock import Clock
 from kivy.core.window import Window
-from kivy.modules import inspector
-from kivy.uix.label import Label
-from kivy.uix.textinput import TextInput
+from kivy.modules import monitor, inspector
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.image import Image
+from kivy.uix.label import Label
+from kivy.uix.textinput import TextInput
 
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import BoxLayout
@@ -22,16 +27,19 @@ from kivymd.uix.gridlayout import GridLayout
 from kivymd.uix.label import MDLabel
 
 from barcode_scanner import BarcodeScanner
+from button_handlers import ButtonHandler
 from database_manager import DatabaseManager
+from history_manager import HistoryView, HistoryPopup
+from inventory_manager import InventoryManagementView
 from label_printer import LabelPrintingView, LabelPrinter
 from open_cash_drawer import open_cash_drawer
 from order_manager import OrderManager
-from history_manager import HistoryView, HistoryPopup
-from receipt_printer import ReceiptPrinter
-from inventory_manager import InventoryManagementView
 from popups import PopupManager, FinancialSummaryWidget
-from button_handlers import ButtonHandler
+from receipt_printer import ReceiptPrinter
 from util import Utilities
+
+
+
 Window.maximize()
 Window.borderless = True
 
@@ -53,7 +61,7 @@ class CashRegisterApp(MDApp):
 
 
     def build(self):
-        self.barcode_scanner = BarcodeScanner()
+        self.barcode_scanner = BarcodeScanner(self)
         self.db_manager = DatabaseManager("inventory.db", self)
         self.financial_summary = FinancialSummaryWidget(self)
         self.order_manager = OrderManager(self)
@@ -67,6 +75,8 @@ class CashRegisterApp(MDApp):
         self.button_handler = ButtonHandler(self)
         self.utilities = Utilities(self)
         self.categories = self.utilities.initialze_categories()
+        print("self.is_guard_screen_displayed at build",self.is_guard_screen_displayed)
+        print("self.is_lock_screen_displayed at build",self.is_lock_screen_displayed)
         self.utilities.load_settings()
 
         main_layout = GridLayout(
@@ -126,7 +136,7 @@ class CashRegisterApp(MDApp):
         main_layout.add_widget(button_layout)
 
         Clock.schedule_interval(self.utilities.check_inactivity, 10)
-        Clock.schedule_interval(self.check_for_scanned_barcode, 0.1)
+        Clock.schedule_interval(self.barcode_scanner.check_for_scanned_barcode, 0.1)
 
         # if not hasattr(self, "monitor_check_scheduled"):
         #     Clock.schedule_interval(self.utilities.check_monitor_status, 5)
@@ -187,54 +197,6 @@ class CashRegisterApp(MDApp):
 
         return financial_layout
 
-    """
-    Barcode functions
-    """
-
-    def check_for_scanned_barcode(self, dt):
-        if self.barcode_scanner.is_barcode_ready():
-            barcode = self.barcode_scanner.read_barcode()
-            self.handle_global_barcode_scan(barcode)
-
-    def handle_global_barcode_scan(self, barcode):
-        if self.current_context == "inventory":
-            self.inventory_manager.handle_scanned_barcode(barcode)
-        elif self.current_context == "label":
-            self.label_manager.handle_scanned_barcode(barcode)
-        elif self.current_context == "inventory_item":
-            self.inventory_manager.handle_scanned_barcode_item(barcode)
-        # elif self.current_context == "history":
-        #     self.history_manager.handle_scanned_barcode(barcode)
-        else:
-            self.handle_scanned_barcode(barcode)
-
-    def handle_scanned_barcode(self, barcode):
-        try:
-            if '-' in barcode and any(c.isalpha() for c in barcode):
-                self.history_manager.display_order_details_from_barcode_scan(barcode)
-            else:
-                item_details = self.db_manager.get_item_details(barcode)
-
-                if item_details:
-                    item_name, item_price = item_details
-                    self.order_manager.add_item(item_name, item_price)
-                    self.utilities.update_display()
-                    self.utilities.update_financial_summary()
-                    return item_details
-                else:
-                    self.popup_manager.show_add_or_bypass_popup(barcode)
-
-        except Exception as e:
-            print(e)
-
-
-
-
-
-
-    """
-    Web
-    """
 
     @eel.expose
     @staticmethod

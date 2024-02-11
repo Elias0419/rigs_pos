@@ -1,3 +1,8 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.popup import Popup
@@ -375,7 +380,11 @@ class PopupManager:
         self.adjust_price_popup.open()
 
     def show_guard_screen(self):
+        print("self.is_guard_screen_displayed at show guard 1",self.app.is_guard_screen_displayed)
+        print("self.is_lock_screen_displayed at show guard 1",self.app.is_lock_screen_displayed)
         if not self.app.is_guard_screen_displayed:
+            print("self.is_guard_screen_displayed at show guard 2",self.app.is_guard_screen_displayed)
+            print("self.is_lock_screen_displayed at show guard 2",self.app.is_lock_screen_displayed)
             guard_layout = BoxLayout()
             self.guard_popup = Popup(
                 title="Guard Screen",
@@ -387,6 +396,8 @@ class PopupManager:
                 on_touch_down=lambda x, touch: self.app.utilities.dismiss_guard_popup()
             )
             self.is_guard_screen_displayed = True
+            print("self.is_guard_screen_displayed at show guard after enable",self.app.is_guard_screen_displayed)
+            print("self.is_lock_screen_displayed at show guard after anable ",self.app.is_lock_screen_displayed)
             self.guard_popup.bind(
                 on_dismiss=lambda x: setattr(
                     self.app, "is_guard_screen_displayed", False
@@ -395,7 +406,11 @@ class PopupManager:
             self.guard_popup.open()
 
     def show_lock_screen(self, x):
+        print("self.is_guard_screen_displayed at show lock 1",self.app.is_guard_screen_displayed)
+        print("self.is_lock_screen_displayed at show lock 1",self.app.is_lock_screen_displayed)
         if not self.app.is_lock_screen_displayed:
+            print("self.is_guard_screen_displayed at show lock if",self.app.is_guard_screen_displayed)
+            print("self.is_lock_screen_displayed at show lock if",self.app.is_lock_screen_displayed)
             lock_layout = BoxLayout(orientation="horizontal", size_hint=(1, 1))
             lock_button_layout = BoxLayout(orientation="vertical", size_hint=(0.5, 1))
             self.lockscreen_keypad_layout = GridLayout(cols=3, spacing=1)
@@ -447,6 +462,8 @@ class PopupManager:
                 background_color=(0.78, 0.78, 0.78, 1)
             )
             self.app.is_lock_screen_displayed = True
+            print("self.is_guard_screen_displayed at show lock after",self.app.is_guard_screen_displayed)
+            print("self.is_lock_screen_displayed at show lock after",self.app.is_lock_screen_displayed)
             self.lock_popup.bind(
                 on_dismiss=lambda instance: setattr(
                     self, "is_lock_screen_displayed", False
@@ -463,6 +480,7 @@ class PopupManager:
             Clock.schedule_once(lambda dt, btn=btn, original=original_background: setattr(btn, 'background_normal', original), 0.5)
 
     def create_clock_layout(self):
+        logger.info("test")
         clock_layout = BoxLayout(orientation="vertical", size_hint_x=1 / 3)
         image_path = 'images/RIGS2.png'
         if os.path.exists(image_path):
