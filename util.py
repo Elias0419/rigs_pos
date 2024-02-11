@@ -204,6 +204,8 @@ class Utilities:
         return categories
 
     def dismiss_guard_popup(self):
+        print("self.is_guard_screen_displayed at dismiss",self.app.is_guard_screen_displayed)
+        print("self.is_lock_screen_displayed at dismiss",self.app.is_lock_screen_displayed)
         self.app.popup_manager.guard_popup.dismiss()
         #self.turn_on_monitor()
 
@@ -248,12 +250,20 @@ class Utilities:
         self.app.popup_manager.dismiss_popups("split_custom_cash_popup")
 
     def trigger_guard_and_lock(self, trigger=False):
+        print("self.is_guard_screen_displayed at trigger 1",self.app.is_guard_screen_displayed)
+        print("self.is_lock_screen_displayed at trigger1",self.app.is_lock_screen_displayed)
         if trigger:
+            print("self.is_guard_screen_displayed at trigger if",self.app.is_guard_screen_displayed)
+            print("self.is_lock_screen_displayed at trigger if",self.app.is_lock_screen_displayed)
             self.app.popup_manager.show_lock_screen(self)
         elif not self.app.is_guard_screen_displayed and not self.app.is_lock_screen_displayed:
+            print("self.is_guard_screen_displayed at trigger elif 1",self.app.is_guard_screen_displayed)
+            print("self.is_lock_screen_displayed at trigger elif 1",self.app.is_lock_screen_displayed)
             self.app.popup_manager.show_lock_screen(self)
             self.app.popup_manager.show_guard_screen()
         elif self.app.is_lock_screen_displayed and not self.app.is_guard_screen_displayed:
+            print("self.is_guard_screen_displayed at trigger elif 2",self.app.is_guard_screen_displayed)
+            print("self.is_lock_screen_displayed at trigger elif 2",self.app.is_lock_screen_displayed)
             self.app.popup_manager.show_guard_screen()
 
     # def check_monitor_status(self, dt):
@@ -362,13 +372,14 @@ class Utilities:
             screensaver_interface = dbus.Interface(screensaver_proxy, dbus_interface="org.freedesktop.ScreenSaver")
             idle_time = screensaver_interface.GetSessionIdleTime()
 
-            if idle_time > 600000:
+            #if idle_time > 600000:
+            if idle_time > 30000
                 self.trigger_guard_and_lock(trigger=False)
 
             #return idle_time
 
         except Exception as e:
-            print(e)
+            print(f"Exception in check_inactivity\n{e}")
 
 
     def clear_split_numeric_input(self):
