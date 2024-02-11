@@ -1,7 +1,7 @@
 from datetime import datetime
 import json
-import sys
 
+from kivy.modules import monitor
 from kivy.config import Config
 
 Config.set("kivy", "keyboard_mode", "systemanddock")
@@ -12,6 +12,8 @@ from kivy.core.window import Window
 from kivy.modules import inspector
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.image import Image
 
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import BoxLayout
@@ -61,7 +63,6 @@ class CashRegisterApp(MDApp):
         self.inventory_manager = InventoryManagementView()
         self.label_printer = LabelPrinter(self)
         self.label_manager = LabelPrintingView(self)
-
         self.popup_manager = PopupManager(self)
         self.button_handler = ButtonHandler(self)
         self.utilities = Utilities(self)
@@ -113,6 +114,7 @@ class CashRegisterApp(MDApp):
         )
         btn_tools = self.utilities.create_md_raised_button(
             "Tools",
+            #self.popup_manager.show_lock_screen,
             self.button_handler.on_button_press,
             (8, 8),
             "H6",
@@ -130,7 +132,30 @@ class CashRegisterApp(MDApp):
             Clock.schedule_interval(self.utilities.check_monitor_status, 5)
             self.monitor_check_scheduled = True
 
-        return main_layout
+        base_layout = FloatLayout()
+
+        try:
+            if self.theme_cls.theme_style == "Light":
+                bg_image = Image(source='images/textured-background.jpg', allow_stretch=True, keep_ratio=False)
+                base_layout.add_widget(bg_image)
+            else:
+                bg_image = Image(source='images/grey_mountains.jpg', allow_stretch=True, keep_ratio=False)
+                base_layout.add_widget(bg_image)
+
+        except Exception as e:
+
+            with base_layout.canvas.before:
+                Color(0.78, 0.78, 0.78, 1)
+                self.rect = Rectangle(size=base_layout.size, pos=base_layout.pos)
+
+            def update_rect(instance, value):
+                instance.rect.size = instance.size
+                instance.rect.pos = instance.pos
+
+            base_layout.bind(size=update_rect, pos=update_rect)
+
+        base_layout.add_widget(main_layout)
+        return base_layout
 
     def create_clock_layout(self):
         clock_layout = BoxLayout(orientation="vertical", size_hint_x=1 / 3)

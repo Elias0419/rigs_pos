@@ -6,6 +6,8 @@ import re
 import threading
 from open_cash_drawer import open_cash_drawer
 import sys
+from kivy.clock import Clock
+
 class Utilities:
     def __init__(self, ref):
         self.app = ref
@@ -439,3 +441,8 @@ class Utilities:
 
             open_cash_drawer()
             self.app.popup_manager.show_split_cash_confirm(amount)
+
+    def indicate_incorrect_pin(self, layout):
+        original_color = layout.background_color
+        layout.background_color = [1, 0, 0, 1]
+        Clock.schedule_once(lambda dt: setattr(layout, 'background_color', original_color), 0.5)
