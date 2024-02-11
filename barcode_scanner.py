@@ -61,7 +61,7 @@ class BarcodeScanner:
             self.app.inventory_manager.handle_scanned_barcode(barcode)
         elif self.app.current_context == "label":
             self.app.label_manager.handle_scanned_barcode(barcode)
-        elif self.current_context == "inventory_item":
+        elif self.app.current_context == "inventory_item":
             self.app.inventory_manager.handle_scanned_barcode_item(barcode)
         # elif self.current_context == "history":
         #     self.history_manager.handle_scanned_barcode(barcode)
