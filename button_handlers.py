@@ -154,6 +154,8 @@ class ButtonHandler:
         if len(self.app.entered_pin) == 4:
             if self.app.entered_pin == self.app.correct_pin:
                 self.app.popup_manager.lock_popup.dismiss()
+                self.app.is_guard_screen_displayed = False
+                self.app.is_lock_screen_displayed = False
             else:
                 self.app.utilities.indicate_incorrect_pin(self.app.popup_manager.lock_popup)
                 self.app.popup_manager.flash_buttons_red()
