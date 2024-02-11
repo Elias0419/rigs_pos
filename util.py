@@ -373,7 +373,7 @@ class Utilities:
             idle_time = screensaver_interface.GetSessionIdleTime()
 
             #if idle_time > 600000:
-            if idle_time > 30000
+            if idle_time > 30000:
                 self.trigger_guard_and_lock(trigger=False)
 
             #return idle_time
