@@ -158,9 +158,9 @@ class Utilities:
 
     def on_add_or_bypass_choice(self, choice_text, barcode):
         if choice_text == "Add Custom Item":
-            self.popup_manager.show_custom_item_popup(barcode)
+            self.app.popup_manager.show_custom_item_popup(barcode)
         elif choice_text == "Add to Database":
-            self.popup_manager.show_add_to_database_popup(barcode)
+            self.app.popup_manager.show_add_to_database_popup(barcode)
 
     def initialze_categories(self):
         categories = [
