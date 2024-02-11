@@ -480,7 +480,7 @@ class PopupManager:
             Clock.schedule_once(lambda dt, btn=btn, original=original_background: setattr(btn, 'background_normal', original), 0.5)
 
     def create_clock_layout(self):
-        logger.info("test")
+        # logger.info("test")
         clock_layout = BoxLayout(orientation="vertical", size_hint_x=1 / 3)
         image_path = 'images/RIGS2.png'
         if os.path.exists(image_path):
