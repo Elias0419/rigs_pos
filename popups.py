@@ -395,7 +395,7 @@ class PopupManager:
             self.guard_popup.bind(
                 on_touch_down=lambda x, touch: self.app.utilities.dismiss_guard_popup()
             )
-            self.is_guard_screen_displayed = True
+            self.app.is_guard_screen_displayed = True
             print("self.is_guard_screen_displayed at show guard after enable",self.app.is_guard_screen_displayed)
             print("self.is_lock_screen_displayed at show guard after anable ",self.app.is_lock_screen_displayed)
             self.guard_popup.bind(

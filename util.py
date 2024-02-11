@@ -253,17 +253,14 @@ class Utilities:
         print("self.is_guard_screen_displayed at trigger 1",self.app.is_guard_screen_displayed)
         print("self.is_lock_screen_displayed at trigger1",self.app.is_lock_screen_displayed)
         if trigger:
-            print("self.is_guard_screen_displayed at trigger if",self.app.is_guard_screen_displayed)
-            print("self.is_lock_screen_displayed at trigger if",self.app.is_lock_screen_displayed)
+
             self.app.popup_manager.show_lock_screen(self)
         elif not self.app.is_guard_screen_displayed and not self.app.is_lock_screen_displayed:
-            print("self.is_guard_screen_displayed at trigger elif 1",self.app.is_guard_screen_displayed)
-            print("self.is_lock_screen_displayed at trigger elif 1",self.app.is_lock_screen_displayed)
+
             self.app.popup_manager.show_lock_screen(self)
             self.app.popup_manager.show_guard_screen()
         elif self.app.is_lock_screen_displayed and not self.app.is_guard_screen_displayed:
-            print("self.is_guard_screen_displayed at trigger elif 2",self.app.is_guard_screen_displayed)
-            print("self.is_lock_screen_displayed at trigger elif 2",self.app.is_lock_screen_displayed)
+
             self.app.popup_manager.show_guard_screen()
 
     # def check_monitor_status(self, dt):
