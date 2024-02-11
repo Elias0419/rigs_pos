@@ -75,8 +75,7 @@ class CashRegisterApp(MDApp):
         self.button_handler = ButtonHandler(self)
         self.utilities = Utilities(self)
         self.categories = self.utilities.initialze_categories()
-        print("self.is_guard_screen_displayed at build",self.is_guard_screen_displayed)
-        print("self.is_lock_screen_displayed at build",self.is_lock_screen_displayed)
+
         self.utilities.load_settings()
 
         main_layout = GridLayout(

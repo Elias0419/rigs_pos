@@ -204,8 +204,7 @@ class Utilities:
         return categories
 
     def dismiss_guard_popup(self):
-        print("self.is_guard_screen_displayed at dismiss",self.app.is_guard_screen_displayed)
-        print("self.is_lock_screen_displayed at dismiss",self.app.is_lock_screen_displayed)
+
         self.app.popup_manager.guard_popup.dismiss()
         #self.turn_on_monitor()
 
@@ -250,8 +249,7 @@ class Utilities:
         self.app.popup_manager.dismiss_popups("split_custom_cash_popup")
 
     def trigger_guard_and_lock(self, trigger=False):
-        print("self.is_guard_screen_displayed at trigger 1",self.app.is_guard_screen_displayed)
-        print("self.is_lock_screen_displayed at trigger1",self.app.is_lock_screen_displayed)
+
         if trigger:
 
             self.app.popup_manager.show_lock_screen(self)
