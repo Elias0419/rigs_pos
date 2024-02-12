@@ -210,17 +210,36 @@ class OrderManager:
         if percent:
 
             self.add_discount(discount_amount, percent=True)
-            self.app.utilities.update_display()
-            self.app.utilities.update_financial_summary()
+            # self.app.utilities.update_display()
+            # self.app.utilities.update_financial_summary()
         else:
             self.add_discount(discount_amount)
-            self.app.utilities.update_display()
-            self.app.utilities.update_financial_summary()
+            # self.app.utilities.update_display()
+            # self.app.utilities.update_financial_summary()
 
+        self.app.utilities.update_display()
+        self.app.utilities.update_financial_summary()
         self.app.popup_manager.discount_popup.dismiss()
         self.app.popup_manager.item_popup.dismiss()
         if hasattr(self.app.popup_manager, "item_popup") and self.app.popup_manager.item_popup is not None:
             self.app.popup_manager.item_popup.dismiss()
+
+    def discount_entire_order(self, discount_amount, percent=False):
+
+        if percent:
+            discount_value = self.subtotal * (discount_amount / 100)
+        else:
+            discount_value = discount_amount
+
+        discount_value = min(discount_value, self.subtotal)
+
+        self.order_discount += discount_value
+        self.total = max(self.subtotal - self.order_discount, 0)
+
+        self.update_tax_amount()
+        self._update_total_with_tax()
+        self.app.utilities.update_display()
+        self.app.utilities.update_financial_summary()
 
     def add_adjusted_price_item(self):
         target_amount = self.app.popup_manager.adjust_price_cash_input.text
