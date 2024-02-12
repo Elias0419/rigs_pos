@@ -123,8 +123,8 @@ class Utilities:
                 valign="center",
             )
             item_button.bind(
-                on_press=lambda x: self.app.popup_manager.show_item_details_popup(item_id)
-            )
+            on_press=lambda x, item_id=item_id: self.app.popup_manager.show_item_details_popup(item_id)
+        )
             self.app.order_layout.add_widget(item_button)
 
     def update_financial_summary(self):
@@ -340,12 +340,27 @@ class Utilities:
         try:
             with open("settings.json", "r") as f:
                 settings = json.load(f)
-                self.app.theme_cls.primary_palette = settings.get(
-                    "primary_palette", "Brown"
-                )
+                # Load theme settings
+                self.app.theme_cls.primary_palette = settings.get("primary_palette", "Brown")
                 self.app.theme_cls.theme_style = settings.get("theme_style", "Light")
+
+                # Check for emergency reboot flag
+                if settings.get("emergency_reboot", True):
+                    self.handle_emergency_reboot()
+
         except FileNotFoundError as e:
             print(e)
+
+
+    def handle_emergency_reboot(self):
+        print("handle_emergency_reboot")
+        with open("settings.json", "r+") as f:
+            settings = json.load(f)
+            settings["emergency_reboot"] = False  # Reset the flag
+            f.seek(0)  # Reset file position to the beginning
+            json.dump(settings, f)
+            f.truncate()  # Remove remaining part of previous data
+        self.app.popup_manager.unrecoverable_error()
 
     def turn_on_monitor(self):
         try:
