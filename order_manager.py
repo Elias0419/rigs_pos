@@ -272,3 +272,19 @@ class OrderManager:
         self.set_payment_details(amount_tendered, change)
         self.app.popup_manager.show_make_change_popup(change)
 
+    def on_custom_cash_confirm(self, instance):
+        amount_tendered = float(self.app.popup_manager.custom_cash_input.text)
+        total_with_tax = self.app.order_manager.calculate_total_with_tax()
+        change = amount_tendered - total_with_tax
+        if hasattr(self.app.popup_manager, "cash_popup"):
+            self.app.popup_manager.cash_popup.dismiss()
+        if hasattr(self.app.popup_manager, "custom_cash_popup"):
+            self.app.popup_manager.custom_cash_popup.dismiss()
+        open_cash_drawer()
+        self.set_payment_method("Cash")
+        self.set_payment_details(amount_tendered, change)
+        self.app.popup_manager.show_make_change_popup(change)
+
+
+
+
