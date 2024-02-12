@@ -16,6 +16,66 @@ from kivymd.uix.recycleview import RecycleView
 from kivy.metrics import dp
 
 
+import logging
+
+# Mocking external dependencies for testing
+class MockBarcode:
+    def __init__(self, barcode_data, writer=None):
+        self.barcode_data = barcode_data
+        self.writer = writer
+
+    def render(self, options):
+        # Simulate rendering a barcode
+        print(f"Mock rendering barcode for {self.barcode_data} with options {options}")
+        return 'MockBarcodeImage'  # Return a mock object or identifier
+
+class MockImageWriter:
+    def write(self, content):
+        print("Mock writing image")
+
+class MockImage:
+    @staticmethod
+    def new(mode, size, color):
+        print(f"Mock creating a new image with mode {mode}, size {size}, color {color}")
+        return 'MockImage'  # Return a mock object
+
+    def paste(self, image, position):
+        print(f"Mock pasting image at {position}")
+
+class MockImageDraw:
+    def __init__(self, image):
+        self.image = image
+
+    def text(self, position, text, fill, font):
+        print(f"Mock drawing text '{text}' at {position} with fill {fill} and font {font}")
+
+    def textbbox(self, position, text, font):
+        # Simulate calculating text bounding box
+        return (0, 0, len(text) * 10, 10)  # Simplified bbox calculation
+
+class MockImageFont:
+    @staticmethod
+    def truetype(font_path, size):
+        print(f"Mock loading font {font_path} with size {size}")
+        return 'MockFont'  # Return a mock object
+
+class MockBrotherQLRaster:
+    def __init__(self, printer_model):
+        self.printer_model = printer_model
+        self.data = []
+
+    def add_data(self, data):
+        self.data.append(data)
+
+def mock_convert(qlr, images, label, cut):
+    print(f"Mock converting images for label {label} with cut {cut}")
+    qlr.add_data('MockPrintData')  # Simulate adding print data
+
+def mock_send(instructions, printer_identifier, backend_identifier):
+    print(f"Mock sending print instructions to printer {printer_identifier} using backend {backend_identifier}")
+    return True  # Simulate successful print
+
+
 class LabelPrintingRow(BoxLayout):
     barcode = StringProperty()
     name = StringProperty()
@@ -248,6 +308,58 @@ class LabelPrinter:
     def clear_queue(self):
         self.print_queue.clear()
 
+    # def print_barcode_label(self, barcode_data, item_price, save_path, include_text=False, optional_text=""):
+    #     # Use mock classes instead of real ones
+    #     UPC = MockBarcode
+    #     writer = MockImageWriter()
+    #
+    #     upc = UPC(barcode_data, writer=writer)
+    #
+    #     barcode_image = upc.render(
+    #         {
+    #             "module_width": 0.17,
+    #             "module_height": 10 if not include_text else 8,
+    #             "font_size": 4,
+    #             "dpi": 300,
+    #             "write_text": False,
+    #         }
+    #     )
+    #
+    #     label_image = MockImage.new("RGB", (202, 202), "white")
+    #     draw = MockImageDraw(label_image)
+    #
+    #     font = MockImageFont.truetype("/usr/share/fonts/TTF/Arialbd.TTF", 33)
+    #     draw.text((100, 0), f"${item_price}", fill="black", font=font)
+    #
+    #     if include_text and optional_text:
+    #         additional_font = MockImageFont.truetype(
+    #             "/usr/share/fonts/TTF/Arial.TTF", 30
+    #         )
+    #         draw.text(
+    #             (100, 160),
+    #             optional_text,
+    #             fill="black",
+    #             font=additional_font,
+    #         )
+    #
+    #     qlr = MockBrotherQLRaster("QL-710W")
+    #     mock_convert(qlr=qlr, images=[label_image], label="23x23", cut=False)
+    #     try:
+    #         mock_send(
+    #             instructions=qlr.data,
+    #             printer_identifier="usb://0x04F9:0x2043",
+    #             backend_identifier="pyusb",
+    #         )
+    #         return True
+    #     except ValueError as e:
+    #         self.app.popup_manager.catch_label_printing_errors(e)
+    #         return False
+
+    # def print_barcode_label(
+    #     self, barcode_data, item_price, save_path, include_text=False, optional_text=""
+    # ):
+    #     print("test",barcode_data, item_price, save_path, include_text, optional_text )
+
     def print_barcode_label(
         self, barcode_data, item_price, save_path, include_text=False, optional_text=""
     ):
@@ -313,7 +425,7 @@ class LabelPrinter:
                 backend_identifier="pyusb",
             )
             return True
-        except ValueError as e:
+        except Exception as e:
             self.app.popup_manager.catch_label_printing_errors(e)
             return False
 

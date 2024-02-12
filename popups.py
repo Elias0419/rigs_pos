@@ -885,7 +885,7 @@ class PopupManager:
         button_layout.add_widget(
             MDRaisedButton(
                 text="Confirm",
-                on_press=lambda _: self.app.add_item_to_database(
+                on_press=lambda _: self.app.db_manager.add_item_to_database(
                     barcode_input.text,
                     name_input.text,
                     price_input.text,
@@ -1292,7 +1292,7 @@ class PopupManager:
 
     def catch_label_printing_errors(self, e):
         label_errors_layout = BoxLayout(orientation="vertical")
-        label_errors_text = Label(text=f"The system can't find the label printer. \nIs it plugged in and turned on?\n\n{e}")
+        label_errors_text = Label(text=f"Caught an error from the label printer\nCheck that the printer is turned on and plugged in\nand there are labels in it.\n\n{e}")
         label_errors_button = MDRaisedButton(text="Dismiss", on_press=lambda x: self.label_errors_popup.dismiss())
         label_errors_layout.add_widget(label_errors_text)
         label_errors_layout.add_widget(label_errors_button)
