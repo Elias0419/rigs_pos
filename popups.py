@@ -718,7 +718,7 @@ class PopupManager:
 
     def open_custom_cash_popup(self, instance):
         self.custom_cash_popup_layout = BoxLayout(orientation="vertical", spacing=10)
-        self.cash_input = TextInput(
+        self.custom_cash_input = TextInput(
             text="",
             multiline=False,
             input_filter="float",
@@ -726,7 +726,7 @@ class PopupManager:
             size_hint_y=None,
             height=50,
         )
-        self.custom_cash_popup_layout.add_widget(self.cash_input)
+        self.custom_cash_popup_layout.add_widget(self.custom_cash_input)
 
         keypad_layout = GridLayout(cols=3, spacing=10)
 
@@ -745,14 +745,14 @@ class PopupManager:
         for button in numeric_buttons:
             btn = self.app.utilities.create_md_raised_button(
                 button,
-                self.app.button_handler.on_numeric_button_press,
+                self.app.button_handler.on_custom_cash_numeric_button_press,
                 (0.8, 0.8),
             )
             keypad_layout.add_widget(btn)
 
         confirm_button = self.app.utilities.create_md_raised_button(
             "Confirm",
-            lambda instance: self.app.on_cash_confirm(instance),
+            lambda instance: self.app.order_manager.on_custom_cash_confirm(instance),
             (0.8, 0.8),
         )
 
@@ -766,7 +766,7 @@ class PopupManager:
 
         self.custom_cash_popup_layout.add_widget(keypad_layout)
         self.custom_cash_popup = Popup(
-            title="Custom Item",
+            title="Custom Cash",
             content=self.custom_cash_popup_layout,
             size_hint=(0.8, 0.8),
         )
@@ -1300,6 +1300,22 @@ class PopupManager:
         self.label_errors_popup = Popup(content=label_errors_layout, size_hint=(0.4,0.4))
         self.label_errors_popup.open()
 
+    def unrecoverable_error(self):
+        print("unrecoverable")
+        error_layout=BoxLayout(orientation="vertical")
+        error_text=Label(text=f"There has been an unrecoverable error\nand the system needs to reboot\nSorry!")
+        error_button=Button(text="Reboot", on_press=lambda x: self.app.reboot())
+        error_layout.add_widget(error_text)
+        error_layout.add_widget(error_button)
+        error_popup=Popup(
+            title="Uh-Oh",
+            auto_dismiss=False,
+            size_hint=(0.4,0.4),
+            content=error_layout
+            )
+        error_popup.open()
+
+
 
 class MarkupLabel(Label):
     pass
@@ -1392,5 +1408,6 @@ class FinancialSummaryWidget(MDRaisedButton):
     def adjust_price(self):
         self.app.popup_manager.show_adjust_price_popup()
         self.order_mod_popup.dismiss()
+
 
 

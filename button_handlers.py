@@ -44,6 +44,16 @@ class ButtonHandler:
         remaining_cents = cents % 100
         self.app.popup_manager.cash_input.text = f"{dollars}.{remaining_cents:02d}"
 
+    def on_custom_cash_numeric_button_press(self, instance):
+        current_input = self.app.popup_manager.custom_cash_input.text.replace(".", "").lstrip("0")
+        print(type(current_input), current_input)
+        new_input = current_input + instance.text
+        new_input = new_input.zfill(2)
+        cents = int(new_input)
+        dollars = cents // 100
+        remaining_cents = cents % 100
+        self.app.popup_manager.custom_cash_input.text = f"{dollars}.{remaining_cents:02d}"
+
     def on_split_payment_numeric_button_press(self, instance):
         current_input = (
             self.app.popup_manager.split_payment_numeric_cash_input.text.replace(
