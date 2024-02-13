@@ -95,6 +95,20 @@ class ButtonHandler:
             f"{dollars}.{remaining_cents:02d}"
         )
 
+    def on_add_order_discount_numeric_button_press(self, instance):
+        current_input = self.app.popup_manager.discount_order_amount_input.text.replace(
+            ".", ""
+        ).lstrip("0")
+        new_input = current_input + instance.text
+        new_input = new_input.zfill(2)
+        cents = int(new_input)
+        dollars = cents // 100
+        remaining_cents = cents % 100
+        self.app.popup_manager.discount_order_amount_input.text = (
+            f"{dollars}.{remaining_cents:02d}"
+        )
+
+
     def on_adjust_price_numeric_button_press(self, instance):
         current_input = self.app.popup_manager.adjust_price_cash_input.text.replace(
             ".", ""
