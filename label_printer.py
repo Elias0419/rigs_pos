@@ -16,9 +16,6 @@ from kivymd.uix.recycleview import RecycleView
 from kivy.metrics import dp
 
 
-
-
-
 class LabelPrintingRow(BoxLayout):
     barcode = StringProperty()
     name = StringProperty()
@@ -51,13 +48,12 @@ class LabelPrintingRow(BoxLayout):
             pos_hint={"top": 1},
         )
 
-
         add_button = MDRaisedButton(
-                text="Add",
-                size_hint=(0.2, 0.8),
-                on_press=lambda x: self.on_add_button_press(quantity_input, popup),
-                disabled=True
-            )
+            text="Add",
+            size_hint=(0.2, 0.8),
+            on_press=lambda x: self.on_add_button_press(quantity_input, popup),
+            disabled=True,
+        )
 
         btn_layout.add_widget(add_button)
 
@@ -69,13 +65,12 @@ class LabelPrintingRow(BoxLayout):
             )
         )
         content.add_widget(btn_layout)
+
         def on_text(instance, value):
 
-            add_button.disabled = not(value.isdigit() and int(value) > 0)
-
+            add_button.disabled = not (value.isdigit() and int(value) > 0)
 
         quantity_input.bind(text=on_text)
-
 
         popup.open()
 
@@ -85,7 +80,9 @@ class LabelPrintingRow(BoxLayout):
 
     def add_quantity_to_queue(self, quantity):
         if quantity.isdigit() and int(quantity) > 0:
-            self.label_printer.add_to_queue(self.barcode, self.name, self.price, quantity)
+            self.label_printer.add_to_queue(
+                self.barcode, self.name, self.price, quantity
+            )
 
 
 class LabelPrintingView(BoxLayout):
@@ -169,11 +166,21 @@ class LabelPrintingView(BoxLayout):
             for item in self.label_printer.print_queue
         ]
 
-        btn_layout = BoxLayout(orientation="horizontal", spacing=10)
-        btn_layout.add_widget(MDRaisedButton(text="Print Now", on_press=self.print_now))
-        btn_layout.add_widget(MDRaisedButton(text="Cancel", on_press=self.cancel_print))
+        btn_layout = BoxLayout(orientation="horizontal", spacing=5, size_hint_y=0.2)
         btn_layout.add_widget(
-            MDRaisedButton(text="Clear Queue", on_press=self.clear_queue)
+            MDRaisedButton(
+                text="Print Now", on_press=self.print_now, size_hint=(0.2, 1)
+            )
+        )
+        btn_layout.add_widget(
+            MDRaisedButton(
+                text="Cancel", on_press=self.cancel_print, size_hint=(0.2, 1)
+            )
+        )
+        btn_layout.add_widget(
+            MDRaisedButton(
+                text="Clear Queue", on_press=self.clear_queue, size_hint=(0.2, 1)
+            )
         )
         queue_layout.add_widget(btn_layout)
         self.print_queue_popup = Popup(
@@ -191,7 +198,6 @@ class LabelPrintingView(BoxLayout):
 
     def print_now(self, instance):
         self.label_printer.process_queue()
-
 
     def cancel_print(self, instance):
         self.print_queue_popup.dismiss()
@@ -227,7 +233,6 @@ class LabelPrinter:
         self.print_queue = []
         self.app = ref
 
-
     def add_to_queue(self, barcode, name, price, quantity):
         try:
             self.print_queue.append(
@@ -250,8 +255,6 @@ class LabelPrinter:
 
     def clear_queue(self):
         self.print_queue.clear()
-
-
 
     def print_barcode_label(
         self, barcode_data, item_price, save_path, include_text=False, optional_text=""
@@ -307,7 +310,7 @@ class LabelPrinter:
                 font=additional_font,
             )
 
-        #label_image.show()
+        # label_image.show()
         qlr = brother_ql.BrotherQLRaster("QL-710W")
         qlr.exception_on_warning = True
         convert(qlr=qlr, images=[label_image], label="23x23", cut=False)

@@ -345,7 +345,7 @@ class PopupManager:
         for index, tool in enumerate(system_buttons):
             btn = MDRaisedButton(
                 text=tool,
-                size_hint=(0.4, 0.1),
+                size_hint=(1, 0.15),
                 pos_hint={"center_x": 0.5, "center_y": 1 - 0.2 * index},
                 on_press=self.app.button_handler.on_system_button_press,
             )
@@ -353,7 +353,7 @@ class PopupManager:
 
         self.system_popup = Popup(
             content=float_layout,
-            size_hint=(0.6, 0.6),
+            size_hint=(0.2, 0.6),
             title="",
             background="images/transparent.png",
             background_color=(0, 0, 0, 0),
@@ -576,7 +576,7 @@ class PopupManager:
             title="Inventory",
             content=inventory_view,
             textinput=inventory_view.ids.label_search_input,
-            size_hint=(0.9, 0.9),
+            size_hint=(0.8, 1),
             pos_hint={"top": 1},
         )
         self.inventory_popup.open()

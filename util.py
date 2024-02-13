@@ -483,3 +483,9 @@ class Utilities:
         original_color = layout.background_color
         layout.background_color = [1, 0, 0, 1]
         Clock.schedule_once(lambda dt: setattr(layout, 'background_color', original_color), 0.5)
+
+     # elif instance.text == "TEST": TODO
+        #     print("test button")
+        #     eel_thread = threading.Thread(target=self.start_eel)
+        #     eel_thread.daemon = True
+        #     eel_thread.start()
