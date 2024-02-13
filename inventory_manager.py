@@ -480,8 +480,10 @@ class InventoryRow(BoxLayout):
 
     def __init__(self, **kwargs):
         super(InventoryRow, self).__init__(**kwargs)
-        self.order_manager = OrderManager(self)
+        self.order_manager = OrderManager(None)
         self.app = App.get_running_app()
+
+
     def add_to_order(self):
 
         try:
@@ -493,13 +495,14 @@ class InventoryRow(BoxLayout):
 
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
-
+        self.app.popup_manager.inventory_popup.dismiss()
 
 class InventoryView(BoxLayout):
     def __init__(self, order_manager, **kwargs):
         super(InventoryView, self).__init__(**kwargs)
         self.order_manager = order_manager
         self.pos_hint = {"top": 1}
+
     def show_inventory(self, inventory_items):
         self.full_inventory = inventory_items
         data = self.generate_data_for_rv(inventory_items)
