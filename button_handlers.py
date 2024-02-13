@@ -5,123 +5,124 @@ class ButtonHandler:
     def __init__(self, ref):
         self.app = ref
 
-    def on_tool_button_press(self, instance):
-            if instance.text == "Clear Order":
-                self.app.order_layout.clear_widgets()
-                self.app.order_manager.clear_order()
-                self.app.update_financial_summary()
-            elif instance.text == "Open Register":
-                open_cash_drawer()
-            elif instance.text == "Reporting":
-                order_history = self.app.db_manager.get_order_history()
-                self.app.history_popup.show_hist_reporting_popup()
-            elif instance.text == "Label Printer":
-                self.app.popup_manager.show_label_printing_view()
-            elif instance.text == "Inventory Management":
-                self.app.popup_manager.show_inventory_management_view()
-            elif instance.text == "System":
-                self.app.popup_manager.show_system_popup()
-            self.app.popup_manager.tools_popup.dismiss()
 
-    def on_payment_button_press(self, instance):
-        if "Pay Cash" in instance.text:
-            self.app.popup_manager.show_cash_payment_popup()
-        elif "Pay Debit" in instance.text:
-            self.app.order_manager.handle_debit_payment()
-        elif "Pay Credit" in instance.text:
-            self.app.order_manager.handle_credit_payment()
-        elif "Split" in instance.text:
-            self.app.popup_manager.handle_split_payment()
-        elif "Cancel" in instance.text:
-            self.app.popup_manager.finalize_order_popup.dismiss()
+    def clear_order(self):
+        self.app.order_layout.clear_widgets()
+        self.app.order_manager.clear_order()
+        self.app.utilities.update_financial_summary()
+
+    def show_reporting(self):
+        self.app.db_manager.get_order_history()
+        self.app.history_popup.show_hist_reporting_popup()
+
+    def show_label_printer_view(self):
+        self.app.popup_manager.show_label_printing_view()
+
+    def show_inventory_management_view(self):
+        self.app.popup_manager.show_inventory_management_view()
+
+    def show_system_popup(self):
+        self.app.popup_manager.show_system_popup()
+
+    def on_tool_button_press(self, instance):
+        tool_actions = {
+            "Clear Order": self.clear_order,
+            "Open Register": open_cash_drawer,
+            "Reporting": self.show_reporting,
+            "Label Printer": self.show_label_printer_view,
+            "Inventory Management": self.show_inventory_management_view,
+            "System": self.show_system_popup
+        }
+        action = tool_actions.get(instance.text)
+        if action:
+            action()
+        self.app.popup_manager.tools_popup.dismiss()
+
+
+    def handle_numeric_input(self, input_field, instance_text):
+        current_input = input_field.text.replace(".", "").lstrip("0")
+        new_input = current_input + instance_text
+        new_input = new_input.zfill(2)
+        cents = int(new_input)
+        dollars = cents // 100
+        remaining_cents = cents % 100
+        input_field.text = f"{dollars}.{remaining_cents:02d}"
 
     def on_numeric_button_press(self, instance):
-        current_input = self.app.popup_manager.cash_input.text.replace(".", "").lstrip("0")
-        new_input = current_input + instance.text
-        new_input = new_input.zfill(2)
-        cents = int(new_input)
-        dollars = cents // 100
-        remaining_cents = cents % 100
-        self.app.popup_manager.cash_input.text = f"{dollars}.{remaining_cents:02d}"
+        self.handle_numeric_input(self.app.popup_manager.cash_input, instance.text)
 
     def on_custom_cash_numeric_button_press(self, instance):
-        current_input = self.app.popup_manager.custom_cash_input.text.replace(".", "").lstrip("0")
-        print(type(current_input), current_input)
-        new_input = current_input + instance.text
-        new_input = new_input.zfill(2)
-        cents = int(new_input)
-        dollars = cents // 100
-        remaining_cents = cents % 100
-        self.app.popup_manager.custom_cash_input.text = f"{dollars}.{remaining_cents:02d}"
+        self.handle_numeric_input(self.app.popup_manager.custom_cash_input, instance.text)
 
     def on_split_payment_numeric_button_press(self, instance):
-        current_input = (
-            self.app.popup_manager.split_payment_numeric_cash_input.text.replace(
-                ".", ""
-            ).lstrip("0")
-        )
-        new_input = current_input + instance.text
-        new_input = new_input.zfill(2)
-        cents = int(new_input)
-        dollars = cents // 100
-        remaining_cents = cents % 100
-        self.app.popup_manager.split_payment_numeric_cash_input.text = (
-            f"{dollars}.{remaining_cents:02d}"
-        )
+        self.handle_numeric_input(self.app.popup_manager.split_payment_numeric_cash_input, instance.text)
 
     def on_split_custom_cash_payment_numeric_button_press(self, instance):
-        current_input = self.app.popup_manager.split_custom_cash_input.text.replace(
-            ".", ""
-        ).lstrip("0")
-        new_input = current_input + instance.text
-        new_input = new_input.zfill(2)
-        cents = int(new_input)
-        dollars = cents // 100
-        remaining_cents = cents % 100
-        self.app.popup_manager.split_custom_cash_input.text = (
-            f"{dollars}.{remaining_cents:02d}"
-        )
+        self.handle_numeric_input(self.app.popup_manager.split_custom_cash_input, instance.text)
 
     def on_add_discount_numeric_button_press(self, instance):
-        current_input = self.app.popup_manager.discount_amount_input.text.replace(
-            ".", ""
-        ).lstrip("0")
-        new_input = current_input + instance.text
-        new_input = new_input.zfill(2)
-        cents = int(new_input)
-        dollars = cents // 100
-        remaining_cents = cents % 100
-        self.app.popup_manager.discount_amount_input.text = (
-            f"{dollars}.{remaining_cents:02d}"
-        )
+        self.handle_numeric_input(self.app.popup_manager.discount_amount_input, instance.text)
 
     def on_add_order_discount_numeric_button_press(self, instance):
-        current_input = self.app.popup_manager.discount_order_amount_input.text.replace(
-            ".", ""
-        ).lstrip("0")
-        new_input = current_input + instance.text
-        new_input = new_input.zfill(2)
-        cents = int(new_input)
-        dollars = cents // 100
-        remaining_cents = cents % 100
-        self.app.popup_manager.discount_order_amount_input.text = (
-            f"{dollars}.{remaining_cents:02d}"
-        )
-
+        self.handle_numeric_input(self.app.popup_manager.discount_order_amount_input, instance.text)
 
     def on_adjust_price_numeric_button_press(self, instance):
-        current_input = self.app.popup_manager.adjust_price_cash_input.text.replace(
-            ".", ""
-        ).lstrip("0")
-        new_input = current_input + instance.text
-        new_input = new_input.zfill(2)
-        cents = int(new_input)
-        dollars = cents // 100
-        remaining_cents = cents % 100
-        self.app.popup_manager.adjust_price_cash_input.text = (
-            f"{dollars}.{remaining_cents:02d}"
-        )
+        self.handle_numeric_input(self.app.popup_manager.adjust_price_cash_input, instance.text)
 
+    def on_payment_button_press(self, instance):
+        payment_actions = {
+            "Pay Cash": self.app.popup_manager.show_cash_payment_popup,
+            "Pay Debit": self.app.order_manager.handle_debit_payment,
+            "Pay Credit": self.app.order_manager.handle_credit_payment,
+            "Split": self.app.popup_manager.handle_split_payment,
+            "Cancel": lambda: self.app.popup_manager.finalize_order_popup.dismiss()
+        }
+
+        for action_text, action in payment_actions.items():
+            if action_text in instance.text:
+                action()
+                break
+
+    def on_system_button_press(self, instance):
+        system_actions = {
+            "Reboot System": self.app.popup_manager.reboot_are_you_sure,
+            "Restart App": lambda: sys.exit(42),
+            "Change Theme": self.app.popup_manager.show_theme_change_popup,
+
+        }
+
+        action = system_actions.get(instance.text)
+        if action:
+            action()
+        self.app.popup_manager.system_popup.dismiss()
+
+    def on_button_press(self, instance):
+        button_actions = {
+            "Clear Order": self.clear_order,
+            "Pay": self.pay_order,
+            "Custom": self.show_custom_item_popup,
+            "Tools": self.show_tools_popup,
+            "Search": self.show_inventory
+        }
+
+        action = button_actions.get(instance.text)
+        if action:
+            action()
+
+
+    def pay_order(self):
+        total = self.app.order_manager.calculate_total_with_tax()
+        if total > 0:
+            self.app.order_manager.finalize_order()
+
+    def show_custom_item_popup(self):
+        self.app.popup_manager.show_custom_item_popup(barcode="1234567890")
+
+    def show_tools_popup(self):
+        self.app.popup_manager.show_tools_popup()
+
+    def show_inventory(self):
+        self.app.popup_manager.show_inventory()
 
     def on_system_button_press(self, instance):
         if instance.text == "Reboot System":
@@ -130,28 +131,10 @@ class ButtonHandler:
             sys.exit(42)
         elif instance.text == "Change Theme":
             self.app.popup_manager.show_theme_change_popup()
-        # elif instance.text == "TEST":
-        #     print("test button")
-        #     eel_thread = threading.Thread(target=self.start_eel)
-        #     eel_thread.daemon = True
-        #     eel_thread.start()
+
         self.app.popup_manager.system_popup.dismiss()
 
-    def on_button_press(self, instance):
-        button_text = instance.text
-        total = self.app.order_manager.calculate_total_with_tax()
-        if button_text == "Clear Order":
-            self.app.order_layout.clear_widgets()
-            self.app.order_manager.clear_order()
-        elif button_text == "Pay":
-            if total > 0:
-                self.app.order_manager.finalize_order()
-        elif button_text == "Custom":
-            self.app.popup_manager.show_custom_item_popup(barcode="1234567890")
-        elif button_text == "Tools":
-            self.app.popup_manager.show_tools_popup()
-        elif button_text == "Search":
-            self.app.popup_manager.show_inventory()
+
 
     def on_done_button_press(self, instance):
         order_details = self.app.order_manager.get_order_details()
