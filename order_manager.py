@@ -125,19 +125,20 @@ class OrderManager:
             self._update_total_with_tax()
 
     def adjust_order_to_target_total(self, target_total_with_tax):
-        adjusted_subtotal = target_total_with_tax / (1 + self.tax_rate)
-        discount = self.subtotal - adjusted_subtotal
+        if target_total_with_tax is not "":
+            adjusted_subtotal = target_total_with_tax / (1 + self.tax_rate)
+            discount = self.subtotal - adjusted_subtotal
 
-        if discount < 0 or discount > self.subtotal:
-            return False
+            if discount < 0 or discount > self.subtotal:
+                return False
 
-        self.subtotal = adjusted_subtotal
-        self.total = adjusted_subtotal
-        self.order_discount += discount
-        self.tax_amount = self.total * self.tax_rate
-        self._total_with_tax = self.total + self.tax_amount
+            self.subtotal = adjusted_subtotal
+            self.total = adjusted_subtotal
+            self.order_discount += discount
+            self.tax_amount = self.total * self.tax_rate
+            self._total_with_tax = self.total + self.tax_amount
 
-        return True
+            return True
 
     def add_discount(self, discount_amount, percent=False):
         discount_amount = float(discount_amount)
@@ -221,25 +222,34 @@ class OrderManager:
         self.app.utilities.update_financial_summary()
         self.app.popup_manager.discount_popup.dismiss()
         self.app.popup_manager.item_popup.dismiss()
-        if hasattr(self.app.popup_manager, "item_popup") and self.app.popup_manager.item_popup is not None:
-            self.app.popup_manager.item_popup.dismiss()
+        # if hasattr(self.app.popup_manager, "item_popup") and self.app.popup_manager.item_popup is not None:
+        #     self.app.popup_manager.item_popup.dismiss()
 
     def discount_entire_order(self, discount_amount, percent=False):
+        if discount_amount is not "":
+            try:
+                discount_amount = float(discount_amount)
+            except Exception as e:
+                print(f"exception in discount entire order\n{e}")
+                pass
+            if percent:
+                discount_value = self.subtotal * discount_amount / 100
+            else:
+                discount_value = discount_amount
 
-        if percent:
-            discount_value = self.subtotal * (discount_amount / 100)
-        else:
-            discount_value = discount_amount
+            discount_value = min(discount_value, self.subtotal)
 
-        discount_value = min(discount_value, self.subtotal)
-
-        self.order_discount += discount_value
-        self.total = max(self.subtotal - self.order_discount, 0)
-
-        self.update_tax_amount()
-        self._update_total_with_tax()
-        self.app.utilities.update_display()
-        self.app.utilities.update_financial_summary()
+            self.order_discount += discount_value
+            self.total = max(self.subtotal - self.order_discount, 0)
+            try:
+                self.update_tax_amount()
+                self._update_total_with_tax()
+                self.app.utilities.update_display()
+                self.app.utilities.update_financial_summary()
+            except Exception as e:
+                print(f"exception updating totals in discount entire order\n{e}")
+            self.app.popup_manager.discount_order_popup.dismiss()
+            self.app.financial_summary.order_mod_popup.dismiss()
 
     def add_adjusted_price_item(self):
         target_amount = self.app.popup_manager.adjust_price_cash_input.text

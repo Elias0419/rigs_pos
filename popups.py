@@ -230,6 +230,77 @@ class PopupManager:
 
         self.discount_popup.open()
 
+    def add_order_discount_popup(self):
+        discount_order_popup_layout = BoxLayout(orientation="vertical", spacing=10)
+        self.discount_order_popup = Popup(
+            title="Add Discount",
+            content=discount_order_popup_layout,
+            size_hint=(0.8, 0.8),
+        )
+        self.discount_order_amount_input = TextInput(
+            text="",
+            disabled=True,
+            multiline=False,
+            input_filter="float",
+            font_size=30,
+            size_hint_y=None,
+            height=50,
+        )
+        discount_order_popup_layout.add_widget(self.discount_order_amount_input)
+
+        keypad_layout = GridLayout(cols=3, spacing=10)
+
+        numeric_buttons = [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "",
+            "0",
+            "",
+        ]
+        for button in numeric_buttons:
+
+            if button == "":
+                blank_space = Label(size_hint=(0.8, 0.8))
+                keypad_layout.add_widget(blank_space)
+            else:
+                btn = Button(
+                    text=button,
+                    on_press=self.app.button_handler.on_add_order_discount_numeric_button_press,
+                    size_hint=(0.8, 0.8),
+                )
+                keypad_layout.add_widget(btn)
+
+        amount_button = self.app.utilities.create_md_raised_button(
+            "Amount",
+            lambda x: self.app.order_manager.discount_entire_order(discount_amount=self.discount_order_amount_input.text),
+            size_hint=(0.8, 0.8),
+        )
+        percent_button = self.app.utilities.create_md_raised_button(
+            "Percent",
+            lambda x: self.app.order_manager.discount_entire_order(discount_amount=self.discount_order_amount_input.text, percent=True),
+            size_hint=(0.8, 0.8),
+        )
+
+        cancel_button = Button(
+            text="Cancel",
+            on_press=lambda x: self.discount_order_popup.dismiss(),
+            size_hint=(0.8, 0.8),
+        )
+
+        keypad_layout.add_widget(amount_button)
+        keypad_layout.add_widget(percent_button)
+        keypad_layout.add_widget(cancel_button)
+        discount_order_popup_layout.add_widget(keypad_layout)
+
+        self.discount_order_popup.open()
+
     def show_theme_change_popup(self):
         layout = GridLayout(cols=4, rows=8, orientation="lr-tb")
 
@@ -525,7 +596,7 @@ class PopupManager:
         for index, tool in enumerate(tool_buttons):
             btn = MDRaisedButton(
                 text=tool,
-                size_hint=(0.4, 0.1),
+                size_hint=(1, 0.15),
                 pos_hint={"center_x": 0.5, "center_y": 1 - 0.2 * index},
                 on_press=self.app.button_handler.on_tool_button_press,
             )
@@ -533,7 +604,7 @@ class PopupManager:
 
         self.tools_popup = Popup(
             content=float_layout,
-            size_hint=(0.6, 0.6),
+            size_hint=(0.2, 0.6),
             title="",
             background="images/transparent.png",
             background_color=(0, 0, 0, 0),
@@ -1292,7 +1363,7 @@ class PopupManager:
 
     def catch_label_printing_errors(self, e):
         label_errors_layout = BoxLayout(orientation="vertical")
-        label_errors_text = Label(text=f"Caught an error from the label printer\nCheck that the printer is turned on and plugged in\nand there are labels in it.\n\n{e}")
+        label_errors_text = Label(text=f"Caught an error from the label printer\nCheck that the printer is turned on and plugged in\nand there are labels in it.\n The full error is below:\n\n{e}")
         label_errors_button = MDRaisedButton(text="Dismiss", on_press=lambda x: self.label_errors_popup.dismiss())
         label_errors_layout.add_widget(label_errors_text)
         label_errors_layout.add_widget(label_errors_button)
@@ -1387,21 +1458,43 @@ class FinancialSummaryWidget(MDRaisedButton):
         self.order_mod_popup.dismiss()
 
     def open_order_modification_popup(self):
-        order_mod_layout = GridLayout(cols=2, spacing=5)
+        order_mod_layout = FloatLayout()
+
+        discount_order_button = MDRaisedButton(
+            text="Add Order Discount",
+            pos_hint={"center_x": 0.5, "center_y": 1 - 0.2},
+            size_hint=(1, 0.15),
+            on_press=lambda x: self.app.popup_manager.add_order_discount_popup()
+        )
+        clear_order_button = MDRaisedButton(
+            text="Clear Order",
+            pos_hint={"center_x": 0.5, "center_y": 1 - 0.2},
+            size_hint=(1, 0.15),
+            on_press=lambda x: self.clear_order()
+        )
         adjust_price_button = MDRaisedButton(
             text="Adjust Payment",
+            pos_hint={"center_x": 0.5, "center_y": 1 - 0.4},
+            size_hint=(1, 0.15),
             on_press=lambda x: self.adjust_price()
         )
         clear_order_button = MDRaisedButton(
-            text="Clear Order", on_press=lambda x: self.clear_order()
+            text="Clear Order",
+            pos_hint={"center_x": 0.5, "center_y": 1 - 0.6},
+            size_hint=(1, 0.15),
+            on_press=lambda x: self.clear_order()
         )
-
+        order_mod_layout.add_widget(discount_order_button)
         order_mod_layout.add_widget(adjust_price_button)
         order_mod_layout.add_widget(clear_order_button)
         self.order_mod_popup = Popup(
             title="",
             content=order_mod_layout,
-            size_hint=(0.2, 0.2),
+            size_hint=(0.2, 0.6),
+            background="images/transparent.png",
+            background_color=(0, 0, 0, 0),
+            separator_height=0,
+
         )
         self.order_mod_popup.open()
 
