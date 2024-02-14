@@ -237,6 +237,7 @@ class Utilities:
 
     def on_custom_item_cancel(self, instance):
         self.app.popup_manager.custom_item_popup.dismiss()
+        self.app.popup_manager.cash_input.text = ""
 
     def on_custom_cash_cancel(self, instance):
         self.app.popup_manager.custom_cash_popup.dismiss()

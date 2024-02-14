@@ -13,6 +13,10 @@ class PopupPreloader:
         self.adjust_price_popup = self.app.popup_manager.show_adjust_price_popup()
         self.guard_popup = self.app.popup_manager.show_guard_screen()
         self.lock_popup = self.app.popup_manager.show_lock_screen()
+        self.inventory_search_popup = self.app.popup_manager.show_inventory()
+        self.tools_popup = self.app.popup_manager.show_tools_popup()
+        self.custom_item_popup = self.app.popup_manager.show_custom_item_popup()
+
 
     def update_and_show_add_or_bypass_popup(self, barcode):
         self.app.popup_manager.barcode_label.text = f"Barcode: {barcode}"

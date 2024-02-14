@@ -554,7 +554,7 @@ class PopupManager:
             return self.lock_popup
             #self.lock_popup.open()
 
-    def flash_buttons_red(self):
+    def flash_buttons_red(self): # move to utils
 
         for btn in self.lockscreen_keypad_layout.children:
             original_background = btn.background_normal
@@ -562,7 +562,7 @@ class PopupManager:
 
             Clock.schedule_once(lambda dt, btn=btn, original=original_background: setattr(btn, 'background_normal', original), 0.5)
 
-    def create_clock_layout(self):
+    def create_clock_layout(self): #  not a popup - to utils
         # logger.info("test")
         self.pin_input = MDLabel(
                 text="",
@@ -597,6 +597,7 @@ class PopupManager:
         return clock_layout
 
     def show_inventory(self):
+        print("PRELOADER: created inventory search popup")
         inventory = self.app.db_manager.get_all_items()
         inventory_view = InventoryView(order_manager=self.app.order_manager)
         inventory_view.show_inventory(inventory)
@@ -607,9 +608,11 @@ class PopupManager:
             size_hint=(0.8, 1),
             pos_hint={"top": 1},
         )
-        self.inventory_popup.open()
+        #self.inventory_popup.open()
+        return self.inventory_popup
 
     def show_tools_popup(self):
+        print("PRELOADER: created tools popup")
         float_layout = FloatLayout()
 
         tool_buttons = [
@@ -638,9 +641,11 @@ class PopupManager:
             background_color=(0, 0, 0, 0),
             separator_height=0,
         )
-        self.tools_popup.open()
+        # self.tools_popup.open()
+        return self.tools_popup
 
-    def show_custom_item_popup(self, barcode):
+    def show_custom_item_popup(self, barcode="01234567890"):
+        print("PRELOADER: created custom item popup")
         self.custom_item_popup_layout = BoxLayout(orientation="vertical", spacing=10)
         self.cash_input = TextInput(
             text="",
@@ -695,10 +700,12 @@ class PopupManager:
             title="Custom Item",
             content=self.custom_item_popup_layout,
             size_hint=(0.8, 0.8),
+            on_dismiss=lambda x: setattr(self.cash_input, 'text', '')
         )
-        self.custom_item_popup.open()
+        return self.custom_item_popup
+        #self.custom_item_popup.open()
 
-    def show_order_popup(self, order_summary):
+    def show_order_popup(self, order_summary): # don't preload for now
         order_details = self.app.order_manager.get_order_details()
         popup_layout = BoxLayout(orientation="vertical", spacing=10)
         popup_layout.add_widget(MarkupLabel(text=order_summary, halign="left"))
@@ -752,7 +759,7 @@ class PopupManager:
         )
         self.finalize_order_popup.open()
 
-    def show_cash_payment_popup(self):
+    def show_cash_payment_popup(self): # don't preload for now (custom cash widgets are dynamic)
         total_with_tax = self.app.order_manager.calculate_total_with_tax()
         common_amounts = self.app.utilities.calculate_common_amounts(total_with_tax)
 
@@ -815,7 +822,7 @@ class PopupManager:
         )
         self.cash_popup.open()
 
-    def open_custom_cash_popup(self, instance):
+    def open_custom_cash_popup(self, instance): # preload not necessary
         self.custom_cash_popup_layout = BoxLayout(orientation="vertical", spacing=10)
         self.custom_cash_input = TextInput(
             text="",

@@ -115,13 +115,13 @@ class ButtonHandler:
             self.app.order_manager.finalize_order()
 
     def show_custom_item_popup(self):
-        self.app.popup_manager.show_custom_item_popup(barcode="1234567890")
+        self.app.popup_preloader.custom_item_popup.open()
 
     def show_tools_popup(self):
-        self.app.popup_manager.show_tools_popup()
+        self.app.popup_preloader.tools_popup.open()
 
     def show_inventory(self):
-        self.app.popup_manager.show_inventory()
+        self.app.popup_preloader.inventory_search_popup.open()
 
     def on_system_button_press(self, instance):
         if instance.text == "Reboot System":
