@@ -371,7 +371,7 @@ class PopupManager:
         self.system_popup.open()
 
     def show_label_printing_view(self):
-        print("PRELOADER: created label printing view popup")
+        #print("PRELOADER: created label printing view popup")
         inventory = self.app.db_manager.get_all_items()
         label_printing_view = self.app.label_manager
         self.app.current_context = "label"
@@ -381,11 +381,11 @@ class PopupManager:
             title="Label Printing", content=label_printing_view, size_hint=(0.9, 0.9)
         )
         self.label_printing_popup.bind(on_dismiss=self.app.utilities.reset_to_main_context)
-        #self.label_printing_popup.open()
-        return self.label_printing_popup
+        self.label_printing_popup.open()
+        #return self.label_printing_popup
 
     def show_inventory_management_view(self):
-        print("PRELOADER: created inventory management view popup")
+        #print("PRELOADER: created inventory management view popup")
         self.inventory_management_view = InventoryManagementView()
         inventory = self.app.db_manager.get_all_items()
         self.inventory_management_view.show_inventory_for_manager(inventory)
@@ -397,8 +397,8 @@ class PopupManager:
             size_hint=(0.9, 0.9),
         )
         self.inventory_management_view_popup.bind(on_dismiss=self.app.utilities.reset_to_main_context)
-        #self.inventory_management_view_popup.open()
-        return self.inventory_management_view_popup
+        self.inventory_management_view_popup.open()
+        #return self.inventory_management_view_popup
 
     def show_adjust_price_popup(self):
         print("PRELOADER: created adjust price popup")
