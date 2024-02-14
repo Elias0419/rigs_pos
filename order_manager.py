@@ -220,6 +220,7 @@ class OrderManager:
 
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
+        self.app.popup_manager.discount_amount_input.text = ""
         self.app.popup_manager.discount_popup.dismiss()
         self.app.popup_manager.item_popup.dismiss()
         # if hasattr(self.app.popup_manager, "item_popup") and self.app.popup_manager.item_popup is not None:
@@ -248,6 +249,7 @@ class OrderManager:
                 self.app.utilities.update_financial_summary()
             except Exception as e:
                 print(f"exception updating totals in discount entire order\n{e}")
+            self.app.popup_manager.discount_order_amount_input.text = ""
             self.app.popup_manager.discount_order_popup.dismiss()
             self.app.financial_summary.order_mod_popup.dismiss()
 
