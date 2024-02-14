@@ -122,8 +122,8 @@ class ButtonHandler:
         self.app.popup_preloader.tools_popup.open()
 
     def show_inventory(self):
-        self.app.popup_preloader.inventory_search_popup.open()
-
+        #self.app.popup_preloader.inventory_search_popup.open()
+        self.app.popup_manager.show_inventory()
     def on_system_button_press(self, instance):
         if instance.text == "Reboot System":
             self.app.popup_manager.reboot_are_you_sure()

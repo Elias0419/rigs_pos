@@ -223,7 +223,7 @@ class OrderManager:
         self.app.popup_manager.item_popup.dismiss()
 
     def discount_entire_order(self, discount_amount, percent=False):
-        if discount_amount is not "":
+        if discount_amount != "":
             try:
                 discount_amount = float(discount_amount)
             except Exception as e:
