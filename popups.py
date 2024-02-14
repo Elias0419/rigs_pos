@@ -517,8 +517,10 @@ class PopupManager:
                     btn_2.bind(on_press=self.app.utilities.manual_override)
                     self.lockscreen_keypad_layout.add_widget(btn_2)
             clock_layout = self.create_clock_layout()
+
             lock_button_layout.add_widget(self.lockscreen_keypad_layout)
             lock_layout.add_widget(lock_button_layout)
+            #lock_layout.add_widget(self.pin_input)
             lock_layout.add_widget(clock_layout)
             self.lock_popup = Popup(
                 title="",
@@ -546,6 +548,15 @@ class PopupManager:
 
     def create_clock_layout(self):
         # logger.info("test")
+        self.pin_input = MDLabel(
+                text="",
+                size_hint_y=None,
+                font_style="H4",
+                height=80,
+                color=self.app.utilities.get_text_color(),
+                halign="center",
+
+                )
         clock_layout = BoxLayout(orientation="vertical", size_hint_x=1 / 3)
         image_path = 'images/RIGS2.png'
         if os.path.exists(image_path):
@@ -556,7 +567,7 @@ class PopupManager:
         self.clock_label = MDLabel(
             text="",
             size_hint_y=None,
-            font_style="H6",
+            font_style="H4",
             height=80,
             color=self.app.utilities.get_text_color(),
             halign="center",
@@ -565,6 +576,7 @@ class PopupManager:
 
         Clock.schedule_interval(self.app.utilities.update_lockscreen_clock, 1)
         clock_layout.add_widget(img)
+        clock_layout.add_widget(self.pin_input)
         clock_layout.add_widget(self.clock_label)
         return clock_layout
 

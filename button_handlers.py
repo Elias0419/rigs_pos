@@ -4,7 +4,7 @@ import sys
 class ButtonHandler:
     def __init__(self, ref):
         self.app = ref
-
+        self.pin_reset_timer = self.app.pin_reset_timer
 
     def clear_order(self):
         self.app.order_layout.clear_widgets()
@@ -154,24 +154,29 @@ class ButtonHandler:
     def on_lock_screen_button_press(self, button_text, instance):
         if button_text == "Reset":
             self.app.entered_pin = ""
+            self.app.popup_manager.pin_input.text = ""
+            self.app.pin_reset_timer.reset() # Reset timer here if needed, for consistency.
         else:
             self.app.entered_pin += button_text
-            self.app.utilities.reset_pin_timer()
+            self.app.popup_manager.pin_input.text += button_text
+            self.app.pin_reset_timer.reset()  # Ensure timer is reset here for ongoing interactions.
 
         if len(self.app.entered_pin) == 4:
             if self.app.entered_pin == self.app.correct_pin:
                 self.app.popup_manager.lock_popup.dismiss()
                 self.app.is_guard_screen_displayed = False
                 self.app.is_lock_screen_displayed = False
-
+                self.app.pin_reset_timer.stop()
             else:
                 self.app.utilities.indicate_incorrect_pin(self.app.popup_manager.lock_popup)
                 self.app.popup_manager.flash_buttons_red()
+                self.app.popup_manager.pin_input.text = ""
+                self.app.pin_reset_timer.reset()
             self.app.entered_pin = ""
+            self.app.popup_manager.pin_input.text = ""
 
     def on_preset_amount_press(self, instance):
         self.app.popup_manager.cash_payment_input.text = instance.text.strip("$")
 
     def split_on_preset_amount_press(self, instance):
         self.app.popup_manager.split_cash_input.text = instance.text.strip("$")
-

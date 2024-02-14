@@ -37,7 +37,7 @@ from open_cash_drawer import open_cash_drawer
 from order_manager import OrderManager
 from popups import PopupManager, FinancialSummaryWidget
 from receipt_printer import ReceiptPrinter
-from util import Utilities
+from util import Utilities, ReusableTimer
 from wrapper import Wrapper
 
 
@@ -54,7 +54,7 @@ class CashRegisterApp(MDApp):
         self.is_guard_screen_displayed = False
         self.is_lock_screen_displayed = False
         self.override_tap_time = 0
-        self.pin_reset_timer = None
+
         self.current_context = "main"
         self.theme_cls.theme_style = "Dark"
         self.theme_cls.primary_palette = "Brown"
@@ -75,10 +75,14 @@ class CashRegisterApp(MDApp):
         self.label_printer = LabelPrinter(self)
         self.label_manager = LabelPrintingView(self)
         self.popup_manager = PopupManager(self)
-        self.button_handler = ButtonHandler(self)
         self.utilities = Utilities(self)
+        self.pin_reset_timer = ReusableTimer(5.0, self.utilities.reset_pin)
+        self.button_handler = ButtonHandler(self)
+
+
         self.wrapper = Wrapper(self)
         self.categories = self.utilities.initialze_categories()
+
 
         #self.utilities.load_settings()
 
