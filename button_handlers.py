@@ -16,10 +16,9 @@ class ButtonHandler:
         self.app.history_popup.show_hist_reporting_popup()
 
     def show_label_printer_view(self):
-        self.app.popup_manager.show_label_printing_view()
-
+        self.app.popup_preloader.label_printing_popup.open()
     def show_inventory_management_view(self):
-        self.app.popup_manager.show_inventory_management_view()
+        self.app.popup_preloader.inventory_management_view_popup.open()
 
     def show_system_popup(self):
         self.app.popup_manager.show_system_popup()

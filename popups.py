@@ -310,7 +310,7 @@ class PopupManager:
         #self.discount_order_popup.open()
         return self.discount_order_popup
 
-    def show_theme_change_popup(self):
+    def show_theme_change_popup(self): # skip preload for this - not used often enough
         layout = GridLayout(cols=4, rows=8, orientation="lr-tb")
 
         button_layout = GridLayout(
@@ -346,7 +346,7 @@ class PopupManager:
         )
         self.theme_change_popup.open()
 
-    def show_system_popup(self):
+    def show_system_popup(self): # skip preload for this - not used often enough
         float_layout = FloatLayout()
 
         system_buttons = ["Change Theme", "Reboot System", "Restart App", "TEST"]
@@ -371,33 +371,37 @@ class PopupManager:
         self.system_popup.open()
 
     def show_label_printing_view(self):
+        print("PRELOADER: created label printing view popup")
         inventory = self.app.db_manager.get_all_items()
         label_printing_view = self.app.label_manager
         self.app.current_context = "label"
 
         label_printing_view.show_inventory_for_label_printing(inventory)
-        label_printing_popup = Popup(
+        self.label_printing_popup = Popup(
             title="Label Printing", content=label_printing_view, size_hint=(0.9, 0.9)
         )
-        label_printing_popup.bind(on_dismiss=self.app.utilities.reset_to_main_context)
-        label_printing_popup.open()
+        self.label_printing_popup.bind(on_dismiss=self.app.utilities.reset_to_main_context)
+        #self.label_printing_popup.open()
+        return self.label_printing_popup
 
     def show_inventory_management_view(self):
-
+        print("PRELOADER: created inventory management view popup")
         self.inventory_management_view = InventoryManagementView()
         inventory = self.app.db_manager.get_all_items()
         self.inventory_management_view.show_inventory_for_manager(inventory)
         self.app.current_context = "inventory"
 
-        popup = Popup(
+        self.inventory_management_view_popup = Popup(
             title="Inventory Management",
             content=self.inventory_management_view,
             size_hint=(0.9, 0.9),
         )
-        popup.bind(on_dismiss=self.app.utilities.reset_to_main_context)
-        popup.open()
+        self.inventory_management_view_popup.bind(on_dismiss=self.app.utilities.reset_to_main_context)
+        #self.inventory_management_view_popup.open()
+        return self.inventory_management_view_popup
 
     def show_adjust_price_popup(self):
+        print("PRELOADER: created adjust price popup")
         self.adjust_price_popup_layout = BoxLayout(orientation="vertical", spacing=10)
         self.adjust_price_popup = Popup(
             title="Enter Target Amount",
@@ -457,10 +461,11 @@ class PopupManager:
         self.adjust_price_popup_layout.add_widget(keypad_layout)
         self.adjust_price_popup_layout.add_widget(buttons_layout)
 
-        self.adjust_price_popup.open()
+        #self.adjust_price_popup.open()
+        return self.adjust_price_popup
 
     def show_guard_screen(self):
-
+        print("PRELOADER: created guard screen popup")
         if not self.app.is_guard_screen_displayed:
 
             guard_layout = BoxLayout()
@@ -473,17 +478,18 @@ class PopupManager:
             self.guard_popup.bind(
                 on_touch_down=lambda x, touch: self.app.utilities.dismiss_guard_popup()
             )
-            self.app.is_guard_screen_displayed = True
+            #self.app.is_guard_screen_displayed = True
 
             self.guard_popup.bind(
                 on_dismiss=lambda x: setattr(
                     self.app, "is_guard_screen_displayed", False
                 )
             )
-            self.guard_popup.open()
+            return self.guard_popup
+            #self.guard_popup.open()
 
-    def show_lock_screen(self, x):
-
+    def show_lock_screen(self):
+        print("PRELOADER: created lock screen popup")
         if not self.app.is_lock_screen_displayed:
 
             lock_layout = BoxLayout(orientation="horizontal", size_hint=(1, 1))
@@ -538,14 +544,15 @@ class PopupManager:
                 auto_dismiss=False,
                 background_color=(0.78, 0.78, 0.78, 1)
             )
-            self.app.is_lock_screen_displayed = True
+            #self.app.is_lock_screen_displayed = True
 
             self.lock_popup.bind(
                 on_dismiss=lambda instance: setattr(
                     self, "is_lock_screen_displayed", False
                 )
             )
-            self.lock_popup.open()
+            return self.lock_popup
+            #self.lock_popup.open()
 
     def flash_buttons_red(self):
 
@@ -1520,7 +1527,7 @@ class FinancialSummaryWidget(MDRaisedButton):
         self.order_mod_popup.open()
 
     def adjust_price(self):
-        self.app.popup_manager.show_adjust_price_popup()
+        self.app.popup_preloader.adjust_price_popup.open()
         self.order_mod_popup.dismiss()
 
 
