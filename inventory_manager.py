@@ -195,8 +195,9 @@ class InventoryManagementView(BoxLayout):
 
     def open_category_button_popup(self):
         self.selected_categories = []
+        categories = self.app.utilities.initialze_categories()
         category_button_layout = GridLayout(size_hint=(1, 0.8), pos_hint={"top":1},cols=7, spacing=5)
-        for category in self.app.categories:
+        for category in categories:
             btn = MDRaisedButton(
                 text=category,
                 on_release=lambda instance, cat=category: self.toggle_category_selection(instance, cat),

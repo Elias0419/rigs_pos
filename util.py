@@ -24,7 +24,7 @@ class Utilities:
     def apply_categories(self):
         categories_str = ", ".join(self.app.selected_categories)
         self.app.popup_manager.add_to_db_category_input.text = categories_str
-        self.app.popup_manager.category_button_popup.dismiss()
+        self.app.popup_preloader.category_popup.dismiss()
 
     def reset_pin_timer(self):
         print("reset_pin_timer", self.app.pin_reset_timer)

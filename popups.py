@@ -26,10 +26,12 @@ class PopupManager:
         self.app = ref
 
     def create_category_popup(self):
+        print("PRELOADER: created category popup")
+        categories = self.app.utilities.initialze_categories()
         category_button_layout = GridLayout(
             size_hint=(1, 0.8), pos_hint={"top": 1}, cols=7, spacing=5
         )
-        for category in self.app.categories:
+        for category in categories:
             btn = MDRaisedButton(
                 text=category,
                 on_release=lambda instance, cat=category: self.app.utilities.toggle_category_selection(
@@ -55,16 +57,18 @@ class PopupManager:
         return category_popup
 
     def open_category_button_popup(self):
-        self.category_button_popup = self.create_category_popup()
-        self.category_button_popup.open()
+        #self.category_button_popup = self.create_category_popup()
+        self.app.popup_preloader.category_popup.open()
 
-    def show_add_or_bypass_popup(self, barcode):
+    def show_add_or_bypass_popup(self):
+        print("PRELOADER: created add or bypass popup")
         popup_layout = BoxLayout(orientation="vertical", spacing=5)
-        popup_layout.add_widget(Label(text=f"Barcode: {barcode}"))
+        self.barcode_label = Label(text="Barcode: ")
+        popup_layout.add_widget(self.barcode_label)
         button_layout = BoxLayout(orientation="horizontal", spacing=5)
 
         def on_button_press(instance, option):
-            self.app.utilities.on_add_or_bypass_choice(option, barcode)
+            self.app.utilities.on_add_or_bypass_choice(option, barcode=None)
             self.add_or_bypass_popup.dismiss()
 
         for option in ["Add Custom Item", "Add to Database"]:
@@ -80,7 +84,8 @@ class PopupManager:
         self.add_or_bypass_popup = Popup(
             title="Item Not Found", content=popup_layout, size_hint=(0.6, 0.4)
         )
-        self.add_or_bypass_popup.open()
+        # self.add_or_bypass_popup.open()
+        return self.add_or_bypass_popup
 
     def show_item_details_popup(self, item_id):
         item_info = self.app.order_manager.items.get(item_id)

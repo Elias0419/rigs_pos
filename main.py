@@ -36,6 +36,7 @@ from label_printer import LabelPrintingView, LabelPrinter
 from open_cash_drawer import open_cash_drawer
 from order_manager import OrderManager
 from popups import PopupManager, FinancialSummaryWidget
+from popup_preloader import PopupPreloader
 from receipt_printer import ReceiptPrinter
 from util import Utilities, ReusableTimer
 from wrapper import Wrapper
@@ -74,8 +75,10 @@ class CashRegisterApp(MDApp):
         self.inventory_manager = InventoryManagementView()
         self.label_printer = LabelPrinter(self)
         self.label_manager = LabelPrintingView(self)
-        self.popup_manager = PopupManager(self)
         self.utilities = Utilities(self)
+        self.popup_manager = PopupManager(self)
+        self.popup_preloader = PopupPreloader(self)
+
         self.pin_reset_timer = ReusableTimer(5.0, self.utilities.reset_pin)
         self.button_handler = ButtonHandler(self)
 
@@ -131,8 +134,8 @@ class CashRegisterApp(MDApp):
         )
         btn_tools = self.utilities.create_md_raised_button(
             "Tools",
-            #self.popup_manager.show_lock_screen,
-            self.button_handler.on_button_press,
+            lambda x: self.popup_preloader.update_and_show_add_or_bypass_popup(barcode="123991247997"),
+            #self.button_handler.on_button_press,
             #lambda x: sys.exit(42),
             (8, 8),
             "H6",
