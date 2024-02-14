@@ -8,6 +8,7 @@ import json
 import subprocess
 from datetime import datetime
 import eel
+import sys
 
 from kivy.config import Config
 Config.set("kivy", "keyboard_mode", "systemanddock")
@@ -37,7 +38,7 @@ from order_manager import OrderManager
 from popups import PopupManager, FinancialSummaryWidget
 from receipt_printer import ReceiptPrinter
 from util import Utilities
-
+from wrapper import Wrapper
 
 
 Window.maximize()
@@ -55,10 +56,12 @@ class CashRegisterApp(MDApp):
         self.override_tap_time = 0
         self.pin_reset_timer = None
         self.current_context = "main"
-        self.theme_cls.theme_style = "Light"
+        self.theme_cls.theme_style = "Dark"
         self.theme_cls.primary_palette = "Brown"
         self.selected_categories = []
 
+    def on_start(self):
+        self.utilities.load_settings()
 
     def build(self):
         self.barcode_scanner = BarcodeScanner(self)
@@ -74,9 +77,10 @@ class CashRegisterApp(MDApp):
         self.popup_manager = PopupManager(self)
         self.button_handler = ButtonHandler(self)
         self.utilities = Utilities(self)
+        self.wrapper = Wrapper(self)
         self.categories = self.utilities.initialze_categories()
 
-        self.utilities.load_settings()
+        #self.utilities.load_settings()
 
         main_layout = GridLayout(
             cols=1, spacing=5, orientation="tb-lr", row_default_height=60
@@ -125,6 +129,7 @@ class CashRegisterApp(MDApp):
             "Tools",
             #self.popup_manager.show_lock_screen,
             self.button_handler.on_button_press,
+            #lambda x: sys.exit(42),
             (8, 8),
             "H6",
         )
@@ -195,6 +200,16 @@ class CashRegisterApp(MDApp):
         financial_layout.add_widget(self.financial_summary_widget)
 
         return financial_layout
+
+    def reboot(self):
+        print("reboot")
+        sys.exit(43)
+        # try:
+        #     subprocess.run(["systemctl", "reboot"])
+        # except Exception as e:
+        #     print(e)
+
+
 
 
     @eel.expose
