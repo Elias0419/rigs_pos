@@ -173,6 +173,7 @@ class OrderManager:
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
         self.app.popup_manager.custom_item_popup.dismiss()
+        self.app.popup_manager.cash_input.text = ""
 
     def finalize_order(self):
         order_details = self.get_order_details()
@@ -211,20 +212,15 @@ class OrderManager:
         if percent:
 
             self.add_discount(discount_amount, percent=True)
-            # self.app.utilities.update_display()
-            # self.app.utilities.update_financial_summary()
+
         else:
             self.add_discount(discount_amount)
-            # self.app.utilities.update_display()
-            # self.app.utilities.update_financial_summary()
 
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
         self.app.popup_manager.discount_amount_input.text = ""
         self.app.popup_manager.discount_popup.dismiss()
         self.app.popup_manager.item_popup.dismiss()
-        # if hasattr(self.app.popup_manager, "item_popup") and self.app.popup_manager.item_popup is not None:
-        #     self.app.popup_manager.item_popup.dismiss()
 
     def discount_entire_order(self, discount_amount, percent=False):
         if discount_amount is not "":

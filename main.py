@@ -133,7 +133,7 @@ class CashRegisterApp(MDApp):
         )
         btn_tools = self.utilities.create_md_raised_button(
             "Tools",
-            #lambda x: self.popup_preloader.update_and_show_add_or_bypass_popup(barcode="123991247997"),
+            #lambda x: self.utilities.trigger_guard_and_lock(),
             self.button_handler.on_button_press,
             #lambda x: sys.exit(42),
             (8, 8),
