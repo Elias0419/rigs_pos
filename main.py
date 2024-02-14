@@ -76,12 +76,11 @@ class CashRegisterApp(MDApp):
         self.label_printer = LabelPrinter(self)
         self.label_manager = LabelPrintingView(self)
         self.utilities = Utilities(self)
+        self.pin_reset_timer = ReusableTimer(5.0, self.utilities.reset_pin)
+
+        self.button_handler = ButtonHandler(self)
         self.popup_manager = PopupManager(self)
         self.popup_preloader = PopupPreloader(self)
-
-        self.pin_reset_timer = ReusableTimer(5.0, self.utilities.reset_pin)
-        self.button_handler = ButtonHandler(self)
-
 
         self.wrapper = Wrapper(self)
         self.categories = self.utilities.initialze_categories()

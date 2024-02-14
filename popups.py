@@ -87,7 +87,8 @@ class PopupManager:
         # self.add_or_bypass_popup.open()
         return self.add_or_bypass_popup
 
-    def show_item_details_popup(self, item_id):
+    def show_item_details_popup(self, item_id): # skipping preloader for now
+
         item_info = self.app.order_manager.items.get(item_id)
         if item_info:
             item_name = item_info["name"]
@@ -130,7 +131,7 @@ class PopupManager:
         buttons_layout.add_widget(
             self.app.utilities.create_md_raised_button(
                 "Add Discount",
-                lambda x: self.add_discount_popup(item_name, item_price),
+                lambda x: self.app.popup_preloader.single_item_discount_popup.open(),
                 (1, 0.4),
             )
         )
@@ -160,7 +161,8 @@ class PopupManager:
         if self.item_popup:
             self.item_popup.dismiss()
 
-    def add_discount_popup(self, item_name, item_price):
+    def add_discount_popup(self):
+        print("PRELOADER: created single item discount popup")
         discount_popup_layout = BoxLayout(orientation="vertical", spacing=10)
         self.discount_popup = Popup(
             title="Add Discount",
@@ -224,7 +226,7 @@ class PopupManager:
 
         cancel_button = Button(
             text="Cancel",
-            on_press=lambda x: self.discount_popup.dismiss(),
+            on_press=lambda x: self.app.utilities.dismiss_single_discount_popup(),
             size_hint=(0.8, 0.8),
         )
 
@@ -233,9 +235,10 @@ class PopupManager:
         keypad_layout.add_widget(cancel_button)
         discount_popup_layout.add_widget(keypad_layout)
 
-        self.discount_popup.open()
+        return self.discount_popup
 
     def add_order_discount_popup(self):
+        print("PRELOADER: created entire order discount popup")
         discount_order_popup_layout = BoxLayout(orientation="vertical", spacing=10)
         self.discount_order_popup = Popup(
             title="Add Discount",
@@ -295,7 +298,7 @@ class PopupManager:
 
         cancel_button = Button(
             text="Cancel",
-            on_press=lambda x: self.discount_order_popup.dismiss(),
+            on_press=lambda x: self.app.utilities.dismiss_entire_discount_popup(),
             size_hint=(0.8, 0.8),
         )
 
@@ -304,7 +307,8 @@ class PopupManager:
         keypad_layout.add_widget(cancel_button)
         discount_order_popup_layout.add_widget(keypad_layout)
 
-        self.discount_order_popup.open()
+        #self.discount_order_popup.open()
+        return self.discount_order_popup
 
     def show_theme_change_popup(self):
         layout = GridLayout(cols=4, rows=8, orientation="lr-tb")
@@ -1481,7 +1485,7 @@ class FinancialSummaryWidget(MDRaisedButton):
             text="Add Order Discount",
             pos_hint={"center_x": 0.5, "center_y": 1 - 0.2},
             size_hint=(1, 0.15),
-            on_press=lambda x: self.app.popup_manager.add_order_discount_popup()
+            on_press=lambda x: self.app.popup_preloader.entire_order_discount_popup.open()
         )
         clear_order_button = MDRaisedButton(
             text="Clear Order",
