@@ -27,14 +27,22 @@ class Utilities:
         self.app.popup_manager.category_button_popup.dismiss()
 
     def reset_pin_timer(self):
+        print("reset_pin_timer", self.app.pin_reset_timer)
         if self.app.pin_reset_timer is not None:
-            self.app.pin_reset_timer.cancel()
+            self.app.pin_reset_timer.stop()
 
-        self.app.pin_reset_timer = threading.Timer(5.0, self.reset_pin)
+        #self.app.pin_reset_timer = self.app.pin_reset_timer(5.0, self.reset_pin)
         self.app.pin_reset_timer.start()
 
-    def reset_pin(self):
-        self.app.entered_pin = ""
+    def reset_pin(self, dt=None):  # Ensure dt=None is included to handle the callback argument from Clock.schedule_once
+        print(f"reset pin\n{self.app.entered_pin}\n{self.app.popup_manager.pin_input.text}")
+        def update_ui(dt):
+            self.app.entered_pin = ""
+            if self.app.popup_manager.pin_input is not None:
+                self.app.popup_manager.pin_input.text = ""
+
+        # Schedule the UI update to occur on the main thread
+        Clock.schedule_once(update_ui)
 
     def calculate_common_amounts(self, total):
         amounts = []
@@ -489,3 +497,30 @@ class Utilities:
         #     eel_thread = threading.Thread(target=self.start_eel)
         #     eel_thread.daemon = True
         #     eel_thread.start()
+
+class ReusableTimer:
+    def __init__(self, interval, function, *args, **kwargs):
+        self.interval = interval
+        self.function = function
+        self.args = args
+        self.kwargs = kwargs
+        self.timer = None
+
+    def _run(self):
+        self.function(*self.args, **self.kwargs)
+        self.timer = None
+
+    def start(self):
+        if self.timer is not None:
+            self.stop()
+        self.timer = threading.Timer(self.interval, self._run)
+        self.timer.start()
+
+    def stop(self):
+        if self.timer is not None:
+            self.timer.cancel()
+            self.timer = None
+
+    def reset(self):
+        self.start()
+
