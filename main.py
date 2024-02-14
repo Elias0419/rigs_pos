@@ -133,7 +133,7 @@ class CashRegisterApp(MDApp):
         )
         btn_tools = self.utilities.create_md_raised_button(
             "Tools",
-            #lambda x: self.utilities.trigger_guard_and_lock(),
+            #lambda x: self.barcode_scanner.handle_scanned_barcode("1298421998"),
             self.button_handler.on_button_press,
             #lambda x: sys.exit(42),
             (8, 8),

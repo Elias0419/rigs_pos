@@ -60,15 +60,15 @@ class PopupManager:
         #self.category_button_popup = self.create_category_popup()
         self.app.popup_preloader.category_popup.open()
 
-    def show_add_or_bypass_popup(self):
+    def show_add_or_bypass_popup(self, barcode):
         print("PRELOADER: created add or bypass popup")
         popup_layout = BoxLayout(orientation="vertical", spacing=5)
-        self.barcode_label = Label(text="Barcode: ")
+        self.barcode_label = Label(text=f"Barcode: {barcode} ")
         popup_layout.add_widget(self.barcode_label)
         button_layout = BoxLayout(orientation="horizontal", spacing=5)
 
         def on_button_press(instance, option):
-            self.app.utilities.on_add_or_bypass_choice(option, barcode=None)
+            self.app.utilities.on_add_or_bypass_choice(option, barcode)
             self.add_or_bypass_popup.dismiss()
 
         for option in ["Add Custom Item", "Add to Database"]:
@@ -84,8 +84,8 @@ class PopupManager:
         self.add_or_bypass_popup = Popup(
             title="Item Not Found", content=popup_layout, size_hint=(0.6, 0.4)
         )
-        # self.add_or_bypass_popup.open()
-        return self.add_or_bypass_popup
+        self.add_or_bypass_popup.open()
+        #return self.add_or_bypass_popup
 
     def show_item_details_popup(self, item_id): # skipping preloader for now
 
@@ -611,8 +611,8 @@ class PopupManager:
             size_hint=(0.8, 1),
             pos_hint={"top": 1},
         )
-        #self.inventory_popup.open()
-        return self.inventory_popup
+        self.inventory_popup.open()
+        #return self.inventory_popup
 
     def show_tools_popup(self):
         print("PRELOADER: created tools popup")

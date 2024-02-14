@@ -82,8 +82,8 @@ class BarcodeScanner:
                     self.app.utilities.update_financial_summary()
                     return item_details
                 else:
-                    self.app.popup_preloader.update_and_show_add_or_bypass_popup(barcode)
-
+                    #self.app.popup_preloader.update_and_show_add_or_bypass_popup(barcode)
+                    self.app.popup_manager.show_add_or_bypass_popup(barcode)
         except Exception as e:
             print(f"Exception in handle_scanned_barcode\n{e}")
 
