@@ -407,6 +407,8 @@ class PopupManager:
             title="Enter Target Amount",
             content=self.adjust_price_popup_layout,
             size_hint=(0.8, 0.8),
+            on_dismiss=lambda x: setattr(self.adjust_price_cash_input, 'text', '')
+
         )
 
         self.adjust_price_cash_input = TextInput(
@@ -453,6 +455,7 @@ class PopupManager:
             "Cancel",
             lambda x: self.adjust_price_popup.dismiss(),
             (0.8, 0.8),
+
         )
 
         buttons_layout.add_widget(confirm_button)
@@ -786,8 +789,8 @@ class PopupManager:
 
         placeholder_amounts = [0] * 5
         for i, amount in enumerate(placeholder_amounts):
-            btn_text = f"${common_amounts[i]}" if i < len(common_amounts) else "-"
-            btn = Button(text=btn_text, on_press=self.app.button_handler.on_preset_amount_press)
+            btn_text = f"[b][size=20]${common_amounts[i]}[/size][/b]" if i < len(common_amounts) else "-"
+            btn = MarkupButton(text=btn_text, on_press=self.app.button_handler.on_preset_amount_press)
             btn.disabled = i >= len(common_amounts)
             keypad_layout.add_widget(btn)
 
@@ -1087,8 +1090,8 @@ class PopupManager:
         placeholder_amounts = [0] * 5
         for i, placeholder in enumerate(placeholder_amounts):
 
-            btn_text = f"${common_amounts[i]}" if i < len(common_amounts) else "-"
-            btn = Button(
+            btn_text = f"[b][size=20]${common_amounts[i]}[/size][/b]" if i < len(common_amounts) else "-"
+            btn = MarkupButton(
                 text=btn_text,
                 on_press=self.app.button_handler.split_on_preset_amount_press,
             )

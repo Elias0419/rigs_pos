@@ -1,6 +1,6 @@
 from open_cash_drawer import open_cash_drawer
 import sys
-
+import re
 class ButtonHandler:
     def __init__(self, ref):
         self.app = ref
@@ -176,7 +176,12 @@ class ButtonHandler:
             self.app.popup_manager.pin_input.text = ""
 
     def on_preset_amount_press(self, instance):
-        self.app.popup_manager.cash_payment_input.text = instance.text.strip("$")
+        amount = re.sub(r'\[.*?\]', '', instance.text)
+        amount = amount.replace("$", "")
+
+        self.app.popup_manager.cash_payment_input.text = amount
 
     def split_on_preset_amount_press(self, instance):
-        self.app.popup_manager.split_cash_input.text = instance.text.strip("$")
+        amount = re.sub(r'\[.*?\]', '', instance.text)
+        amount = amount.replace("$", "")
+        self.app.popup_manager.split_cash_input.text = amount
