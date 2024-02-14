@@ -125,7 +125,7 @@ class OrderManager:
             self._update_total_with_tax()
 
     def adjust_order_to_target_total(self, target_total_with_tax):
-        if target_total_with_tax is not "":
+        if target_total_with_tax != "":
             adjusted_subtotal = target_total_with_tax / (1 + self.tax_rate)
             discount = self.subtotal - adjusted_subtotal
 
