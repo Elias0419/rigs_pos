@@ -294,23 +294,23 @@ class Utilities:
                 self.app.theme_cls.primary_palette = settings.get("primary_palette", "Brown")
                 self.app.theme_cls.theme_style = settings.get("theme_style", "Light")
 
-                # Check for emergency reboot flag
-                if settings.get("emergency_reboot", True):
-                    self.handle_emergency_reboot()
+                # # Check for emergency reboot flag
+                # if settings.get("emergency_reboot", True):
+                #     self.handle_emergency_reboot()
 
         except FileNotFoundError as e:
             print(e)
 
 
-    def handle_emergency_reboot(self):
-        print("handle_emergency_reboot")
-        with open("settings.json", "r+") as f:
-            settings = json.load(f)
-            settings["emergency_reboot"] = False  # Reset the flag
-            f.seek(0)  # Reset file position to the beginning
-            json.dump(settings, f)
-            f.truncate()  # Remove remaining part of previous data
-        self.app.popup_manager.unrecoverable_error()
+    # def handle_emergency_reboot(self):
+    #     print("handle_emergency_reboot")
+    #     with open("settings.json", "r+") as f:
+    #         settings = json.load(f)
+    #         settings["emergency_reboot"] = False
+    #         f.seek(0)
+    #         json.dump(settings, f)
+    #         f.truncate()
+    #     self.app.popup_manager.unrecoverable_error()
 
     def turn_on_monitor(self):
         try:

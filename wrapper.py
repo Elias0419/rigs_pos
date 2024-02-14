@@ -42,7 +42,7 @@ class Wrapper():
                 if recent_restarts >= max_restarts:
                     self.send_email("App has failed!",f"Script exited with returncode {result.returncode}. Recent restart count: {recent_restarts}.", recipient )
 
-                    self.set_emergency_reboot_flag()
+                    # self.set_emergency_reboot_flag()
     #                 try:
             #             result = subprocess.run(["../1/bin/python", "/net/fallback/main_fallback.py"])
     #
@@ -55,14 +55,14 @@ class Wrapper():
             else:
                 self.send_email("App has failed!",f"Script has failed with unexpected return code: {result.returncode}",recipient )
                 break
-    def set_emergency_reboot_flag(self):
-
-        with open("settings.json", "r+") as f:
-            settings = json.load(f)
-            settings["emergency_reboot"] = True
-            f.seek(0)
-            json.dump(settings, f)
-            f.truncate()
+    # def set_emergency_reboot_flag(self):
+    #
+    #     with open("settings.json", "r+") as f:
+    #         settings = json.load(f)
+    #         settings["emergency_reboot"] = True
+    #         f.seek(0)
+    #         json.dump(settings, f)
+    #         f.truncate()
 
     def send_email(self, subject, message, recipient):
         email_content = f"{subject}\n\n{message}"
