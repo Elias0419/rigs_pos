@@ -609,7 +609,7 @@ class PopupManager:
             title="Inventory",
             content=inventory_view,
             textinput=inventory_view.ids.label_search_input,
-            size_hint=(0.8, 1),
+            size_hint=(0.4, 1),
             pos_hint={"top": 1},
         )
         self.inventory_popup.open()
