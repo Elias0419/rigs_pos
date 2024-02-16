@@ -24,7 +24,7 @@ class Utilities:
     def apply_categories(self):
         categories_str = ", ".join(self.app.selected_categories)
         self.app.popup_manager.add_to_db_category_input.text = categories_str
-        self.app.popup_preloader.category_popup.dismiss()
+        self.app.popup_manager.category_popup.dismiss()
 
     def reset_pin_timer(self):
         print("reset_pin_timer", self.app.pin_reset_timer)
@@ -260,15 +260,15 @@ class Utilities:
     def trigger_guard_and_lock(self, trigger=False):
 
         if trigger:
-            self.app.popup_preloader.lock_popup.open()
+            self.app.popup_manager.show_lock_screen()
             self.app.is_lock_screen_displayed = True
         elif not self.app.is_guard_screen_displayed and not self.app.is_lock_screen_displayed:
-            self.app.popup_preloader.lock_popup.open()
-            self.app.popup_preloader.guard_popup.open()
+            self.app.popup_manager.show_lock_screen()
+            self.app.popup_manager.show_guard_screen()
             self.app.is_lock_screen_displayed = True
             self.app.is_guard_screen_displayed = True
         elif self.app.is_lock_screen_displayed and not self.app.is_guard_screen_displayed:
-            self.app.popup_preloader.guard_popup.open()
+            self.app.popup_manager.show_guard_screen()
             self.app.is_guard_screen_displayed = True
 
 

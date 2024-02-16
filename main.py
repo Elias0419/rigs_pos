@@ -86,7 +86,7 @@ class CashRegisterApp(MDApp):
         self.categories = self.utilities.initialze_categories()
 
 
-        #self.utilities.load_settings()
+
 
         main_layout = GridLayout(
             cols=1, spacing=5, orientation="tb-lr", row_default_height=60
@@ -133,7 +133,7 @@ class CashRegisterApp(MDApp):
         )
         btn_tools = self.utilities.create_md_raised_button(
             "Tools",
-            #lambda x: self.barcode_scanner.handle_scanned_barcode("1298421998"),
+            #lambda x: self.utilities.trigger_guard_and_lock(),
             self.button_handler.on_button_press,
             #lambda x: sys.exit(42),
             (8, 8),
@@ -148,9 +148,6 @@ class CashRegisterApp(MDApp):
         Clock.schedule_interval(self.utilities.check_inactivity, 10)
         Clock.schedule_interval(self.barcode_scanner.check_for_scanned_barcode, 0.1)
 
-        # if not hasattr(self, "monitor_check_scheduled"):
-        #     Clock.schedule_interval(self.utilities.check_monitor_status, 5)
-        #     self.monitor_check_scheduled = True
 
         base_layout = FloatLayout()
 
@@ -191,7 +188,7 @@ class CashRegisterApp(MDApp):
             icon="lock",
             pos_hint={"right": 1},
             on_press=lambda x: self.utilities.trigger_guard_and_lock(trigger=True),
-            # on_press=lambda x: self.utilities.turn_off_monitor(),
+
         )
         clock_layout.add_widget(padlock_button)
 

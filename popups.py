@@ -26,7 +26,7 @@ class PopupManager:
         self.app = ref
 
     def create_category_popup(self):
-        print("PRELOADER: created category popup")
+
         categories = self.app.utilities.initialze_categories()
         category_button_layout = GridLayout(
             size_hint=(1, 0.8), pos_hint={"top": 1}, cols=7, spacing=5
@@ -47,21 +47,21 @@ class PopupManager:
         )
         cancel_button = MDRaisedButton(
             text="Cancel",
-            on_release=lambda instance: category_popup.dismiss(),
+            on_release=lambda instance: self.category_popup.dismiss(),
         )
         category_popup_layout.add_widget(category_button_layout)
         category_popup_layout.add_widget(confirm_button)
         category_popup_layout.add_widget(cancel_button)
 
-        category_popup = Popup(content=category_popup_layout, size_hint=(0.9, 0.9))
-        return category_popup
+        self.category_popup = Popup(content=category_popup_layout, size_hint=(0.9, 0.9))
+        return self.category_popup
 
     def open_category_button_popup(self):
-        #self.category_button_popup = self.create_category_popup()
-        self.app.popup_preloader.category_popup.open()
+        category_button_popup = self.create_category_popup()
+        category_button_popup.open()
 
     def show_add_or_bypass_popup(self, barcode):
-        print("PRELOADER: created add or bypass popup")
+
         popup_layout = BoxLayout(orientation="vertical", spacing=5)
         self.barcode_label = Label(text=f"Barcode: {barcode} ")
         popup_layout.add_widget(self.barcode_label)
@@ -85,10 +85,8 @@ class PopupManager:
             title="Item Not Found", content=popup_layout, size_hint=(0.6, 0.4)
         )
         self.add_or_bypass_popup.open()
-        #return self.add_or_bypass_popup
 
-    def show_item_details_popup(self, item_id): # skipping preloader for now
-
+    def show_item_details_popup(self, item_id):
         item_info = self.app.order_manager.items.get(item_id)
         if item_info:
             item_name = item_info["name"]
@@ -131,7 +129,7 @@ class PopupManager:
         buttons_layout.add_widget(
             self.app.utilities.create_md_raised_button(
                 "Add Discount",
-                lambda x: self.app.popup_preloader.single_item_discount_popup.open(),
+                self.add_discount_popup,
                 (1, 0.4),
             )
         )
@@ -161,8 +159,8 @@ class PopupManager:
         if self.item_popup:
             self.item_popup.dismiss()
 
-    def add_discount_popup(self):
-        print("PRELOADER: created single item discount popup")
+    def add_discount_popup(self, instance=None):
+
         discount_popup_layout = BoxLayout(orientation="vertical", spacing=10)
         self.discount_popup = Popup(
             title="Add Discount",
@@ -235,10 +233,10 @@ class PopupManager:
         keypad_layout.add_widget(cancel_button)
         discount_popup_layout.add_widget(keypad_layout)
 
-        return self.discount_popup
+        self.discount_popup.open()
 
     def add_order_discount_popup(self):
-        print("PRELOADER: created entire order discount popup")
+
         discount_order_popup_layout = BoxLayout(orientation="vertical", spacing=10)
         self.discount_order_popup = Popup(
             title="Add Discount",
@@ -307,10 +305,10 @@ class PopupManager:
         keypad_layout.add_widget(cancel_button)
         discount_order_popup_layout.add_widget(keypad_layout)
 
-        #self.discount_order_popup.open()
-        return self.discount_order_popup
+        self.discount_order_popup.open()
 
-    def show_theme_change_popup(self): # skip preload for this - not used often enough
+
+    def show_theme_change_popup(self):
         layout = GridLayout(cols=4, rows=8, orientation="lr-tb")
 
         button_layout = GridLayout(
@@ -346,7 +344,7 @@ class PopupManager:
         )
         self.theme_change_popup.open()
 
-    def show_system_popup(self): # skip preload for this - not used often enough
+    def show_system_popup(self):
         float_layout = FloatLayout()
 
         system_buttons = ["Change Theme", "Reboot System", "Restart App", "TEST"]
@@ -371,7 +369,7 @@ class PopupManager:
         self.system_popup.open()
 
     def show_label_printing_view(self):
-        #print("PRELOADER: created label printing view popup")
+
         inventory = self.app.db_manager.get_all_items()
         label_printing_view = self.app.label_manager
         self.app.current_context = "label"
@@ -382,10 +380,9 @@ class PopupManager:
         )
         self.label_printing_popup.bind(on_dismiss=self.app.utilities.reset_to_main_context)
         self.label_printing_popup.open()
-        #return self.label_printing_popup
 
     def show_inventory_management_view(self):
-        #print("PRELOADER: created inventory management view popup")
+
         self.inventory_management_view = InventoryManagementView()
         inventory = self.app.db_manager.get_all_items()
         self.inventory_management_view.show_inventory_for_manager(inventory)
@@ -398,10 +395,10 @@ class PopupManager:
         )
         self.inventory_management_view_popup.bind(on_dismiss=self.app.utilities.reset_to_main_context)
         self.inventory_management_view_popup.open()
-        #return self.inventory_management_view_popup
+
 
     def show_adjust_price_popup(self):
-        print("PRELOADER: created adjust price popup")
+
         self.adjust_price_popup_layout = BoxLayout(orientation="vertical", spacing=10)
         self.adjust_price_popup = Popup(
             title="Enter Target Amount",
@@ -464,11 +461,11 @@ class PopupManager:
         self.adjust_price_popup_layout.add_widget(keypad_layout)
         self.adjust_price_popup_layout.add_widget(buttons_layout)
 
-        #self.adjust_price_popup.open()
-        return self.adjust_price_popup
+        self.adjust_price_popup.open()
+        #return self.adjust_price_popup
 
     def show_guard_screen(self):
-        print("PRELOADER: created guard screen popup")
+
         if not self.app.is_guard_screen_displayed:
 
             guard_layout = BoxLayout()
@@ -481,18 +478,17 @@ class PopupManager:
             self.guard_popup.bind(
                 on_touch_down=lambda x, touch: self.app.utilities.dismiss_guard_popup()
             )
-            #self.app.is_guard_screen_displayed = True
 
             self.guard_popup.bind(
                 on_dismiss=lambda x: setattr(
                     self.app, "is_guard_screen_displayed", False
                 )
             )
-            return self.guard_popup
-            #self.guard_popup.open()
+
+            self.guard_popup.open()
 
     def show_lock_screen(self):
-        print("PRELOADER: created lock screen popup")
+
         if not self.app.is_lock_screen_displayed:
 
             lock_layout = BoxLayout(orientation="horizontal", size_hint=(1, 1))
@@ -547,15 +543,15 @@ class PopupManager:
                 auto_dismiss=False,
                 background_color=(0.78, 0.78, 0.78, 1)
             )
-            #self.app.is_lock_screen_displayed = True
+
 
             self.lock_popup.bind(
                 on_dismiss=lambda instance: setattr(
                     self, "is_lock_screen_displayed", False
                 )
             )
-            return self.lock_popup
-            #self.lock_popup.open()
+
+            self.lock_popup.open()
 
     def flash_buttons_red(self): # move to utils
 
@@ -566,7 +562,7 @@ class PopupManager:
             Clock.schedule_once(lambda dt, btn=btn, original=original_background: setattr(btn, 'background_normal', original), 0.5)
 
     def create_clock_layout(self): #  not a popup - to utils
-        # logger.info("test")
+
         self.pin_input = MDLabel(
                 text="",
                 size_hint_y=None,
@@ -600,7 +596,7 @@ class PopupManager:
         return clock_layout
 
     def show_inventory(self):
-        print("PRELOADER: created inventory search popup")
+
         inventory = self.app.db_manager.get_all_items()
         inventory_view = InventoryView(order_manager=self.app.order_manager)
         inventory_view.show_inventory(inventory)
@@ -612,10 +608,10 @@ class PopupManager:
             pos_hint={"top": 1},
         )
         self.inventory_popup.open()
-        #return self.inventory_popup
+
 
     def show_tools_popup(self):
-        print("PRELOADER: created tools popup")
+
         float_layout = FloatLayout()
 
         tool_buttons = [
@@ -644,11 +640,11 @@ class PopupManager:
             background_color=(0, 0, 0, 0),
             separator_height=0,
         )
-        # self.tools_popup.open()
-        return self.tools_popup
+        self.tools_popup.open()
+
 
     def show_custom_item_popup(self, barcode="01234567890"):
-        print("PRELOADER: created custom item popup")
+
         self.custom_item_popup_layout = BoxLayout(orientation="vertical", spacing=10)
         self.cash_input = TextInput(
             text="",
@@ -705,10 +701,10 @@ class PopupManager:
             size_hint=(0.8, 0.8),
             on_dismiss=lambda x: setattr(self.cash_input, 'text', '')
         )
-        return self.custom_item_popup
-        #self.custom_item_popup.open()
 
-    def show_order_popup(self, order_summary): # don't preload for now
+        self.custom_item_popup.open()
+
+    def show_order_popup(self, order_summary):
         order_details = self.app.order_manager.get_order_details()
         popup_layout = BoxLayout(orientation="vertical", spacing=10)
         popup_layout.add_widget(MarkupLabel(text=order_summary, halign="left"))
@@ -762,7 +758,7 @@ class PopupManager:
         )
         self.finalize_order_popup.open()
 
-    def show_cash_payment_popup(self): # don't preload for now (custom cash widgets are dynamic)
+    def show_cash_payment_popup(self):
         total_with_tax = self.app.order_manager.calculate_total_with_tax()
         common_amounts = self.app.utilities.calculate_common_amounts(total_with_tax)
 
@@ -825,7 +821,7 @@ class PopupManager:
         )
         self.cash_popup.open()
 
-    def open_custom_cash_popup(self, instance): # preload not necessary
+    def open_custom_cash_popup(self, instance):
         self.custom_cash_popup_layout = BoxLayout(orientation="vertical", spacing=10)
         self.custom_cash_input = TextInput(
             text="",
@@ -905,9 +901,7 @@ class PopupManager:
 
             order_summary += f"{item_name} x{quantity}\n"
 
-        # order_summary += (
-        #     f"\n${total_with_tax:.2f} Paid With {order_details['payment_method']}"
-        # )
+
         confirmation_layout.add_widget(Label(text=order_summary,size_hint=(0.5,0.9), halign="left", valign="top"))
         confirmation_layout.add_widget(Label(text=f"\n${total_with_tax:.2f} Paid With {order_details['payment_method']}", size_hint_y = 0.2))
         button_layout = BoxLayout(orientation="horizontal", spacing=5, size_hint=(1,0.2))
@@ -1026,11 +1020,7 @@ class PopupManager:
         )
         self.add_to_db_popup.open()
 
-    #################
-    #################
-    #################
-    #################
-    #################
+
 
     def handle_split_payment(self):
         self.dismiss_popups(
@@ -1333,7 +1323,7 @@ class PopupManager:
                 (0.8, 0.8),
             )
             keypad_layout.add_widget(btn)
-        # amount = float(self.split_custom_cash_input.text)
+
         confirm_button = self.app.utilities.create_md_raised_button(
             "Confirm",
             lambda x: self.app.utilities.split_on_custom_cash_confirm(amount),
@@ -1502,7 +1492,7 @@ class FinancialSummaryWidget(MDRaisedButton):
             text="Add Order Discount",
             pos_hint={"center_x": 0.5, "center_y": 1 - 0.2},
             size_hint=(1, 0.15),
-            on_press=lambda x: self.app.popup_preloader.entire_order_discount_popup.open()
+            on_press=lambda x: self.app.popup_manager.add_order_discount_popup()
         )
         clear_order_button = MDRaisedButton(
             text="Clear Order",
@@ -1537,7 +1527,7 @@ class FinancialSummaryWidget(MDRaisedButton):
         self.order_mod_popup.open()
 
     def adjust_price(self):
-        self.app.popup_preloader.adjust_price_popup.open()
+        self.app.popup_manager.show_adjust_price_popup()
         self.order_mod_popup.dismiss()
 
 
