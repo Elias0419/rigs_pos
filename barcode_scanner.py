@@ -86,4 +86,3 @@ class BarcodeScanner:
                     self.app.popup_manager.show_add_or_bypass_popup(barcode)
         except Exception as e:
             print(f"Exception in handle_scanned_barcode\n{e}")
-
