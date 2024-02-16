@@ -26,8 +26,8 @@ from kivymd.uix.boxlayout import BoxLayout
 from kivymd.uix.button import MDIconButton
 from kivymd.uix.gridlayout import GridLayout
 from kivymd.uix.label import MDLabel
-
-from barcode_scanner import BarcodeScanner
+from _barcode_test import BarcodeScanner
+#from barcode_scanner import BarcodeScanner
 from button_handlers import ButtonHandler
 from database_manager import DatabaseManager
 from history_manager import HistoryView, HistoryPopup
