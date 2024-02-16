@@ -116,13 +116,13 @@ class ButtonHandler:
             self.app.order_manager.finalize_order()
 
     def show_custom_item_popup(self):
-        self.app.popup_preloader.custom_item_popup.open()
+        self.app.popup_manager.show_custom_item_popup()
 
     def show_tools_popup(self):
-        self.app.popup_preloader.tools_popup.open()
+        self.app.popup_manager.show_tools_popup()
 
     def show_inventory(self):
-        #self.app.popup_preloader.inventory_search_popup.open()
+
         self.app.popup_manager.show_inventory()
     def on_system_button_press(self, instance):
         if instance.text == "Reboot System":
@@ -155,11 +155,11 @@ class ButtonHandler:
         if button_text == "Reset":
             self.app.entered_pin = ""
             self.app.popup_manager.pin_input.text = ""
-            self.app.pin_reset_timer.reset() # Reset timer here if needed, for consistency.
+            self.app.pin_reset_timer.reset()
         else:
             self.app.entered_pin += button_text
             self.app.popup_manager.pin_input.text += button_text
-            self.app.pin_reset_timer.reset()  # Ensure timer is reset here for ongoing interactions.
+            self.app.pin_reset_timer.reset()
 
         if len(self.app.entered_pin) == 4:
             if self.app.entered_pin == self.app.correct_pin:
