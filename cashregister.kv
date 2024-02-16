@@ -5,6 +5,7 @@
 <MarkupButton>:
     markup: True
 <InventoryRow>:
+
     canvas.after:
         Color:
             rgba: 0.5, 0.5, 0.5, 1
@@ -15,28 +16,32 @@
     name: root.name
     price: root.price
 
-    Label:
-        id: barcode
-        text: root.barcode
-    Label:
+
+    MarkupLabel:
         id: name
-        text: root.name
+        text: root.formatted_name
+        halign: 'left'
+
+        text_size: self.size
+
     Label:
         id: price
-        text: root.price
+        text: root.formatted_price
+        size_hint_x: 0.2
     MDRaisedButton:
         text: "Add to Order"
         on_press: root.add_to_order()
 
 <InventoryView>:
     orientation: 'vertical'
+
     rv: rv
     BoxLayout:
         size_hint_y: None
         height: '32dp'
         TextInput:
             id: label_search_input
-            size_hint: (0.8, 1)
+
             hint_text: 'Search'
             on_text: root.filter_inventory(self.text)
 
@@ -47,6 +52,7 @@
             default_size: None, dp(40)
             default_size_hint: 1, None
             size_hint_y: None
+
             height: self.minimum_height
             orientation: 'vertical'
 <LabelPrintingRow>:
@@ -178,7 +184,7 @@
             width: 1
     barcode: root.barcode
     name: root.name
-    price: root.price
+    price: root.formatted_price
 
     GridLayout:
         orientation: 'lr-tb'
