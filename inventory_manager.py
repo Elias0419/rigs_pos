@@ -314,12 +314,24 @@ class InventoryManagementRow(BoxLayout):
     cost = StringProperty()
     sku = StringProperty()
     category = StringProperty()
+    formatted_price = StringProperty()
+
+
 
     def __init__(self, **kwargs):
         super(InventoryManagementRow, self).__init__(**kwargs)
+        self.bind(price=self.update_formatted_price)
         self.database_manager = DatabaseManager("inventory.db", self)
         self.inventory_management_view = InventoryManagementView()
         self.app = App.get_running_app()
+
+    def update_formatted_price(self, instance, value):
+        try:
+            price_float = float(value)
+            self.formatted_price = f"{price_float:.2f}"
+        except ValueError:
+            self.formatted_price = "Invalid"
+
 
     def inventory_item_popup_row(self):
 
@@ -478,11 +490,26 @@ class InventoryRow(BoxLayout):
     name = StringProperty()
     price = StringProperty()
     order_manager = ObjectProperty()
+    formatted_price = StringProperty()
+    formatted_name = StringProperty('')
 
     def __init__(self, **kwargs):
         super(InventoryRow, self).__init__(**kwargs)
+        self.bind(price=self.update_formatted_price)
+        self.bind(name=self.update_formatted_name)
         self.order_manager = OrderManager(None)
         self.app = App.get_running_app()
+
+    def update_formatted_name(self, instance, name):
+        formatted_name = f"[b]{name}[/b]" if name else "[b][/b]"
+        self.formatted_name = formatted_name
+
+    def update_formatted_price(self, instance, value):
+        try:
+            price_float = float(value)
+            self.formatted_price = f"{price_float:.2f}"
+        except ValueError:
+            self.formatted_price = "Invalid"
 
 
     def add_to_order(self):
@@ -534,3 +561,5 @@ class InventoryView(BoxLayout):
             filtered_items = self.full_inventory
 
         self.rv.data = self.generate_data_for_rv(filtered_items)
+class MarkupLabel(Label):
+    pass
