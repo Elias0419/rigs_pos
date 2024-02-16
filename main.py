@@ -36,7 +36,6 @@ from label_printer import LabelPrintingView, LabelPrinter
 from open_cash_drawer import open_cash_drawer
 from order_manager import OrderManager
 from popups import PopupManager, FinancialSummaryWidget
-from popup_preloader import PopupPreloader
 from receipt_printer import ReceiptPrinter
 from util import Utilities, ReusableTimer
 from wrapper import Wrapper
@@ -80,7 +79,7 @@ class CashRegisterApp(MDApp):
 
         self.button_handler = ButtonHandler(self)
         self.popup_manager = PopupManager(self)
-        self.popup_preloader = PopupPreloader(self)
+
 
         self.wrapper = Wrapper(self)
         self.categories = self.utilities.initialze_categories()

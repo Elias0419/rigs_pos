@@ -338,8 +338,8 @@ class Utilities:
             #return idle_time
 
         except Exception as e:
-            print(f"Exception in check_inactivity\n{e}")
-
+            #print(f"Exception in check_inactivity\n{e}")
+            pass
 
     def clear_split_numeric_input(self):
         self.app.popup_manager.split_payment_numeric_cash_input.text = ""
