@@ -121,9 +121,13 @@ class BarcodeScanner:
 
                     else:
                         self.current_barcode += character
+            except AttributeError as e:
+                print(e)
+                break
             except usb.core.USBError as e:
                 if e.errno == 110:
                     continue
+
                 else:
                     raise
 
