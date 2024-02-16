@@ -4,14 +4,12 @@
 # logger = logging.getLogger(__name__)
 # logger.info("Application starting..")
 
-import json
-import subprocess
-from datetime import datetime
 import eel
 import sys
 
 from kivy.config import Config
 Config.set("kivy", "keyboard_mode", "systemanddock")
+
 
 from kivy.clock import Clock
 from kivy.core.window import Window
@@ -19,13 +17,14 @@ from kivy.modules import monitor, inspector
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.image import Image
 from kivy.uix.label import Label
-from kivy.uix.textinput import TextInput
 
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import BoxLayout
 from kivymd.uix.button import MDIconButton
 from kivymd.uix.gridlayout import GridLayout
 from kivymd.uix.label import MDLabel
+from kivymd.uix.boxlayout import MDBoxLayout
+
 from _barcode_test import BarcodeScanner
 #from barcode_scanner import BarcodeScanner
 from button_handlers import ButtonHandler
@@ -33,7 +32,6 @@ from database_manager import DatabaseManager
 from history_manager import HistoryView, HistoryPopup
 from inventory_manager import InventoryManagementView
 from label_printer import LabelPrintingView, LabelPrinter
-from open_cash_drawer import open_cash_drawer
 from order_manager import OrderManager
 from popups import PopupManager, FinancialSummaryWidget
 from receipt_printer import ReceiptPrinter
@@ -175,6 +173,22 @@ class CashRegisterApp(MDApp):
 
     def create_clock_layout(self):
         clock_layout = BoxLayout(orientation="vertical", size_hint_x=1 / 3)
+        register_text = MDLabel(
+        text="Cash Register",
+        size_hint_y=None,
+        #font_style="H8",
+        height=20,
+        valign="bottom",
+        halign="center"
+    )
+        blank_space = MDLabel(
+        text="",
+        size_hint_y=None,
+        height=450,
+        valign="top",
+        halign="center"
+    )
+
         self.clock_label = MDLabel(
             text="Loading...",
             size_hint_y=None,
@@ -183,12 +197,25 @@ class CashRegisterApp(MDApp):
             color=self.utilities.get_text_color(),
             halign="center",
         )
+        line_container = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=1)
+        blue_line = MDBoxLayout(size_hint_x=0.2)
+        blue_line.md_bg_color = (0.56, 0.56, 1, 1)
+        blank_line = MDBoxLayout(size_hint_x=0.2)
+        blank_line.md_bg_color = (0, 0, 0, 0)
+        blank_line2 = MDBoxLayout(size_hint_x=0.2)
+        blank_line2.md_bg_color = (0, 0, 0, 0)
+        line_container.add_widget(blank_line)
+        line_container.add_widget(blue_line)
+        line_container.add_widget(blank_line2)
         padlock_button = MDIconButton(
             icon="lock",
             pos_hint={"right": 1},
             on_press=lambda x: self.utilities.trigger_guard_and_lock(trigger=True),
 
         )
+        clock_layout.add_widget(register_text)
+        clock_layout.add_widget(line_container)
+        clock_layout.add_widget(blank_space)
         clock_layout.add_widget(padlock_button)
 
         Clock.schedule_interval(self.utilities.update_clock, 1)
@@ -240,7 +267,6 @@ class CashRegisterApp(MDApp):
         eel.init("web")
         print("start eel")
         eel.start("index.html")
-
 
 
 
