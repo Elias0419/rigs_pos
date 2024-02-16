@@ -92,7 +92,7 @@ class PopupManager:
             item_name = item_info["name"]
             item_quantity = item_info["quantity"]
             item_price = item_info["total_price"]
-
+            item_discount = item_info.get('discount', {'amount': 0, 'percent': False})
         item_popup_layout = GridLayout(rows=3, size_hint=(0.8, 0.8))
         details_layout = BoxLayout(orientation="vertical")
         try:
@@ -129,7 +129,8 @@ class PopupManager:
         buttons_layout.add_widget(
             self.app.utilities.create_md_raised_button(
                 "Add Discount",
-                self.add_discount_popup,
+                lambda x, item_id=item_id: self.open_add_discount_popup(item_id),
+                #self.add_discount_popup,
                 (1, 0.4),
             )
         )
@@ -159,7 +160,10 @@ class PopupManager:
         if self.item_popup:
             self.item_popup.dismiss()
 
-    def add_discount_popup(self, instance=None):
+    def open_add_discount_popup(self, item_id):
+        self.add_discount_popup(item_id)
+
+    def add_discount_popup(self, item_id, instance=None):
 
         discount_popup_layout = BoxLayout(orientation="vertical", spacing=10)
         self.discount_popup = Popup(
@@ -211,13 +215,14 @@ class PopupManager:
             "Amount",
             lambda x: self.app.order_manager.discount_single_item(
                 discount_amount=self.discount_amount_input.text,
+                item_id=item_id,
             ),
             (0.8, 0.8),
         )
         percent_button = self.app.utilities.create_md_raised_button(
             "Percent",
             lambda x: self.app.order_manager.discount_single_item(
-                discount_amount=self.discount_amount_input.text, percent=True
+                discount_amount=self.discount_amount_input.text, percent=True, item_id=item_id,
             ),
             (0.8, 0.8),
         )
