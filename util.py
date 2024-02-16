@@ -31,17 +31,17 @@ class Utilities:
         if self.app.pin_reset_timer is not None:
             self.app.pin_reset_timer.stop()
 
-        #self.app.pin_reset_timer = self.app.pin_reset_timer(5.0, self.reset_pin)
+
         self.app.pin_reset_timer.start()
 
-    def reset_pin(self, dt=None):  # Ensure dt=None is included to handle the callback argument from Clock.schedule_once
+    def reset_pin(self, dt=None):
         print(f"reset pin\n{self.app.entered_pin}\n{self.app.popup_manager.pin_input.text}")
         def update_ui(dt):
             self.app.entered_pin = ""
             if self.app.popup_manager.pin_input is not None:
                 self.app.popup_manager.pin_input.text = ""
 
-        # Schedule the UI update to occur on the main thread
+
         Clock.schedule_once(update_ui)
 
     def calculate_common_amounts(self, total):
@@ -52,18 +52,13 @@ class Utilities:
                 amounts.append(amount)
         return amounts
 
-    # def on_input_focus(self, instance, value):
-    #     if value:
-    #         instance.show_keyboard()
-    #     else:
-    #         instance.hide_keyboard()
 
     def update_clock(self, *args):
         self.app.clock_label.text = time.strftime("%I:%M %p\n%A\n%B %d, %Y\n")
         self.app.clock_label.color = self.get_text_color()
 
     def update_lockscreen_clock(self, *args):
-        # self.app.popup_manager.clock_label.text = time.strftime("%I:%M %p\n%A\n%B %d, %Y\n")
+
         self.app.popup_manager.clock_label.text = time.strftime("%I:%M %p")
         self.app.popup_manager.clock_label.color = self.get_text_color()
 
@@ -114,16 +109,26 @@ class Utilities:
         self.app.order_layout.clear_widgets()
         for item_id, item_info in self.app.order_manager.items.items():
             item_name = item_info["name"]
+            price = item_info["price"]
             item_quantity = item_info["quantity"]
             item_total_price = item_info["total_price"]
-
+            item_discount = item_info.get('discount', {'amount': 0, 'percent': False})
+            price_times_quantity = price * item_quantity
             if item_quantity > 1:
-                item_display_text = (
-                    f"{item_name} x{item_quantity} ${item_total_price:.2f}"
-                )
-            else:
-                item_display_text = f"{item_name} ${item_total_price:.2f}"
+                if float(item_discount['amount']) > 0:
+                    item_display_text = (
+                        f"{item_name} x{item_quantity} ${price_times_quantity:.2f}\n - {float(item_discount['amount']):.2f} = ${item_total_price:.2f}"
+                    )
+                else:
+                     item_display_text = (
+                        f"{item_name} x{item_quantity} ${item_total_price:.2f}"
+                    )
 
+            else:
+                if float(item_discount['amount']) > 0:
+                    item_display_text = f"{item_name} ${price_times_quantity:.2f}\n - {float(item_discount['amount']):.2f} = ${item_total_price:.2f}"
+                else:
+                     item_display_text = f"{item_name} ${item_total_price:.2f}"
             item_button = MDRaisedButton(
                 text=item_display_text,
                 size_hint=(0.1, 0.1),
