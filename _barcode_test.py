@@ -169,13 +169,13 @@ class BarcodeScanner:
                     print(f"Muliple Matches\n{closest_matches}")
                    # self.app.popup_manager.show_item_selection_popup(closest_matches)
                 else:
-                    # No match found
+
                     self.app.popup_manager.show_add_or_bypass_popup(barcode)
         except Exception as e:
             print(f"Exception in handle_scanned_barcode\n{e}")
 
     def process_item_details(self, item_details):
-        item_name, item_price = item_details[:2] # Assuming these are the first two elements
+        item_name, item_price = item_details[:2]
         self.app.order_manager.add_item(item_name, item_price)
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
@@ -185,7 +185,7 @@ class BarcodeScanner:
         min_distance = float('inf')
 
         for barcode in self.app.barcode_cache.keys():
-            # Calculate the Levenshtein distance
+
             dist = levenshtein_distance(scanned_barcode, barcode)
 
             if dist < min_distance and dist <= max_distance:
@@ -194,7 +194,6 @@ class BarcodeScanner:
             elif dist == min_distance:
                 closest_matches.append(barcode)
 
-        # If multiple barcodes are equally close, return all of them
         return closest_matches
 
     def close(self):
