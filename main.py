@@ -9,7 +9,10 @@ import sys
 
 from kivy.config import Config
 Config.set("kivy", "keyboard_mode", "systemanddock")
-
+#Config.set('graphics', 'show_cursor', '0')
+#Config.set('kivy', 'log_level', 'error')
+Config.set('graphics', 'multisamples', '4')
+Config.set('graphics', 'kivy_clock', 'interrupt')
 
 from kivy.clock import Clock
 from kivy.core.window import Window
@@ -177,13 +180,13 @@ class CashRegisterApp(MDApp):
         text="Cash Register",
         size_hint_y=None,
         #font_style="H8",
-        height=20,
+        height=50,
         valign="bottom",
         halign="center"
     )
         blank_space = MDLabel(
         text="",
-        size_hint_y=None,
+        size_hint_y=1,
         height=450,
         valign="top",
         halign="center"
