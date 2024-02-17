@@ -12,7 +12,7 @@ class OrderManager:
 
     def __init__(self, ref, tax_rate=0.07):
         if not hasattr(self, "_init"):
-            print("order manager init", self)
+
             self.items = {}
             self.total = 0.0
             self.subtotal = 0.0
@@ -74,15 +74,15 @@ class OrderManager:
                 "price": item_price,
                 "quantity": 1,
                 "total_price": item_price,
-                'discount': {'amount': 0, 'percent': False},  # New discount structure
+                'discount': {'amount': 0, 'percent': False},
             }
-        print(f"self.total {type(self.total)} {self.total}\nitem_price {type(item_price)} {item_price}")
+
         self.total += item_price
         self.subtotal += item_price
         self._update_total_with_tax()
 
     def remove_item(self, item_name):
-        print("Current Items:", self.items)
+
         item_to_remove = next(
             (key for key, value in self.items.items() if value["name"] == item_name),
             None,
@@ -208,7 +208,7 @@ class OrderManager:
 
     def finalize_order(self):
         order_details = self.get_order_details()
-        print(order_details)
+
         order_summary = f"[size=18][b]Order Summary:[/b][/size]\n\n"
 
         for item_id, item_details in order_details["items"].items():
@@ -236,6 +236,8 @@ class OrderManager:
 
         self.app.popup_manager.show_order_popup(order_summary)
 
+
+
     def create_order_summary_item(self, item_name, quantity, total_price):
         return f"[b]{item_name}[/b] x{quantity} ${total_price:.2f}\n"
 
@@ -243,16 +245,16 @@ class OrderManager:
         if item_id in self.items:
             item = self.items[item_id]
 
-            print(percent,"before")
+
             item_price = float(item['price'])
             discount_amount = float(discount_amount)
             item_quantity = int(item['quantity'])
 
             if percent:
-                print(percent,"if")
+
                 discount_value = item_price * discount_amount / 100
             else:
-                print(percent, "else")
+
                 discount_value = discount_amount
 
 
