@@ -83,23 +83,16 @@ class HistoryView(BoxLayout):
 
         if ref is not None:
             self.app = ref
-
             self.receipt_printer = ReceiptPrinter(self, "receipt_printer_config.yaml")
-            print("historyview init", self)
-
             self.totals_layout = BoxLayout(orientation="horizontal", size_hint=(1, 0.1))
             self.total_amount_label = Label(text="Total: $0.00")
             self.totals_layout.add_widget(self.total_amount_label)
-
             self.button_layout = BoxLayout(orientation="horizontal", size_hint=(1, 0.4))
             self.initialize_buttons()
-
             self.add_widget(self.totals_layout)
             self.add_widget(self.button_layout)
 
             Clock.schedule_once(self.init_filter, 0.1)
-
-
 
 
     def initialize_buttons(self):
@@ -151,57 +144,53 @@ class HistoryView(BoxLayout):
         total_tax = sum(float(order["tax"]) for order in self.rv_data)
         total_with_tax = sum(float(order["total_with_tax"]) for order in self.rv_data)
 
-
         self.total_amount_label.text = f"${total_amount:.2f} + ${total_tax:.2f} tax = ${total_with_tax:.2f}"
 
 
 
     def show_reporting_popup(self, order_history):
-        print("entering show reporting popup")
         self.order_history = order_history
-        #print("order history before updating rv", order_history)
-        self.rv_data = [
-        {
-            "order_id": order[0],
-            "items": self.format_items(order[1]),
-            "total": self.format_money(order[2]),
-            "tax": self.format_money(order[3]),
-            "discount": self.format_money(order[4]),
-            "total_with_tax": self.format_money(order[5]),
-            "timestamp": self.format_date(order[6]),
-            "payment_method": order[7],
-            "amount_tendered": self.format_money(order[8]),
-            "change_given": self.format_money(order[9]),
-            "history_view": self,
-        }
-        for order in order_history
-    ]
+        try:
+            self.rv_data = [
+            {
+                "order_id": order[0],
+                "items": self.format_items(order[1]),
+                "total": self.format_money(order[2]),
+                "tax": self.format_money(order[3]),
+                "discount": self.format_money(order[4]),
+                "total_with_tax": self.format_money(order[5]),
+                "timestamp": self.format_date(order[6]),
+                "payment_method": order[7],
+                "amount_tendered": self.format_money(order[8]),
+                "change_given": self.format_money(order[9]),
+                "history_view": self,
+            }
+            for order in order_history
+        ]
 
-        #print("after updating rv_data", self.rv_data)
-        self.rv_data.reverse()
-        #print("after reverse rv_data", self.rv_data)
-        self.ids.history_rv.data = self.rv_data
+            self.rv_data.reverse()
+            self.ids.history_rv.data = self.rv_data
+        except Exception as e:
+            print(f"[HistoryManager] show_reporting_popup\n{e}")
 
     def create_history_row(self, order):
-       # print(order)
+
         try:
             history_row = HistoryRow()
             history_row.order_id = order[0]
             history_row.items = self.format_items(order[1])
             history_row.total = self.format_money(order[2])
             history_row.tax = self.format_money(order[3])
-            history_row.discount = self.format_items(order[4])
+            history_row.discount = self.format_money(order[4])
             history_row.total_with_tax = self.format_money(order[5])
             history_row.timestamp = self.format_date(order[6])
             history_row.payment_method = order[7]
-            #print(f"Before setting amount_tendered: {order[8]}")
             history_row.amount_tendered = self.format_money(order[8])
-            # print(f"After setting amount_tendered: {order[8]}")
             history_row.change_given = self.format_money(order[9])
             history_row.history_view = self
             return history_row
         except Exception as e:
-            print(e)
+            print(f"[HistoryManager] create_history_row\n{e}")
 
 
     def show_specific_day_popup(self, instance):
@@ -239,25 +228,27 @@ class HistoryView(BoxLayout):
         self.update_totals()
 
     def update_rv_data(self, filtered_history):
-        #print("update_rv_data", filtered_history)
-        self.rv_data = [
-            {
-                "order_id": order[0],
-                "items": self.format_items(order[1]),
-                "total": self.format_money(order[2]),
-                "tax": self.format_money(order[3]),
-                "discount": self.format_money(order[4]),
-                "total_with_tax": self.format_money(order[5]),
-                "timestamp": self.format_date(order[6]),
-                "payment_method": order[7],
-                "amount_tendered": self.format_money(order[8]),
-                "change_given": self.format_money(order[9]),
-                "history_view": self,
-            }
-            for order in filtered_history
-        ]
-        self.rv_data.reverse()
-        self.ids.history_rv.data = self.rv_data
+        try:
+            self.rv_data = [
+                {
+                    "order_id": order[0],
+                    "items": self.format_items(order[1]),
+                    "total": self.format_money(order[2]),
+                    "tax": self.format_money(order[3]),
+                    "discount": self.format_money(order[4]),
+                    "total_with_tax": self.format_money(order[5]),
+                    "timestamp": self.format_date(order[6]),
+                    "payment_method": order[7],
+                    "amount_tendered": self.format_money(order[8]),
+                    "change_given": self.format_money(order[9]),
+                    "history_view": self,
+                }
+                for order in filtered_history
+            ]
+            self.rv_data.reverse()
+            self.ids.history_rv.data = self.rv_data
+        except Exception as e:
+            print(f"[HistoryManager]: update_rv_data \n{e}")
 
     def is_today(self, date_obj):
         return date_obj.date() == datetime.today().date()
@@ -322,7 +313,7 @@ class HistoryView(BoxLayout):
                 None,
             )
         except Exception as e:
-            print(e)
+            print(f"[HistoryManager] display_order_details\n{e}")
 
         if specific_order:
             popup = OrderDetailsPopup(specific_order, self.receipt_printer)
@@ -350,7 +341,7 @@ class HistoryView(BoxLayout):
                 self.order_not_found_popup(barcode_str) # needs testing
 
         except Exception as e:
-            print(e)
+            print(f"[HistoryManager] display_order_details_from_barcode_scan\n{e}")
 
     def order_not_found_popup(self, order):
         not_found_layout = BoxLayout(size_hint=(1,1))
@@ -360,8 +351,6 @@ class HistoryView(BoxLayout):
         not_found_layout.add_widget(not_found_button)
         self.not_found_popup = Popup(content=not_found_layout, size_hint=(0.4,0.4))
         self.not_found_popup.open()
-
-
 
 
     def show_order_details(self, order_id):
@@ -375,18 +364,27 @@ class HistoryView(BoxLayout):
                 history_row = self.create_history_row(specific_order)
                 self.add_widget(history_row)
             except Exception as e:
-                print(e)
+                print(f"[HistoryManager] show_order_details\n{e}")
+
 
 
     def format_items(self, items_str):
         try:
-            items_list = ast.literal_eval(items_str)
-            all_item_names = ", ".join(
-                item.get("name", "Unknown") for item in items_list
-            )
+
+            parsed_data = json.loads(items_str)
+
+            if isinstance(parsed_data, dict):
+                items_list = [parsed_data]
+            else:
+                items_list = parsed_data
+
+            all_item_names = ", ".join(item.get("name", "Unknown") for item in items_list)
+
             return self.truncate_text(all_item_names)
-        except Exception as e:
-            print(e)
+        except json.JSONDecodeError as e:
+            print(f"JSON parsing error in format_items: {e}")
+            return self.truncate_text("Error parsing items")
+
 
     def format_money(self, value):
         formatted_value = "{:.2f}".format(value)
@@ -490,20 +488,27 @@ class OrderDetailsPopup(Popup):
 
     def format_items(self, items_str):
         try:
-            items_list = ast.literal_eval(items_str)
-            all_item_names = ", ".join(
-                item.get("name", "Unknown") for item in items_list
-            )
+            parsed_data = json.loads(items_str)
+
+            if isinstance(parsed_data, dict):
+                items_list = [parsed_data]
+            else:
+                items_list = parsed_data
+
+            all_item_names = ", ".join(item.get("name", "Unknown") for item in items_list)
+
             return all_item_names
-        except Exception as e:
-            print(e)
+        except json.JSONDecodeError as e:
+            print(f"JSON parsing error in format_items: {e}")
+            return "Error parsing items"
 
     def convert_order_to_dict(self, order_tuple):
         #print(order_tuple)
         order_id, items_json, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given = order_tuple
         try:
             items = json.loads(items_json)
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            print(f"\n\n\n\n\n\n\n\json error \n{e}")
             items = ast.literal_eval(items_json)
 
         if isinstance(items, list):
@@ -539,4 +544,4 @@ class OrderDetailsPopup(Popup):
             f"Amount Tendered: ${self.history_view.format_money(order[8])}",
             f"Change Given: ${self.history_view.format_money(order[9])}",
         ])
-        return "\n".join(formatted_order)
+        return "\n".join(formatted_order) if formatted_order is not None else ""
