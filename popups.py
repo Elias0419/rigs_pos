@@ -727,26 +727,37 @@ class PopupManager:
 
         self.custom_item_popup.open()
 
+
     def show_order_popup(self, order_summary):
 
         order_details = self.app.order_manager.get_order_details()
-        popup_layout = BoxLayout(orientation="vertical", spacing=5)
-        bottom_layout = BoxLayout(
-            orientation="vertical", size_hint_y=None, height=90, spacing=5
-        )
-        spacer1 = Widget(size_hint_y=0.1)
-        popup_layout.add_widget(spacer1)
+        popup_layout = GridLayout(orientation="lr-tb", spacing=5, cols=2, rows=1)
+        items_and_totals_layout = GridLayout(orientation="tb-lr", spacing=5, cols=1, rows=3)
+        items_layout = BoxLayout(orientation="vertical", size_hint_y=1,)
+
+        def determine_label_height(text, max_line_length):
+
+            if len(text) > max_line_length:
+                return 40
+            else:
+                return 20
+        max_line_length = 42
+
 
         for item_id, item_details in order_details["items"].items():
+            item_text = f"{item_details['quantity']}x {item_details['name']} - ${item_details['total_price']:.2f}"
+            text_height = determine_label_height(item_text, max_line_length)
             item_label = MDLabel(
-                text=f"[size=20]{item_details['quantity']}x {item_details['name']} - [b]${item_details['total_price']:.2f}[/b][/size]",
-                halign="left", pos_hint={"top":1}, size_hint_y=None, height=20
+                text=item_text,
+                halign="left",
+                size_hint_y=None,
+                height=text_height
             )
-            popup_layout.add_widget(item_label)
+            items_layout.add_widget(item_label)
+        items_and_totals_layout.add_widget(items_layout)
         spacer = Widget(size_hint_y=1)
-        popup_layout.add_widget(spacer)
-
-
+        items_and_totals_layout.add_widget(spacer)
+        totals_layout = BoxLayout(size_hint_y=None, height=100, orientation="vertical")
         subtotal_label = MDLabel(
             text=f"Subtotal: ${order_details['subtotal']:.2f}", halign="left"
         )
@@ -757,20 +768,18 @@ class PopupManager:
             text=f"[size=25]Total: [b]${order_details['total_with_tax']:.2f}[/b][/size]", halign="left"
         )
 
-        bottom_layout.add_widget(subtotal_label)
+        totals_layout.add_widget(subtotal_label)
         if order_details["discount"] > 0:
             discount_label = MDLabel(
                 text=f"Discount: -${order_details['discount']:.2f}", halign="left"
             )
-            bottom_layout.add_widget(discount_label)
-        bottom_layout.add_widget(tax_label)
-        bottom_layout.add_widget(total_label)
-        popup_layout.add_widget(bottom_layout)
-        button_layout = BoxLayout(
-            size_hint_y=None,
-            height=50,
-            spacing=5,
-        )
+            totals_layout.add_widget(discount_label)
+        totals_layout.add_widget(tax_label)
+        totals_layout.add_widget(total_label)
+        items_and_totals_layout.add_widget(totals_layout)
+        popup_layout.add_widget(items_and_totals_layout)
+
+        buttons_layout = GridLayout(orientation="tb-lr", spacing=5, cols=1, rows=5)
 
         btn_pay_cash = self.app.utilities.create_md_raised_button(
             f"[b][size=20]Pay Cash[/b][/size]",
@@ -800,13 +809,20 @@ class PopupManager:
             on_press=self.app.button_handler.on_payment_button_press,
             size_hint=(0.8, 1),
         )
-        button_layout.add_widget(btn_pay_cash)
-        button_layout.add_widget(btn_pay_debit)
-        button_layout.add_widget(btn_pay_credit)
-        button_layout.add_widget(btn_pay_split)
-        button_layout.add_widget(btn_cancel)
+        buttons_layout.add_widget(btn_pay_cash)
+        buttons_layout.add_widget(btn_pay_debit)
+        buttons_layout.add_widget(btn_pay_credit)
+        buttons_layout.add_widget(btn_pay_split)
+        buttons_layout.add_widget(btn_cancel)
+        popup_layout.add_widget(buttons_layout)
 
-        popup_layout.add_widget(button_layout)
+
+
+        bottom_layout = BoxLayout(
+            orientation="vertical", size_hint_y=None, height=90, spacing=5
+        )
+
+
 
         self.finalize_order_popup = Popup(
             title=f"Finalize Order - {order_details['order_id']}",
@@ -814,6 +830,7 @@ class PopupManager:
             size_hint=(0.6, 0.8),
         )
         self.finalize_order_popup.open()
+
 
     def show_cash_payment_popup(self):
         total_with_tax = self.app.order_manager.calculate_total_with_tax()
@@ -964,16 +981,17 @@ class PopupManager:
             order_summary += f"{item_name} x{quantity}\n"
 
         confirmation_layout.add_widget(
-            Label(text=order_summary, size_hint=(0.5, 0.9), halign="left", valign="top")
+            Label(text=order_summary, size_hint=(0.5, 0.9))
         )
         confirmation_layout.add_widget(
-            Label(
-                text=f"\n${total_with_tax:.2f} Paid With {order_details['payment_method']}",
+            MDLabel(
+                text=f"[b]${total_with_tax:.2f} Paid With {order_details['payment_method']}[/b]",
                 size_hint_y=0.2,
+                halign="center"
             )
         )
         button_layout = BoxLayout(
-            orientation="horizontal", spacing=5, size_hint=(1, 0.2)
+            orientation="vertical", spacing=5, size_hint=(1, 0.4)
         )
         done_button = self.app.utilities.create_md_raised_button(
             "Done",
