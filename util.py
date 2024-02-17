@@ -176,6 +176,30 @@ class Utilities:
         elif choice_text == "Add to Database":
             self.app.popup_manager.show_add_to_database_popup(barcode)
 
+    def initialize_barcode_cache(self):
+        all_items = self.app.db_manager.get_all_items()
+        barcode_cache = {}
+
+        for item in all_items:
+            barcode = item[0]
+            if barcode not in barcode_cache:
+                barcode_cache[barcode] = [item]
+            else:
+                barcode_cache[barcode].append(item)
+        #print(barcode_cache)
+        return barcode_cache
+
+
+    def update_barcode_cache(self, new_item):
+        barcode = new_item[0]
+        if barcode not in self.app.barcode_cache:
+            self.app.barcode_cache[barcode] = [new_item]
+        else:
+            self.app.barcode_cache[barcode].append(new_item)
+
+
+
+
     def initialze_categories(self):
         categories = [
             "Cdb",
