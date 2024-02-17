@@ -28,8 +28,8 @@ from kivymd.uix.gridlayout import GridLayout
 from kivymd.uix.label import MDLabel
 from kivymd.uix.boxlayout import MDBoxLayout
 
-#from _barcode_test import BarcodeScanner
-from barcode_scanner import BarcodeScanner
+from _barcode_test import BarcodeScanner
+#from barcode_scanner import BarcodeScanner
 from button_handlers import ButtonHandler
 from database_manager import DatabaseManager
 from history_manager import HistoryView, HistoryPopup
@@ -84,7 +84,7 @@ class CashRegisterApp(MDApp):
 
         self.wrapper = Wrapper(self)
         self.categories = self.utilities.initialze_categories()
-        #self.barcode_cache = self.utilities.initialize_barcode_cache()
+        self.barcode_cache = self.utilities.initialize_barcode_cache()
 
 
 
