@@ -1,6 +1,7 @@
 import threading
 import usb.core
 import usb.util
+from Levenshtein import distance as levenshtein_distance
 
 
 class BarcodeScanner:
@@ -154,25 +155,47 @@ class BarcodeScanner:
             self.handle_scanned_barcode(barcode)
 
     def handle_scanned_barcode(self, barcode):
-
         try:
             if "-" in barcode and any(c.isalpha() for c in barcode):
-                self.app.history_manager.display_order_details_from_barcode_scan(
-                    barcode
-                )
+                self.app.history_manager.display_order_details_from_barcode_scan(barcode)
             else:
-                item_details = self.app.db_manager.get_item_details(barcode)
+                closest_matches = self.find_closest_barcode(barcode)
+                if len(closest_matches) == 1:
 
-                if item_details:
-                    item_name, item_price = item_details
-                    self.app.order_manager.add_item(item_name, item_price)
-                    self.app.utilities.update_display()
-                    self.app.utilities.update_financial_summary()
-                    return item_details
+                    item_details = self.app.db_manager.get_item_details(closest_matches[0])
+                    if item_details:
+                        self.process_item_details(item_details)
+                elif len(closest_matches) > 1:
+                    print(f"Muliple Matches\n{closest_matches}")
+                   # self.app.popup_manager.show_item_selection_popup(closest_matches)
                 else:
+                    # No match found
                     self.app.popup_manager.show_add_or_bypass_popup(barcode)
         except Exception as e:
             print(f"Exception in handle_scanned_barcode\n{e}")
+
+    def process_item_details(self, item_details):
+        item_name, item_price = item_details[:2] # Assuming these are the first two elements
+        self.app.order_manager.add_item(item_name, item_price)
+        self.app.utilities.update_display()
+        self.app.utilities.update_financial_summary()
+
+    def find_closest_barcode(self, scanned_barcode, max_distance=1):
+        closest_matches = []
+        min_distance = float('inf')
+
+        for barcode in self.app.barcode_cache.keys():
+            # Calculate the Levenshtein distance
+            dist = levenshtein_distance(scanned_barcode, barcode)
+
+            if dist < min_distance and dist <= max_distance:
+                closest_matches = [barcode]
+                min_distance = dist
+            elif dist == min_distance:
+                closest_matches.append(barcode)
+
+        # If multiple barcodes are equally close, return all of them
+        return closest_matches
 
     def close(self):
         self.stop_thread.set()
