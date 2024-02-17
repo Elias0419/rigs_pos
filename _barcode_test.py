@@ -8,8 +8,8 @@ class BarcodeScanner:
         self.app = ref
         self.current_barcode = ""
 
-        self.idVendor = 0x28E9
-        self.idProduct = 0x03DA
+        self.idVendor = 0x05e0
+        self.idProduct = 0x1200
 
         try:
             self.device = self.initializeUSBDevice()
@@ -41,7 +41,7 @@ class BarcodeScanner:
         )
 
         if self.endpoint is None:
-            raise ValueError("[Barcode Scanner: Endpoint not found]")
+            raise ValueError("[Barcode Scanner]: Endpoint not found")
 
         return device
 
