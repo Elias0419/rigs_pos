@@ -551,7 +551,7 @@ class InventoryView(BoxLayout):
 
     def filter_inventory(self, query):
         if query:
-            query = query.lower()
+            query = query.lower().strip()
             filtered_items = [
                 item
                 for item in self.full_inventory
