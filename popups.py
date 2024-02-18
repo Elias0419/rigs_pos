@@ -24,6 +24,11 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.image import Image
 import os
 from functools import partial
+from kivymd.uix.gridlayout import MDGridLayout
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.button import MDRaisedButton
+from kivymd.uix.textfield import MDTextField
+from kivy.utils import get_color_from_hex
 
 
 class PopupManager:
@@ -640,6 +645,7 @@ class PopupManager:
 
         tool_buttons = [
             "Clear Order",
+            "Calculator",
             "Open Register",
             "Reporting",
             "Label Printer",
@@ -727,13 +733,17 @@ class PopupManager:
 
         self.custom_item_popup.open()
 
-
     def show_order_popup(self, order_summary):
 
         order_details = self.app.order_manager.get_order_details()
         popup_layout = GridLayout(orientation="lr-tb", spacing=5, cols=2, rows=1)
-        items_and_totals_layout = GridLayout(orientation="tb-lr", spacing=5, cols=1, rows=3)
-        items_layout = BoxLayout(orientation="vertical", size_hint_y=1,)
+        items_and_totals_layout = GridLayout(
+            orientation="tb-lr", spacing=5, cols=1, rows=3
+        )
+        items_layout = BoxLayout(
+            orientation="vertical",
+            size_hint_y=1,
+        )
 
         def determine_label_height(text, max_line_length):
 
@@ -741,17 +751,14 @@ class PopupManager:
                 return 40
             else:
                 return 20
-        max_line_length = 42
 
+        max_line_length = 42
 
         for item_id, item_details in order_details["items"].items():
             item_text = f"{item_details['quantity']}x {item_details['name']} - ${item_details['total_price']:.2f}"
             text_height = determine_label_height(item_text, max_line_length)
             item_label = MDLabel(
-                text=item_text,
-                halign="left",
-                size_hint_y=None,
-                height=text_height
+                text=item_text, halign="left", size_hint_y=None, height=text_height
             )
             items_layout.add_widget(item_label)
         items_and_totals_layout.add_widget(items_layout)
@@ -765,7 +772,8 @@ class PopupManager:
             text=f"Tax: ${order_details['tax_amount']:.2f}", halign="left"
         )
         total_label = MDLabel(
-            text=f"[size=25]Total: [b]${order_details['total_with_tax']:.2f}[/b][/size]", halign="left"
+            text=f"[size=25]Total: [b]${order_details['total_with_tax']:.2f}[/b][/size]",
+            halign="left",
         )
 
         totals_layout.add_widget(subtotal_label)
@@ -816,13 +824,9 @@ class PopupManager:
         buttons_layout.add_widget(btn_cancel)
         popup_layout.add_widget(buttons_layout)
 
-
-
         bottom_layout = BoxLayout(
             orientation="vertical", size_hint_y=None, height=90, spacing=5
         )
-
-
 
         self.finalize_order_popup = Popup(
             title=f"Finalize Order - {order_details['order_id']}",
@@ -830,7 +834,6 @@ class PopupManager:
             size_hint=(0.6, 0.8),
         )
         self.finalize_order_popup.open()
-
 
     def show_cash_payment_popup(self):
         total_with_tax = self.app.order_manager.calculate_total_with_tax()
@@ -980,19 +983,15 @@ class PopupManager:
 
             order_summary += f"{item_name} x{quantity}\n"
 
-        confirmation_layout.add_widget(
-            Label(text=order_summary, size_hint=(0.5, 0.9))
-        )
+        confirmation_layout.add_widget(Label(text=order_summary, size_hint=(0.5, 0.9)))
         confirmation_layout.add_widget(
             MDLabel(
                 text=f"[b]${total_with_tax:.2f} Paid With {order_details['payment_method']}[/b]",
                 size_hint_y=0.2,
-                halign="center"
+                halign="center",
             )
         )
-        button_layout = BoxLayout(
-            orientation="vertical", spacing=5, size_hint=(1, 0.4)
-        )
+        button_layout = BoxLayout(orientation="vertical", spacing=5, size_hint=(1, 0.4))
         done_button = self.app.utilities.create_md_raised_button(
             "Done",
             self.app.button_handler.on_done_button_press,
@@ -1518,6 +1517,145 @@ class PopupManager:
         )
         error_popup.open()
 
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+
+
+    def inventory_item_popup(self, barcode=None):
+
+
+        self.app.current_context = "inventory_item"
+
+        content = BoxLayout(orientation="vertical", padding=10)
+        name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        name_input = TextInput(text=self.app.inventory_manager.name)
+        name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
+        name_layout.add_widget(name_input)
+
+        barcode_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        self.barcode_input = TextInput(
+            input_filter="int", text=self.app.inventory_manager.barcode if self.app.inventory_manager.barcode else ""
+        )
+        barcode_layout.add_widget(Label(text="Barcode", size_hint_x=0.2))
+        barcode_layout.add_widget(self.barcode_input)
+
+        price_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        price_input = TextInput(text=self.app.inventory_manager.price, input_filter="float")
+        price_layout.add_widget(Label(text="Price", size_hint_x=0.2))
+        price_layout.add_widget(price_input)
+
+        cost_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        cost_input = TextInput(text=self.app.inventory_manager.cost, input_filter="float")
+        cost_layout.add_widget(Label(text="Cost", size_hint_x=0.2))
+        cost_layout.add_widget(cost_input)
+
+        sku_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        sku_input = TextInput(text=self.app.inventory_manager.sku)
+        sku_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
+
+        sku_layout.add_widget(sku_input)
+
+        category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        self.add_to_db_category_input = TextInput(text=self.app.inventory_manager.category, disabled=True)
+        category_layout.add_widget(Label(text="Category", size_hint_x=0.2))
+
+        category_layout.add_widget(self.add_to_db_category_input)
+
+        content.add_widget(name_layout)
+        content.add_widget(barcode_layout)
+        content.add_widget(price_layout)
+        content.add_widget(cost_layout)
+        content.add_widget(sku_layout)
+        content.add_widget(category_layout)
+
+        button_layout = BoxLayout(
+            orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
+        )
+
+        button_layout.add_widget(
+            MDRaisedButton(
+                text="Confirm",
+                on_press=lambda x: self.app.utilities.inventory_item_confirm_and_close(
+                    self.barcode_input, name_input, price_input, cost_input, sku_input, self.add_to_db_category_input, self.inventory_item_popup
+                ),
+            )
+        )
+        button_layout.add_widget(
+            MDRaisedButton(
+                text="Generate Barcode",
+                on_press=lambda *args: self.app.utilities.set_generated_barcode(self.barcode_input),
+            )
+        )
+        button_layout.add_widget(
+            MDRaisedButton(
+                text="Categories",
+                on_press=lambda *args: self.open_category_button_popup_inv(),
+            )
+        )
+        button_layout.add_widget(
+            MDRaisedButton(text="Cancel", on_press=lambda *args: self.inventory_item_popup.dismiss())
+        )
+
+
+        content.add_widget(button_layout)
+
+        self.inventory_item_popup = Popup(
+            title="Item details",
+            pos_hint={"top": 1},
+            content=content,
+            size_hint=(0.8, 0.4),
+        )
+
+        self.inventory_item_popup.bind(on_dismiss=lambda x: self.app.inventory_manager.reset_inventory_context())
+        self.app.inventory_manager.refresh_inventory()
+        self.inventory_item_popup.open()
+
+
+    def open_category_button_popup_inv(self):
+        self.selected_categories = []
+        categories = self.app.utilities.initialze_categories()
+        category_button_layout = GridLayout(size_hint=(1, 0.8), pos_hint={"top":1},cols=7, spacing=5)
+        for category in categories:
+            btn = MDRaisedButton(
+                text=category,
+                on_release=lambda instance, cat=category: self.app.utilities.toggle_category_selection_inv(instance, cat),
+                size_hint=(1,0.8)
+                )
+            category_button_layout.add_widget(btn)
+        category_popup_layout = BoxLayout()
+        confirm_button = MDRaisedButton(
+            text="Confirm",
+            on_release=lambda instance: self.app.utilities.apply_categories_inv()
+            )
+        cancel_button = MDRaisedButton(
+            text="Cancel",
+            on_release=lambda instance: self.category_button_popup_inv.dismiss()
+            )
+        category_popup_layout.add_widget(category_button_layout)
+        category_popup_layout.add_widget(confirm_button)
+        category_popup_layout.add_widget(cancel_button)
+
+        self.category_button_popup_inv = Popup(
+            content=category_popup_layout,
+            size_hint=(0.9,0.9)
+            )
+        self.category_button_popup_inv.open()
+
+
+
+
+
+
+
+############################################################################################################
+############################################################################################################
+############################################################################################################
+############################################################################################################
+############################################################################################################
+############################################################################################################
+
 
 class MarkupLabel(Label):
     pass
@@ -1633,3 +1771,121 @@ class FinancialSummaryWidget(MDRaisedButton):
     def adjust_price(self):
         self.app.popup_manager.show_adjust_price_popup()
         self.order_mod_popup.dismiss()
+
+
+class Calculator:
+    def __init__(self):
+        self.operators = ["+", "-", "*", "/"]
+        self.last_was_operator = None
+        self.last_button = None
+        self.calculation = ""
+
+    def create_calculator_layout(self):
+        main_layout = MDGridLayout(cols=1, rows=3, spacing=5, size_hint=(1, 1))
+        text_layout = MDBoxLayout(orientation="horizontal", size_hint_y=0.1)
+        self.solution = MDTextField(
+            multiline=False,
+            readonly=True,
+            halign="right",
+            font_size=30,
+            mode="rectangle",
+        )
+        text_layout.add_widget(self.solution)
+        main_layout.add_widget(text_layout)
+
+        number_layout = MDGridLayout(cols=3, spacing=5, rows=4, size_hint=(1, 1))
+
+        buttons = [
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            ".",
+            "0",
+            "C",
+        ]
+
+        for button in buttons:
+            number_layout.add_widget(
+                MDRaisedButton(
+                    text=button,
+                    font_style="H6",
+                    size_hint=(1, 1),
+                    on_press=self.on_button_press,
+                )
+            )
+        main_layout.add_widget(number_layout)
+
+        operation_button_layout = MDGridLayout(
+            cols=5, spacing=5, rows=1, size_hint=(1, 0.2)
+        )
+        operation_buttons = ["+", "-", "*", "/", "="]
+        for op_button in operation_buttons:
+            if op_button == "=":
+
+                operation_button_layout.add_widget(
+                    MDRaisedButton(
+                        text=op_button,
+                        md_bg_color=get_color_from_hex("#4CAF50"),
+                        size_hint=(1, 1),
+                        font_style="H6",
+                        on_press=self.on_solution,
+                    )
+                )
+            else:
+
+                operation_button_layout.add_widget(
+                    MDRaisedButton(
+                        text=op_button,
+                        md_bg_color=get_color_from_hex("#2196F3"),
+                        size_hint=(1, 1),
+                        font_style="H6",
+                        on_press=self.on_button_press,
+                    )
+                )
+        main_layout.add_widget(operation_button_layout)
+
+        return main_layout
+
+    def on_button_press(self, instance):
+        current = self.solution.text
+        button_text = instance.text
+
+        if button_text == "C":
+            self.solution.text = ""
+        else:
+            if current and (self.last_was_operator and button_text in self.operators):
+                return
+            elif current == "" and button_text in self.operators:
+                return
+            else:
+                new_text = current + button_text
+                self.solution.text = new_text
+
+        self.last_was_operator = button_text in self.operators
+        self.last_button = button_text
+
+    def on_solution(self, instance):
+        text = self.solution.text
+        if text:
+            try:
+                self.solution.text = str(eval(self.solution.text))
+            except Exception:
+                self.solution.text = "Error"
+
+    def show_calculator_popup(self):
+        calculator_layout = self.create_calculator_layout()
+        calculator_popup = Popup(
+            content=calculator_layout,
+            size_hint=(0.4, 0.8),
+            title="",
+            background="images/transparent.png",
+            background_color=(0, 0, 0, 0),
+            separator_height=0,
+        )
+        calculator_popup.open()

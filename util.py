@@ -8,7 +8,8 @@ import dbus
 from open_cash_drawer import open_cash_drawer
 import sys
 from kivy.clock import Clock
-
+from barcode.upc import UniversalProductCodeA as upc_a
+import random
 class Utilities:
     def __init__(self, ref):
         self.app = ref
@@ -350,9 +351,6 @@ class Utilities:
             print(e)
 
 
-
-
-
     def check_inactivity(self, *args):
         try:
 
@@ -477,6 +475,63 @@ class Utilities:
         self.app.popup_manager.discount_order_amount_input.text = ""
         self.app.popup_manager.discount_order_popup.dismiss()
 
+    def inventory_item_confirm_and_close(
+        self,
+        barcode_input,
+        name_input,
+        price_input,
+        cost_input,
+        sku_input,
+        category_input,
+        popup,
+    ):
+
+        if len(name_input.text) > 0:
+
+            self.app.inventory_manager.add_item_to_database(
+                barcode_input,
+                name_input,
+                price_input,
+                cost_input,
+                sku_input,
+                category_input,
+            )
+            self.app.inventory_manager.refresh_inventory()
+            self.app.popup_manager.inventory_item_popup.dismiss()
+
+    def set_generated_barcode(self, barcode_input):
+        unique_barcode = self.generate_unique_barcode()
+        self.app.popup_manager.barcode_input.text = unique_barcode
+
+    def generate_unique_barcode(self):
+        while True:
+            new_barcode = str(
+                upc_a(
+                    str(random.randint(100000000000, 999999999999)), writer=None
+                ).get_fullcode()
+            )
+
+            if not self.app.db_manager.barcode_exists(new_barcode):
+                return new_barcode
+
+    def apply_categories_inv(self):
+        categories_str = ', '.join(self.app.popup_manager.selected_categories)
+        self.app.popup_manager.add_to_db_category_input.text = categories_str
+        self.app.popup_manager.category_button_popup_inv.dismiss()
+
+    def toggle_category_selection_inv(self, instance, category):
+        if category in self.app.popup_manager.selected_categories:
+            self.app.popup_manager.selected_categories.remove(category)
+            instance.text = category
+        else:
+            self.app.popup_manager.selected_categories.append(category)
+            instance.text = f"{category}\n (Selected)"
+
+    def show_add_item_popup(self, scanned_barcode):
+        self.barcode = scanned_barcode
+        self.app.popup_manager.inventory_item_popup()
+
+
 class ReusableTimer:
     def __init__(self, interval, function, *args, **kwargs):
         self.interval = interval
@@ -502,4 +557,5 @@ class ReusableTimer:
 
     def reset(self):
         self.start()
+
 

@@ -23,6 +23,8 @@ class ButtonHandler:
 
     def show_system_popup(self):
         self.app.popup_manager.show_system_popup()
+    def show_calcultor_popup(self):
+        self.app.calculator.show_calculator_popup()
 
     def on_tool_button_press(self, instance):
         tool_actions = {
@@ -31,7 +33,8 @@ class ButtonHandler:
             "Reporting": self.show_reporting,
             "Label Printer": self.show_label_printer_view,
             "Inventory Management": self.show_inventory_management_view,
-            "System": self.show_system_popup
+            "System": self.show_system_popup,
+            "Calculator": self.show_calcultor_popup,
         }
         action = tool_actions.get(instance.text)
         if action:
