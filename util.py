@@ -531,6 +531,32 @@ class Utilities:
         self.barcode = scanned_barcode
         self.app.popup_manager.inventory_item_popup()
 
+    def update_confirm_and_close(
+        self, barcode_input, name_input, price_input, cost_input, sku_input, category_input, popup
+    ):
+        self.app.inventory_row.update_item_in_database(
+            barcode_input, name_input, price_input, cost_input, sku_input, category_input
+        )
+        self.app.inventory_manager.refresh_inventory()
+        popup.dismiss()
+
+    def open_inventory_manager_row(self, instance):
+
+        self.app.popup_manager.inventory_item_popup_row(instance)
+
+    def update_apply_categories(self):
+        categories_str = ', '.join(self.update_selected_categories)
+        self.update_category_input.text = categories_str
+        self.update_category_button_popup.dismiss()
+
+    def update_toggle_category_selection(self, instance, category):
+        if category in self.update_selected_categories:
+            self.update_selected_categories.remove(category)
+            instance.text = category
+        else:
+            self.update_selected_categories.append(category)
+            instance.text = f"{category}\n (Selected)"
+
 
 class ReusableTimer:
     def __init__(self, interval, function, *args, **kwargs):
