@@ -100,6 +100,30 @@ class DatabaseManager:
         conn.close()
         return True
 
+
+    def update_item(self, barcode, name, price, cost=None, sku=None, category=None):
+        print("db update_item", barcode, name, price, cost, sku, category)
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+
+            update_query = """UPDATE items
+                            SET name=?, price=?, cost=?, sku=?, category=?
+                            WHERE barcode=? AND (sku=? OR ? IS NULL AND sku IS NULL)"""
+            cursor.execute(update_query, (name, price, cost, sku, category, barcode, sku, sku))
+
+            if cursor.rowcount == 0:
+                print("No item found with barcode and SKU:", barcode, sku)
+                return False
+            conn.commit()
+        except Exception as e:
+            print(e)
+            return False
+        finally:
+            conn.close()
+
+        return True
+
     def add_order_history(self, order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given):
         self.create_order_history_table()
         conn = self._get_connection()
@@ -194,27 +218,7 @@ class DatabaseManager:
         conn.close()
         return exists
 
-    def update_item(self, barcode, name, price, cost=None, sku=None, category=None):
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
 
-            update_query = """UPDATE items
-                            SET name=?, price=?, cost=?, sku=?, category=?
-                            WHERE barcode=? AND (sku=? OR ? IS NULL AND sku IS NULL)"""
-            cursor.execute(update_query, (name, price, cost, sku, category, barcode, sku, sku))
-
-            if cursor.rowcount == 0:
-                print("No item found with barcode and SKU:", barcode, sku)
-                return False
-            conn.commit()
-        except Exception as e:
-            print(e)
-            return False
-        finally:
-            conn.close()
-
-        return True
 
 
     def delete_item(self, barcode):
@@ -224,3 +228,7 @@ class DatabaseManager:
         conn = self._get_connection()
         if conn:
             conn.close()
+if __name__=="__main__":
+    db=DatabaseManager("inventory.db", None)
+    res=db.get_all_items()
+    print(res)

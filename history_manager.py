@@ -16,7 +16,6 @@ from database_manager import DatabaseManager
 from receipt_printer import ReceiptPrinter
 
 
-
 class NullableStringProperty(StringProperty):
     def __init__(self, *args, **kwargs):
 
@@ -468,7 +467,8 @@ class OrderDetailsPopup(Popup):
 
         button_layout.add_widget(
             MDRaisedButton(
-                text="Print Receipt", on_press=lambda instance: self.print_receipt(order=order)
+                text="Print Receipt",
+                on_press=lambda instance: self.print_receipt(order=order),
             )
         )
         button_layout.add_widget(MDRaisedButton(text="Refund", on_press=self.refund))
@@ -527,7 +527,7 @@ class OrderDetailsPopup(Popup):
             items = json.loads(items_json)
         except json.JSONDecodeError as e:
             print(f"[OrderDetailsPopup] convert_order_to_dict \n{e}")
-            #items = ast.literal_eval(items_json)
+            # items = ast.literal_eval(items_json)
 
         if isinstance(items, list):
             items_dict = {str(i): item for i, item in enumerate(items)}
