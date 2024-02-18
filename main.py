@@ -36,7 +36,7 @@ from history_manager import HistoryView, HistoryPopup
 from inventory_manager import InventoryManagementView
 from label_printer import LabelPrintingView, LabelPrinter
 from order_manager import OrderManager
-from popups import PopupManager, FinancialSummaryWidget
+from popups import PopupManager, FinancialSummaryWidget, Calculator
 from receipt_printer import ReceiptPrinter
 from util import Utilities, ReusableTimer
 from wrapper import Wrapper
@@ -77,7 +77,7 @@ class CashRegisterApp(MDApp):
         self.label_manager = LabelPrintingView(self)
         self.utilities = Utilities(self)
         self.pin_reset_timer = ReusableTimer(5.0, self.utilities.reset_pin)
-
+        self.calculator = Calculator()
         self.button_handler = ButtonHandler(self)
         self.popup_manager = PopupManager(self)
 
