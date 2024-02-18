@@ -1517,10 +1517,6 @@ class PopupManager:
         )
         error_popup.open()
 
-##########################################################################################################
-##########################################################################################################
-##########################################################################################################
-##########################################################################################################
 
 
     def inventory_item_popup(self, barcode=None):
@@ -1643,7 +1639,122 @@ class PopupManager:
             )
         self.category_button_popup_inv.open()
 
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
+##########################################################################################################
 
+
+    def inventory_item_popup_row(self, instance):
+
+        content = BoxLayout(orientation="vertical", padding=10)
+        name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        name_input = TextInput(text=instance.name)
+        name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
+        name_layout.add_widget(name_input)
+        barcode_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        print(f"Accessing inventory row barcode: {instance.barcode}")
+
+        barcode_input = TextInput(
+            input_filter="int", text=instance.barcode if instance.barcode else ""
+        )
+        barcode_layout.add_widget(Label(text="Barcode", size_hint_x=0.2))
+        barcode_layout.add_widget(barcode_input)
+
+        price_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        price_input = TextInput(input_filter="float", text=instance.price)
+        price_layout.add_widget(Label(text="Price", size_hint_x=0.2))
+        price_layout.add_widget(price_input)
+
+        cost_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        cost_input = TextInput(text=instance.cost, input_filter="float")
+        cost_layout.add_widget(Label(text="Cost", size_hint_x=0.2))
+        cost_layout.add_widget(cost_input)
+
+        sku_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        sku_input = TextInput(text=instance.sku)
+        sku_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
+        sku_layout.add_widget(sku_input)
+
+        category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        self.update_category_input = TextInput(text=instance.category, disabled=True)
+        category_layout.add_widget(Label(text="Categories", size_hint_x=0.2))
+        category_layout.add_widget(self.update_category_input)
+
+        content.add_widget(name_layout)
+        content.add_widget(barcode_layout)
+        content.add_widget(price_layout)
+        content.add_widget(cost_layout)
+        content.add_widget(sku_layout)
+        content.add_widget(category_layout)
+
+        button_layout = BoxLayout(
+            orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
+        )
+
+        button_layout.add_widget(
+            MDRaisedButton(
+                text="Update Details",
+                on_press=lambda x: self.app.utilities.update_confirm_and_close(
+                    barcode_input,
+                    name_input,
+                    price_input,
+                    cost_input,
+                    sku_input,
+                    self.update_category_input,
+                    self.inventory_item_update_popup,
+                ),
+            )
+        )
+        button_layout.add_widget(
+            MDRaisedButton(
+                text="Categories",
+                on_press=lambda x: self.open_update_category_button_popup(),
+            )
+        )
+
+        button_layout.add_widget(
+            MDRaisedButton(text="Close", on_press=lambda x: self.inventory_item_update_popup.dismiss())
+        )
+
+        content.add_widget(button_layout)
+
+        self.inventory_item_update_popup = Popup(
+            title="Item details",
+            pos_hint={"top": 1},
+            content=content,
+            size_hint=(0.8, 0.4),
+        )
+        self.inventory_item_update_popup.open()
+
+    def open_update_category_button_popup(self):
+        self.update_selected_categories = []
+        category_button_layout = GridLayout(size_hint=(1, 0.8), pos_hint={"top":1},cols=7, spacing=5)
+        for category in self.app.categories:
+            btn = MDRaisedButton(
+                text=category,
+                on_release=lambda x, cat=category: self.app.utilities.update_toggle_category_selection(x, cat),
+                size_hint=(1,0.8)
+                )
+            category_button_layout.add_widget(btn)
+        category_popup_layout = BoxLayout()
+        confirm_button = MDRaisedButton(
+            text="Confirm",
+            on_release=lambda x: self.app.utilities.update_apply_categories()
+            )
+        cancel_button = MDRaisedButton(
+            text="Cancel",
+            on_release=lambda x: self.update_category_button_popup.dismiss()
+            )
+        category_popup_layout.add_widget(category_button_layout)
+        category_popup_layout.add_widget(confirm_button)
+        category_popup_layout.add_widget(cancel_button)
+
+        self.update_category_button_popup = Popup(
+            content=category_popup_layout,
+            size_hint=(0.9,0.9)
+            )
+        self.update_category_button_popup.open()
 
 
 
