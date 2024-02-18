@@ -1,15 +1,19 @@
 import json
-from kivymd.uix.button import MDRaisedButton
 import time
 import subprocess
-import re
 import threading
-import dbus
-from open_cash_drawer import open_cash_drawer
 import sys
-from kivy.clock import Clock
-from barcode.upc import UniversalProductCodeA as upc_a
 import random
+
+import dbus
+from kivy.clock import Clock
+from kivymd.uix.button import MDRaisedButton
+
+from open_cash_drawer import open_cash_drawer
+from barcode.upc import UniversalProductCodeA as upc_a
+
+
+
 class Utilities:
     def __init__(self, ref):
         self.app = ref
@@ -32,16 +36,17 @@ class Utilities:
         if self.app.pin_reset_timer is not None:
             self.app.pin_reset_timer.stop()
 
-
         self.app.pin_reset_timer.start()
 
     def reset_pin(self, dt=None):
-        print(f"reset pin\n{self.app.entered_pin}\n{self.app.popup_manager.pin_input.text}")
+        print(
+            f"reset pin\n{self.app.entered_pin}\n{self.app.popup_manager.pin_input.text}"
+        )
+
         def update_ui(dt):
             self.app.entered_pin = ""
             if self.app.popup_manager.pin_input is not None:
                 self.app.popup_manager.pin_input.text = ""
-
 
         Clock.schedule_once(update_ui)
 
@@ -52,7 +57,6 @@ class Utilities:
             if amount not in amounts and amount >= total:
                 amounts.append(amount)
         return amounts
-
 
     def update_clock(self, *args):
         self.app.clock_label.text = time.strftime("%I:%M %p\n%A\n%B %d, %Y\n")
@@ -76,7 +80,6 @@ class Utilities:
             self.app.label_manager.detach_from_parent()
         except Exception as e:
             print(e)
-
 
     def create_md_raised_button(
         self,
@@ -113,23 +116,21 @@ class Utilities:
             price = item_info["price"]
             item_quantity = item_info["quantity"]
             item_total_price = item_info["total_price"]
-            item_discount = item_info.get('discount', {'amount': 0, 'percent': False})
+            item_discount = item_info.get("discount", {"amount": 0, "percent": False})
             price_times_quantity = price * item_quantity
             if item_quantity > 1:
-                if float(item_discount['amount']) > 0:
-                    item_display_text = (
-                        f"{item_name} x{item_quantity} ${price_times_quantity:.2f}\n - {float(item_discount['amount']):.2f} = ${item_total_price:.2f}"
-                    )
+                if float(item_discount["amount"]) > 0:
+                    item_display_text = f"{item_name} x{item_quantity} ${price_times_quantity:.2f}\n - {float(item_discount['amount']):.2f} = ${item_total_price:.2f}"
                 else:
-                     item_display_text = (
+                    item_display_text = (
                         f"{item_name} x{item_quantity} ${item_total_price:.2f}"
                     )
 
             else:
-                if float(item_discount['amount']) > 0:
+                if float(item_discount["amount"]) > 0:
                     item_display_text = f"{item_name} ${price_times_quantity:.2f}\n - {float(item_discount['amount']):.2f} = ${item_total_price:.2f}"
                 else:
-                     item_display_text = f"{item_name} ${item_total_price:.2f}"
+                    item_display_text = f"{item_name} ${item_total_price:.2f}"
             item_button = MDRaisedButton(
                 text=item_display_text,
                 size_hint=(0.1, 0.1),
@@ -137,8 +138,10 @@ class Utilities:
                 valign="center",
             )
             item_button.bind(
-            on_press=lambda x, item_id=item_id: self.app.popup_manager.show_item_details_popup(item_id)
-        )
+                on_press=lambda x, item_id=item_id: self.app.popup_manager.show_item_details_popup(
+                    item_id
+                )
+            )
             self.app.order_layout.add_widget(item_button)
 
     def update_financial_summary(self):
@@ -187,9 +190,8 @@ class Utilities:
                 barcode_cache[barcode] = [item]
             else:
                 barcode_cache[barcode].append(item)
-        #print(barcode_cache)
+        # print(barcode_cache)
         return barcode_cache
-
 
     def update_barcode_cache(self, new_item):
         barcode = new_item[0]
@@ -197,9 +199,6 @@ class Utilities:
             self.app.barcode_cache[barcode] = [new_item]
         else:
             self.app.barcode_cache[barcode].append(new_item)
-
-
-
 
     def initialze_categories(self):
         categories = [
@@ -244,7 +243,7 @@ class Utilities:
     def dismiss_guard_popup(self):
 
         self.app.popup_manager.guard_popup.dismiss()
-        #self.turn_on_monitor()
+        # self.turn_on_monitor()
 
     def close_item_popup(self):
         self.dismiss_popups("item_popup")
@@ -292,15 +291,19 @@ class Utilities:
         if trigger:
             self.app.popup_manager.show_lock_screen()
             self.app.is_lock_screen_displayed = True
-        elif not self.app.is_guard_screen_displayed and not self.app.is_lock_screen_displayed:
+        elif (
+            not self.app.is_guard_screen_displayed
+            and not self.app.is_lock_screen_displayed
+        ):
             self.app.popup_manager.show_lock_screen()
             self.app.popup_manager.show_guard_screen()
             self.app.is_lock_screen_displayed = True
             self.app.is_guard_screen_displayed = True
-        elif self.app.is_lock_screen_displayed and not self.app.is_guard_screen_displayed:
+        elif (
+            self.app.is_lock_screen_displayed and not self.app.is_guard_screen_displayed
+        ):
             self.app.popup_manager.show_guard_screen()
             self.app.is_guard_screen_displayed = True
-
 
     def reboot(self, instance):
         try:
@@ -321,7 +324,9 @@ class Utilities:
             with open("settings.json", "r") as f:
                 settings = json.load(f)
                 # Load theme settings
-                self.app.theme_cls.primary_palette = settings.get("primary_palette", "Brown")
+                self.app.theme_cls.primary_palette = settings.get(
+                    "primary_palette", "Brown"
+                )
                 self.app.theme_cls.theme_style = settings.get("theme_style", "Light")
 
                 # # Check for emergency reboot flag
@@ -330,7 +335,6 @@ class Utilities:
 
         except FileNotFoundError as e:
             print(e)
-
 
     # def handle_emergency_reboot(self):
     #     print("handle_emergency_reboot")
@@ -350,22 +354,25 @@ class Utilities:
         except Exception as e:
             print(e)
 
-
     def check_inactivity(self, *args):
         try:
 
             bus = dbus.SessionBus()
-            screensaver_proxy = bus.get_object("org.freedesktop.ScreenSaver", "/org/freedesktop/ScreenSaver")
-            screensaver_interface = dbus.Interface(screensaver_proxy, dbus_interface="org.freedesktop.ScreenSaver")
+            screensaver_proxy = bus.get_object(
+                "org.freedesktop.ScreenSaver", "/org/freedesktop/ScreenSaver"
+            )
+            screensaver_interface = dbus.Interface(
+                screensaver_proxy, dbus_interface="org.freedesktop.ScreenSaver"
+            )
             idle_time = screensaver_interface.GetSessionIdleTime()
 
             if idle_time > 600000:
                 self.trigger_guard_and_lock(trigger=False)
 
-            #return idle_time
+            # return idle_time
 
         except Exception as e:
-            #print(f"Exception in check_inactivity\n{e}")
+            # print(f"Exception in check_inactivity\n{e}")
             pass
 
     def clear_split_numeric_input(self):
@@ -407,20 +414,30 @@ class Utilities:
             "split_cash_popup", "split_cash_confirm_popup", "split_change_popup"
         )
 
-        if abs(self.app.popup_manager.split_payment_info["remaining_amount"]) <= tolerance:
+        if (
+            abs(self.app.popup_manager.split_payment_info["remaining_amount"])
+            <= tolerance
+        ):
             self.finalize_split_payment()
         else:
-            self.app.popup_manager.show_split_payment_numeric_popup(subsequent_payment=True)
+            self.app.popup_manager.show_split_payment_numeric_popup(
+                subsequent_payment=True
+            )
 
     def split_card_continue(self, amount, method):
 
         tolerance = 0.001
         self.app.popup_manager.dismiss_popups("split_card_confirm_popup")
 
-        if abs(self.app.popup_manager.split_payment_info["remaining_amount"]) <= tolerance:
+        if (
+            abs(self.app.popup_manager.split_payment_info["remaining_amount"])
+            <= tolerance
+        ):
             self.finalize_split_payment()
         else:
-            self.app.popup_manager.show_split_payment_numeric_popup(subsequent_payment=True)
+            self.app.popup_manager.show_split_payment_numeric_popup(
+                subsequent_payment=True
+            )
 
     def finalize_split_payment(self):
         self.app.order_manager.set_payment_method("Split")
@@ -459,18 +476,20 @@ class Utilities:
     def indicate_incorrect_pin(self, layout):
         original_color = layout.background_color
         layout.background_color = [1, 0, 0, 1]
-        Clock.schedule_once(lambda dt: setattr(layout, 'background_color', original_color), 0.5)
+        Clock.schedule_once(
+            lambda dt: setattr(layout, "background_color", original_color), 0.5
+        )
 
-     # elif instance.text == "TEST": TODO
-        #     print("test button")
-        #     eel_thread = threading.Thread(target=self.start_eel)
-        #     eel_thread.daemon = True
-        #     eel_thread.start()
-
+    # elif instance.text == "TEST": TODO
+    #     print("test button")
+    #     eel_thread = threading.Thread(target=self.start_eel)
+    #     eel_thread.daemon = True
+    #     eel_thread.start()
 
     def dismiss_single_discount_popup(self):
         self.app.popup_manager.discount_amount_input.text = ""
         self.app.popup_manager.discount_popup.dismiss()
+
     def dismiss_entire_discount_popup(self):
         self.app.popup_manager.discount_order_amount_input.text = ""
         self.app.popup_manager.discount_order_popup.dismiss()
@@ -515,7 +534,7 @@ class Utilities:
                 return new_barcode
 
     def apply_categories_inv(self):
-        categories_str = ', '.join(self.app.popup_manager.selected_categories)
+        categories_str = ", ".join(self.app.popup_manager.selected_categories)
         self.app.popup_manager.add_to_db_category_input.text = categories_str
         self.app.popup_manager.category_button_popup_inv.dismiss()
 
@@ -532,10 +551,22 @@ class Utilities:
         self.app.popup_manager.inventory_item_popup()
 
     def update_confirm_and_close(
-        self, barcode_input, name_input, price_input, cost_input, sku_input, category_input, popup
+        self,
+        barcode_input,
+        name_input,
+        price_input,
+        cost_input,
+        sku_input,
+        category_input,
+        popup,
     ):
         self.app.inventory_row.update_item_in_database(
-            barcode_input, name_input, price_input, cost_input, sku_input, category_input
+            barcode_input,
+            name_input,
+            price_input,
+            cost_input,
+            sku_input,
+            category_input,
         )
         self.app.inventory_manager.refresh_inventory()
         popup.dismiss()
@@ -545,7 +576,7 @@ class Utilities:
         self.app.popup_manager.inventory_item_popup_row(instance)
 
     def update_apply_categories(self):
-        categories_str = ', '.join(self.update_selected_categories)
+        categories_str = ", ".join(self.update_selected_categories)
         self.update_category_input.text = categories_str
         self.update_category_button_popup.dismiss()
 
@@ -583,5 +614,3 @@ class ReusableTimer:
 
     def reset(self):
         self.start()
-
-

@@ -1,6 +1,9 @@
-from open_cash_drawer import open_cash_drawer
 import sys
 import re
+
+from open_cash_drawer import open_cash_drawer
+
+
 class ButtonHandler:
     def __init__(self, ref):
         self.app = ref
@@ -23,6 +26,7 @@ class ButtonHandler:
 
     def show_system_popup(self):
         self.app.popup_manager.show_system_popup()
+
     def show_calcultor_popup(self):
         self.app.calculator.show_calculator_popup()
 
@@ -41,7 +45,6 @@ class ButtonHandler:
             action()
         self.app.popup_manager.tools_popup.dismiss()
 
-
     def handle_numeric_input(self, input_field, instance_text):
         current_input = input_field.text.replace(".", "").lstrip("0")
         new_input = current_input + instance_text
@@ -55,22 +58,34 @@ class ButtonHandler:
         self.handle_numeric_input(self.app.popup_manager.cash_input, instance.text)
 
     def on_custom_cash_numeric_button_press(self, instance):
-        self.handle_numeric_input(self.app.popup_manager.custom_cash_input, instance.text)
+        self.handle_numeric_input(
+            self.app.popup_manager.custom_cash_input, instance.text
+        )
 
     def on_split_payment_numeric_button_press(self, instance):
-        self.handle_numeric_input(self.app.popup_manager.split_payment_numeric_cash_input, instance.text)
+        self.handle_numeric_input(
+            self.app.popup_manager.split_payment_numeric_cash_input, instance.text
+        )
 
     def on_split_custom_cash_payment_numeric_button_press(self, instance):
-        self.handle_numeric_input(self.app.popup_manager.split_custom_cash_input, instance.text)
+        self.handle_numeric_input(
+            self.app.popup_manager.split_custom_cash_input, instance.text
+        )
 
     def on_add_discount_numeric_button_press(self, instance):
-        self.handle_numeric_input(self.app.popup_manager.discount_amount_input, instance.text)
+        self.handle_numeric_input(
+            self.app.popup_manager.discount_amount_input, instance.text
+        )
 
     def on_add_order_discount_numeric_button_press(self, instance):
-        self.handle_numeric_input(self.app.popup_manager.discount_order_amount_input, instance.text)
+        self.handle_numeric_input(
+            self.app.popup_manager.discount_order_amount_input, instance.text
+        )
 
     def on_adjust_price_numeric_button_press(self, instance):
-        self.handle_numeric_input(self.app.popup_manager.adjust_price_cash_input, instance.text)
+        self.handle_numeric_input(
+            self.app.popup_manager.adjust_price_cash_input, instance.text
+        )
 
     def on_payment_button_press(self, instance):
         payment_actions = {
@@ -78,7 +93,7 @@ class ButtonHandler:
             "Pay Debit": self.app.order_manager.handle_debit_payment,
             "Pay Credit": self.app.order_manager.handle_credit_payment,
             "Split": self.app.popup_manager.handle_split_payment,
-            "Cancel": lambda: self.app.popup_manager.finalize_order_popup.dismiss()
+            "Cancel": lambda: self.app.popup_manager.finalize_order_popup.dismiss(),
         }
 
         for action_text, action in payment_actions.items():
@@ -91,7 +106,6 @@ class ButtonHandler:
             "Reboot System": self.app.popup_manager.reboot_are_you_sure,
             "Restart App": lambda: sys.exit(42),
             "Change Theme": self.app.popup_manager.show_theme_change_popup,
-
         }
 
         action = system_actions.get(instance.text)
@@ -105,13 +119,12 @@ class ButtonHandler:
             "Pay": self.pay_order,
             "Custom": self.show_custom_item_popup,
             "Tools": self.show_tools_popup,
-            "Search": self.show_inventory
+            "Search": self.show_inventory,
         }
 
         action = button_actions.get(instance.text)
         if action:
             action()
-
 
     def pay_order(self):
         total = self.app.order_manager.calculate_total_with_tax()
@@ -127,15 +140,6 @@ class ButtonHandler:
     def show_inventory(self):
 
         self.app.popup_manager.show_inventory()
-    def on_system_button_press(self, instance):
-        if instance.text == "Reboot System":
-            self.app.popup_manager.reboot_are_you_sure()
-        elif instance.text == "Restart App":
-            sys.exit(42)
-        elif instance.text == "Change Theme":
-            self.app.popup_manager.show_theme_change_popup()
-
-        self.app.popup_manager.system_popup.dismiss()
 
 
 
@@ -171,7 +175,9 @@ class ButtonHandler:
                 self.app.is_lock_screen_displayed = False
                 self.app.pin_reset_timer.stop()
             else:
-                self.app.utilities.indicate_incorrect_pin(self.app.popup_manager.lock_popup)
+                self.app.utilities.indicate_incorrect_pin(
+                    self.app.popup_manager.lock_popup
+                )
                 self.app.popup_manager.flash_buttons_red()
                 self.app.popup_manager.pin_input.text = ""
                 self.app.pin_reset_timer.reset()
@@ -179,12 +185,12 @@ class ButtonHandler:
             self.app.popup_manager.pin_input.text = ""
 
     def on_preset_amount_press(self, instance):
-        amount = re.sub(r'\[.*?\]', '', instance.text)
+        amount = re.sub(r"\[.*?\]", "", instance.text)
         amount = amount.replace("$", "")
 
         self.app.popup_manager.cash_payment_input.text = amount
 
     def split_on_preset_amount_press(self, instance):
-        amount = re.sub(r'\[.*?\]', '', instance.text)
+        amount = re.sub(r"\[.*?\]", "", instance.text)
         amount = amount.replace("$", "")
         self.app.popup_manager.split_cash_input.text = amount

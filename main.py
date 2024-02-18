@@ -8,18 +8,18 @@ import eel
 import sys
 
 from kivy.config import Config
+
 Config.set("kivy", "keyboard_mode", "systemanddock")
-#Config.set('graphics', 'show_cursor', '0')
-#Config.set('kivy', 'log_level', 'error')
-Config.set('graphics', 'multisamples', '4')
-#Config.set('graphics', 'kivy_clock', 'interrupt')
+# Config.set('graphics', 'show_cursor', '0')
+# Config.set('kivy', 'log_level', 'error')
+Config.set("graphics", "multisamples", "4")
+# Config.set('graphics', 'kivy_clock', 'interrupt')
 
 from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.modules import monitor, inspector
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.image import Image
-from kivy.uix.label import Label
 
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import BoxLayout
@@ -29,7 +29,8 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.boxlayout import MDBoxLayout
 
 from _barcode_test import BarcodeScanner
-#from barcode_scanner import BarcodeScanner
+
+# from barcode_scanner import BarcodeScanner
 from button_handlers import ButtonHandler
 from database_manager import DatabaseManager
 from history_manager import HistoryView, HistoryPopup
@@ -81,12 +82,9 @@ class CashRegisterApp(MDApp):
         self.button_handler = ButtonHandler(self)
         self.popup_manager = PopupManager(self)
 
-
         self.wrapper = Wrapper(self)
         self.categories = self.utilities.initialze_categories()
         self.barcode_cache = self.utilities.initialize_barcode_cache()
-
-
 
         main_layout = GridLayout(
             cols=1, spacing=5, orientation="tb-lr", row_default_height=60
@@ -133,9 +131,9 @@ class CashRegisterApp(MDApp):
         )
         btn_tools = self.utilities.create_md_raised_button(
             "Tools",
-            #lambda x: self.utilities.trigger_guard_and_lock(),
+            # lambda x: self.utilities.trigger_guard_and_lock(),
             self.button_handler.on_button_press,
-            #lambda x: sys.exit(42),
+            # lambda x: sys.exit(42),
             (8, 8),
             "H6",
         )
@@ -148,19 +146,26 @@ class CashRegisterApp(MDApp):
         Clock.schedule_interval(self.utilities.check_inactivity, 10)
         Clock.schedule_interval(self.barcode_scanner.check_for_scanned_barcode, 0.1)
 
-
         base_layout = FloatLayout()
 
         try:
             if self.theme_cls.theme_style == "Light":
-                bg_image = Image(source='images/gradient_wallpaper.png', allow_stretch=True, keep_ratio=False)
+                bg_image = Image(
+                    source="images/gradient_wallpaper.png",
+                    allow_stretch=True,
+                    keep_ratio=False,
+                )
                 base_layout.add_widget(bg_image)
             else:
-                bg_image = Image(source='images/grey_mountains.jpg', allow_stretch=True, keep_ratio=False)
+                bg_image = Image(
+                    source="images/grey_mountains.jpg",
+                    allow_stretch=True,
+                    keep_ratio=False,
+                )
                 base_layout.add_widget(bg_image)
 
         except Exception as e:
-
+            print(e)
             with base_layout.canvas.before:
                 Color(0.78, 0.78, 0.78, 1)
                 self.rect = Rectangle(size=base_layout.size, pos=base_layout.pos)
@@ -177,20 +182,16 @@ class CashRegisterApp(MDApp):
     def create_clock_layout(self):
         clock_layout = BoxLayout(orientation="vertical", size_hint_x=1 / 3)
         register_text = MDLabel(
-        text="Cash Register",
-        size_hint_y=None,
-        #font_style="H8",
-        height=50,
-        valign="bottom",
-        halign="center"
-    )
+            text="Cash Register",
+            size_hint_y=None,
+            # font_style="H8",
+            height=50,
+            valign="bottom",
+            halign="center",
+        )
         blank_space = MDLabel(
-        text="",
-        size_hint_y=1,
-        height=450,
-        valign="top",
-        halign="center"
-    )
+            text="", size_hint_y=1, height=450, valign="top", halign="center"
+        )
 
         self.clock_label = MDLabel(
             text="Loading...",
@@ -200,7 +201,9 @@ class CashRegisterApp(MDApp):
             color=self.utilities.get_text_color(),
             halign="center",
         )
-        line_container = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=1)
+        line_container = MDBoxLayout(
+            orientation="horizontal", size_hint_y=None, height=1
+        )
         blue_line = MDBoxLayout(size_hint_x=0.2)
         blue_line.md_bg_color = (0.56, 0.56, 1, 1)
         blank_line = MDBoxLayout(size_hint_x=0.2)
@@ -214,7 +217,6 @@ class CashRegisterApp(MDApp):
             icon="lock",
             pos_hint={"right": 1},
             on_press=lambda x: self.utilities.trigger_guard_and_lock(trigger=True),
-
         )
         clock_layout.add_widget(register_text)
         clock_layout.add_widget(line_container)
@@ -240,9 +242,6 @@ class CashRegisterApp(MDApp):
         #     subprocess.run(["systemctl", "reboot"])
         # except Exception as e:
         #     print(e)
-
-
-
 
     @eel.expose
     @staticmethod
@@ -270,7 +269,6 @@ class CashRegisterApp(MDApp):
         eel.init("web")
         print("start eel")
         eel.start("index.html")
-
 
 
 try:

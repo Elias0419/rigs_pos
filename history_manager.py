@@ -420,13 +420,13 @@ class HistoryView(BoxLayout):
         today = datetime.now().strftime("%Y-%m-%d")
         if self.current_filter == "today":
             return f"Order_History_Today_{today}.csv"
-        elif self.current_filter == "this_week":
+        if self.current_filter == "this_week":
             return f"Order_History_This_Week_{today}.csv"
-        elif self.current_filter == "this_month":
+        if self.current_filter == "this_month":
             return f"Order_History_This_Month_{today}.csv"
-        elif self.current_filter == "custom_range":
+        if self.current_filter == "custom_range":
             return f"Order_History_Custom_Range_{today}.csv"
-        elif self.current_filter == "specific_day":
+        if self.current_filter == "specific_day":
             return f"Order_History_Custom_Range_{today}.csv"
         else:
             return f"Order_History_All_{today}.csv"
