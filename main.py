@@ -10,10 +10,12 @@ import sys
 from kivy.config import Config
 
 Config.set("kivy", "keyboard_mode", "systemanddock")
-# Config.set('graphics', 'show_cursor', '0')
+Config.set('kivy', 'keyboard_scale', '0.5')
+
+Config.set('graphics', 'show_cursor', '0')
 # Config.set('kivy', 'log_level', 'error')
 Config.set("graphics", "multisamples", "4")
-# Config.set('graphics', 'kivy_clock', 'interrupt')
+Config.set('graphics', 'kivy_clock', 'interrupt')
 
 from kivy.clock import Clock
 from kivy.core.window import Window
