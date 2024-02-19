@@ -93,7 +93,16 @@ class DatabaseManager:
                 (barcode, name, price, cost, sku, category, parent_barcode),
             )
             conn.commit()
-            self.app.utilities.update_barcode_cache(barcode)
+            item_details = {
+                'barcode': barcode,
+                'name': name,
+                'price': price,
+                'cost': cost,
+                'sku': sku,
+                'category': category,
+                'parent_barcode': parent_barcode
+            }
+            self.app.utilities.update_barcode_cache(item_details)
         except sqlite3.IntegrityError as e:
             print(e)
             conn.close()
@@ -118,7 +127,16 @@ class DatabaseManager:
                 print("No item found with barcode and SKU:", barcode, sku)
                 return False
             conn.commit()
-            self.app.utilities.update_barcode_cache(barcode)
+            item_details = {
+                'barcode': barcode,
+                'name': name,
+                'price': price,
+                'cost': cost,
+                'sku': sku,
+                'category': category,
+                'parent_barcode': parent_barcode
+            }
+            self.app.utilities.update_barcode_cache(item_details)
         except Exception as e:
             print(e)
             return False
