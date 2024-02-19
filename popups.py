@@ -1520,7 +1520,7 @@ class PopupManager:
 
 
 
-    def inventory_item_popup(self, barcode=None):
+    def open_inventory_item_popup(self, barcode=None):
 
 
         self.app.current_context = "inventory_item"
@@ -1605,10 +1605,13 @@ class PopupManager:
             size_hint=(0.8, 0.4),
         )
 
-        self.inventory_item_popup.bind(on_dismiss=lambda x: self.app.inventory_manager.reset_inventory_context())
+        self.inventory_item_popup.bind(on_dismiss=lambda x: self.on_inventory_item_dismiss(x))
         self.app.inventory_manager.refresh_inventory()
         self.inventory_item_popup.open()
 
+    def on_inventory_item_dismiss(self, instance):
+        self.app.inventory_manager.reset_inventory_context()
+        #self.app.inventory_manager.detach_from_parent()
 
     def open_category_button_popup_inv(self):
         self.selected_categories = []
@@ -1725,6 +1728,7 @@ class PopupManager:
             pos_hint={"top": 1},
             content=content,
             size_hint=(0.8, 0.4),
+            on_dismiss=lambda x: self.app.inventory_manager.reset_inventory_context()
         )
         self.inventory_item_update_popup.open()
 
