@@ -193,12 +193,14 @@ class Utilities:
         # print(barcode_cache)
         return barcode_cache
 
-    def update_barcode_cache(self, new_item):
-        barcode = new_item[0]
+    def update_barcode_cache(self, item_details):
+
+        barcode = item_details['barcode']
         if barcode not in self.app.barcode_cache:
-            self.app.barcode_cache[barcode] = [new_item]
+
+            self.app.barcode_cache[barcode] = [item_details]
         else:
-            self.app.barcode_cache[barcode].append(new_item)
+            self.app.barcode_cache[barcode].append(item_details)
 
     def initialze_categories(self):
         categories = [
