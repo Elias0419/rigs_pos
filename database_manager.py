@@ -93,11 +93,13 @@ class DatabaseManager:
                 (barcode, name, price, cost, sku, category, parent_barcode),
             )
             conn.commit()
+            self.app.utilities.update_barcode_cache(barcode)
         except sqlite3.IntegrityError as e:
             print(e)
             conn.close()
             return False
         conn.close()
+
         return True
 
 
@@ -116,12 +118,12 @@ class DatabaseManager:
                 print("No item found with barcode and SKU:", barcode, sku)
                 return False
             conn.commit()
+            self.app.utilities.update_barcode_cache(barcode)
         except Exception as e:
             print(e)
             return False
         finally:
             conn.close()
-
         return True
 
     def add_order_history(self, order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given):
