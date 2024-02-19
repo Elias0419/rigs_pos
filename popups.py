@@ -423,6 +423,7 @@ class PopupManager:
 
     def on_inventory_manager_dismiss(self, instance):
         self.app.utilities.reset_to_main_context(instance)
+        self.app.inventory_manager.detach_from_parent()
         self.inventory_management_view.ids.inv_search_input.text = ""
 
     def show_adjust_price_popup(self):
