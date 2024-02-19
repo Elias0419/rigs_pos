@@ -312,7 +312,7 @@ class LabelPrinter:
 
         # label_image.show()
         qlr = brother_ql.BrotherQLRaster("QL-710W")
-        qlr.exception_on_warning = True
+        #qlr.exception_on_warning = True
         convert(qlr=qlr, images=[label_image], label="23x23", cut=False)
         try:
             send(
