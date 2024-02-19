@@ -12,7 +12,7 @@ from kivy.config import Config
 Config.set("kivy", "keyboard_mode", "systemanddock")
 Config.set('kivy', 'keyboard_scale', '0.5')
 
-Config.set('graphics', 'show_cursor', '0')
+#Config.set('graphics', 'show_cursor', '0')
 # Config.set('kivy', 'log_level', 'error')
 Config.set("graphics", "multisamples", "4")
 Config.set('graphics', 'kivy_clock', 'interrupt')
@@ -36,7 +36,7 @@ from _barcode_test import BarcodeScanner
 from button_handlers import ButtonHandler
 from database_manager import DatabaseManager
 from history_manager import HistoryView, HistoryPopup
-from inventory_manager import InventoryManagementView
+from inventory_manager import InventoryManagementView, InventoryManagementRow
 from label_printer import LabelPrintingView, LabelPrinter
 from order_manager import OrderManager
 from popups import PopupManager, FinancialSummaryWidget, Calculator
@@ -76,6 +76,7 @@ class CashRegisterApp(MDApp):
         self.history_popup = HistoryPopup()
         self.receipt_printer = ReceiptPrinter(self, "receipt_printer_config.yaml")
         self.inventory_manager = InventoryManagementView()
+        self.inventory_row = InventoryManagementRow()
         self.label_printer = LabelPrinter(self)
         self.label_manager = LabelPrintingView(self)
         self.utilities = Utilities(self)

@@ -100,8 +100,8 @@ class InventoryManagementView(BoxLayout):
         self.barcode_input.text = unique_barcode
 
     def open_inventory_manager(self):
-
-        self.app.popup_manager.inventory_item_popup()
+        #self.detach_from_parent()
+        self.app.popup_manager.open_inventory_item_popup()
 
     def generate_data_for_rv(self, items):
         data = [
