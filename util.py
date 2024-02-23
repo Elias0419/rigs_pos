@@ -13,23 +13,18 @@ from open_cash_drawer import open_cash_drawer
 from barcode.upc import UniversalProductCodeA as upc_a
 
 
-
 class Utilities:
     def __init__(self, ref):
         self.app = ref
 
-    def toggle_category_selection(self, instance, category):
-        if category in self.app.selected_categories:
-            self.app.selected_categories.remove(category)
-            instance.text = category
-        else:
-            self.app.selected_categories.append(category)
-            instance.text = f"{category}\n (Selected)"
+    # def toggle_category_selection(self, instance, category):
+    #     if category in self.app.selected_categories:
+    #         self.app.selected_categories.remove(category)
+    #         instance.text = category
+    #     else:
+    #         self.app.selected_categories.append(category)
+    #         instance.text = f"{category}\n (Selected)"
 
-    def apply_categories(self):
-        categories_str = ", ".join(self.app.selected_categories)
-        self.app.popup_manager.add_to_db_category_input.text = categories_str
-        self.app.popup_manager.category_popup.dismiss()
 
     def reset_pin_timer(self):
         print("reset_pin_timer", self.app.pin_reset_timer)
@@ -202,7 +197,7 @@ class Utilities:
         else:
             self.app.barcode_cache[barcode].append(item_details)
 
-    def initialze_categories(self):
+    def initialize_categories(self):
         categories = [
             "Cdb",
             "Rig",
@@ -535,18 +530,35 @@ class Utilities:
             if not self.app.db_manager.barcode_exists(new_barcode):
                 return new_barcode
 
-    def apply_categories_inv(self):
+    def apply_categories(self):
         categories_str = ", ".join(self.app.popup_manager.selected_categories)
         self.app.popup_manager.add_to_db_category_input.text = categories_str
+        self.app.popup_manager.category_button_popup.dismiss()
+
+    def apply_categories_inv(self):
+        categories_str = ", ".join(
+            self.app.popup_manager.selected_categories_inv
+            )
+        self.app.popup_manager.add_to_db_category_input_inv.text = categories_str
         self.app.popup_manager.category_button_popup_inv.dismiss()
 
-    def toggle_category_selection_inv(self, instance, category):
-        if category in self.app.popup_manager.selected_categories:
-            self.app.popup_manager.selected_categories.remove(category)
-            instance.text = category
+    def toggle_category_selection(self, is_active, category):
+        if is_active:
+            if category not in self.app.popup_manager.selected_categories:
+                self.app.popup_manager.selected_categories.append(category)
         else:
-            self.app.popup_manager.selected_categories.append(category)
-            instance.text = f"{category}\n (Selected)"
+            if category in self.app.popup_manager.selected_categories:
+                self.app.popup_manager.selected_categories.remove(category)
+
+    def toggle_category_selection(self, is_active, category):
+        if is_active:
+            if category not in self.app.popup_manager.selected_categories_inv:
+                self.app.popup_manager.selected_categories_inv.append(category)
+
+        else:
+            if category in self.app.popup_manager.selected_categories_inv:
+                self.app.popup_manager.selected_categories_inv.append(category)
+
 
     def show_add_item_popup(self, scanned_barcode):
         self.barcode = scanned_barcode
