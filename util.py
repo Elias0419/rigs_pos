@@ -550,7 +550,7 @@ class Utilities:
             if category in self.app.popup_manager.selected_categories:
                 self.app.popup_manager.selected_categories.remove(category)
 
-    def toggle_category_selection(self, is_active, category):
+    def toggle_category_selection_inv(self, is_active, category):
         if is_active:
             if category not in self.app.popup_manager.selected_categories_inv:
                 self.app.popup_manager.selected_categories_inv.append(category)

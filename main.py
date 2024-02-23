@@ -147,6 +147,7 @@ class CashRegisterApp(MDApp):
             "Tools",
             #lambda x: self.popup_manager.open_category_button_popup(),
             self.button_handler.on_button_press,
+            #lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
             # lambda x: sys.exit(42),
             (8, 8),
             "H6",
