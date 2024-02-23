@@ -79,7 +79,7 @@ class PopupManager:
                                 height=40
                                 )
         checkbox = MDCheckbox(size_hint=(None, None), size=(48, 48))
-        checkbox.bind(active=lambda instance, is_active, cat=category: self.app.utilities.toggle_category_selection_inv(is_active, cat))
+        checkbox.bind(active=lambda instance, is_active, cat=category: self.app.utilities.toggle_category_selection(is_active, cat))
         label = MDLabel(text=category, size_hint_y=None, height=40)
         container.add_widget(checkbox)
         container.add_widget(label)
@@ -1676,7 +1676,7 @@ class PopupManager:
         # self.app.inventory_manager.detach_from_parent()
 
     def open_category_button_popup_inv(self):
-        self.selected_categories = []
+        self.selected_categories_inv = []
         categories = self.app.utilities.initialize_categories()
         main_layout = GridLayout(orientation="lr-tb", cols=1, rows=2)
         layout = GridLayout(
@@ -1690,7 +1690,7 @@ class PopupManager:
         layout.bind(minimum_height=layout.setter('height'))
 
         for category in categories:
-            layout.add_widget(self.create_category_item(category))
+            layout.add_widget(self.create_category_item_inv(category))
         main_layout.add_widget(layout)
         button_layout = GridLayout(orientation="lr-tb", cols=2, rows=2)
         confirm_button = MDRaisedButton(
