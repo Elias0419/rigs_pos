@@ -74,7 +74,10 @@ class CashRegisterApp(MDApp):
         self.order_manager = OrderManager(self)
         self.history_manager = HistoryView(self)
         self.history_popup = HistoryPopup()
-        self.receipt_printer = ReceiptPrinter(self, "receipt_printer_config.yaml")
+        self.receipt_printer = ReceiptPrinter(
+            self,
+            "receipt_printer_config.yaml"
+            )
         self.inventory_manager = InventoryManagementView()
         self.inventory_row = InventoryManagementRow()
         self.label_printer = LabelPrinter(self)
@@ -86,13 +89,17 @@ class CashRegisterApp(MDApp):
         self.popup_manager = PopupManager(self)
 
         self.wrapper = Wrapper(self)
-        self.categories = self.utilities.initialze_categories()
+        self.categories = self.utilities.initialize_categories()
         self.barcode_cache = self.utilities.initialize_barcode_cache()
 
         main_layout = GridLayout(
             cols=1, spacing=5, orientation="tb-lr", row_default_height=60
         )
-        top_area_layout = GridLayout(cols=3, orientation="lr-tb", row_default_height=60)
+        top_area_layout = GridLayout(
+            cols=3,
+            orientation="lr-tb",
+            row_default_height=60
+            )
         self.order_layout = GridLayout(
             orientation="tb-lr",
             cols=2,
@@ -110,7 +117,11 @@ class CashRegisterApp(MDApp):
         top_area_layout.add_widget(clock_layout)
         main_layout.add_widget(top_area_layout)
         button_layout = GridLayout(
-            cols=4, spacing=5, size_hint_y=1 / 8, size_hint_x=1, orientation="lr-tb"
+            cols=4,
+            spacing=5,
+            size_hint_y=1 / 8,
+            size_hint_x=1,
+            orientation="lr-tb"
         )
 
         btn_pay = self.utilities.create_md_raised_button(
@@ -134,7 +145,7 @@ class CashRegisterApp(MDApp):
         )
         btn_tools = self.utilities.create_md_raised_button(
             "Tools",
-            # lambda x: self.utilities.trigger_guard_and_lock(),
+            #lambda x: self.popup_manager.open_category_button_popup(),
             self.button_handler.on_button_press,
             # lambda x: sys.exit(42),
             (8, 8),
@@ -147,7 +158,10 @@ class CashRegisterApp(MDApp):
         main_layout.add_widget(button_layout)
 
         Clock.schedule_interval(self.utilities.check_inactivity, 10)
-        Clock.schedule_interval(self.barcode_scanner.check_for_scanned_barcode, 0.1)
+        Clock.schedule_interval(
+            self.barcode_scanner.check_for_scanned_barcode,
+            0.1
+            )
 
         base_layout = FloatLayout()
 
@@ -171,7 +185,10 @@ class CashRegisterApp(MDApp):
             print(e)
             with base_layout.canvas.before:
                 Color(0.78, 0.78, 0.78, 1)
-                self.rect = Rectangle(size=base_layout.size, pos=base_layout.pos)
+                self.rect = Rectangle(
+                    size=base_layout.size,
+                    pos=base_layout.pos
+                    )
 
             def update_rect(instance, value):
                 instance.rect.size = instance.size
@@ -219,7 +236,8 @@ class CashRegisterApp(MDApp):
         padlock_button = MDIconButton(
             icon="lock",
             pos_hint={"right": 1},
-            on_press=lambda x: self.utilities.trigger_guard_and_lock(trigger=True),
+            on_press=lambda x: self.utilities.trigger_guard_and_lock(
+                trigger=True),
         )
         clock_layout.add_widget(register_text)
         clock_layout.add_widget(line_container)

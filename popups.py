@@ -1,7 +1,7 @@
 # import logging
 #
 # logger = logging.getLogger(__name__)
-
+from kivymd.uix.selectioncontrol import MDCheckbox
 from kivy.uix.widget import Widget
 from kivy.uix.label import Label
 from kivy.uix.button import Button
@@ -36,36 +36,98 @@ class PopupManager:
         self.app = ref
 
     def create_category_popup(self):
-
-        categories = self.app.utilities.initialze_categories()
-        category_button_layout = GridLayout(
-            size_hint=(1, 0.8), pos_hint={"top": 1}, cols=7, spacing=5
+        self.selected_categories = []
+        categories = self.app.utilities.initialize_categories()
+        main_layout = GridLayout(orientation="lr-tb", cols=1, rows=2)
+        layout = GridLayout(
+            orientation='lr-tb',
+            spacing=10,
+            size_hint=(1, 1),
+            rows=7,
+            cols=7
         )
-        for category in categories:
-            btn = MDRaisedButton(
-                text=category,
-                on_release=lambda instance, cat=category: self.app.utilities.toggle_category_selection(
-                    instance, cat
-                ),
-                size_hint=(1, 0.8),
-            )
-            category_button_layout.add_widget(btn)
 
-        category_popup_layout = BoxLayout()
+        layout.bind(minimum_height=layout.setter('height'))
+
+        for category in categories:
+            layout.add_widget(self.create_category_item(category))
+        main_layout.add_widget(layout)
+        button_layout = GridLayout(orientation="lr-tb", cols=2, rows=2)
         confirm_button = MDRaisedButton(
             text="Confirm",
-            on_release=lambda instance: self.app.utilities.apply_categories(),
-        )
+            on_release=lambda instance:
+                self.app.utilities.apply_categories()
+            )
         cancel_button = MDRaisedButton(
             text="Cancel",
-            on_release=lambda instance: self.category_popup.dismiss(),
-        )
-        category_popup_layout.add_widget(category_button_layout)
-        category_popup_layout.add_widget(confirm_button)
-        category_popup_layout.add_widget(cancel_button)
+            on_release=lambda instance:
+            self.category_button_popup.dismiss()
+            )
+        button_layout.add_widget(confirm_button)
+        button_layout.add_widget(cancel_button)
+        main_layout.add_widget(button_layout)
+        self.category_button_popup = Popup(
+            content=main_layout,
+            size_hint=(0.9, 0.9))
+        #self.category_button_popup_inv.open()
 
-        self.category_popup = Popup(content=category_popup_layout, size_hint=(0.9, 0.9))
-        return self.category_popup
+        return self.category_button_popup
+
+    def create_category_item(self, category):
+        container = MDBoxLayout(orientation='horizontal',
+                                size_hint_y=None,
+                                height=40
+                                )
+        checkbox = MDCheckbox(size_hint=(None, None), size=(48, 48))
+        checkbox.bind(active=lambda instance, is_active, cat=category: self.app.utilities.toggle_category_selection_inv(is_active, cat))
+        label = MDLabel(text=category, size_hint_y=None, height=40)
+        container.add_widget(checkbox)
+        container.add_widget(label)
+        return container
+
+    def create_category_item_inv(self, category):
+        container = MDBoxLayout(orientation='horizontal',
+                                size_hint_y=None,
+                                height=40
+                                )
+        checkbox = MDCheckbox(size_hint=(None, None), size=(48, 48))
+        checkbox.bind(active=lambda instance, is_active, cat=category: self.app.utilities.toggle_category_selection_inv(is_active, cat))
+        label = MDLabel(text=category, size_hint_y=None, height=40)
+        container.add_widget(checkbox)
+        container.add_widget(label)
+        return container
+
+    # def create_category_popup(self):
+    #
+    #     categories = self.app.utilities.initialze_categories()
+    #     category_button_layout = GridLayout(
+    #         size_hint=(1, 0.8), pos_hint={"top": 1}, cols=7, spacing=5
+    #     )
+    #     for category in categories:
+    #         btn = MDRaisedButton(
+    #             text=category,
+    #             on_release=lambda instance, cat=category: self.app.utilities.toggle_category_selection(
+    #                 instance, cat
+    #             ),
+    #             size_hint=(1, 0.8),
+    #         )
+    #         category_button_layout.add_widget(btn)
+    #
+    #     category_popup_layout = BoxLayout()
+    #     confirm_button = MDRaisedButton(
+    #         text="Confirm",
+    #         on_release=lambda instance: self.app.utilities.apply_categories(),
+    #     )
+    #     cancel_button = MDRaisedButton(
+    #         text="Cancel",
+    #         on_release=lambda instance: self.category_popup.dismiss(),
+    #     )
+    #     category_popup_layout.add_widget(category_button_layout)
+    #     category_popup_layout.add_widget(confirm_button)
+    #     category_popup_layout.add_widget(cancel_button)
+    #
+    #     self.category_popup = Popup(content=category_popup_layout, size_hint=(0.9, 0.9))
+    #     return self.category_popup
 
     def open_category_button_popup(self):
         category_button_popup = self.create_category_popup()
@@ -657,8 +719,8 @@ class PopupManager:
         for index, tool in enumerate(tool_buttons):
             btn = MDRaisedButton(
                 text=tool,
-                size_hint=(1, 0.15),
-                pos_hint={"center_x": 0.5, "center_y": 1 - 0.2 * index},
+                size_hint=(1, 0.125),
+                pos_hint={"center_x": 0.5, "center_y": 1 - 0.15 * index},
                 on_press=self.app.button_handler.on_tool_button_press,
             )
             float_layout.add_widget(btn)
@@ -1555,10 +1617,10 @@ class PopupManager:
         sku_layout.add_widget(sku_input)
 
         category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        self.add_to_db_category_input = TextInput(text=self.app.inventory_manager.category, disabled=True)
+        self.add_to_db_category_input_inv = TextInput(text=self.app.inventory_manager.category, disabled=True)
         category_layout.add_widget(Label(text="Category", size_hint_x=0.2))
 
-        category_layout.add_widget(self.add_to_db_category_input)
+        category_layout.add_widget(self.add_to_db_category_input_inv)
 
         content.add_widget(name_layout)
         content.add_widget(barcode_layout)
@@ -1575,7 +1637,7 @@ class PopupManager:
             MDRaisedButton(
                 text="Confirm",
                 on_press=lambda x: self.app.utilities.inventory_item_confirm_and_close(
-                    self.barcode_input, name_input, price_input, cost_input, sku_input, self.add_to_db_category_input, self.inventory_item_popup
+                    self.barcode_input, name_input, price_input, cost_input, sku_input, self.add_to_db_category_input_inv, self.inventory_item_popup
                 ),
             )
         )
@@ -1611,37 +1673,92 @@ class PopupManager:
 
     def on_inventory_item_dismiss(self, instance):
         self.app.inventory_manager.reset_inventory_context()
-        #self.app.inventory_manager.detach_from_parent()
+        # self.app.inventory_manager.detach_from_parent()
 
     def open_category_button_popup_inv(self):
         self.selected_categories = []
-        categories = self.app.utilities.initialze_categories()
-        category_button_layout = GridLayout(size_hint=(1, 0.8), pos_hint={"top":1},cols=7, spacing=5)
+        categories = self.app.utilities.initialize_categories()
+        main_layout = GridLayout(orientation="lr-tb", cols=1, rows=2)
+        layout = GridLayout(
+            orientation='lr-tb',
+            spacing=10,
+            size_hint=(1, 1),
+            rows=7,
+            cols=7
+        )
+
+        layout.bind(minimum_height=layout.setter('height'))
+
         for category in categories:
-            btn = MDRaisedButton(
-                text=category,
-                on_release=lambda instance, cat=category: self.app.utilities.toggle_category_selection_inv(instance, cat),
-                size_hint=(1,0.8)
-                )
-            category_button_layout.add_widget(btn)
-        category_popup_layout = BoxLayout()
+            layout.add_widget(self.create_category_item(category))
+        main_layout.add_widget(layout)
+        button_layout = GridLayout(orientation="lr-tb", cols=2, rows=2)
         confirm_button = MDRaisedButton(
             text="Confirm",
-            on_release=lambda instance: self.app.utilities.apply_categories_inv()
+            on_release=lambda instance:
+                self.app.utilities.apply_categories_inv()
             )
         cancel_button = MDRaisedButton(
             text="Cancel",
-            on_release=lambda instance: self.category_button_popup_inv.dismiss()
+            on_release=lambda instance:
+            self.category_button_popup_inv.dismiss()
             )
-        category_popup_layout.add_widget(category_button_layout)
-        category_popup_layout.add_widget(confirm_button)
-        category_popup_layout.add_widget(cancel_button)
-
+        button_layout.add_widget(confirm_button)
+        button_layout.add_widget(cancel_button)
+        main_layout.add_widget(button_layout)
         self.category_button_popup_inv = Popup(
-            content=category_popup_layout,
-            size_hint=(0.9,0.9)
-            )
+            content=main_layout,
+            size_hint=(0.9, 0.9))
         self.category_button_popup_inv.open()
+
+    # def create_category_item(self, category):
+    #     container = MDBoxLayout(orientation='horizontal',
+    #                             size_hint_y=None,
+    #                             height=40
+    #                             )
+    #     checkbox = MDCheckbox(size_hint=(None, None), size=(48, 48))
+    #     label = MDLabel(text=category, size_hint_y=None, height=40)
+    #     container.add_widget(checkbox)
+    #     container.add_widget(label)
+    #     return container
+
+    # def open_category_button_popup_inv(self):
+    #     self.selected_categories = []
+    #     categories = self.app.utilities.initialize_categories()
+    #     category_button_layout = GridLayout(size_hint=(1, 0.8),
+    #                                         pos_hint={"top": 1},
+    #                                         cols=7,
+    #                                         spacing=5)
+    #     for category in categories:
+    #         btn = MDRaisedButton(
+    #             text=category,
+    #             on_release=lambda instance, cat=category:
+    #                 self.app.utilities.toggle_category_selection_inv(instance,
+    #                                                                  cat
+    #                                                                  ),
+    #             size_hint=(1, 0.8)
+    #             )
+    #         category_button_layout.add_widget(btn)
+    #     category_popup_layout = BoxLayout()
+    #     confirm_button = MDRaisedButton(
+    #         text="Confirm",
+    #         on_release=lambda instance:
+    #             self.app.utilities.apply_categories_inv()
+    #         )
+    #     cancel_button = MDRaisedButton(
+    #         text="Cancel",
+    #         on_release=lambda instance:
+    #             self.category_button_popup_inv.dismiss()
+    #         )
+    #     category_popup_layout.add_widget(category_button_layout)
+    #     category_popup_layout.add_widget(confirm_button)
+    #     category_popup_layout.add_widget(cancel_button)
+    #
+    #     self.category_button_popup_inv = Popup(
+    #         content=category_popup_layout,
+    #         size_hint=(0.9, 0.9)
+    #         )
+    #     self.category_button_popup_inv.open()
 
 ##########################################################################################################
 ##########################################################################################################
