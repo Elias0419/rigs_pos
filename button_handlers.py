@@ -79,7 +79,7 @@ class ButtonHandler:
 
     def on_add_order_discount_numeric_button_press(self, instance):
         self.handle_numeric_input(
-            self.app.popup_manager.discount_order_amount_input, instance.text
+            self.app.popup_manager.custom_discount_order_amount_input, instance.text
         )
 
     def on_adjust_price_numeric_button_press(self, instance):

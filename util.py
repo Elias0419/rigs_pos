@@ -484,11 +484,13 @@ class Utilities:
     #     eel_thread.start()
 
     def dismiss_single_discount_popup(self):
-        self.app.popup_manager.discount_amount_input.text = ""
+        if self.app.popup_manager.discount_amount_input.text:
+            self.app.popup_manager.discount_amount_input.text = ""
         self.app.popup_manager.discount_popup.dismiss()
 
     def dismiss_entire_discount_popup(self):
-        self.app.popup_manager.discount_order_amount_input.text = ""
+        if self.app.popup_manager.discount_order_amount_input.text:
+            self.app.popup_manager.discount_order_amount_input.text = ""
         self.app.popup_manager.discount_order_popup.dismiss()
 
     def update_confirm_and_close(
