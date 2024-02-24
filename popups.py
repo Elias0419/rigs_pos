@@ -548,15 +548,15 @@ class PopupManager:
 
         self.discount_popup.open()
 
-    def add_order_discount_popup(self):
+    def custom_add_order_discount_popup(self):
 
-        discount_order_popup_layout = BoxLayout(orientation="vertical", spacing=10)
-        self.discount_order_popup = Popup(
+        custom_discount_order_popup_layout = BoxLayout(orientation="vertical", spacing=10)
+        self.custom_discount_order_popup = Popup(
             title="Add Discount",
-            content=discount_order_popup_layout,
+            content=custom_discount_order_popup_layout,
             size_hint=(0.8, 0.8),
         )
-        self.discount_order_amount_input = TextInput(
+        self.custom_discount_order_amount_input = TextInput(
             text="",
             disabled=True,
             multiline=False,
@@ -565,7 +565,7 @@ class PopupManager:
             size_hint_y=None,
             height=50,
         )
-        discount_order_popup_layout.add_widget(self.discount_order_amount_input)
+        custom_discount_order_popup_layout.add_widget(self.custom_discount_order_amount_input)
 
         keypad_layout = GridLayout(cols=3, spacing=10)
 
@@ -622,7 +622,57 @@ class PopupManager:
         keypad_layout.add_widget(cancel_button)
         discount_order_popup_layout.add_widget(keypad_layout)
 
+        self.custom_discount_order_popup.open()
+
+    def add_order_discount_popup(self):
+        discount_order_popup_layout = GridLayout(orientation="tb-lr", spacing=5, cols=1, rows=2)
+        self.discount_order_popup = Popup(
+            title="Add Discount",
+            content=discount_order_popup_layout,
+            size_hint=(0.8, 0.8),
+        )
+
+
+        discounts = [
+            {'type': 'percent', 'values': [10, 20, 30, 40, 50]},
+            {'type': 'amount', 'values': [10, 20, 30, 40, 50]}
+        ]
+
+        discount_layout = GridLayout(orientation="tb-lr",cols=2, spacing=10)
+
+        for discount_type in discounts:
+            for value in discount_type['values']:
+                label = f"{value}% Off" if discount_type['type'] == 'percent' else f"${value} Off"
+                discount_button = Button(
+                    text=label,
+                    on_press=lambda x, v=value, t=discount_type['type']: self.apply_discount(v, t),
+                    size_hint=(0.8, 0.8),
+                )
+                discount_layout.add_widget(discount_button)
+        button_layout = GridLayout(orientation="lr-tb", cols=2, rows=1)
+        custom_button = Button(
+            text="Custom",
+            on_press=lambda x: self,
+            )
+        cancel_button = Button(
+            text="Cancel",
+            on_press=lambda x: self.app.utilities.dismiss_entire_discount_popup(),
+            size_hint=(0.8, 0.8),
+        )
+
+
+        discount_order_popup_layout.add_widget(discount_layout)
+        discount_order_popup_layout.add_widget(cancel_button)
+
         self.discount_order_popup.open()
+
+    def apply_discount(self, value, discount_type):
+        if discount_type == 'percent':
+
+            self.app.order_manager.discount_entire_order(discount_amount=value, percent=True)
+        else:
+
+            self.app.order_manager.discount_entire_order(discount_amount=value, percent=False)
 
     def show_theme_change_popup(self):
         layout = GridLayout(cols=4, rows=8, orientation="lr-tb")
