@@ -470,6 +470,60 @@ class PopupManager:
         self.add_discount_popup(item_id)
 
     def add_discount_popup(self, item_id, instance=None):
+        print("add_discount_popup", item_id)
+        discount_item_popup_layout = GridLayout(orientation="tb-lr", spacing=5, cols=1, rows=2)
+        self.discount_item_popup = Popup(
+            title="Add Discount",
+            content=discount_item_popup_layout,
+            size_hint=(0.6, 0.8),
+        )
+
+
+        discounts = [
+            {'type': 'percent', 'values': [10, 20, 30, 40, 50]},
+            {'type': 'amount', 'values': [10, 20, 30, 40, 50]}
+        ]
+
+        discount_item_layout = GridLayout(orientation="tb-lr",cols=2, spacing=10)
+
+        for discount_type in discounts:
+            for value in discount_type['values']:
+                label = f"[size=20][b]{value}%[/size][/b]" if discount_type['type'] == 'percent' else f"[size=20][b]${value}[/size][/b]"
+                discount_button = self.app.utilities.create_md_raised_button(
+                    label,
+                    lambda x, v=value, t=discount_type['type']: self.apply_item_discount(v, t, item_id=item_id),
+                    (0.8, 0.8),
+                )
+                discount_item_layout.add_widget(discount_button)
+        button_layout = GridLayout(orientation="lr-tb", spacing=5, cols=2, rows=1, size_hint_y=0.2)
+        custom_button = Button(
+            text="Custom",
+            on_press=lambda x: self.custom_add_item_discount_popup(item_id=item_id),
+            )
+        cancel_button = Button(
+            text="Cancel",
+            on_press=lambda x: self.app.utilities.dismiss_single_discount_popup(),
+
+        )
+
+        button_layout.add_widget(custom_button)
+        button_layout.add_widget(cancel_button)
+        discount_item_popup_layout.add_widget(discount_item_layout)
+        discount_item_popup_layout.add_widget(button_layout)
+
+
+        self.discount_item_popup.open()
+
+    def apply_item_discount(self, value, discount_type, item_id=""):
+        print("apply_item_discount", item_id)
+        if discount_type == 'percent':
+
+            self.app.order_manager.discount_single_item(discount_amount=value, percent=True, item_id=item_id)
+        else:
+
+            self.app.order_manager.discount_single_item(discount_amount=value, percent=False, item_id=item_id)
+
+    def custom_add_item_discount_popup(self, item_id, instance=None):
 
         discount_popup_layout = BoxLayout(orientation="vertical", spacing=10)
         self.discount_popup = Popup(
@@ -606,7 +660,7 @@ class PopupManager:
         percent_button = self.app.utilities.create_md_raised_button(
             "Percent",
             lambda x: self.app.order_manager.discount_entire_order(
-                discount_amount=self.discount_order_amount_input.text, percent=True
+                discount_amount=self.custom_discount_order_amount_input.text, percent=True
             ),
             size_hint=(0.8, 0.8),
         )
@@ -629,7 +683,7 @@ class PopupManager:
         self.discount_order_popup = Popup(
             title="Add Discount",
             content=discount_order_popup_layout,
-            size_hint=(0.8, 0.8),
+            size_hint=(0.6, 0.8),
         )
 
 
@@ -642,22 +696,22 @@ class PopupManager:
 
         for discount_type in discounts:
             for value in discount_type['values']:
-                label = f"{value}% Off" if discount_type['type'] == 'percent' else f"${value} Off"
-                discount_button = Button(
-                    text=label,
-                    on_press=lambda x, v=value, t=discount_type['type']: self.apply_discount(v, t),
-                    size_hint=(0.8, 0.8),
+                label = f"[size=20][b]{value}%[/size][/b]" if discount_type['type'] == 'percent' else f"[size=20][b]${value}[/size][/b]"
+                discount_button = self.app.utilities.create_md_raised_button(
+                    label,
+                    lambda x, v=value, t=discount_type['type']: self.apply_discount(v, t),
+                    (0.8, 0.8),
                 )
                 discount_layout.add_widget(discount_button)
-        button_layout = GridLayout(orientation="lr-tb", cols=2, rows=1)
+        button_layout = GridLayout(orientation="lr-tb", spacing=5, cols=2, rows=1, size_hint_y=0.2)
         custom_button = Button(
             text="Custom",
-            on_press=lambda x: self,
+            on_press=lambda x: self.custom_add_order_discount_popup(),
             )
         cancel_button = Button(
             text="Cancel",
-            on_press=lambda x: self.app.utilities.dismiss_entire_discount_popup(),
-            size_hint=(0.8, 0.8),
+            on_press=lambda x: self.app.utilities.dismiss_discount_order_popup(),
+
         )
 
         button_layout.add_widget(custom_button)
@@ -1889,19 +1943,6 @@ class PopupManager:
 
 
 
-
-
-
-
-
-############################################################################################################
-############################################################################################################
-############################################################################################################
-############################################################################################################
-############################################################################################################
-############################################################################################################
-
-
 class MarkupLabel(Label):
     pass
 
@@ -2134,6 +2175,8 @@ class Calculator:
             separator_height=0,
         )
         calculator_popup.open()
+
+
 class TouchableMDBoxLayout(BoxLayout):
     def __init__(self, checkbox, **kwargs):
         super(TouchableMDBoxLayout, self).__init__(**kwargs)
