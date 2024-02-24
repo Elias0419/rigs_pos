@@ -22,6 +22,7 @@ class DatabaseManager:
     def ensure_tables_exist(self):
         self.create_items_table()
         self.create_order_history_table()
+        self.create_modified_orders_table()
 
     def create_items_table(self):
         conn = self._get_connection()
@@ -62,6 +63,31 @@ class DatabaseManager:
                                 amount_tendered REAL,
                                 change_given REAL,
                                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                            )"""
+            )
+            conn.commit()
+        except sqlite3.Error as e:
+            print(e)
+        finally:
+            conn.close()
+
+    def create_modified_orders_table(self):
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """CREATE TABLE IF NOT EXISTS order_history (
+                                order_id TEXT PRIMARY KEY,
+                                items TEXT,
+                                total REAL,
+                                tax REAL,
+                                discount REAL,
+                                total_with_tax REAL,
+                                payment_method TEXT,
+                                amount_tendered REAL,
+                                change_given REAL,
+                                modification_type TEXT, -- 'deleted' or 'modified'
+                                modification_timestamp TEXT
                             )"""
             )
             conn.commit()
@@ -152,9 +178,9 @@ class DatabaseManager:
             cursor = conn.cursor()
 
             cursor.execute(
-            "INSERT INTO order_history (order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO order_history (order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given),
-        )
+            )
             conn.commit()
         except sqlite3.Error as e:
             print(e)
@@ -162,6 +188,61 @@ class DatabaseManager:
         finally:
             conn.close()
         return True
+
+    def _save_current_order_state(self, order_id, modification_type):
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO modified_orders (order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given, modification_type, modification_timestamp) "
+                "SELECT order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given, ?, CURRENT_TIMESTAMP "
+                "FROM order_history WHERE order_id = ?",
+                (modification_type, order_id),
+            )
+            conn.commit()
+        except sqlite3.Error as e:
+            print(e)
+            return False
+        finally:
+            conn.close()
+        return True
+
+    def delete_order(self, order_id):
+        if self._save_current_order_state(order_id, "deleted"):
+            conn = self._get_connection()
+            try:
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM order_history WHERE order_id = ?", (order_id,))
+                conn.commit()
+            except sqlite3.Error as e:
+                print(e)
+                return False
+            finally:
+                conn.close()
+            return True
+        else:
+            return False
+
+    def modify_order(self, order_id, **kwargs):
+        if self._save_current_order_state(order_id, "modified"):
+            conn = self._get_connection()
+            try:
+                cursor = conn.cursor()
+                set_clause = ", ".join([f"{key} = ?" for key in kwargs.keys()])
+                values = list(kwargs.values())
+                values.append(order_id)
+                cursor.execute(f"UPDATE order_history SET {set_clause} WHERE order_id = ?", values)
+                conn.commit()
+            except sqlite3.Error as e:
+                print(e)
+                return False
+            finally:
+                conn.close()
+            return True
+        else:
+            return False
+
+
 
     def get_order_history(self):
         conn = self._get_connection()
