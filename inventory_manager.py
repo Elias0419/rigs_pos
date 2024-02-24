@@ -169,15 +169,16 @@ class InventoryManagementRow(BoxLayout):
         sku_input,
         category_input,
     ):
+
         if barcode_input and name_input and price_input:
             try:
                 self.database_manager.update_item(
-                    barcode_input.text,
-                    name_input.text,
-                    price_input.text,
-                    cost_input.text,
-                    sku_input.text,
-                    category_input.text,
+                    barcode_input,
+                    name_input,
+                    price_input,
+                    cost_input,
+                    sku_input,
+                    category_input,
                 )
             except Exception as e:
                 print(e)

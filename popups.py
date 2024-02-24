@@ -41,10 +41,10 @@ class PopupManager:
         main_layout = GridLayout(orientation="lr-tb", cols=1, rows=2)
         layout = GridLayout(
             orientation='lr-tb',
-            spacing=10,
+            spacing=5,
             size_hint=(1, 1),
-            rows=7,
-            cols=7
+            rows=10,
+            cols=5
         )
 
         layout.bind(minimum_height=layout.setter('height'))
@@ -52,86 +52,319 @@ class PopupManager:
         for category in categories:
             layout.add_widget(self.create_category_item(category))
         main_layout.add_widget(layout)
-        button_layout = GridLayout(orientation="lr-tb", cols=2, rows=2)
+        button_layout = GridLayout(orientation="lr-tb", spacing=5, cols=2, rows=2, size_hint=(1, 0.2))
         confirm_button = MDRaisedButton(
             text="Confirm",
             on_release=lambda instance:
-                self.app.utilities.apply_categories()
+                self.app.utilities.apply_categories(),
+            size_hint=(0.2, 1)
             )
+
+
         cancel_button = MDRaisedButton(
             text="Cancel",
             on_release=lambda instance:
-            self.category_button_popup.dismiss()
+            self.category_button_popup.dismiss(),
+            size_hint=(0.2, 1)
             )
         button_layout.add_widget(confirm_button)
         button_layout.add_widget(cancel_button)
         main_layout.add_widget(button_layout)
         self.category_button_popup = Popup(
             content=main_layout,
-            size_hint=(0.9, 0.9))
+            size_hint=(0.8, 0.8))
         #self.category_button_popup_inv.open()
 
         return self.category_button_popup
 
+    def open_update_category_button_popup(self):
+        self.selected_categories_row = []
+        categories = self.app.utilities.initialize_categories()
+        main_layout = GridLayout(orientation="lr-tb", cols=1, rows=2)
+        layout = GridLayout(
+            orientation='lr-tb',
+            spacing=5,
+            size_hint=(1, 1),
+            rows=10,
+            cols=5
+        )
+
+        layout.bind(minimum_height=layout.setter('height'))
+
+        for category in categories:
+            layout.add_widget(self.create_category_item_row(category))
+        main_layout.add_widget(layout)
+        button_layout = GridLayout(orientation="lr-tb", spacing=5, cols=2, rows=2, size_hint=(1, 0.2))
+        confirm_button = MDRaisedButton(
+            text="Confirm",
+            on_release=lambda instance:
+                self.app.utilities.apply_categories_row(),
+                size_hint=(0.2, 1)
+            )
+        cancel_button = MDRaisedButton(
+            text="Cancel",
+            on_release=lambda instance:
+            self.category_button_popup_row.dismiss(),
+            size_hint=(0.2, 1)
+            )
+        button_layout.add_widget(confirm_button)
+        button_layout.add_widget(cancel_button)
+        main_layout.add_widget(button_layout)
+        self.category_button_popup_row = Popup(
+            content=main_layout,
+            size_hint=(0.8, 0.8)
+            )
+        self.category_button_popup_row.open()
+
+
+    def open_category_button_popup_inv(self):
+        self.selected_categories_inv = []
+        categories = self.app.utilities.initialize_categories()
+        main_layout = GridLayout(orientation="lr-tb", cols=1, rows=2)
+        layout = GridLayout(
+            orientation='lr-tb',
+            spacing=5,
+            size_hint=(1, 1),
+            rows=10,
+            cols=5
+        )
+
+        layout.bind(minimum_height=layout.setter('height'))
+
+        for category in categories:
+            layout.add_widget(self.create_category_item_inv(category))
+        main_layout.add_widget(layout)
+        button_layout = GridLayout(orientation="lr-tb", spacing=5, cols=2, rows=2, size_hint=(1, 0.2))
+        confirm_button = MDRaisedButton(
+            text="Confirm",
+            on_release=lambda instance:
+                self.app.utilities.apply_categories_inv(),
+                size_hint=(0.2, 1)
+            )
+        cancel_button = MDRaisedButton(
+            text="Cancel",
+            on_release=lambda instance:
+            self.category_button_popup_inv.dismiss(),
+            size_hint=(0.2, 1)
+            )
+        button_layout.add_widget(confirm_button)
+        button_layout.add_widget(cancel_button)
+        main_layout.add_widget(button_layout)
+        self.category_button_popup_inv = Popup(
+            content=main_layout,
+            size_hint=(0.8, 0.8)
+            )
+        self.category_button_popup_inv.open()
+
+
     def create_category_item(self, category):
-        container = MDBoxLayout(orientation='horizontal',
-                                size_hint_y=None,
-                                height=40
-                                )
         checkbox = MDCheckbox(size_hint=(None, None), size=(48, 48))
         checkbox.bind(active=lambda instance, is_active, cat=category: self.app.utilities.toggle_category_selection(is_active, cat))
+
+        container = TouchableMDBoxLayout(orientation='horizontal', size_hint_y=None, height=40, checkbox=checkbox)
         label = MDLabel(text=category, size_hint_y=None, height=40)
+
         container.add_widget(checkbox)
         container.add_widget(label)
+
         return container
 
     def create_category_item_inv(self, category):
-        container = MDBoxLayout(orientation='horizontal',
-                                size_hint_y=None,
-                                height=40
-                                )
         checkbox = MDCheckbox(size_hint=(None, None), size=(48, 48))
         checkbox.bind(active=lambda instance, is_active, cat=category: self.app.utilities.toggle_category_selection_inv(is_active, cat))
+        container = TouchableMDBoxLayout(
+                                    orientation='horizontal',
+                                    size_hint_y=None,
+                                    height=40,
+                                    checkbox=checkbox
+                                    )
+
         label = MDLabel(text=category, size_hint_y=None, height=40)
         container.add_widget(checkbox)
         container.add_widget(label)
         return container
 
-    # def create_category_popup(self):
-    #
-    #     categories = self.app.utilities.initialze_categories()
-    #     category_button_layout = GridLayout(
-    #         size_hint=(1, 0.8), pos_hint={"top": 1}, cols=7, spacing=5
-    #     )
-    #     for category in categories:
-    #         btn = MDRaisedButton(
-    #             text=category,
-    #             on_release=lambda instance, cat=category: self.app.utilities.toggle_category_selection(
-    #                 instance, cat
-    #             ),
-    #             size_hint=(1, 0.8),
-    #         )
-    #         category_button_layout.add_widget(btn)
-    #
-    #     category_popup_layout = BoxLayout()
-    #     confirm_button = MDRaisedButton(
-    #         text="Confirm",
-    #         on_release=lambda instance: self.app.utilities.apply_categories(),
-    #     )
-    #     cancel_button = MDRaisedButton(
-    #         text="Cancel",
-    #         on_release=lambda instance: self.category_popup.dismiss(),
-    #     )
-    #     category_popup_layout.add_widget(category_button_layout)
-    #     category_popup_layout.add_widget(confirm_button)
-    #     category_popup_layout.add_widget(cancel_button)
-    #
-    #     self.category_popup = Popup(content=category_popup_layout, size_hint=(0.9, 0.9))
-    #     return self.category_popup
+    def create_category_item_row(self, category):
+        checkbox = MDCheckbox(size_hint=(None, None), size=(48, 48))
+        checkbox.bind(active=lambda instance, is_active, cat=category: self.app.utilities.toggle_category_selection_row(is_active, cat))
+        container = TouchableMDBoxLayout(
+                                    orientation='horizontal',
+                                    size_hint_y=None,
+                                    height=40,
+                                    checkbox=checkbox
+                                    )
+
+        label = MDLabel(text=category, size_hint_y=None, height=40)
+        container.add_widget(checkbox)
+        container.add_widget(label)
+        return container
+
+
 
     def open_category_button_popup(self):
         category_button_popup = self.create_category_popup()
         category_button_popup.open()
+
+    def inventory_item_popup_row(self, instance):
+
+        content = BoxLayout(orientation="vertical", padding=10)
+        name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        name_input = TextInput(text=instance.name)
+        name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
+        name_layout.add_widget(name_input)
+        barcode_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+
+
+        barcode_input = TextInput(
+            input_filter="int", text=instance.barcode if instance.barcode else ""
+        )
+        barcode_layout.add_widget(Label(text="Barcode", size_hint_x=0.2))
+        barcode_layout.add_widget(barcode_input)
+
+        price_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        price_input = TextInput(input_filter="float", text=instance.price)
+        price_layout.add_widget(Label(text="Price", size_hint_x=0.2))
+        price_layout.add_widget(price_input)
+
+        cost_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        cost_input = TextInput(text=instance.cost, input_filter="float")
+        cost_layout.add_widget(Label(text="Cost", size_hint_x=0.2))
+        cost_layout.add_widget(cost_input)
+
+        sku_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        sku_input = TextInput(text=instance.sku)
+        sku_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
+        sku_layout.add_widget(sku_input)
+
+        category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        self.add_to_db_category_input_row = TextInput(text=instance.category, disabled=True)
+        category_layout.add_widget(Label(text="Categories", size_hint_x=0.2))
+        category_layout.add_widget(self.add_to_db_category_input_row)
+
+        content.add_widget(name_layout)
+        content.add_widget(barcode_layout)
+        content.add_widget(price_layout)
+        content.add_widget(cost_layout)
+        content.add_widget(sku_layout)
+        content.add_widget(category_layout)
+
+        button_layout = BoxLayout(
+            orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
+        )
+
+        button_layout.add_widget(
+            MDRaisedButton(
+                text="Update Details",
+                on_press=lambda x: self.app.utilities.update_confirm_and_close(
+                    barcode_input.text,
+                    name_input.text,
+                    price_input.text,
+                    cost_input.text,
+                    sku_input.text,
+                    self.add_to_db_category_input_row.text,
+                    self.inventory_item_update_popup,
+                ),
+            )
+        )
+        button_layout.add_widget(
+            MDRaisedButton(
+                text="Categories",
+                on_press=lambda x: self.open_update_category_button_popup(),
+            )
+        )
+
+        button_layout.add_widget(
+            MDRaisedButton(text="Close", on_press=lambda x: self.inventory_item_update_popup.dismiss())
+        )
+
+        content.add_widget(button_layout)
+
+        self.inventory_item_update_popup = Popup(
+            title="Item details",
+            pos_hint={"top": 1},
+            content=content,
+            size_hint=(0.8, 0.4),
+            on_dismiss=lambda x: self.app.inventory_manager.reset_inventory_context()
+        )
+        self.inventory_item_update_popup.open()
+
+    def show_add_to_database_popup(self, barcode, categories=None):
+        content = BoxLayout(orientation="vertical", padding=10)
+        name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        name_input = TextInput()
+        name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
+        name_layout.add_widget(name_input)
+        barcode_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        barcode_input = TextInput(input_filter="int", text=barcode if barcode else "")
+        barcode_layout.add_widget(Label(text="Barcode", size_hint_x=0.2))
+        barcode_layout.add_widget(barcode_input)
+
+        price_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        price_input = TextInput(input_filter="float")
+        price_layout.add_widget(Label(text="Price", size_hint_x=0.2))
+        price_layout.add_widget(price_input)
+
+        cost_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        cost_input = TextInput(input_filter="float")
+        cost_layout.add_widget(Label(text="Cost", size_hint_x=0.2))
+        cost_layout.add_widget(cost_input)
+
+        sku_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        sku_input = TextInput()
+        sku_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
+        sku_layout.add_widget(sku_input)
+
+        category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        self.add_to_db_category_input = TextInput(disabled=True)
+        category_layout.add_widget(Label(text="Categories", size_hint_x=0.2))
+        category_layout.add_widget(self.add_to_db_category_input)
+
+        content.add_widget(name_layout)
+        content.add_widget(barcode_layout)
+        content.add_widget(price_layout)
+        content.add_widget(cost_layout)
+        content.add_widget(sku_layout)
+        content.add_widget(category_layout)
+
+        button_layout = BoxLayout(
+            orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
+        )
+
+        button_layout.add_widget(
+            MDRaisedButton(
+                text="Confirm",
+                on_press=lambda _: self.app.db_manager.add_item_to_database(
+                    barcode_input.text,
+                    name_input.text,
+                    price_input.text,
+                    cost_input.text,
+                    sku_input.text,
+                    self.add_to_db_category_input.text,
+                ),
+            )
+        )
+
+        button_layout.add_widget(
+            MDRaisedButton(
+                text="Close", on_press=lambda x: self.add_to_db_popup.dismiss()
+            )
+        )
+        button_layout.add_widget(
+            MDRaisedButton(
+                text="Categories", on_press=lambda x: self.open_category_button_popup()
+            )
+        )
+
+        content.add_widget(button_layout)
+
+        self.add_to_db_popup = Popup(
+            title="Item details",
+            pos_hint={"top": 1},
+            content=content,
+            size_hint=(0.8, 0.4),
+        )
+        self.add_to_db_popup.open()
+
 
     def show_add_or_bypass_popup(self, barcode):
 
@@ -1093,82 +1326,6 @@ class PopupManager:
         )
         self.change_popup.open()
 
-    def show_add_to_database_popup(self, barcode, categories=None):
-        content = BoxLayout(orientation="vertical", padding=10)
-        name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        name_input = TextInput()
-        name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
-        name_layout.add_widget(name_input)
-        barcode_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        barcode_input = TextInput(input_filter="int", text=barcode if barcode else "")
-        barcode_layout.add_widget(Label(text="Barcode", size_hint_x=0.2))
-        barcode_layout.add_widget(barcode_input)
-
-        price_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        price_input = TextInput(input_filter="float")
-        price_layout.add_widget(Label(text="Price", size_hint_x=0.2))
-        price_layout.add_widget(price_input)
-
-        cost_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        cost_input = TextInput(input_filter="float")
-        cost_layout.add_widget(Label(text="Cost", size_hint_x=0.2))
-        cost_layout.add_widget(cost_input)
-
-        sku_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        sku_input = TextInput()
-        sku_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
-        sku_layout.add_widget(sku_input)
-
-        category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        self.add_to_db_category_input = TextInput(disabled=True)
-        category_layout.add_widget(Label(text="Categories", size_hint_x=0.2))
-        category_layout.add_widget(self.add_to_db_category_input)
-
-        content.add_widget(name_layout)
-        content.add_widget(barcode_layout)
-        content.add_widget(price_layout)
-        content.add_widget(cost_layout)
-        content.add_widget(sku_layout)
-        content.add_widget(category_layout)
-
-        button_layout = BoxLayout(
-            orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
-        )
-
-        button_layout.add_widget(
-            MDRaisedButton(
-                text="Confirm",
-                on_press=lambda _: self.app.db_manager.add_item_to_database(
-                    barcode_input.text,
-                    name_input.text,
-                    price_input.text,
-                    cost_input.text,
-                    sku_input.text,
-                    self.add_to_db_category_input.text,
-                ),
-            )
-        )
-
-        button_layout.add_widget(
-            MDRaisedButton(
-                text="Close", on_press=lambda x: self.add_to_db_popup.dismiss()
-            )
-        )
-        button_layout.add_widget(
-            MDRaisedButton(
-                text="Categories", on_press=lambda x: self.open_category_button_popup()
-            )
-        )
-
-        content.add_widget(button_layout)
-
-        self.add_to_db_popup = Popup(
-            title="Item details",
-            pos_hint={"top": 1},
-            content=content,
-            size_hint=(0.8, 0.4),
-        )
-        self.add_to_db_popup.open()
 
     def handle_split_payment(self):
         self.dismiss_popups(
@@ -1675,208 +1832,8 @@ class PopupManager:
         self.app.inventory_manager.reset_inventory_context()
         # self.app.inventory_manager.detach_from_parent()
 
-    def open_category_button_popup_inv(self):
-        self.selected_categories_inv = []
-        categories = self.app.utilities.initialize_categories()
-        main_layout = GridLayout(orientation="lr-tb", cols=1, rows=2)
-        layout = GridLayout(
-            orientation='lr-tb',
-            spacing=10,
-            size_hint=(1, 1),
-            rows=7,
-            cols=7
-        )
-
-        layout.bind(minimum_height=layout.setter('height'))
-
-        for category in categories:
-            layout.add_widget(self.create_category_item_inv(category))
-        main_layout.add_widget(layout)
-        button_layout = GridLayout(orientation="lr-tb", cols=2, rows=2)
-        confirm_button = MDRaisedButton(
-            text="Confirm",
-            on_release=lambda instance:
-                self.app.utilities.apply_categories_inv()
-            )
-        cancel_button = MDRaisedButton(
-            text="Cancel",
-            on_release=lambda instance:
-            self.category_button_popup_inv.dismiss()
-            )
-        button_layout.add_widget(confirm_button)
-        button_layout.add_widget(cancel_button)
-        main_layout.add_widget(button_layout)
-        self.category_button_popup_inv = Popup(
-            content=main_layout,
-            size_hint=(0.9, 0.9))
-        self.category_button_popup_inv.open()
-
-    # def create_category_item(self, category):
-    #     container = MDBoxLayout(orientation='horizontal',
-    #                             size_hint_y=None,
-    #                             height=40
-    #                             )
-    #     checkbox = MDCheckbox(size_hint=(None, None), size=(48, 48))
-    #     label = MDLabel(text=category, size_hint_y=None, height=40)
-    #     container.add_widget(checkbox)
-    #     container.add_widget(label)
-    #     return container
-
-    # def open_category_button_popup_inv(self):
-    #     self.selected_categories = []
-    #     categories = self.app.utilities.initialize_categories()
-    #     category_button_layout = GridLayout(size_hint=(1, 0.8),
-    #                                         pos_hint={"top": 1},
-    #                                         cols=7,
-    #                                         spacing=5)
-    #     for category in categories:
-    #         btn = MDRaisedButton(
-    #             text=category,
-    #             on_release=lambda instance, cat=category:
-    #                 self.app.utilities.toggle_category_selection_inv(instance,
-    #                                                                  cat
-    #                                                                  ),
-    #             size_hint=(1, 0.8)
-    #             )
-    #         category_button_layout.add_widget(btn)
-    #     category_popup_layout = BoxLayout()
-    #     confirm_button = MDRaisedButton(
-    #         text="Confirm",
-    #         on_release=lambda instance:
-    #             self.app.utilities.apply_categories_inv()
-    #         )
-    #     cancel_button = MDRaisedButton(
-    #         text="Cancel",
-    #         on_release=lambda instance:
-    #             self.category_button_popup_inv.dismiss()
-    #         )
-    #     category_popup_layout.add_widget(category_button_layout)
-    #     category_popup_layout.add_widget(confirm_button)
-    #     category_popup_layout.add_widget(cancel_button)
-    #
-    #     self.category_button_popup_inv = Popup(
-    #         content=category_popup_layout,
-    #         size_hint=(0.9, 0.9)
-    #         )
-    #     self.category_button_popup_inv.open()
-
-##########################################################################################################
-##########################################################################################################
-##########################################################################################################
-##########################################################################################################
 
 
-    def inventory_item_popup_row(self, instance):
-
-        content = BoxLayout(orientation="vertical", padding=10)
-        name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        name_input = TextInput(text=instance.name)
-        name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
-        name_layout.add_widget(name_input)
-        barcode_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        print(f"Accessing inventory row barcode: {instance.barcode}")
-
-        barcode_input = TextInput(
-            input_filter="int", text=instance.barcode if instance.barcode else ""
-        )
-        barcode_layout.add_widget(Label(text="Barcode", size_hint_x=0.2))
-        barcode_layout.add_widget(barcode_input)
-
-        price_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        price_input = TextInput(input_filter="float", text=instance.price)
-        price_layout.add_widget(Label(text="Price", size_hint_x=0.2))
-        price_layout.add_widget(price_input)
-
-        cost_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        cost_input = TextInput(text=instance.cost, input_filter="float")
-        cost_layout.add_widget(Label(text="Cost", size_hint_x=0.2))
-        cost_layout.add_widget(cost_input)
-
-        sku_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        sku_input = TextInput(text=instance.sku)
-        sku_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
-        sku_layout.add_widget(sku_input)
-
-        category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        self.update_category_input = TextInput(text=instance.category, disabled=True)
-        category_layout.add_widget(Label(text="Categories", size_hint_x=0.2))
-        category_layout.add_widget(self.update_category_input)
-
-        content.add_widget(name_layout)
-        content.add_widget(barcode_layout)
-        content.add_widget(price_layout)
-        content.add_widget(cost_layout)
-        content.add_widget(sku_layout)
-        content.add_widget(category_layout)
-
-        button_layout = BoxLayout(
-            orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
-        )
-
-        button_layout.add_widget(
-            MDRaisedButton(
-                text="Update Details",
-                on_press=lambda x: self.app.utilities.update_confirm_and_close(
-                    barcode_input,
-                    name_input,
-                    price_input,
-                    cost_input,
-                    sku_input,
-                    self.update_category_input,
-                    self.inventory_item_update_popup,
-                ),
-            )
-        )
-        button_layout.add_widget(
-            MDRaisedButton(
-                text="Categories",
-                on_press=lambda x: self.open_update_category_button_popup(),
-            )
-        )
-
-        button_layout.add_widget(
-            MDRaisedButton(text="Close", on_press=lambda x: self.inventory_item_update_popup.dismiss())
-        )
-
-        content.add_widget(button_layout)
-
-        self.inventory_item_update_popup = Popup(
-            title="Item details",
-            pos_hint={"top": 1},
-            content=content,
-            size_hint=(0.8, 0.4),
-            on_dismiss=lambda x: self.app.inventory_manager.reset_inventory_context()
-        )
-        self.inventory_item_update_popup.open()
-
-    def open_update_category_button_popup(self):
-        self.update_selected_categories = []
-        category_button_layout = GridLayout(size_hint=(1, 0.8), pos_hint={"top":1},cols=7, spacing=5)
-        for category in self.app.categories:
-            btn = MDRaisedButton(
-                text=category,
-                on_release=lambda x, cat=category: self.app.utilities.update_toggle_category_selection(x, cat),
-                size_hint=(1,0.8)
-                )
-            category_button_layout.add_widget(btn)
-        category_popup_layout = BoxLayout()
-        confirm_button = MDRaisedButton(
-            text="Confirm",
-            on_release=lambda x: self.app.utilities.update_apply_categories()
-            )
-        cancel_button = MDRaisedButton(
-            text="Cancel",
-            on_release=lambda x: self.update_category_button_popup.dismiss()
-            )
-        category_popup_layout.add_widget(category_button_layout)
-        category_popup_layout.add_widget(confirm_button)
-        category_popup_layout.add_widget(cancel_button)
-
-        self.update_category_button_popup = Popup(
-            content=category_popup_layout,
-            size_hint=(0.9,0.9)
-            )
-        self.update_category_button_popup.open()
 
 
 
@@ -2122,3 +2079,13 @@ class Calculator:
             separator_height=0,
         )
         calculator_popup.open()
+class TouchableMDBoxLayout(BoxLayout):
+    def __init__(self, checkbox, **kwargs):
+        super(TouchableMDBoxLayout, self).__init__(**kwargs)
+        self.checkbox = checkbox
+
+    def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos):
+            self.checkbox.active = not self.checkbox.active
+            return True
+        return super(TouchableMDBoxLayout, self).on_touch_down(touch)
