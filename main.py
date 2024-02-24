@@ -119,7 +119,7 @@ class CashRegisterApp(MDApp):
         button_layout = GridLayout(
             cols=4,
             spacing=5,
-            size_hint_y=1 / 8,
+            size_hint_y=0.05,
             size_hint_x=1,
             orientation="lr-tb"
         )
