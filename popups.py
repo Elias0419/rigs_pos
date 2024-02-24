@@ -1805,7 +1805,7 @@ class PopupManager:
 
         barcode_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         self.barcode_input = TextInput(
-            input_filter="int", text=self.app.inventory_manager.barcode if self.app.inventory_manager.barcode else ""
+            input_filter="int", text=barcode if barcode else ""
         )
         barcode_layout.add_widget(Label(text="Barcode", size_hint_x=0.2))
         barcode_layout.add_widget(self.barcode_input)
