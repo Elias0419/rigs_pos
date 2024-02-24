@@ -970,7 +970,7 @@ class PopupManager:
 
     def show_custom_item_popup(self, barcode="01234567890"):
 
-        self.custom_item_popup_layout = BoxLayout(orientation="vertical", spacing=10)
+        self.custom_item_popup_layout = BoxLayout(orientation="vertical", spacing=5)
         self.cash_input = TextInput(
             text="",
             disabled=True,
@@ -1001,6 +1001,7 @@ class PopupManager:
                 text=button,
                 on_press=self.app.button_handler.on_numeric_button_press,
                 size_hint=(0.8, 0.8),
+                font_size=30,
             )
             keypad_layout.add_widget(btn)
 
@@ -1012,6 +1013,7 @@ class PopupManager:
 
         cancel_button = Button(
             text="Cancel",
+
             on_press=self.app.utilities.on_custom_item_cancel,
             size_hint=(0.8, 0.8),
         )
@@ -1023,7 +1025,7 @@ class PopupManager:
         self.custom_item_popup = Popup(
             title="Custom Item",
             content=self.custom_item_popup_layout,
-            size_hint=(0.8, 0.8),
+            size_hint=(0.6, 0.6),
             on_dismiss=lambda x: setattr(self.cash_input, "text", ""),
         )
 
@@ -1196,7 +1198,7 @@ class PopupManager:
         self.cash_popup = Popup(
             title="Amount Tendered",
             content=self.cash_popup_layout,
-            size_hint=(0.8, 0.8),
+            size_hint=(0.6, 0.8),
         )
         self.cash_popup.open()
 
@@ -1227,10 +1229,11 @@ class PopupManager:
             "0",
         ]
         for button in numeric_buttons:
-            btn = self.app.utilities.create_md_raised_button(
-                button,
-                self.app.button_handler.on_custom_cash_numeric_button_press,
-                (0.8, 0.8),
+            btn = Button(
+                text=button,
+                on_press=self.app.button_handler.on_custom_cash_numeric_button_press,
+                size_hint=(0.8, 0.8),
+                font_size=30,
             )
             keypad_layout.add_widget(btn)
 
@@ -1252,7 +1255,7 @@ class PopupManager:
         self.custom_cash_popup = Popup(
             title="Custom Cash",
             content=self.custom_cash_popup_layout,
-            size_hint=(0.8, 0.8),
+            size_hint=(0.6, 0.6),
         )
         self.custom_cash_popup.open()
 
