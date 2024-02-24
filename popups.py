@@ -599,7 +599,7 @@ class PopupManager:
         amount_button = self.app.utilities.create_md_raised_button(
             "Amount",
             lambda x: self.app.order_manager.discount_entire_order(
-                discount_amount=self.discount_order_amount_input.text
+                discount_amount=self.custom_discount_order_amount_input.text
             ),
             size_hint=(0.8, 0.8),
         )
@@ -620,7 +620,7 @@ class PopupManager:
         keypad_layout.add_widget(amount_button)
         keypad_layout.add_widget(percent_button)
         keypad_layout.add_widget(cancel_button)
-        discount_order_popup_layout.add_widget(keypad_layout)
+        custom_discount_order_popup_layout.add_widget(keypad_layout)
 
         self.custom_discount_order_popup.open()
 
@@ -660,9 +660,11 @@ class PopupManager:
             size_hint=(0.8, 0.8),
         )
 
-
+        button_layout.add_widget(custom_button)
+        button_layout.add_widget(cancel_button)
         discount_order_popup_layout.add_widget(discount_layout)
-        discount_order_popup_layout.add_widget(cancel_button)
+        discount_order_popup_layout.add_widget(button_layout)
+
 
         self.discount_order_popup.open()
 
