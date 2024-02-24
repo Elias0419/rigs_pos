@@ -241,7 +241,8 @@ class OrderManager:
     def create_order_summary_item(self, item_name, quantity, total_price):
         return f"[b]{item_name}[/b] x{quantity} ${total_price:.2f}\n"
 
-    def discount_single_item(self, item_id, discount_amount, percent=False):
+    def discount_single_item(self, discount_amount, item_id="", percent=False):
+        print("discount_single_item", item_id)
         if item_id in self.items:
             item = self.items[item_id]
 
@@ -271,7 +272,11 @@ class OrderManager:
             self.app.popup_manager.discount_amount_input.text = ""
         except:
             pass
-        self.app.popup_manager.discount_popup.dismiss()
+        self.app.popup_manager.discount_item_popup.dismiss()
+        try:
+            self.app.popup_manager.discount_popup.dismiss()
+        except:
+            pass
         self.app.popup_manager.item_popup.dismiss()
 
 
@@ -303,6 +308,10 @@ class OrderManager:
             except:
                 pass
             self.app.popup_manager.discount_order_popup.dismiss()
+            try:
+                self.app.popup_manager.custom_discount_order_popup.dismiss()
+            except:
+                pass
             self.app.financial_summary.order_mod_popup.dismiss()
 
     def add_adjusted_price_item(self):
