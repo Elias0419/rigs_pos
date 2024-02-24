@@ -11,7 +11,7 @@ from kivy.uix.popup import Popup
 from kivymd.uix.boxlayout import BoxLayout
 from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.pickers import MDDatePicker
-
+from kivy.uix.gridlayout import GridLayout
 from database_manager import DatabaseManager
 from receipt_printer import ReceiptPrinter
 
@@ -90,7 +90,7 @@ class HistoryView(BoxLayout):
             Clock.schedule_once(self.init_filter, 0.1)
 
     def initialize_buttons(self):
-        self.button_layout = BoxLayout(orientation="horizontal", size_hint=(1, 0.2))
+        self.button_layout = BoxLayout(orientation="horizontal", spacing=5, size_hint=(1, 0.2))
         self.button_layout.add_widget(
             MDRaisedButton(
                 text="Today", size_hint=(1, 1), on_press=lambda x: self.filter_today()
@@ -449,36 +449,86 @@ class HistoryView(BoxLayout):
         ]
 
 
+
 class OrderDetailsPopup(Popup):
     def __init__(self, order, receipt_printer, **kwargs):
         super(OrderDetailsPopup, self).__init__(**kwargs)
         self.title = f"Order Details - {order[0]}"
         self.history_view = HistoryView()
-        self.size_hint = (0.8, 0.6)
+        self.size_hint = (0.4, 0.8)
         self.receipt_printer = receipt_printer
 
-        content_layout = BoxLayout(orientation="vertical", spacing=dp(10))
+        content_layout = GridLayout(orientation="tb-lr", spacing=5, cols=1, rows=3)
+        formatted_order_details = self.format_order_details(order)
+        print(formatted_order_details)
 
-        content_layout.add_widget(
-            Label(text=self.format_order_details(order), valign="top", halign="left")
-        )
+        # content_layout.add_widget(
+        #     Label(text=self.format_order_details(order), valign="top", halign="left")
+        # )
+        top_layout=Label(halign="center", size_hint_y=0.1, text=f"\n{formatted_order_details['Timestamp']}")
+        items = formatted_order_details['Items']
+        items_split = items.split(",")
+        formatted_items = '\n'.join(items_split)
+        if formatted_order_details['Payment Method'] == "Cash":
+            middle_layout = Label(halign="center", text=f"{formatted_items}\n\nSubtotal: {formatted_order_details['Total']}\nDiscount: {formatted_order_details['Discount']}\nTax: {formatted_order_details['Tax']}\nTotal: {formatted_order_details['Total with Tax']}\n\nPaid with {formatted_order_details['Payment Method']}\nAmount Tendered: {formatted_order_details['Amount Tendered']}\nChange Given: {formatted_order_details['Change Given']}")
+        else:
+            middle_layout = Label(halign="center", text=f"{formatted_items}\n\nSubtotal: {formatted_order_details['Total']}\nDiscount: {formatted_order_details['Discount']}\nTax: {formatted_order_details['Tax']}\nTotal: {formatted_order_details['Total with Tax']}\n\nPaid with {formatted_order_details['Payment Method']}")
 
-        button_layout = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(10))
+        button_layout = BoxLayout(size_hint=(1, 0.2), height=dp(50), spacing=5)
 
         button_layout.add_widget(
             MDRaisedButton(
                 text="Print Receipt",
                 on_press=lambda instance: self.print_receipt(order=order),
+                size_hint=(1, 1)
             )
         )
-        button_layout.add_widget(MDRaisedButton(text="Refund", on_press=self.refund))
+        button_layout.add_widget(MDRaisedButton(
+                                text="Refund",
+                                on_press=self.refund,
+                                size_hint=(1,1)
+
+                                )
+                            )
         button_layout.add_widget(
-            MDRaisedButton(text="Close", on_press=self.dismiss_popup)
+            MDRaisedButton(
+                text="Edit",
+                on_press=self.dismiss_popup,
+                 size_hint=(1,1)
+
+                )
         )
 
+        button_layout.add_widget(
+            MDRaisedButton(
+                text="Close",
+                on_press=self.dismiss_popup,
+                 size_hint=(1,1)
+
+                )
+        )
+        content_layout.add_widget(top_layout)
+        content_layout.add_widget(middle_layout)
         content_layout.add_widget(button_layout)
 
         self.content = content_layout
+
+    def format_order_details(self, order):
+
+        formatted_order_dict = {
+            "Order ID": order[0],
+            "Items": self.format_items(order[1]),
+            "Total": f"${self.history_view.format_money(order[2])}",
+            "Tax": f"${self.history_view.format_money(order[3])}",
+            "Discount": f"${self.history_view.format_money(order[4])}",
+            "Total with Tax": f"${self.history_view.format_money(order[5])}",
+            "Timestamp": self.history_view.format_date(order[6]),
+            "Payment Method": order[7],
+            "Amount Tendered": f"${self.history_view.format_money(order[8])}",
+            "Change Given": f"${self.history_view.format_money(order[9])}",
+        }
+
+        return formatted_order_dict
 
     def print_receipt(self, instance, order):
         order_dict = self.convert_order_to_dict(order)
@@ -546,22 +596,121 @@ class OrderDetailsPopup(Popup):
 
         return order_dict
 
-    def format_order_details(self, order):
-        # print(order)
-        formatted_order = [
-            f"Order ID: {order[0]}",
-            f"Items: {self.format_items(order[1])}",
-            f"Total: ${self.history_view.format_money(order[2])}",
-            f"Tax: ${self.history_view.format_money(order[3])}",
-            f"Discount: ${self.history_view.format_money(order[4])}",
-            f"Total with Tax: ${self.history_view.format_money(order[5])}",
-            f"Timestamp: {self.history_view.format_date(order[6])}",
-        ]
-        formatted_order.extend(
-            [
-                f"Payment Method: {order[7]}",
-                f"Amount Tendered: ${self.history_view.format_money(order[8])}",
-                f"Change Given: ${self.history_view.format_money(order[9])}",
-            ]
-        )
-        return "\n".join(formatted_order) if formatted_order is not None else ""
+
+
+# class OrderDetailsPopup(Popup):
+#     def __init__(self, order, receipt_printer, **kwargs):
+#         super(OrderDetailsPopup, self).__init__(**kwargs)
+#         self.title = f"Order Details - {order[0]}"
+#         self.history_view = HistoryView()
+#         self.size_hint = (0.6, 0.6)
+#         self.receipt_printer = receipt_printer
+#
+#         content_layout = BoxLayout(orientation="vertical", spacing=dp(10))
+#
+#         content_layout.add_widget(
+#             Label(text=self.format_order_details(order), valign="top", halign="left")
+#         )
+#
+#         button_layout = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(10))
+#
+#         button_layout.add_widget(
+#             MDRaisedButton(
+#                 text="Print Receipt",
+#                 on_press=lambda instance: self.print_receipt(order=order),
+#             )
+#         )
+#         button_layout.add_widget(MDRaisedButton(text="Refund", on_press=self.refund))
+#         button_layout.add_widget(
+#             MDRaisedButton(text="Close", on_press=self.dismiss_popup)
+#         )
+#
+#         content_layout.add_widget(button_layout)
+#
+#         self.content = content_layout
+#
+#     def print_receipt(self, instance, order):
+#         order_dict = self.convert_order_to_dict(order)
+#         self.receipt_printer.print_receipt(order_dict)
+#
+#     def refund(self, instance):
+#         pass
+#
+#     def dismiss_popup(self, instance):
+#         self.dismiss()
+#
+#     def format_items(self, items_str):
+#         try:
+#             parsed_data = json.loads(items_str)
+#
+#             if isinstance(parsed_data, dict):
+#                 items_list = [parsed_data]
+#             else:
+#                 items_list = parsed_data
+#
+#             all_item_names = ", ".join(
+#                 item.get("name", "Unknown") for item in items_list
+#             )
+#
+#             return all_item_names
+#         except json.JSONDecodeError as e:
+#             print(f"JSON parsing error in format_items: {e}")
+#             return "Error parsing items"
+#
+#     def convert_order_to_dict(self, order):
+#         print(order)
+#
+#         (
+#             order_id,
+#             items_json,
+#             total,
+#             tax,
+#             discount,
+#             total_with_tax,
+#             timestamp,
+#             payment_method,
+#             amount_tendered,
+#             change_given,
+#         ) = order
+#         try:
+#             items = json.loads(items_json)
+#         except json.JSONDecodeError as e:
+#             print(f"[OrderDetailsPopup] convert_order_to_dict \n{e}")
+#             # items = ast.literal_eval(items_json)
+#
+#         if isinstance(items, list):
+#             items_dict = {str(i): item for i, item in enumerate(items)}
+#         else:
+#             items_dict = items
+#
+#         order_dict = {
+#             "order_id": order_id,
+#             "items": items_dict,
+#             "subtotal": total,
+#             "tax_amount": tax,
+#             "total_with_tax": total_with_tax,
+#             "timestamp": timestamp,
+#             "discount": discount,
+#         }
+#
+#         return order_dict
+#
+#     def format_order_details(self, order):
+#         # print(order)
+#         formatted_order = [
+#             f"Order ID: {order[0]}",
+#             f"Items: {self.format_items(order[1])}",
+#             f"Total: ${self.history_view.format_money(order[2])}",
+#             f"Tax: ${self.history_view.format_money(order[3])}",
+#             f"Discount: ${self.history_view.format_money(order[4])}",
+#             f"Total with Tax: ${self.history_view.format_money(order[5])}",
+#             f"Timestamp: {self.history_view.format_date(order[6])}",
+#         ]
+#         formatted_order.extend(
+#             [
+#                 f"Payment Method: {order[7]}",
+#                 f"Amount Tendered: ${self.history_view.format_money(order[8])}",
+#                 f"Change Given: ${self.history_view.format_money(order[9])}",
+#             ]
+#         )
+#         return "\n".join(formatted_order) if formatted_order is not None else ""
