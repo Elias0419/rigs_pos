@@ -491,6 +491,27 @@ class Utilities:
         self.app.popup_manager.discount_order_amount_input.text = ""
         self.app.popup_manager.discount_order_popup.dismiss()
 
+    def update_confirm_and_close(
+        self,
+        barcode_input,
+        name_input,
+        price_input,
+        cost_input,
+        sku_input,
+        category_input,
+        popup,
+    ):
+        self.app.inventory_row.update_item_in_database(
+            barcode_input,
+            name_input,
+            price_input,
+            cost_input,
+            sku_input,
+            category_input,
+        )
+        self.app.inventory_manager.refresh_inventory()
+        popup.dismiss()
+
     def inventory_item_confirm_and_close(
         self,
         barcode_input,
@@ -542,6 +563,13 @@ class Utilities:
         self.app.popup_manager.add_to_db_category_input_inv.text = categories_str
         self.app.popup_manager.category_button_popup_inv.dismiss()
 
+    def apply_categories_row(self):
+        categories_str = ", ".join(
+            self.app.popup_manager.selected_categories_row
+            )
+        self.app.popup_manager.add_to_db_category_input_row.text = categories_str
+        self.app.popup_manager.category_button_popup_row.dismiss()
+
     def toggle_category_selection(self, is_active, category):
         if is_active:
             if category not in self.app.popup_manager.selected_categories:
@@ -549,6 +577,15 @@ class Utilities:
         else:
             if category in self.app.popup_manager.selected_categories:
                 self.app.popup_manager.selected_categories.remove(category)
+
+    def toggle_category_selection_row(self, is_active, category):
+        if is_active:
+            if category not in self.app.popup_manager.selected_categories_row:
+                self.app.popup_manager.selected_categories_row.append(category)
+
+        else:
+            if category in self.app.popup_manager.selected_categories_row:
+                self.app.popup_manager.selected_categories_row.append(category)
 
     def toggle_category_selection_inv(self, is_active, category):
         if is_active:
@@ -564,26 +601,7 @@ class Utilities:
         self.barcode = scanned_barcode
         self.app.popup_manager.inventory_item_popup()
 
-    def update_confirm_and_close(
-        self,
-        barcode_input,
-        name_input,
-        price_input,
-        cost_input,
-        sku_input,
-        category_input,
-        popup,
-    ):
-        self.app.inventory_row.update_item_in_database(
-            barcode_input,
-            name_input,
-            price_input,
-            cost_input,
-            sku_input,
-            category_input,
-        )
-        self.app.inventory_manager.refresh_inventory()
-        popup.dismiss()
+
 
     def open_inventory_manager_row(self, instance):
 
