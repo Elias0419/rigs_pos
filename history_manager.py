@@ -24,12 +24,21 @@ class NullableStringProperty(StringProperty):
 
 
 class HistoryPopup(Popup):
-    def __init__(self, **kwargs):
-        super(HistoryPopup, self).__init__(**kwargs)
-        self.db_manager = DatabaseManager("inventory.db", self)
-        # self.history_view = HistoryView()
+    _instance = None  # Class attribute to store the singleton instance
 
-    def show_hist_reporting_popup(self):
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(HistoryPopup, cls).__new__(cls, *args, **kwargs)
+        return cls._instance
+
+    def __init__(self, **kwargs):
+        if not hasattr(self, '_init'):
+            self._init = True
+            super(HistoryPopup, self).__init__(**kwargs)
+            self.db_manager = DatabaseManager("inventory.db", self)
+            # self.history_view = HistoryView()
+
+    def show_hist_reporting_popup(self, instance=None):
         order_history = self.db_manager.get_order_history()
         # print(order_history)
         history_view = HistoryView()
@@ -41,6 +50,8 @@ class HistoryPopup(Popup):
         self.title = "Order History"
         self.open()
 
+    def dismiss_popup(self):
+        self.dismiss()
 
 class HistoryRow(BoxLayout):
     order_id = NullableStringProperty()
@@ -246,7 +257,7 @@ class HistoryView(BoxLayout):
         return date_obj.date() == datetime.today().date()
 
     def filter_today(self):
-        print("filtered today")
+        #print("filtered today")
         self.current_filter = "today"
         filtered_history = [
             order
@@ -458,13 +469,14 @@ class OrderDetailsPopup(Popup):
         super(OrderDetailsPopup, self).__init__(**kwargs)
         self.title = f"Order Details - {order[0]}"
         self.history_view = HistoryView()
+        self.history_popup = HistoryPopup()
         self.size_hint = (0.4, 0.8)
         self.receipt_printer = receipt_printer
         self.db_manager = DatabaseManager("inventory.db", self)
 
         content_layout = GridLayout(orientation="tb-lr", spacing=5, cols=1, rows=3)
         formatted_order_details = self.format_order_details(order)
-        print(formatted_order_details)
+        #print(formatted_order_details)
 
         # content_layout.add_widget(
         #     Label(text=self.format_order_details(order), valign="top", halign="left")
@@ -475,6 +487,9 @@ class OrderDetailsPopup(Popup):
         formatted_items = '\n'.join(items_split)
         if formatted_order_details['Payment Method'] == "Cash":
             middle_layout = Label(halign="center", text=f"{formatted_items}\n\nSubtotal: {formatted_order_details['Total']}\nDiscount: {formatted_order_details['Discount']}\nTax: {formatted_order_details['Tax']}\nTotal: {formatted_order_details['Total with Tax']}\n\nPaid with {formatted_order_details['Payment Method']}\nAmount Tendered: {formatted_order_details['Amount Tendered']}\nChange Given: {formatted_order_details['Change Given']}")
+        # elif formatted_order_details['Payment Method'] == "Split":
+        #     order_details = self.db_manager.get_order_by_id(order[0])
+        #     print(order_details)
         else:
             middle_layout = Label(halign="center", text=f"{formatted_items}\n\nSubtotal: {formatted_order_details['Total']}\nDiscount: {formatted_order_details['Discount']}\nTax: {formatted_order_details['Tax']}\nTotal: {formatted_order_details['Total with Tax']}\n\nPaid with {formatted_order_details['Payment Method']}")
 
@@ -527,11 +542,11 @@ class OrderDetailsPopup(Popup):
         items_json = order_details[1]
         items = json.loads(items_json)
 
-        modify_order_layout = GridLayout(cols=2)
+        modify_order_layout = GridLayout(rows=10, orientation="tb-lr")
         item_name_inputs = []
 
         for item in items:
-            text_input = TextInput(text=item['name'], multiline=False)
+            text_input = TextInput(text=item['name'], multiline=False, size_hint_y=None, height=50)
             item_name_inputs.append(text_input)
             modify_order_layout.add_widget(text_input)
 
@@ -544,17 +559,23 @@ class OrderDetailsPopup(Popup):
             updated_items_json = json.dumps(items)
 
             self.db_manager.modify_order(order_id, items=updated_items_json)
+            self.dismiss()
+            modify_order_popup.dismiss()
+            print(self.history_view.current_filter)
+            self.history_popup.dismiss_popup()
+            Clock.schedule_once(self.history_popup.show_hist_reporting_popup, 0.2)
 
 
-        buttons_layout=BoxLayout(orientation="horizontal")
-        confirm_button = MDRaisedButton(text="Confirm", on_release=on_confirm)
+        modify_order_popup = Popup(size_hint=(0.8, 0.8), content=modify_order_layout)
+        buttons_layout=BoxLayout(orientation="horizontal", size_hint_y=None, height=50)
+        confirm_button = MDRaisedButton(text="Confirm", on_release=on_confirm,  size_hint=(1,1))
 
-        cancel_button = MDRaisedButton(text="Cancel")
+        cancel_button = MDRaisedButton(text="Cancel", on_press=lambda instance: modify_order_popup.dismiss(), size_hint=(1,1))
         buttons_layout.add_widget(confirm_button)
         buttons_layout.add_widget(cancel_button)
 
         modify_order_layout.add_widget(buttons_layout)
-        modify_order_popup = Popup(size_hint=(0.8, 0.8), content=modify_order_layout)
+
         modify_order_popup.open()
 
     def format_order_details(self, order):
@@ -585,7 +606,7 @@ class OrderDetailsPopup(Popup):
         self.dismiss()
 
     def format_items(self, items_str):
-        print(f"Hello {items_str}\n\n\n\n")
+
         try:
             parsed_data = json.loads(items_str)
 
@@ -604,7 +625,7 @@ class OrderDetailsPopup(Popup):
             return "Error parsing items"
 
     def convert_order_to_dict(self, order):
-        print(order)
+        #print(order)
 
         (
             order_id,
@@ -643,4 +664,4 @@ class OrderDetailsPopup(Popup):
 
 
 
-       return "\n".join(formatted_order) if formatted_order is not None else ""
+
