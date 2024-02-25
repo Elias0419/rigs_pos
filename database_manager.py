@@ -299,7 +299,7 @@ class DatabaseManager:
             "SELECT order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given FROM order_history"
         )
         order_history = cursor.fetchall()
-        print(order_history)
+        #print(order_history)
         conn.close()
         return order_history
 
