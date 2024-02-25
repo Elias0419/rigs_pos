@@ -12,7 +12,7 @@ from kivy.config import Config
 Config.set("kivy", "keyboard_mode", "systemanddock")
 Config.set('kivy', 'keyboard_scale', '0.5')
 #Config.set('postproc', 'double_tap_time', '500')
-Config.set('input', 'isolution multitouch', 'mtdev,/dev/input/event12')
+Config.set('input', 'isolution multitouch', 'hidinput,/dev/input/event12')
 #Config.set('graphics', 'show_cursor', '0')
 # Config.set('kivy', 'log_level', 'error')
 Config.set("graphics", "multisamples", "4")
