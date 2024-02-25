@@ -7,7 +7,7 @@ from kivy.metrics import dp
 from kivy.properties import StringProperty, ObjectProperty
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
-
+from kivy.uix.textinput import TextInput
 from kivymd.uix.boxlayout import BoxLayout
 from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.pickers import MDDatePicker
@@ -308,9 +308,12 @@ class HistoryView(BoxLayout):
             print(f"[HistoryManager] display_order_details\n{e}")
 
         if specific_order:
-            popup = OrderDetailsPopup(specific_order, self.receipt_printer)
+            try:
+                popup = OrderDetailsPopup(specific_order, self.receipt_printer)
 
-            popup.open()
+                popup.open()
+            except Exception as e:
+                print(e)
 
     def display_order_details_from_barcode_scan(self, barcode):
         try:
@@ -457,6 +460,7 @@ class OrderDetailsPopup(Popup):
         self.history_view = HistoryView()
         self.size_hint = (0.4, 0.8)
         self.receipt_printer = receipt_printer
+        self.db_manager = DatabaseManager("inventory.db", self)
 
         content_layout = GridLayout(orientation="tb-lr", spacing=5, cols=1, rows=3)
         formatted_order_details = self.format_order_details(order)
@@ -493,7 +497,7 @@ class OrderDetailsPopup(Popup):
         button_layout.add_widget(
             MDRaisedButton(
                 text="Edit",
-                on_press=self.dismiss_popup,
+                on_press= lambda x: self.open_modify_order_popup(order[0]),
                  size_hint=(1,1)
 
                 )
@@ -512,6 +516,46 @@ class OrderDetailsPopup(Popup):
         content_layout.add_widget(button_layout)
 
         self.content = content_layout
+
+
+
+
+
+
+    def open_modify_order_popup(self, order_id):
+        order_details = self.db_manager.get_order_by_id(order_id)
+        items_json = order_details[1]
+        items = json.loads(items_json)
+
+        modify_order_layout = GridLayout(cols=2)
+        item_name_inputs = []
+
+        for item in items:
+            text_input = TextInput(text=item['name'], multiline=False)
+            item_name_inputs.append(text_input)
+            modify_order_layout.add_widget(text_input)
+
+        def on_confirm(instance):
+
+            for item, name_input in zip(items, item_name_inputs):
+                item['name'] = name_input.text
+
+
+            updated_items_json = json.dumps(items)
+
+            self.db_manager.modify_order(order_id, items=updated_items_json)
+
+
+        buttons_layout=BoxLayout(orientation="horizontal")
+        confirm_button = MDRaisedButton(text="Confirm", on_release=on_confirm)
+
+        cancel_button = MDRaisedButton(text="Cancel")
+        buttons_layout.add_widget(confirm_button)
+        buttons_layout.add_widget(cancel_button)
+
+        modify_order_layout.add_widget(buttons_layout)
+        modify_order_popup = Popup(size_hint=(0.8, 0.8), content=modify_order_layout)
+        modify_order_popup.open()
 
     def format_order_details(self, order):
 
@@ -541,6 +585,7 @@ class OrderDetailsPopup(Popup):
         self.dismiss()
 
     def format_items(self, items_str):
+        print(f"Hello {items_str}\n\n\n\n")
         try:
             parsed_data = json.loads(items_str)
 
@@ -598,119 +643,4 @@ class OrderDetailsPopup(Popup):
 
 
 
-# class OrderDetailsPopup(Popup):
-#     def __init__(self, order, receipt_printer, **kwargs):
-#         super(OrderDetailsPopup, self).__init__(**kwargs)
-#         self.title = f"Order Details - {order[0]}"
-#         self.history_view = HistoryView()
-#         self.size_hint = (0.6, 0.6)
-#         self.receipt_printer = receipt_printer
-#
-#         content_layout = BoxLayout(orientation="vertical", spacing=dp(10))
-#
-#         content_layout.add_widget(
-#             Label(text=self.format_order_details(order), valign="top", halign="left")
-#         )
-#
-#         button_layout = BoxLayout(size_hint_y=None, height=dp(50), spacing=dp(10))
-#
-#         button_layout.add_widget(
-#             MDRaisedButton(
-#                 text="Print Receipt",
-#                 on_press=lambda instance: self.print_receipt(order=order),
-#             )
-#         )
-#         button_layout.add_widget(MDRaisedButton(text="Refund", on_press=self.refund))
-#         button_layout.add_widget(
-#             MDRaisedButton(text="Close", on_press=self.dismiss_popup)
-#         )
-#
-#         content_layout.add_widget(button_layout)
-#
-#         self.content = content_layout
-#
-#     def print_receipt(self, instance, order):
-#         order_dict = self.convert_order_to_dict(order)
-#         self.receipt_printer.print_receipt(order_dict)
-#
-#     def refund(self, instance):
-#         pass
-#
-#     def dismiss_popup(self, instance):
-#         self.dismiss()
-#
-#     def format_items(self, items_str):
-#         try:
-#             parsed_data = json.loads(items_str)
-#
-#             if isinstance(parsed_data, dict):
-#                 items_list = [parsed_data]
-#             else:
-#                 items_list = parsed_data
-#
-#             all_item_names = ", ".join(
-#                 item.get("name", "Unknown") for item in items_list
-#             )
-#
-#             return all_item_names
-#         except json.JSONDecodeError as e:
-#             print(f"JSON parsing error in format_items: {e}")
-#             return "Error parsing items"
-#
-#     def convert_order_to_dict(self, order):
-#         print(order)
-#
-#         (
-#             order_id,
-#             items_json,
-#             total,
-#             tax,
-#             discount,
-#             total_with_tax,
-#             timestamp,
-#             payment_method,
-#             amount_tendered,
-#             change_given,
-#         ) = order
-#         try:
-#             items = json.loads(items_json)
-#         except json.JSONDecodeError as e:
-#             print(f"[OrderDetailsPopup] convert_order_to_dict \n{e}")
-#             # items = ast.literal_eval(items_json)
-#
-#         if isinstance(items, list):
-#             items_dict = {str(i): item for i, item in enumerate(items)}
-#         else:
-#             items_dict = items
-#
-#         order_dict = {
-#             "order_id": order_id,
-#             "items": items_dict,
-#             "subtotal": total,
-#             "tax_amount": tax,
-#             "total_with_tax": total_with_tax,
-#             "timestamp": timestamp,
-#             "discount": discount,
-#         }
-#
-#         return order_dict
-#
-#     def format_order_details(self, order):
-#         # print(order)
-#         formatted_order = [
-#             f"Order ID: {order[0]}",
-#             f"Items: {self.format_items(order[1])}",
-#             f"Total: ${self.history_view.format_money(order[2])}",
-#             f"Tax: ${self.history_view.format_money(order[3])}",
-#             f"Discount: ${self.history_view.format_money(order[4])}",
-#             f"Total with Tax: ${self.history_view.format_money(order[5])}",
-#             f"Timestamp: {self.history_view.format_date(order[6])}",
-#         ]
-#         formatted_order.extend(
-#             [
-#                 f"Payment Method: {order[7]}",
-#                 f"Amount Tendered: ${self.history_view.format_money(order[8])}",
-#                 f"Change Given: ${self.history_view.format_money(order[9])}",
-#             ]
-#         )
-#         return "\n".join(formatted_order) if formatted_order is not None else ""
+       return "\n".join(formatted_order) if formatted_order is not None else ""

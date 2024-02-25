@@ -145,6 +145,7 @@ class ButtonHandler:
 
     def on_done_button_press(self, instance):
         order_details = self.app.order_manager.get_order_details()
+
         self.app.db_manager.send_order_to_history_database(
             order_details, self.app.order_manager, self.app.db_manager
         )

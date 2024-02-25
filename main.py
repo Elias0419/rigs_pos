@@ -35,7 +35,7 @@ from _barcode_test import BarcodeScanner
 # from barcode_scanner import BarcodeScanner
 from button_handlers import ButtonHandler
 from database_manager import DatabaseManager
-from history_manager import HistoryView, HistoryPopup
+from history_manager import HistoryView, HistoryPopup, OrderDetailsPopup
 from inventory_manager import InventoryManagementView, InventoryManagementRow
 from label_printer import LabelPrintingView, LabelPrinter
 from order_manager import OrderManager
@@ -73,6 +73,7 @@ class CashRegisterApp(MDApp):
         self.financial_summary = FinancialSummaryWidget(self)
         self.order_manager = OrderManager(self)
         self.history_manager = HistoryView(self)
+        self.order_history_popup = OrderManager(self)
         self.history_popup = HistoryPopup()
         self.receipt_printer = ReceiptPrinter(
             self,
