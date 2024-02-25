@@ -30,7 +30,7 @@
         id: price
         text: root.formatted_price
         size_hint_x: 0.2
-    MDRaisedButton:
+    Button:
         text: "Add to Order"
         on_press: root.add_to_order()
 
@@ -41,6 +41,7 @@
     BoxLayout:
         size_hint_y: None
         height: '32dp'
+        spacing: 5
         TextInput:
             id: label_search_input
 
@@ -51,6 +52,7 @@
         id: rv
         viewclass: 'InventoryRow'
         RecycleBoxLayout:
+            #spacing: 5
             default_size: None, dp(40)
             default_size_hint: 1, None
             size_hint_y: None
@@ -82,7 +84,7 @@
         Label:
             id: price
             text: root.price
-        MDRaisedButton:
+        Button:
             text: "Add to Queue"
             on_press: root.add_to_print_queue()
 
