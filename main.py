@@ -166,22 +166,20 @@ class CashRegisterApp(MDApp):
             )
 
         base_layout = FloatLayout()
-
         try:
             if self.theme_cls.theme_style == "Light":
                 bg_image = Image(
                     source="images/gradient_wallpaper.png",
-                    allow_stretch=True,
-                    keep_ratio=False,
+                    fit_mode='fill'
                 )
                 base_layout.add_widget(bg_image)
             else:
                 bg_image = Image(
                     source="images/grey_mountains.jpg",
-                    allow_stretch=True,
-                    keep_ratio=False,
+                    fit_mode='fill'
                 )
                 base_layout.add_widget(bg_image)
+
 
         except Exception as e:
             print(e)
