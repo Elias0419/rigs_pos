@@ -8,9 +8,10 @@ import random
 import dbus
 from kivy.clock import Clock
 from kivymd.uix.button import MDRaisedButton
-
+from kivy.uix.textinput import TextInput
 from open_cash_drawer import open_cash_drawer
 from barcode.upc import UniversalProductCodeA as upc_a
+from kivy.core.window import Window
 
 
 class Utilities:
@@ -284,23 +285,23 @@ class Utilities:
         self.app.popup_manager.dismiss_popups("split_custom_cash_popup")
 
     def trigger_guard_and_lock(self, trigger=False):
-
-        if trigger:
-            self.app.popup_manager.show_lock_screen()
-            self.app.is_lock_screen_displayed = True
-        elif (
-            not self.app.is_guard_screen_displayed
-            and not self.app.is_lock_screen_displayed
-        ):
-            self.app.popup_manager.show_lock_screen()
-            self.app.popup_manager.show_guard_screen()
-            self.app.is_lock_screen_displayed = True
-            self.app.is_guard_screen_displayed = True
-        elif (
-            self.app.is_lock_screen_displayed and not self.app.is_guard_screen_displayed
-        ):
-            self.app.popup_manager.show_guard_screen()
-            self.app.is_guard_screen_displayed = True
+        pass
+        # if trigger:
+        #     self.app.popup_manager.show_lock_screen()
+        #     self.app.is_lock_screen_displayed = True
+        # elif (
+        #     not self.app.is_guard_screen_displayed
+        #     and not self.app.is_lock_screen_displayed
+        # ):
+        #     self.app.popup_manager.show_lock_screen()
+        #     self.app.popup_manager.show_guard_screen()
+        #     self.app.is_lock_screen_displayed = True
+        #     self.app.is_guard_screen_displayed = True
+        # elif (
+        #     self.app.is_lock_screen_displayed and not self.app.is_guard_screen_displayed
+        # ):
+        #     self.app.popup_manager.show_guard_screen()
+        #     self.app.is_guard_screen_displayed = True
 
     def reboot(self, instance):
         try:
@@ -662,3 +663,47 @@ class ReusableTimer:
 
     def reset(self):
         self.start()
+
+
+
+# class CustomTextInput(TextInput):
+#     def __init__(self, ref=None, **kwargs):
+#         super(CustomTextInput, self).__init__(**kwargs)
+#         self.bind(focus=self.on_focus)
+#         self.app = ref
+#         self._keyboard = None
+#
+#     def on_focus(self, instance, value):
+#         if value:
+#             self.request_keyboard()
+#         else:
+#             if self._keyboard is not None:
+#                 self.release_keyboard()
+#
+#     def request_keyboard(self):
+#         if self._keyboard is None:
+#             self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
+#             self._keyboard.bind(on_key_down=self._on_keyboard_down)
+#
+#
+#
+#         if hasattr(self._keyboard, 'widget') and self._keyboard.widget:
+#             vkeyboard = self._keyboard.widget
+#             vkeyboard.docked = False
+#             vkeyboard.pos = (100, 100)
+#
+#     def release_keyboard(self):
+#         if self._keyboard is not None:
+#             self._keyboard.unbind(on_key_down=self._on_keyboard_down)
+#             self._keyboard.release()
+#             self._keyboard = None
+#
+#
+#     def _keyboard_closed(self):
+#
+#         self.release_keyboard()
+#
+#     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+#
+#
+#         pass
