@@ -9,7 +9,7 @@ import sys
 
 from kivy.config import Config
 
-Config.set('kivy', 'keyboard_mode', 'systemandmulti')
+Config.set('kivy', 'keyboard_mode', '')
 Config.set('kivy', 'keyboard_scale', '0.75')
 #Config.set('postproc', 'double_tap_time', '500')
 Config.set('input', 'isolution multitouch', 'hidinput,/dev/input/event12')
@@ -42,7 +42,7 @@ from label_printer import LabelPrintingView, LabelPrinter
 from order_manager import OrderManager
 from popups import PopupManager, FinancialSummaryWidget, Calculator
 from receipt_printer import ReceiptPrinter
-from util import Utilities, ReusableTimer
+from util import Utilities, ReusableTimer#, CustomTextInput
 from wrapper import Wrapper
 
 
@@ -89,7 +89,7 @@ class CashRegisterApp(MDApp):
         self.calculator = Calculator()
         self.button_handler = ButtonHandler(self)
         self.popup_manager = PopupManager(self)
-
+        #self.custom_textinput = CustomTextInput(self)
         self.wrapper = Wrapper(self)
         self.categories = self.utilities.initialize_categories()
         self.barcode_cache = self.utilities.initialize_barcode_cache()
