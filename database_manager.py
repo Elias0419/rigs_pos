@@ -76,8 +76,8 @@ class DatabaseManager:
         try:
             cursor = conn.cursor()
             cursor.execute(
-                """CREATE TABLE IF NOT EXISTS order_history (
-                                order_id TEXT PRIMARY KEY,
+                """CREATE TABLE IF NOT EXISTS modified_orders (
+                                order_id TEXT,
                                 items TEXT,
                                 total REAL,
                                 tax REAL,
@@ -87,7 +87,7 @@ class DatabaseManager:
                                 amount_tendered REAL,
                                 change_given REAL,
                                 modification_type TEXT, -- 'deleted' or 'modified'
-                                modification_timestamp TEXT
+                                timestamp TEXT
                             )"""
             )
             conn.commit()
@@ -170,7 +170,14 @@ class DatabaseManager:
             conn.close()
         return True
 
+    # def debug_print(self, order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given):
+    #     variables = locals()  # Captures all the local variables in the function as a dictionary
+    #
+    #     for var_name, value in variables.items():
+    #         print(f"{var_name}: Value = {value}, Type = {type(value)}")
+
     def add_order_history(self, order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given):
+        # self.debug_print(order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given)
         self.create_order_history_table()
         conn = self._get_connection()
 
@@ -194,7 +201,7 @@ class DatabaseManager:
         try:
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO modified_orders (order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given, modification_type, modification_timestamp) "
+                "INSERT INTO modified_orders (order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given, modification_type, timestamp) "
                 "SELECT order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given, ?, CURRENT_TIMESTAMP "
                 "FROM order_history WHERE order_id = ?",
                 (modification_type, order_id),
@@ -208,6 +215,7 @@ class DatabaseManager:
         return True
 
     def delete_order(self, order_id):
+        print("[DatabaseManager]: Delete order", order_id)
         if self._save_current_order_state(order_id, "deleted"):
             conn = self._get_connection()
             try:
@@ -228,9 +236,15 @@ class DatabaseManager:
             conn = self._get_connection()
             try:
                 cursor = conn.cursor()
+
+                if "items" in kwargs and isinstance(kwargs["items"], (list, dict)):
+
+                    kwargs["items"] = json.dumps(kwargs["items"], ensure_ascii=False)
+
                 set_clause = ", ".join([f"{key} = ?" for key in kwargs.keys()])
                 values = list(kwargs.values())
                 values.append(order_id)
+
                 cursor.execute(f"UPDATE order_history SET {set_clause} WHERE order_id = ?", values)
                 conn.commit()
             except sqlite3.Error as e:
@@ -242,6 +256,40 @@ class DatabaseManager:
         else:
             return False
 
+    def get_order_by_id(self, order_id):
+
+        conn = self._get_connection()
+        cursor = conn.cursor()
+
+
+        query = """
+        SELECT
+            order_id,
+            items,
+            total,
+            tax,
+            discount,
+            total_with_tax,
+            timestamp,
+            payment_method,
+            amount_tendered,
+            change_given
+        FROM
+            order_history
+        WHERE
+            order_id = ?
+        """
+
+
+        cursor.execute(query, (order_id,))
+
+
+        order = cursor.fetchone()
+
+        conn.close()
+
+
+        return order
 
 
     def get_order_history(self):
@@ -251,6 +299,7 @@ class DatabaseManager:
             "SELECT order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given FROM order_history"
         )
         order_history = cursor.fetchall()
+        print(order_history)
         conn.close()
         return order_history
 
