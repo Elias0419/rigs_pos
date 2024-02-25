@@ -54,8 +54,8 @@
             default_size: None, dp(40)
             default_size_hint: 1, None
             size_hint_y: None
-
-            height: self.minimum_height
+            height: len(rv.data) * dp(40)
+            #height: self.minimum_height
             orientation: 'vertical'
 <LabelPrintingRow>:
     canvas.after:
@@ -115,7 +115,8 @@
             default_size: None, dp(56)
             default_size_hint: 1, None
             size_hint_y: None
-            height: self.minimum_height
+            height: len(label_rv.data) * dp(56)
+            #height: self.minimum_height
             orientation: 'vertical'
 
 <PrintQueueRow>:
@@ -175,7 +176,8 @@
             default_size: None, dp(48)
             default_size_hint: 1, None
             size_hint_y: None
-            height: self.minimum_height
+            #height: self.minimum_height
+            height: len(label_queue_rv.data) * dp(40)
             orientation: 'vertical'
 <InventoryManagementRow>:
     canvas.after:
@@ -253,7 +255,8 @@
             default_size: None, dp(40)
             default_size_hint: 1, None
             size_hint_y: None
-            height: self.minimum_height
+            #height: self.minimum_height
+            height: len(rv.data) * dp(40)
             orientation: 'vertical'
 
 
@@ -301,7 +304,8 @@
             default_size: None, dp(32)
             default_size_hint: 1, None
             size_hint_y: None
-            height: self.minimum_height
+            height: len(history_rv.data) * dp(32)
+            #height: self.minimum_height
             orientation: 'vertical'
 
 
