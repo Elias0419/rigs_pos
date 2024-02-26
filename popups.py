@@ -893,14 +893,19 @@ class PopupManager:
         # return self.adjust_price_popup
 
     def show_guard_screen(self):
-
         if not self.app.is_guard_screen_displayed:
+            guard_layout = BoxLayout(orientation='vertical')
 
-            guard_layout = BoxLayout()
+            guard_image = Image(source='images/guard.jpg')
+
+
+            guard_layout.add_widget(guard_image)
+
             self.guard_popup = Popup(
                 title="Guard Screen",
                 content=guard_layout,
                 size_hint=(1, 1),
+
                 auto_dismiss=False,
             )
             self.guard_popup.bind(
@@ -908,12 +913,11 @@ class PopupManager:
             )
 
             self.guard_popup.bind(
-                on_dismiss=lambda x: setattr(
-                    self.app, "is_guard_screen_displayed", False
-                )
+                on_dismiss=lambda x: setattr(self.app, "is_guard_screen_displayed", False)
             )
 
             self.guard_popup.open()
+
 
     def show_lock_screen(self):
 
@@ -1078,6 +1082,7 @@ class PopupManager:
 
         self.custom_item_popup_layout = BoxLayout(orientation="vertical", spacing=5)
         self.cash_input = TextInput(
+           #keyboard="12",
             text="",
             disabled=True,
             multiline=False,
