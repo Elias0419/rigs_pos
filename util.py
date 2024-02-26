@@ -285,23 +285,28 @@ class Utilities:
         self.app.popup_manager.dismiss_popups("split_custom_cash_popup")
 
     def trigger_guard_and_lock(self, trigger=False):
-        pass
-        # if trigger:
-        #     self.app.popup_manager.show_lock_screen()
-        #     self.app.is_lock_screen_displayed = True
-        # elif (
-        #     not self.app.is_guard_screen_displayed
-        #     and not self.app.is_lock_screen_displayed
-        # ):
-        #     self.app.popup_manager.show_lock_screen()
-        #     self.app.popup_manager.show_guard_screen()
-        #     self.app.is_lock_screen_displayed = True
-        #     self.app.is_guard_screen_displayed = True
-        # elif (
-        #     self.app.is_lock_screen_displayed and not self.app.is_guard_screen_displayed
-        # ):
-        #     self.app.popup_manager.show_guard_screen()
-        #     self.app.is_guard_screen_displayed = True
+        print(f"trigger\n{trigger}\n")
+       # pass
+        if trigger:
+            print(f"if trigger\n{trigger}\n")
+            self.app.popup_manager.show_lock_screen()
+            self.app.is_lock_screen_displayed = True
+        elif (
+
+            not self.app.is_guard_screen_displayed
+            and not self.app.is_lock_screen_displayed
+        ):
+            print(f"elif 1 trigger\n{trigger}\n")
+            self.app.popup_manager.show_lock_screen()
+            self.app.popup_manager.show_guard_screen()
+            self.app.is_lock_screen_displayed = True
+            self.app.is_guard_screen_displayed = True
+        elif (
+            self.app.is_lock_screen_displayed and not self.app.is_guard_screen_displayed
+        ):
+            print(f"elif 2 trigger\n{trigger}\n")
+            self.app.popup_manager.show_guard_screen()
+            self.app.is_guard_screen_displayed = True
 
     def reboot(self, instance):
         try:
@@ -354,7 +359,6 @@ class Utilities:
 
     def check_inactivity(self, *args):
         try:
-
             bus = dbus.SessionBus()
             screensaver_proxy = bus.get_object(
                 "org.freedesktop.ScreenSaver", "/org/freedesktop/ScreenSaver"
@@ -364,14 +368,43 @@ class Utilities:
             )
             idle_time = screensaver_interface.GetSessionIdleTime()
 
-            if idle_time > 600000:
+
+            hours, remainder = divmod(idle_time, 3600000)
+            minutes, seconds = divmod(remainder, 60000)
+            seconds //= 1000
+
+
+            human_readable_time = f"{hours}h:{minutes}m:{seconds}s"
+
+            if idle_time > 6000:
+                print(human_readable_time, "if")
                 self.trigger_guard_and_lock(trigger=False)
+            print(human_readable_time)
+        except Exception as e:
+            print("An error occurred:", e)
 
             # return idle_time
 
         except Exception as e:
-            # print(f"Exception in check_inactivity\n{e}")
+            print(f"Exception in check_inactivity\n{e}")
             pass
+
+    # def check_inactivity(self, *args):
+    #     try:
+    #         # Call xprintidle to get the idle time in milliseconds
+    #         idle_time_output = subprocess.check_output(["xprintidle"]).decode().strip()
+    #         idle_time = int(idle_time_output)
+    #
+    #         # Check if the idle time exceeds the threshold (600000 ms = 10 minutes)
+    #         # if idle_time > 600000:
+    #         if idle_time > 6000:
+    #             print(idle_time, "if")
+    #             self.trigger_guard_and_lock(trigger=False)
+    #         print(idle_time)
+    #
+    #     except Exception as e:
+    #         print(f"Exception in check_inactivity\n{e}")
+    #         pass
 
     def clear_split_numeric_input(self):
         self.app.popup_manager.split_payment_numeric_cash_input.text = ""
