@@ -286,7 +286,7 @@ class Utilities:
 
     def trigger_guard_and_lock(self, trigger=False):
         print(f"trigger\n{trigger}\n")
-       # pass
+
         if trigger:
             print(f"if trigger\n{trigger}\n")
             self.app.popup_manager.show_lock_screen()
@@ -376,14 +376,10 @@ class Utilities:
 
             human_readable_time = f"{hours}h:{minutes}m:{seconds}s"
 
-            if idle_time > 6000:
+            if idle_time > 600000:
                 print(human_readable_time, "if")
                 self.trigger_guard_and_lock(trigger=False)
             print(human_readable_time)
-        except Exception as e:
-            print("An error occurred:", e)
-
-            # return idle_time
 
         except Exception as e:
             print(f"Exception in check_inactivity\n{e}")
