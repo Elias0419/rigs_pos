@@ -9,7 +9,7 @@ import sys
 
 from kivy.config import Config
 
-Config.set('kivy', 'keyboard_mode', '')
+Config.set('kivy', 'keyboard_mode', 'systemanddock')
 Config.set('kivy', 'keyboard_scale', '0.75')
 #Config.set('postproc', 'double_tap_time', '500')
 Config.set('input', 'isolution multitouch', 'hidinput,/dev/input/event12')
@@ -147,7 +147,7 @@ class CashRegisterApp(MDApp):
         )
         btn_tools = self.utilities.create_md_raised_button(
             "Tools",
-            #lambda x: self.popup_manager.open_category_button_popup(),
+            #lambda x: self.popup_manager.show_guard_screen(),
             self.button_handler.on_button_press,
             #lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
             # lambda x: sys.exit(42),
