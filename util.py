@@ -289,7 +289,7 @@ class Utilities:
 
         if trigger:
             print(f"if trigger\n{trigger}\n")
-            self.app.popup_manager.show_lock_screen()
+            #self.app.popup_manager.show_lock_screen()
             self.app.is_lock_screen_displayed = True
         elif (
 
@@ -297,7 +297,7 @@ class Utilities:
             and not self.app.is_lock_screen_displayed
         ):
             print(f"elif 1 trigger\n{trigger}\n")
-            self.app.popup_manager.show_lock_screen()
+            #self.app.popup_manager.show_lock_screen()
             self.app.popup_manager.show_guard_screen()
             self.app.is_lock_screen_displayed = True
             self.app.is_guard_screen_displayed = True
