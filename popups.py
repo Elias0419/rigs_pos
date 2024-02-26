@@ -23,6 +23,7 @@ from kivymd.uix.dialog import MDDialog
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.image import Image
 import os
+from datetime import datetime
 from functools import partial
 from kivymd.uix.gridlayout import MDGridLayout
 from kivymd.uix.boxlayout import MDBoxLayout
@@ -896,16 +897,22 @@ class PopupManager:
         if not self.app.is_guard_screen_displayed:
             guard_layout = BoxLayout(orientation='vertical')
 
+            clock_label = Label(size_hint_y=0.1, font_size=30)
+
+            def update_time(*args):
+                clock_label.text = datetime.now().strftime('%I:%M %p')
+
+            Clock.schedule_interval(update_time, 1)
+
             guard_image = Image(source='images/guard.jpg')
 
-
+            guard_layout.add_widget(clock_label)
             guard_layout.add_widget(guard_image)
 
             self.guard_popup = Popup(
                 title="Guard Screen",
                 content=guard_layout,
                 size_hint=(1, 1),
-
                 auto_dismiss=False,
             )
             self.guard_popup.bind(
@@ -917,6 +924,8 @@ class PopupManager:
             )
 
             self.guard_popup.open()
+            # Immediately update the time so it's correct from the moment it's displayed
+            update_time()
 
 
     def show_lock_screen(self):
