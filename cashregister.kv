@@ -44,7 +44,6 @@
         spacing: 5
         TextInput:
             id: label_search_input
-
             hint_text: 'Search'
             on_text: root.filter_inventory(self.text)
 
@@ -170,17 +169,17 @@
         on_press: root.on_remove_button_press()
 
 <LabelQueueLayout>:
-    RecycleView:
+    BoxLayout:
         id: label_queue_rv
         size_hint: (1, 1)
         viewclass: 'PrintQueueRow'
-        RecycleBoxLayout:
-            default_size: None, dp(48)
-            default_size_hint: 1, None
-            size_hint_y: None
-            #height: self.minimum_height
-            height: len(label_queue_rv.data) * dp(40)
-            orientation: 'vertical'
+       # RecycleBoxLayout:
+        #    default_size: None, dp(48)
+         #   default_size_hint: 1, None
+          #  size_hint_y: None
+           # #height: self.minimum_height
+            #height: len(label_queue_rv.data) * dp(40)
+            #orientation: 'vertical'
 <InventoryManagementRow>:
     canvas.after:
         Color:
