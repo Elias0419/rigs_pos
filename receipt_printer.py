@@ -22,16 +22,16 @@ class ReceiptPrinter:
 
     def print_receipt(self, order_details):
         print(order_details)
-        logo = Image.open("images/logo.png")
+        logo = Image.open("images/rigs_logo_scaled.png")
+        # try:
+        #     split_payments = self.app.popup_manager.split_payment_info['payments']
+        #
+        # except Exception as e:
+        #     print("exception in receipt printer, get split payment info", e)
+
+
         try:
-            split_payments = self.app.popup_manager.split_payment_info['payments']
-
-        except Exception as e:
-            print("exception in receipt printer, get split payment info", e)
-
-
-        try:
-            self.printer.image(logo, (200, -60))
+            self.printer.image(logo, (300, -60))
 
             date = str(datetime.now().replace(microsecond=0))
             self.printer.set(align="center", font="a")
