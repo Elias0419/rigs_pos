@@ -7,6 +7,7 @@ import brother_ql
 from brother_ql.conversion import convert
 from brother_ql.backends.helpers import send
 from kivymd.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.properties import StringProperty, ListProperty, ObjectProperty
@@ -14,7 +15,10 @@ from kivy.uix.textinput import TextInput
 from kivymd.uix.button import MDFlatButton, MDRaisedButton
 from kivymd.uix.recycleview import RecycleView
 from kivy.metrics import dp
-
+from kivy.uix.button import Button
+from kivy.graphics import Rectangle, Color, Line
+from kivy.uix.widget import Widget
+from kivymd.uix.boxlayout import MDBoxLayout
 
 class LabelPrintingRow(BoxLayout):
     barcode = StringProperty()
@@ -145,26 +149,49 @@ class LabelPrintingView(BoxLayout):
         self.ids.label_search_input.text = barcode
 
     def show_print_queue(self):
-        queue_data = [
-            {
-                "name": item["name"],
-                "quantity": str(item["quantity"]),
-            }
-            for item in self.label_printer.print_queue
-        ]
+        # queue_data = [
+        #     {
+        #         "name": item["name"],
+        #         "quantity": str(item["quantity"]),
+        #     }
+        #     for item in self.label_printer.print_queue
+        # ]
 
-        queue_layout = LabelQueueLayout()
-        queue_layout.ids["label_queue_rv"].data = [
-            {
-                "name": item["name"],
-                "quantity": str(item["quantity"]),
-                "optional_text": item["optional_text"],
-                "remove_callback": self.remove_from_queue,
-                "quantity_changed_callback": self.update_print_queue_quantity,
-                "add_label_text_callback": self.update_print_queue_with_label_text,
-            }
-            for item in self.label_printer.print_queue
-        ]
+        queue_layout = BoxLayout(orientation="vertical")
+        item_layout = BoxLayout(orientation="vertical")
+        #line = BoxLayout(orientation="horizontal", size_hint_y=None, height=1)
+        for item in self.label_printer.print_queue:
+            item_name=item['name']
+            label = Label(
+                text=f"{item['name']}  Qty: {item['quantity']} Text:  {item['optional_text']}",
+                size_hint_x=0.8,
+                )
+            rm_button = Button(text="Remove", size_hint_x=0.1,  on_press=lambda x, item=item: self.remove_from_queue(item_name=item['name']))
+            text_button = Button(text="Add Text", size_hint_x=0.1)
+            item_row = GridLayout(orientation="lr-tb", cols=3, spacing=5, size_hint_y=None, height=40)
+            item_row.add_widget(label)
+            item_row.add_widget(text_button)
+            item_row.add_widget(rm_button)
+            item_layout.add_widget(item_row)
+            line = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=1)
+            line.md_bg_color = (0.56, 0.56, 1, 1)
+
+            item_layout.add_widget(line)
+
+
+
+        # queue_layout = LabelQueueLayout()
+        # queue_layout.ids["label_queue_rv"].data = [
+        #     {
+        #         "name": item["name"],
+        #         "quantity": str(item["quantity"]),
+        #         "optional_text": item["optional_text"],
+        #         "remove_callback": self.remove_from_queue,
+        #         "quantity_changed_callback": self.update_print_queue_quantity,
+        #         "add_label_text_callback": self.update_print_queue_with_label_text,
+        #     }
+        #     for item in self.label_printer.print_queue
+        # ]
 
         btn_layout = BoxLayout(orientation="horizontal", spacing=5, size_hint_y=0.2)
         btn_layout.add_widget(
@@ -182,6 +209,8 @@ class LabelPrintingView(BoxLayout):
                 text="Clear Queue", on_press=self.clear_queue, size_hint=(0.2, 1)
             )
         )
+
+        queue_layout.add_widget(item_layout)
         queue_layout.add_widget(btn_layout)
         self.print_queue_popup = Popup(
             title="Print Queue", content=queue_layout, size_hint=(0.8, 0.6)
@@ -373,8 +402,9 @@ class PrintQueueRow(BoxLayout):
     def add_label_text(self):
         add_lable_layout = BoxLayout(orientation="vertical")
         add_label_text_layout = BoxLayout(orientation="vertical")
+        name_truncated = self.name[:15]
         add_label_text_label = Label(text="15 Characters Max")
-        self.add_label_text_input = TextInput(size_hint=(1, 0.4))
+        self.add_label_text_input = TextInput(text=name_truncated, size_hint=(1, 0.4))
         add_label_text_layout.add_widget(add_label_text_label)
         add_label_text_layout.add_widget(self.add_label_text_input)
         add_label_button_layout = BoxLayout(orientation="horizontal", spacing=5)
@@ -428,13 +458,13 @@ class LabelQueueLayout(BoxLayout):
     def __init__(self, **kwargs):
         super(LabelQueueLayout, self).__init__(**kwargs)
 
-        self.bind(children=self.update_height)
+        #self.bind(children=self.update_height)
 
         self.orientation = "vertical"
-        self.height = self.minimum_height
+        #self.height = self.minimum_height
 
-    def update_height(self, *args):
-        self.height = len(self.children) * dp(48)
+    # def update_height(self, *args):
+    #     self.height = len(self.children) * dp(48)
 
 
 class FocusPopup(Popup):
