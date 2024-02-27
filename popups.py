@@ -1142,13 +1142,13 @@ class PopupManager:
         keypad_layout.add_widget(cancel_button)
 
         self.custom_item_popup_layout.add_widget(keypad_layout)
-        self.custom_item_popup = Popup(
+        self.custom_item_popup = FocusPopup(
             title="Custom Item",
             content=self.custom_item_popup_layout,
             size_hint=(0.6, 0.6),
             on_dismiss=lambda x: setattr(self.cash_input, "text", ""),
         )
-
+        self.custom_item_popup.focus_on_textinput(self.cash_input)
         self.custom_item_popup.open()
 
     def show_order_popup(self, order_summary):
