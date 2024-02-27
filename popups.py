@@ -1281,7 +1281,7 @@ class PopupManager:
         placeholder_amounts = [0] * 5
         for i, amount in enumerate(placeholder_amounts):
             btn_text = (
-                f"[b][size=20]${common_amounts[i]}[/size][/b]"
+                f"[b][size=20]${common_amounts[i]:.2f}[/size][/b]"
                 if i < len(common_amounts)
                 else "-"
             )
