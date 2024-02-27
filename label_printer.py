@@ -207,7 +207,7 @@ class LabelPrintingView(BoxLayout):
             {
                 "barcode": str(item[0]),
                 "name": item[1],
-                "price": str(item[2]),
+                "price": f"{item[2]:.2f}",
                 "label_printer": self.label_printer,
             }
             for item in items
@@ -334,7 +334,7 @@ class LabelPrinter:
             for _ in range(item["quantity"]):
                 success = self.print_barcode_label(
                     item["barcode"],
-                    item["price"],
+                    f"{item['price']:.2f}",
                     #f"{item['name']}_label.png",
                     include_text=include_text,
                     optional_text=optional_text,
