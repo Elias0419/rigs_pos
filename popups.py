@@ -1828,6 +1828,8 @@ class PopupManager:
         return popup
 
     def catch_label_printing_errors(self, e):
+        if hasattr(self, 'label_errors_popup') and self.label_errors_popup.is_open:
+            self.label_errors_popup.dismiss()
         label_errors_layout = GridLayout(orientation="tb-lr", rows=2)
         label_errors_text = Label(
             text=f"Caught an error from the label printer:\n\n{e}\n\nMake sure it's plugged in and turned on.",
