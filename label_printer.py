@@ -345,6 +345,10 @@ class LabelPrinter:
         if self.print_success:
             self.print_queue.clear()
             self.app.label_manager.print_queue_popup.dismiss()
+            try:
+                self.app.popup_manager.label_errors_popup.dismiss()
+            except:
+                pass
 
     def remove_from_queue(self, name):
         for i, item in enumerate(self.print_queue):

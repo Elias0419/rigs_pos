@@ -8,7 +8,7 @@ from kivy.uix.button import Button
 from kivy.uix.popup import Popup
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
-from kivymd.uix.button import MDRaisedButton, MDFlatButton
+from kivymd.uix.button import MDRaisedButton, MDFlatButton, MDIconButton
 from kivy.uix.textinput import TextInput
 from kivymd.color_definitions import palette
 from kivy.uix.floatlayout import FloatLayout
@@ -1828,18 +1828,31 @@ class PopupManager:
         return popup
 
     def catch_label_printing_errors(self, e):
-        label_errors_layout = BoxLayout(orientation="vertical")
+        label_errors_layout = GridLayout(orientation="tb-lr", rows=2)
         label_errors_text = Label(
-            text=f"Caught an error from the label printer\nCheck that the printer is turned on and plugged in\nand there are labels in it.\n The full error is below:\n\n{e}"
+            text=f"Caught an error from the label printer:\n\n{e}\n\nMake sure it's plugged in and turned on.",
+            size_hint_y=0.5,
+            pos_hint={"top":1}
+        )
+        label_errors_icon_button = MDRaisedButton(
+            text="Try Again",
+            on_press=lambda x: self.app.label_printer.process_queue(),
+            size_hint_x=1
         )
         label_errors_button = MDRaisedButton(
-            text="Dismiss", on_press=lambda x: self.label_errors_popup.dismiss()
+            text="Dismiss",
+            on_press=lambda x: self.label_errors_popup.dismiss(),
+            size_hint_x=1
         )
         label_errors_layout.add_widget(label_errors_text)
-        label_errors_layout.add_widget(label_errors_button)
-
+        buttons_layout=GridLayout(orientation="lr-tb", cols=2, size_hint_y=0.1, spacing=5)
+        buttons_layout.add_widget(label_errors_button)
+        buttons_layout.add_widget(label_errors_icon_button)
+        label_errors_layout.add_widget(buttons_layout)
         self.label_errors_popup = Popup(
-            content=label_errors_layout, size_hint=(0.4, 0.4)
+            content=label_errors_layout,
+            size_hint=(0.4, 0.4),
+            title="Label Printer Error"
         )
         self.label_errors_popup.open()
 
