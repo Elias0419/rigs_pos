@@ -9,7 +9,7 @@ import sys
 
 from kivy.config import Config
 
-Config.set('kivy', 'keyboard_mode', 'systemanddock')
+#Config.set('kivy', 'keyboard_mode', 'systemanddock')
 Config.set('kivy', 'keyboard_scale', '0.75')
 #Config.set('postproc', 'double_tap_time', '500')
 Config.set('input', 'isolution multitouch', 'hidinput,/dev/input/event12')
