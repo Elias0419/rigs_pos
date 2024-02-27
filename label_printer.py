@@ -257,7 +257,7 @@ class LabelPrinter:
         self.print_queue.clear()
 
     def print_barcode_label(
-        self, barcode_data, item_price, save_path, include_text=False, optional_text=""
+        self, barcode_data, item_price, save_path=None, include_text=False, optional_text=""
     ):
         label_width, label_height = 202, 202
         barcode_y_position = 35
@@ -335,7 +335,7 @@ class LabelPrinter:
                 success = self.print_barcode_label(
                     item["barcode"],
                     item["price"],
-                    f"{item['name']}_label.png",
+                    #f"{item['name']}_label.png",
                     include_text=include_text,
                     optional_text=optional_text,
                 )
