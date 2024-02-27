@@ -293,7 +293,7 @@ class LabelPrinter:
         label_image.paste(barcode_image, barcode_position)
 
         if include_text and optional_text:
-            additional_text_font_size = 30
+            additional_text_font_size = 20
             additional_font = ImageFont.truetype(
                 "/usr/share/fonts/TTF/Arial.TTF", additional_text_font_size
             )
