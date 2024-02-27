@@ -334,7 +334,7 @@ class LabelPrinter:
             for _ in range(item["quantity"]):
                 success = self.print_barcode_label(
                     item["barcode"],
-                    f"{item['price']:.2f}",
+                    item['price'],
                     #f"{item['name']}_label.png",
                     include_text=include_text,
                     optional_text=optional_text,
