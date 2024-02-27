@@ -1093,7 +1093,7 @@ class PopupManager:
         self.cash_input = TextInput(
            #keyboard="12",
             text="",
-            disabled=True,
+            #disabled=True,
             multiline=False,
             input_filter="float",
             font_size=30,
