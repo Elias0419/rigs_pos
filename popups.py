@@ -1828,7 +1828,7 @@ class PopupManager:
         return popup
 
     def catch_label_printing_errors(self, e):
-        if hasattr(self, 'label_errors_popup') and self.label_errors_popup.is_open:
+        if hasattr(self, 'label_errors_popup') and self.label_errors_popup._is_open:
             self.label_errors_popup.dismiss()
         label_errors_layout = GridLayout(orientation="tb-lr", rows=2)
         label_errors_text = Label(
