@@ -285,10 +285,10 @@ class Utilities:
         self.app.popup_manager.dismiss_popups("split_custom_cash_popup")
 
     def trigger_guard_and_lock(self, trigger=False):
-        print(f"trigger\n{trigger}\n")
+
 
         if trigger:
-            print(f"if trigger\n{trigger}\n")
+
             #self.app.popup_manager.show_lock_screen()
             self.app.is_lock_screen_displayed = True
         elif (
@@ -296,7 +296,7 @@ class Utilities:
             not self.app.is_guard_screen_displayed
             and not self.app.is_lock_screen_displayed
         ):
-            print(f"elif 1 trigger\n{trigger}\n")
+
             #self.app.popup_manager.show_lock_screen()
             self.app.popup_manager.show_guard_screen()
             self.app.is_lock_screen_displayed = True
@@ -304,7 +304,7 @@ class Utilities:
         elif (
             self.app.is_lock_screen_displayed and not self.app.is_guard_screen_displayed
         ):
-            print(f"elif 2 trigger\n{trigger}\n")
+
             self.app.popup_manager.show_guard_screen()
             self.app.is_guard_screen_displayed = True
 
@@ -377,9 +377,9 @@ class Utilities:
             human_readable_time = f"{hours}h:{minutes}m:{seconds}s"
 
             if idle_time > 600000:
-                print(human_readable_time, "if")
+
                 self.trigger_guard_and_lock(trigger=False)
-            print(human_readable_time)
+
 
         except Exception as e:
             print(f"Exception in check_inactivity\n{e}")
