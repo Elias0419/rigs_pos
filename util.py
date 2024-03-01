@@ -153,7 +153,7 @@ class Utilities:
     def manual_override(self, instance):
 
         current_time = time.time()
-        print(f"{current_time}\n{self.app.override_tap_time}")
+
         if current_time - self.app.override_tap_time < 0.5:
             sys.exit(42)
 
@@ -186,7 +186,7 @@ class Utilities:
                 barcode_cache[barcode] = [item]
             else:
                 barcode_cache[barcode].append(item)
-        # print(barcode_cache)
+
         return barcode_cache
 
     def update_barcode_cache(self, item_details):
@@ -650,7 +650,7 @@ class Utilities:
 
 
     def open_inventory_manager_row(self, instance):
-
+        self.app.current_context = "inventory_item"
         self.app.popup_manager.inventory_item_popup_row(instance)
 
     def update_apply_categories(self):
