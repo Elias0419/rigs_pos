@@ -198,13 +198,16 @@ class OrderManager:
             price = float(price)
         except Exception as e:
             print("Exception in add custom item order_manager.py,", e)
-
-        custom_item_name = "Custom Item"
-        self.add_item(custom_item_name, price)
-        self.app.utilities.update_display()
-        self.app.utilities.update_financial_summary()
-        self.app.popup_manager.custom_item_popup.dismiss()
-        self.app.popup_manager.cash_input.text = ""
+        try:
+            custom_item_name = "Custom Item"
+            self.add_item(custom_item_name, price)
+            self.app.utilities.update_display()
+            self.app.utilities.update_financial_summary()
+            self.app.popup_manager.custom_item_popup.dismiss()
+            self.app.popup_manager.cash_input.text = ""
+        except Exception as e:
+            print(f"[Order Manager]: add_custom_item\n{e}")
+            pass
 
     def finalize_order(self):
         order_details = self.get_order_details()
