@@ -41,40 +41,33 @@ class PopupManager:
         categories = self.app.utilities.initialize_categories()
         main_layout = GridLayout(orientation="lr-tb", cols=1, rows=2)
         layout = GridLayout(
-            orientation='lr-tb',
-            spacing=5,
-            size_hint=(1, 1),
-            rows=10,
-            cols=5
+            orientation="lr-tb", spacing=5, size_hint=(1, 1), rows=10, cols=5
         )
 
-        layout.bind(minimum_height=layout.setter('height'))
+        layout.bind(minimum_height=layout.setter("height"))
 
         for category in categories:
             layout.add_widget(self.create_category_item(category))
         main_layout.add_widget(layout)
-        button_layout = GridLayout(orientation="lr-tb", spacing=5, cols=2, rows=2, size_hint=(1, 0.2))
+        button_layout = GridLayout(
+            orientation="lr-tb", spacing=5, cols=2, rows=2, size_hint=(1, 0.2)
+        )
         confirm_button = MDRaisedButton(
             text="Confirm",
-            on_release=lambda instance:
-                self.app.utilities.apply_categories(),
-            size_hint=(0.2, 1)
-            )
-
+            on_release=lambda instance: self.app.utilities.apply_categories(),
+            size_hint=(0.2, 1),
+        )
 
         cancel_button = MDRaisedButton(
             text="Cancel",
-            on_release=lambda instance:
-            self.category_button_popup.dismiss(),
-            size_hint=(0.2, 1)
-            )
+            on_release=lambda instance: self.category_button_popup.dismiss(),
+            size_hint=(0.2, 1),
+        )
         button_layout.add_widget(confirm_button)
         button_layout.add_widget(cancel_button)
         main_layout.add_widget(button_layout)
-        self.category_button_popup = Popup(
-            content=main_layout,
-            size_hint=(0.8, 0.8))
-        #self.category_button_popup_inv.open()
+        self.category_button_popup = Popup(content=main_layout, size_hint=(0.8, 0.8))
+        # self.category_button_popup_inv.open()
 
         return self.category_button_popup
 
@@ -83,86 +76,80 @@ class PopupManager:
         categories = self.app.utilities.initialize_categories()
         main_layout = GridLayout(orientation="lr-tb", cols=1, rows=2)
         layout = GridLayout(
-            orientation='lr-tb',
-            spacing=5,
-            size_hint=(1, 1),
-            rows=10,
-            cols=5
+            orientation="lr-tb", spacing=5, size_hint=(1, 1), rows=10, cols=5
         )
 
-        layout.bind(minimum_height=layout.setter('height'))
+        layout.bind(minimum_height=layout.setter("height"))
 
         for category in categories:
             layout.add_widget(self.create_category_item_row(category))
         main_layout.add_widget(layout)
-        button_layout = GridLayout(orientation="lr-tb", spacing=5, cols=2, rows=2, size_hint=(1, 0.2))
+        button_layout = GridLayout(
+            orientation="lr-tb", spacing=5, cols=2, rows=2, size_hint=(1, 0.2)
+        )
         confirm_button = MDRaisedButton(
             text="Confirm",
-            on_release=lambda instance:
-                self.app.utilities.apply_categories_row(),
-                size_hint=(0.2, 1)
-            )
+            on_release=lambda instance: self.app.utilities.apply_categories_row(),
+            size_hint=(0.2, 1),
+        )
         cancel_button = MDRaisedButton(
             text="Cancel",
-            on_release=lambda instance:
-            self.category_button_popup_row.dismiss(),
-            size_hint=(0.2, 1)
-            )
+            on_release=lambda instance: self.category_button_popup_row.dismiss(),
+            size_hint=(0.2, 1),
+        )
         button_layout.add_widget(confirm_button)
         button_layout.add_widget(cancel_button)
         main_layout.add_widget(button_layout)
         self.category_button_popup_row = Popup(
-            content=main_layout,
-            size_hint=(0.8, 0.8)
-            )
+            content=main_layout, size_hint=(0.8, 0.8)
+        )
         self.category_button_popup_row.open()
-
 
     def open_category_button_popup_inv(self):
         self.selected_categories_inv = []
         categories = self.app.utilities.initialize_categories()
         main_layout = GridLayout(orientation="lr-tb", cols=1, rows=2)
         layout = GridLayout(
-            orientation='lr-tb',
-            spacing=5,
-            size_hint=(1, 1),
-            rows=10,
-            cols=5
+            orientation="lr-tb", spacing=5, size_hint=(1, 1), rows=10, cols=5
         )
 
-        layout.bind(minimum_height=layout.setter('height'))
+        layout.bind(minimum_height=layout.setter("height"))
 
         for category in categories:
             layout.add_widget(self.create_category_item_inv(category))
         main_layout.add_widget(layout)
-        button_layout = GridLayout(orientation="lr-tb", spacing=5, cols=2, rows=2, size_hint=(1, 0.2))
+        button_layout = GridLayout(
+            orientation="lr-tb", spacing=5, cols=2, rows=2, size_hint=(1, 0.2)
+        )
         confirm_button = MDRaisedButton(
             text="Confirm",
-            on_release=lambda instance:
-                self.app.utilities.apply_categories_inv(),
-                size_hint=(0.2, 1)
-            )
+            on_release=lambda instance: self.app.utilities.apply_categories_inv(),
+            size_hint=(0.2, 1),
+        )
         cancel_button = MDRaisedButton(
             text="Cancel",
-            on_release=lambda instance:
-            self.category_button_popup_inv.dismiss(),
-            size_hint=(0.2, 1)
-            )
+            on_release=lambda instance: self.category_button_popup_inv.dismiss(),
+            size_hint=(0.2, 1),
+        )
         button_layout.add_widget(confirm_button)
         button_layout.add_widget(cancel_button)
         main_layout.add_widget(button_layout)
         self.category_button_popup_inv = Popup(
-            content=main_layout,
-            size_hint=(0.8, 0.8)
-            )
+            content=main_layout, size_hint=(0.8, 0.8)
+        )
         self.category_button_popup_inv.open()
-
 
     def create_category_item(self, category):
         checkbox = MDCheckbox(size_hint=(None, None), size=(48, 48))
-        checkbox.bind(active=lambda instance, is_active, cat=category: self.app.utilities.toggle_category_selection(is_active, cat))
+        checkbox.bind(
+            active=lambda instance, is_active, cat=category: self.app.utilities.toggle_category_selection(
+                is_active, cat
+            )
+        )
 
-        container = TouchableMDBoxLayout(orientation='horizontal', size_hint_y=None, height=40, checkbox=checkbox)
+        container = TouchableMDBoxLayout(
+            orientation="horizontal", size_hint_y=None, height=40, checkbox=checkbox
+        )
         label = MDLabel(text=category, size_hint_y=None, height=40)
 
         container.add_widget(checkbox)
@@ -172,13 +159,14 @@ class PopupManager:
 
     def create_category_item_inv(self, category):
         checkbox = MDCheckbox(size_hint=(None, None), size=(48, 48))
-        checkbox.bind(active=lambda instance, is_active, cat=category: self.app.utilities.toggle_category_selection_inv(is_active, cat))
+        checkbox.bind(
+            active=lambda instance, is_active, cat=category: self.app.utilities.toggle_category_selection_inv(
+                is_active, cat
+            )
+        )
         container = TouchableMDBoxLayout(
-                                    orientation='horizontal',
-                                    size_hint_y=None,
-                                    height=40,
-                                    checkbox=checkbox
-                                    )
+            orientation="horizontal", size_hint_y=None, height=40, checkbox=checkbox
+        )
 
         label = MDLabel(text=category, size_hint_y=None, height=40)
         container.add_widget(checkbox)
@@ -187,20 +175,19 @@ class PopupManager:
 
     def create_category_item_row(self, category):
         checkbox = MDCheckbox(size_hint=(None, None), size=(48, 48))
-        checkbox.bind(active=lambda instance, is_active, cat=category: self.app.utilities.toggle_category_selection_row(is_active, cat))
+        checkbox.bind(
+            active=lambda instance, is_active, cat=category: self.app.utilities.toggle_category_selection_row(
+                is_active, cat
+            )
+        )
         container = TouchableMDBoxLayout(
-                                    orientation='horizontal',
-                                    size_hint_y=None,
-                                    height=40,
-                                    checkbox=checkbox
-                                    )
+            orientation="horizontal", size_hint_y=None, height=40, checkbox=checkbox
+        )
 
         label = MDLabel(text=category, size_hint_y=None, height=40)
         container.add_widget(checkbox)
         container.add_widget(label)
         return container
-
-
 
     def open_category_button_popup(self):
         category_button_popup = self.create_category_popup()
@@ -215,12 +202,11 @@ class PopupManager:
         name_layout.add_widget(name_input)
         barcode_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
 
-
-        barcode_input = TextInput(
+        self.item_barcode_input = TextInput(
             input_filter="int", text=instance.barcode if instance.barcode else ""
         )
         barcode_layout.add_widget(Label(text="Barcode", size_hint_x=0.2))
-        barcode_layout.add_widget(barcode_input)
+        barcode_layout.add_widget(self.item_barcode_input)
 
         price_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         price_input = TextInput(input_filter="float", text=instance.price)
@@ -238,7 +224,9 @@ class PopupManager:
         sku_layout.add_widget(sku_input)
 
         category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        self.add_to_db_category_input_row = TextInput(text=instance.category, disabled=True)
+        self.add_to_db_category_input_row = TextInput(
+            text=instance.category, disabled=True
+        )
         category_layout.add_widget(Label(text="Categories", size_hint_x=0.2))
         category_layout.add_widget(self.add_to_db_category_input_row)
 
@@ -275,7 +263,10 @@ class PopupManager:
         )
 
         button_layout.add_widget(
-            MDRaisedButton(text="Close", on_press=lambda x: self.inventory_item_update_popup.dismiss())
+            MDRaisedButton(
+                text="Close",
+                on_press=lambda x: self.inventory_item_update_popup.dismiss(),
+            )
         )
 
         content.add_widget(button_layout)
@@ -285,7 +276,7 @@ class PopupManager:
             pos_hint={"top": 1},
             content=content,
             size_hint=(0.8, 0.4),
-            on_dismiss=lambda x: self.app.inventory_manager.reset_inventory_context()
+            on_dismiss=lambda x: self.app.inventory_manager.reset_inventory_context(),
         )
         self.inventory_item_update_popup.open()
 
@@ -365,7 +356,6 @@ class PopupManager:
             size_hint=(0.8, 0.4),
         )
         self.add_to_db_popup.open()
-
 
     def show_add_or_bypass_popup(self, barcode):
 
@@ -472,39 +462,47 @@ class PopupManager:
 
     def add_discount_popup(self, item_id, instance=None):
         print("add_discount_popup", item_id)
-        discount_item_popup_layout = GridLayout(orientation="tb-lr", spacing=5, cols=1, rows=2)
+        discount_item_popup_layout = GridLayout(
+            orientation="tb-lr", spacing=5, cols=1, rows=2
+        )
         self.discount_item_popup = Popup(
             title="Add Discount",
             content=discount_item_popup_layout,
             size_hint=(0.6, 0.8),
         )
 
-
         discounts = [
-            {'type': 'percent', 'values': [10, 20, 30, 40, 50]},
-            {'type': 'amount', 'values': [10, 20, 30, 40, 50]}
+            {"type": "percent", "values": [10, 20, 30, 40, 50]},
+            {"type": "amount", "values": [10, 20, 30, 40, 50]},
         ]
 
-        discount_item_layout = GridLayout(orientation="tb-lr",cols=2, spacing=10)
+        discount_item_layout = GridLayout(orientation="tb-lr", cols=2, spacing=10)
 
         for discount_type in discounts:
-            for value in discount_type['values']:
-                label = f"[size=20][b]{value}%[/size][/b]" if discount_type['type'] == 'percent' else f"[size=20][b]${value}[/size][/b]"
+            for value in discount_type["values"]:
+                label = (
+                    f"[size=20][b]{value}%[/size][/b]"
+                    if discount_type["type"] == "percent"
+                    else f"[size=20][b]${value}[/size][/b]"
+                )
                 discount_button = self.app.utilities.create_md_raised_button(
                     label,
-                    lambda x, v=value, t=discount_type['type']: self.apply_item_discount(v, t, item_id=item_id),
+                    lambda x, v=value, t=discount_type[
+                        "type"
+                    ]: self.apply_item_discount(v, t, item_id=item_id),
                     (0.8, 0.8),
                 )
                 discount_item_layout.add_widget(discount_button)
-        button_layout = GridLayout(orientation="lr-tb", spacing=5, cols=2, rows=1, size_hint_y=0.2)
+        button_layout = GridLayout(
+            orientation="lr-tb", spacing=5, cols=2, rows=1, size_hint_y=0.2
+        )
         custom_button = Button(
             text="Custom",
             on_press=lambda x: self.custom_add_item_discount_popup(item_id=item_id),
-            )
+        )
         cancel_button = Button(
             text="Cancel",
             on_press=lambda x: self.app.utilities.dismiss_single_discount_popup(),
-
         )
 
         button_layout.add_widget(custom_button)
@@ -512,17 +510,20 @@ class PopupManager:
         discount_item_popup_layout.add_widget(discount_item_layout)
         discount_item_popup_layout.add_widget(button_layout)
 
-
         self.discount_item_popup.open()
 
     def apply_item_discount(self, value, discount_type, item_id=""):
         print("apply_item_discount", item_id)
-        if discount_type == 'percent':
+        if discount_type == "percent":
 
-            self.app.order_manager.discount_single_item(discount_amount=value, percent=True, item_id=item_id)
+            self.app.order_manager.discount_single_item(
+                discount_amount=value, percent=True, item_id=item_id
+            )
         else:
 
-            self.app.order_manager.discount_single_item(discount_amount=value, percent=False, item_id=item_id)
+            self.app.order_manager.discount_single_item(
+                discount_amount=value, percent=False, item_id=item_id
+            )
 
     def custom_add_item_discount_popup(self, item_id, instance=None):
 
@@ -605,7 +606,9 @@ class PopupManager:
 
     def custom_add_order_discount_popup(self):
 
-        custom_discount_order_popup_layout = BoxLayout(orientation="vertical", spacing=10)
+        custom_discount_order_popup_layout = BoxLayout(
+            orientation="vertical", spacing=10
+        )
         self.custom_discount_order_popup = Popup(
             title="Add Discount",
             content=custom_discount_order_popup_layout,
@@ -620,7 +623,9 @@ class PopupManager:
             size_hint_y=None,
             height=50,
         )
-        custom_discount_order_popup_layout.add_widget(self.custom_discount_order_amount_input)
+        custom_discount_order_popup_layout.add_widget(
+            self.custom_discount_order_amount_input
+        )
 
         keypad_layout = GridLayout(cols=3, spacing=10)
 
@@ -661,7 +666,8 @@ class PopupManager:
         percent_button = self.app.utilities.create_md_raised_button(
             "Percent",
             lambda x: self.app.order_manager.discount_entire_order(
-                discount_amount=self.custom_discount_order_amount_input.text, percent=True
+                discount_amount=self.custom_discount_order_amount_input.text,
+                percent=True,
             ),
             size_hint=(0.8, 0.8),
         )
@@ -680,39 +686,47 @@ class PopupManager:
         self.custom_discount_order_popup.open()
 
     def add_order_discount_popup(self):
-        discount_order_popup_layout = GridLayout(orientation="tb-lr", spacing=5, cols=1, rows=2)
+        discount_order_popup_layout = GridLayout(
+            orientation="tb-lr", spacing=5, cols=1, rows=2
+        )
         self.discount_order_popup = Popup(
             title="Add Discount",
             content=discount_order_popup_layout,
             size_hint=(0.6, 0.8),
         )
 
-
         discounts = [
-            {'type': 'percent', 'values': [10, 20, 30, 40, 50]},
-            {'type': 'amount', 'values': [10, 20, 30, 40, 50]}
+            {"type": "percent", "values": [10, 20, 30, 40, 50]},
+            {"type": "amount", "values": [10, 20, 30, 40, 50]},
         ]
 
-        discount_layout = GridLayout(orientation="tb-lr",cols=2, spacing=10)
+        discount_layout = GridLayout(orientation="tb-lr", cols=2, spacing=10)
 
         for discount_type in discounts:
-            for value in discount_type['values']:
-                label = f"[size=20][b]{value}%[/size][/b]" if discount_type['type'] == 'percent' else f"[size=20][b]${value}[/size][/b]"
+            for value in discount_type["values"]:
+                label = (
+                    f"[size=20][b]{value}%[/size][/b]"
+                    if discount_type["type"] == "percent"
+                    else f"[size=20][b]${value}[/size][/b]"
+                )
                 discount_button = self.app.utilities.create_md_raised_button(
                     label,
-                    lambda x, v=value, t=discount_type['type']: self.apply_discount(v, t),
+                    lambda x, v=value, t=discount_type["type"]: self.apply_discount(
+                        v, t
+                    ),
                     (0.8, 0.8),
                 )
                 discount_layout.add_widget(discount_button)
-        button_layout = GridLayout(orientation="lr-tb", spacing=5, cols=2, rows=1, size_hint_y=0.2)
+        button_layout = GridLayout(
+            orientation="lr-tb", spacing=5, cols=2, rows=1, size_hint_y=0.2
+        )
         custom_button = Button(
             text="Custom",
             on_press=lambda x: self.custom_add_order_discount_popup(),
-            )
+        )
         cancel_button = Button(
             text="Cancel",
             on_press=lambda x: self.app.utilities.dismiss_discount_order_popup(),
-
         )
 
         button_layout.add_widget(custom_button)
@@ -720,16 +734,19 @@ class PopupManager:
         discount_order_popup_layout.add_widget(discount_layout)
         discount_order_popup_layout.add_widget(button_layout)
 
-
         self.discount_order_popup.open()
 
     def apply_discount(self, value, discount_type):
-        if discount_type == 'percent':
+        if discount_type == "percent":
 
-            self.app.order_manager.discount_entire_order(discount_amount=value, percent=True)
+            self.app.order_manager.discount_entire_order(
+                discount_amount=value, percent=True
+            )
         else:
 
-            self.app.order_manager.discount_entire_order(discount_amount=value, percent=False)
+            self.app.order_manager.discount_entire_order(
+                discount_amount=value, percent=False
+            )
 
     def show_theme_change_popup(self):
         layout = GridLayout(cols=4, rows=8, orientation="lr-tb")
@@ -895,16 +912,16 @@ class PopupManager:
 
     def show_guard_screen(self):
         if not self.app.is_guard_screen_displayed:
-            guard_layout = BoxLayout(orientation='vertical')
+            guard_layout = BoxLayout(orientation="vertical")
 
             clock_label = Label(size_hint_y=0.1, font_size=30)
 
             def update_time(*args):
-                clock_label.text = datetime.now().strftime('%I:%M %p')
+                clock_label.text = datetime.now().strftime("%I:%M %p")
 
             Clock.schedule_interval(update_time, 1)
 
-            guard_image = Image(source='images/guard.jpg')
+            guard_image = Image(source="images/guard.jpg")
 
             guard_layout.add_widget(clock_label)
             guard_layout.add_widget(guard_image)
@@ -920,13 +937,13 @@ class PopupManager:
             )
 
             self.guard_popup.bind(
-                on_dismiss=lambda x: setattr(self.app, "is_guard_screen_displayed", False)
+                on_dismiss=lambda x: setattr(
+                    self.app, "is_guard_screen_displayed", False
+                )
             )
 
             self.guard_popup.open()
-            # Immediately update the time so it's correct from the moment it's displayed
             update_time()
-
 
     def show_lock_screen(self):
 
@@ -1008,7 +1025,7 @@ class PopupManager:
                 0.5,
             )
 
-    def create_clock_layout(self):  #  not a popup - to utils
+    def create_clock_layout(self):  # not a popup - to utils
 
         self.pin_input = MDLabel(
             text="",
@@ -1091,9 +1108,7 @@ class PopupManager:
 
         self.custom_item_popup_layout = BoxLayout(orientation="vertical", spacing=5)
         self.cash_input = TextInput(
-           #keyboard="12",
             text="",
-            #disabled=True,
             multiline=False,
             input_filter="float",
             font_size=30,
@@ -1133,7 +1148,6 @@ class PopupManager:
 
         cancel_button = Button(
             text="Cancel",
-
             on_press=self.app.utilities.on_custom_item_cancel,
             size_hint=(0.8, 0.8),
         )
@@ -1448,7 +1462,6 @@ class PopupManager:
             title="Change Calculation", content=change_layout, size_hint=(0.6, 0.3)
         )
         self.change_popup.open()
-
 
     def handle_split_payment(self):
         self.dismiss_popups(
@@ -1828,33 +1841,35 @@ class PopupManager:
         return popup
 
     def catch_label_printing_errors(self, e):
-        if hasattr(self, 'label_errors_popup') and self.label_errors_popup._is_open:
+        if hasattr(self, "label_errors_popup") and self.label_errors_popup._is_open:
             self.label_errors_popup.dismiss()
         label_errors_layout = GridLayout(orientation="tb-lr", rows=2)
         label_errors_text = Label(
             text=f"Caught an error from the label printer:\n\n{e}\n\nMake sure it's plugged in and turned on.",
             size_hint_y=0.5,
-            pos_hint={"top":1}
+            pos_hint={"top": 1},
         )
         label_errors_icon_button = MDRaisedButton(
             text="Try Again",
             on_press=lambda x: self.app.label_printer.process_queue(),
-            size_hint_x=1
+            size_hint_x=1,
         )
         label_errors_button = MDRaisedButton(
             text="Dismiss",
             on_press=lambda x: self.label_errors_popup.dismiss(),
-            size_hint_x=1
+            size_hint_x=1,
         )
         label_errors_layout.add_widget(label_errors_text)
-        buttons_layout=GridLayout(orientation="lr-tb", cols=2, size_hint_y=0.1, spacing=5)
+        buttons_layout = GridLayout(
+            orientation="lr-tb", cols=2, size_hint_y=0.1, spacing=5
+        )
         buttons_layout.add_widget(label_errors_button)
         buttons_layout.add_widget(label_errors_icon_button)
         label_errors_layout.add_widget(buttons_layout)
         self.label_errors_popup = Popup(
             content=label_errors_layout,
             size_hint=(0.4, 0.4),
-            title="Label Printer Error"
+            title="Label Printer Error",
         )
         self.label_errors_popup.open()
 
@@ -1875,10 +1890,7 @@ class PopupManager:
         )
         error_popup.open()
 
-
-
     def open_inventory_item_popup(self, barcode=None):
-
 
         self.app.current_context = "inventory_item"
 
@@ -1896,12 +1908,16 @@ class PopupManager:
         barcode_layout.add_widget(self.barcode_input)
 
         price_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        price_input = TextInput(text=self.app.inventory_manager.price, input_filter="float")
+        price_input = TextInput(
+            text=self.app.inventory_manager.price, input_filter="float"
+        )
         price_layout.add_widget(Label(text="Price", size_hint_x=0.2))
         price_layout.add_widget(price_input)
 
         cost_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        cost_input = TextInput(text=self.app.inventory_manager.cost, input_filter="float")
+        cost_input = TextInput(
+            text=self.app.inventory_manager.cost, input_filter="float"
+        )
         cost_layout.add_widget(Label(text="Cost", size_hint_x=0.2))
         cost_layout.add_widget(cost_input)
 
@@ -1912,7 +1928,9 @@ class PopupManager:
         sku_layout.add_widget(sku_input)
 
         category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        self.add_to_db_category_input_inv = TextInput(text=self.app.inventory_manager.category, disabled=True)
+        self.add_to_db_category_input_inv = TextInput(
+            text=self.app.inventory_manager.category, disabled=True
+        )
         category_layout.add_widget(Label(text="Category", size_hint_x=0.2))
 
         category_layout.add_widget(self.add_to_db_category_input_inv)
@@ -1932,14 +1950,22 @@ class PopupManager:
             MDRaisedButton(
                 text="Confirm",
                 on_press=lambda x: self.app.utilities.inventory_item_confirm_and_close(
-                    self.barcode_input, name_input, price_input, cost_input, sku_input, self.add_to_db_category_input_inv, self.inventory_item_popup
+                    self.barcode_input,
+                    name_input,
+                    price_input,
+                    cost_input,
+                    sku_input,
+                    self.add_to_db_category_input_inv,
+                    self.inventory_item_popup,
                 ),
             )
         )
         button_layout.add_widget(
             MDRaisedButton(
                 text="Generate Barcode",
-                on_press=lambda *args: self.app.utilities.set_generated_barcode(self.barcode_input),
+                on_press=lambda *args: self.app.utilities.set_generated_barcode(
+                    self.barcode_input
+                ),
             )
         )
         button_layout.add_widget(
@@ -1949,9 +1975,11 @@ class PopupManager:
             )
         )
         button_layout.add_widget(
-            MDRaisedButton(text="Cancel", on_press=lambda *args: self.inventory_item_popup.dismiss())
+            MDRaisedButton(
+                text="Cancel",
+                on_press=lambda *args: self.inventory_item_popup.dismiss(),
+            )
         )
-
 
         content.add_widget(button_layout)
 
@@ -1962,14 +1990,15 @@ class PopupManager:
             size_hint=(0.8, 0.4),
         )
 
-        self.inventory_item_popup.bind(on_dismiss=lambda x: self.on_inventory_item_dismiss(x))
+        self.inventory_item_popup.bind(
+            on_dismiss=lambda x: self.on_inventory_item_dismiss(x)
+        )
         self.app.inventory_manager.refresh_inventory()
         self.inventory_item_popup.open()
 
     def on_inventory_item_dismiss(self, instance):
         self.app.inventory_manager.reset_inventory_context()
         # self.app.inventory_manager.detach_from_parent()
-
 
 
 class MarkupLabel(Label):
