@@ -54,7 +54,7 @@ class InventoryManagementView(BoxLayout):
 
     def handle_scanned_barcode_item(self, barcode):
         barcode = barcode.strip()
-        self.app.popup_manager.barcode_input.text = barcode
+        self.app.popup_manager.item_barcode_input.text = barcode
 
     def show_inventory_for_manager(self, inventory_items):
         self.full_inventory = inventory_items
