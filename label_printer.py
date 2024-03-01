@@ -1,5 +1,6 @@
 import barcode
 import textwrap
+import json
 from barcode.writer import ImageWriter
 from barcode.upc import UniversalProductCodeA as upc_a
 from PIL import Image, ImageDraw, ImageFont
@@ -12,7 +13,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.label import Label
 from kivy.properties import StringProperty, ListProperty, ObjectProperty
 from kivy.uix.textinput import TextInput
-from kivymd.uix.button import MDFlatButton, MDRaisedButton
+from kivymd.uix.button import MDFlatButton, MDRaisedButton, MDIconButton
 from kivymd.uix.recycleview import RecycleView
 from kivy.metrics import dp
 from kivy.uix.button import Button
@@ -149,27 +150,26 @@ class LabelPrintingView(BoxLayout):
         self.ids.label_search_input.text = barcode
 
     def show_print_queue(self):
-        # queue_data = [
-        #     {
-        #         "name": item["name"],
-        #         "quantity": str(item["quantity"]),
-        #     }
-        #     for item in self.label_printer.print_queue
-        # ]
 
-        queue_layout = BoxLayout(orientation="vertical")
-        item_layout = BoxLayout(orientation="vertical")
-        #line = BoxLayout(orientation="horizontal", size_hint_y=None, height=1)
+
+        queue_layout = BoxLayout(orientation="vertical", spacing=5)
+        item_layout = BoxLayout(orientation="vertical", spacing=5)
         for item in self.label_printer.print_queue:
-            item_name=item['name']
-            label = Label(
-                text=f"{item['name']}  Qty: {item['quantity']} Text:  {item['optional_text']}",
-                size_hint_x=0.8,
-                )
-            rm_button = Button(text="Remove", size_hint_x=0.1,  on_press=lambda x, item=item: self.remove_from_queue(item_name=item['name']))
-            text_button = Button(text="Add Text", size_hint_x=0.1)
-            item_row = GridLayout(orientation="lr-tb", cols=3, spacing=5, size_hint_y=None, height=40)
-            item_row.add_widget(label)
+            name_label = Label(text=f"{item['name']}", size_hint_x=None, width=200)
+            qty_label = Label(text=f"Qty: {item['quantity']}", size_hint_x=None, width=50)
+            text_label = Label(text=f"Text: {item['optional_text']}", size_hint_x=None, width=100)
+            plus_button = MDIconButton(icon="plus", on_press=lambda x, item=item:self.increment_quantity(item_str=item['name']), size_hint_x=None, width=40)
+            minus_button = MDIconButton(icon="minus", on_press=lambda x, item=item:self.decrement_quantity(item_str=item['name']), size_hint_x=None, width=40)
+            rm_button = Button(text="Remove", on_press=lambda x, item=item: self.remove_from_queue(item_name=item['name']), size_hint_x=None, width=100)
+            text_button = Button(text="Add Text", on_press=lambda x, item=item: self.add_label_text(item_str=item['name']), size_hint_x=None, width=100)
+            item_row = GridLayout(cols=7, spacing=5, size_hint_y=None, height=40)
+            item_row.add_widget(name_label)
+            item_row.add_widget(qty_label)
+
+            text_label = Label(text=f"Text: {item['optional_text']}")
+            item_row.add_widget(text_label)
+            item_row.add_widget(plus_button)
+            item_row.add_widget(minus_button)
             item_row.add_widget(text_button)
             item_row.add_widget(rm_button)
             item_layout.add_widget(item_row)
@@ -180,18 +180,6 @@ class LabelPrintingView(BoxLayout):
 
 
 
-        # queue_layout = LabelQueueLayout()
-        # queue_layout.ids["label_queue_rv"].data = [
-        #     {
-        #         "name": item["name"],
-        #         "quantity": str(item["quantity"]),
-        #         "optional_text": item["optional_text"],
-        #         "remove_callback": self.remove_from_queue,
-        #         "quantity_changed_callback": self.update_print_queue_quantity,
-        #         "add_label_text_callback": self.update_print_queue_with_label_text,
-        #     }
-        #     for item in self.label_printer.print_queue
-        # ]
 
         btn_layout = BoxLayout(orientation="horizontal", spacing=5, size_hint_y=0.2)
         btn_layout.add_widget(
@@ -213,16 +201,73 @@ class LabelPrintingView(BoxLayout):
         queue_layout.add_widget(item_layout)
         queue_layout.add_widget(btn_layout)
         self.print_queue_popup = Popup(
-            title="Print Queue", content=queue_layout, size_hint=(0.8, 0.6)
+            title="Print Queue", content=queue_layout, size_hint=(0.6, 0.6)
         )
 
         self.print_queue_popup.open()
 
+    def add_label_text(self, item_str):
+        add_lable_layout = BoxLayout(orientation="vertical")
+        add_label_text_layout = BoxLayout(orientation="vertical")
+        name_truncated = item_str[:15]
+        add_label_text_label = Label(text="15 Characters Max")
+        self.add_label_text_input = TextInput(text=name_truncated, size_hint=(1, 0.4))
+        add_label_text_layout.add_widget(add_label_text_label)
+        add_label_text_layout.add_widget(self.add_label_text_input)
+        add_label_button_layout = BoxLayout(orientation="horizontal", spacing=5)
+        add_label_confirm_button = MDRaisedButton(
+            text="Confirm", on_press=lambda x: self.on_add_label_confirm_button_press(item_str)
+        )
+        add_label_cancel_button = MDRaisedButton(
+            text="Cancel", on_press=lambda x: self.add_label_popup.dismiss()
+        )
+        add_label_button_layout.add_widget(add_label_confirm_button)
+        add_label_button_layout.add_widget(add_label_cancel_button)
+        add_lable_layout.add_widget(add_label_text_layout)
+        add_lable_layout.add_widget(add_label_button_layout)
+        self.add_label_popup = self.create_focus_popup(
+            title="Add Text to Selected Label",
+            content=add_lable_layout,
+            textinput=self.add_label_text_input,
+            pos_hint={"top": 1},
+            size_hint=(0.4, 0.4),
+        )
+        self.add_label_popup.open()
+
+    def on_add_label_confirm_button_press(self, item_str):
+        self.add_label_popup.dismiss()
+        for item in self.label_printer.print_queue:
+            if item_str == item['name']:
+                item['optional_text'] = self.add_label_text_input.text
+                self.label_printer.save_queue()
+                self.refresh_and_show_print_queue()
+                break
+
+    def increment_quantity(self, item_str):
+        for item in self.label_printer.print_queue:
+            if item["name"] == item_str :
+                item["quantity"] += 1
+                self.label_printer.save_queue()
+                self.refresh_and_show_print_queue()
+                break
+
+    def decrement_quantity(self, item_str):
+       for item in self.label_printer.print_queue:
+            if item["name"] == item_str :
+                if item["quantity"] > 1:
+                    item["quantity"] -= 1
+                    self.label_printer.save_queue()
+                    self.refresh_and_show_print_queue()
+                    break
+
+
     def update_print_queue_quantity(self, item_name, new_quantity):
         self.label_printer.update_queue_item_quantity(item_name, new_quantity)
+        self.label_printer.save_queue()
 
     def clear_queue(self, instance):
         self.label_printer.clear_queue()
+        self.label_printer.save_queue()
         self.print_queue_popup.dismiss()
 
     def print_now(self, instance):
@@ -257,10 +302,39 @@ class LabelPrintingView(BoxLayout):
         self.ids.label_rv.data = self.generate_data_for_rv(filtered_items)
 
 
+    def create_focus_popup(self, title, content, textinput, size_hint, pos_hint={}):
+        popup = FocusPopup(
+            title=title, content=content, size_hint=size_hint, pos_hint=pos_hint
+        )
+        popup.focus_on_textinput(textinput)
+        return popup
+
+
 class LabelPrinter:
     def __init__(self, ref):
         self.print_queue = []
         self.app = ref
+        self.queue_file_path = 'print_queue.json'
+        self.load_queue()
+
+    def save_queue(self):
+
+        try:
+            with open(self.queue_file_path, 'w') as file:
+                json.dump(self.print_queue, file)
+        except Exception as e:
+            print(f"Error saving print queue: {e}")
+
+    def load_queue(self):
+
+        try:
+            with open(self.queue_file_path, 'r') as file:
+                self.print_queue = json.load(file)
+        except FileNotFoundError:
+
+            self.print_queue = []
+        except Exception as e:
+            print(f"Error loading print queue: {e}")
 
     def add_to_queue(self, barcode, name, price, quantity):
         try:
@@ -273,6 +347,7 @@ class LabelPrinter:
                     "optional_text": "",
                 }
             )
+            self.save_queue()
         except Exception as e:
             print(f"Error adding labels to the queue. Probably tried to add 0 \n{e}")
 
@@ -280,10 +355,12 @@ class LabelPrinter:
         for item in self.print_queue:
             if item["name"] == name:
                 item["quantity"] = new_quantity
+                self.save_queue()
                 break
 
     def clear_queue(self):
         self.print_queue.clear()
+        self.save_queue()
 
     def print_barcode_label(
         self, barcode_data, item_price, save_path=None, include_text=False, optional_text=""
@@ -373,6 +450,7 @@ class LabelPrinter:
 
         if self.print_success:
             self.print_queue.clear()
+            self.save_queue()
             self.app.label_manager.print_queue_popup.dismiss()
             try:
                 self.app.popup_manager.label_errors_popup.dismiss()
@@ -383,6 +461,7 @@ class LabelPrinter:
         for i, item in enumerate(self.print_queue):
             if item["name"] == name:
                 self.print_queue.pop(i)
+                self.save_queue()
                 return True, len(self.print_queue) == 0
         return False, False
 
@@ -399,40 +478,8 @@ class PrintQueueRow(BoxLayout):
         if self.remove_callback:
             self.remove_callback(self.name)
 
-    def add_label_text(self):
-        add_lable_layout = BoxLayout(orientation="vertical")
-        add_label_text_layout = BoxLayout(orientation="vertical")
-        name_truncated = self.name[:15]
-        add_label_text_label = Label(text="15 Characters Max")
-        self.add_label_text_input = TextInput(text=name_truncated, size_hint=(1, 0.4))
-        add_label_text_layout.add_widget(add_label_text_label)
-        add_label_text_layout.add_widget(self.add_label_text_input)
-        add_label_button_layout = BoxLayout(orientation="horizontal", spacing=5)
-        add_label_confirm_button = MDRaisedButton(
-            text="Confirm", on_press=lambda x: self.on_add_label_confirm_button_press()
-        )
-        add_label_cancel_button = MDRaisedButton(
-            text="Cancel", on_press=lambda x: self.add_label_popup.dismiss()
-        )
-        add_label_button_layout.add_widget(add_label_confirm_button)
-        add_label_button_layout.add_widget(add_label_cancel_button)
-        add_lable_layout.add_widget(add_label_text_layout)
-        add_lable_layout.add_widget(add_label_button_layout)
-        self.add_label_popup = self.create_focus_popup(
-            title="Add Text to Selected Label",
-            content=add_lable_layout,
-            textinput=self.add_label_text_input,
-            pos_hint={"top": 1},
-            size_hint=(0.4, 0.4),
-        )
-        self.add_label_popup.open()
 
-    def create_focus_popup(self, title, content, textinput, size_hint, pos_hint={}):
-        popup = FocusPopup(
-            title=title, content=content, size_hint=size_hint, pos_hint=pos_hint
-        )
-        popup.focus_on_textinput(textinput)
-        return popup
+
 
     def on_add_label_confirm_button_press(self):
         optional_text = self.add_label_text_input.text
@@ -441,17 +488,7 @@ class PrintQueueRow(BoxLayout):
             self.add_label_text_callback(self.name, optional_text)
         self.add_label_popup.dismiss()
 
-    def increment_quantity(self):
-        new_quantity = int(self.quantity) + 1
-        self.quantity = str(new_quantity)
-        if self.quantity_changed_callback:
-            self.quantity_changed_callback(self.name, new_quantity)
 
-    def decrement_quantity(self):
-        new_quantity = max(1, int(self.quantity) - 1)
-        self.quantity = str(new_quantity)
-        if self.quantity_changed_callback:
-            self.quantity_changed_callback(self.name, new_quantity)
 
 
 class LabelQueueLayout(BoxLayout):
