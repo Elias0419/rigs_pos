@@ -47,7 +47,7 @@ class HistoryPopup(Popup):
         history_view.filter_today()
         self.content = history_view
         self.size_hint = (0.9, 0.9)
-        self.title = "Order History"
+        self.title = f"Order History"
         self.open()
 
     def dismiss_popup(self):
@@ -100,15 +100,15 @@ class HistoryView(BoxLayout):
     def initialize_total_layout(self):
         self.totals_layout = GridLayout(orientation="lr-tb", cols=3, size_hint=(1, 0.1))
         self.total_amount_label = Label(text="Total: $0.00")
-        blank = Label(text="")
+        self.blank = Label(text="Current Filter: today")
         self.total_cash_label = Label(text="Total Cash: $0.00")
         self.totals_layout.add_widget(self.total_amount_label)
-        self.totals_layout.add_widget(blank)
+        self.totals_layout.add_widget(self.blank)
         self.totals_layout.add_widget(self.total_cash_label)
         self.button_layout = BoxLayout(orientation="horizontal", size_hint=(1, 0.4))
 
     def initialize_buttons(self):
-        self.button_layout = BoxLayout(orientation="horizontal", spacing=5, size_hint=(1, 0.2))
+        self.button_layout = BoxLayout(orientation="horizontal", spacing=5, size_hint=(1, 0.1))
         self.button_layout.add_widget(
             MDRaisedButton(
                 text="Today", size_hint=(1, 1), on_press=lambda x: self.filter_today()
@@ -116,14 +116,20 @@ class HistoryView(BoxLayout):
         )
         self.button_layout.add_widget(
             MDRaisedButton(
-                text="This Week", size_hint=(1, 1), on_press=self.filter_this_week
+                text="Yesterday", size_hint=(1, 1), on_press=lambda x: self.filter_yesterday()
             )
         )
-        self.button_layout.add_widget(
-            MDRaisedButton(
-                text="This Month", size_hint=(1, 1), on_press=self.filter_this_month
-            )
-        )
+
+        # self.button_layout.add_widget(
+        #     MDRaisedButton(
+        #         text="This Week", size_hint=(1, 1), on_press=self.filter_this_week
+        #     )
+        # )
+        # self.button_layout.add_widget(
+        #     MDRaisedButton(
+        #         text="This Month", size_hint=(1, 1), on_press=self.filter_this_month
+        #     )
+        # )
         self.button_layout.add_widget(
             MDRaisedButton(
                 text="Specific Day",
@@ -163,6 +169,7 @@ class HistoryView(BoxLayout):
         )
 
         self.total_cash_label.text = f"Cash: {total_tendered:.2f} - {total_change:.2f} change = ${total_cash:.2f}"
+        self.blank.text = f"Current Filter: {self.current_filter}"
 
     def show_reporting_popup(self, order_history):
         self.order_history = order_history
@@ -306,6 +313,20 @@ class HistoryView(BoxLayout):
             order
             for order in self.order_history
             if self.is_this_month(datetime.strptime(order[6], "%Y-%m-%d %H:%M:%S.%f"))
+        ]
+        self.update_rv_data(filtered_history)
+        self.update_totals()
+
+    def is_yesterday(self, date_obj):
+        yesterday = datetime.today() - timedelta(days=1)
+        return date_obj.date() == yesterday.date()
+
+    def filter_yesterday(self):
+        self.current_filter = "yesterday"
+        filtered_history = [
+            order
+            for order in self.order_history
+            if self.is_yesterday(datetime.strptime(order[6], "%Y-%m-%d %H:%M:%S.%f"))
         ]
         self.update_rv_data(filtered_history)
         self.update_totals()
