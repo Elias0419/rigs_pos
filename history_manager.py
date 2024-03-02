@@ -24,7 +24,7 @@ class NullableStringProperty(StringProperty):
 
 
 class HistoryPopup(Popup):
-    _instance = None  # Class attribute to store the singleton instance
+    _instance = None
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
@@ -90,15 +90,22 @@ class HistoryView(BoxLayout):
         if ref is not None:
             self.app = ref
             self.receipt_printer = ReceiptPrinter(self, "receipt_printer_config.yaml")
-            self.totals_layout = BoxLayout(orientation="horizontal", size_hint=(1, 0.1))
-            self.total_amount_label = Label(text="Total: $0.00")
-            self.totals_layout.add_widget(self.total_amount_label)
-            self.button_layout = BoxLayout(orientation="horizontal", size_hint=(1, 0.4))
+            self.initialize_total_layout()
             self.initialize_buttons()
             self.add_widget(self.totals_layout)
             self.add_widget(self.button_layout)
 
             Clock.schedule_once(self.init_filter, 0.1)
+
+    def initialize_total_layout(self):
+        self.totals_layout = GridLayout(orientation="lr-tb", cols=3, size_hint=(1, 0.1))
+        self.total_amount_label = Label(text="Total: $0.00")
+        blank = Label(text="")
+        self.total_cash_label = Label(text="Total Cash: $0.00")
+        self.totals_layout.add_widget(self.total_amount_label)
+        self.totals_layout.add_widget(blank)
+        self.totals_layout.add_widget(self.total_cash_label)
+        self.button_layout = BoxLayout(orientation="horizontal", size_hint=(1, 0.4))
 
     def initialize_buttons(self):
         self.button_layout = BoxLayout(orientation="horizontal", spacing=5, size_hint=(1, 0.2))
@@ -147,10 +154,15 @@ class HistoryView(BoxLayout):
         total_amount = sum(float(order["total"]) for order in self.rv_data)
         total_tax = sum(float(order["tax"]) for order in self.rv_data)
         total_with_tax = sum(float(order["total_with_tax"]) for order in self.rv_data)
+        total_tendered = sum(float(order["amount_tendered"])for order in self.rv_data)
+        total_change =  sum(float(order["change_given"])for order in self.rv_data)
+        total_cash = sum(float(order["amount_tendered"]) - float(order["change_given"]) for order in self.rv_data)
 
         self.total_amount_label.text = (
-            f"${total_amount:.2f} + ${total_tax:.2f} tax = ${total_with_tax:.2f}"
+            f"Total: {total_amount:.2f} + {total_tax:.2f} tax = ${total_with_tax:.2f}"
         )
+
+        self.total_cash_label.text = f"Cash: {total_tendered:.2f} - {total_change:.2f} change = ${total_cash:.2f}"
 
     def show_reporting_popup(self, order_history):
         self.order_history = order_history
