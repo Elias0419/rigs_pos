@@ -50,6 +50,7 @@ class Wrapper():
                             self.send_email("Fallback successful", "The application has successfully fallen back.", recipient)
                         else:
                             self.send_email("Fallback Failed", "The application has failed to fall back and is now stopped!", recipient)
+                            sys.exit(43)
                     except:
                         self.send_email("Fallback Failed","The application has failed to fall back and is now stopped!", recipient)
                         sys.exit(43)
