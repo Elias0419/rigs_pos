@@ -2,6 +2,7 @@ import threading
 import usb.core
 import usb.util
 from Levenshtein import distance as levenshtein_distance
+from rapidfuzz import process, fuzz
 
 
 class BarcodeScanner:
@@ -183,19 +184,29 @@ class BarcodeScanner:
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
 
-    def find_closest_barcode(self, scanned_barcode, max_distance=1):
+    # def find_closest_barcode(self, scanned_barcode, max_distance=1):
+    #     closest_matches = []
+    #     min_distance = float('inf')
+    #
+    #     for barcode in self.app.barcode_cache.keys():
+    #
+    #         dist = levenshtein_distance(scanned_barcode, barcode)
+    #
+    #         if dist < min_distance and dist <= max_distance:
+    #             closest_matches = [barcode]
+    #             min_distance = dist
+    #         elif dist == min_distance:
+    #             closest_matches.append(barcode)
+    #
+    #     return closest_matches
+
+    def find_closest_barcode(self, scanned_barcode, score_cutoff=90):
         closest_matches = []
-        min_distance = float('inf')
+        scores = process.extract(scanned_barcode, self.app.barcode_cache.keys(), scorer=fuzz.ratio, score_cutoff=score_cutoff)
 
-        for barcode in self.app.barcode_cache.keys():
-
-            dist = levenshtein_distance(scanned_barcode, barcode)
-
-            if dist < min_distance and dist <= max_distance:
-                closest_matches = [barcode]
-                min_distance = dist
-            elif dist == min_distance:
-                closest_matches.append(barcode)
+        for match, score in scores:
+            if score >= score_cutoff:
+                closest_matches.append(match)
 
         return closest_matches
 
