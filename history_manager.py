@@ -14,6 +14,7 @@ from kivymd.uix.pickers import MDDatePicker
 from kivy.uix.gridlayout import GridLayout
 from database_manager import DatabaseManager
 from receipt_printer import ReceiptPrinter
+from rapidfuzz import process, fuzz
 
 
 class NullableStringProperty(StringProperty):
