@@ -31,6 +31,9 @@ class ReceiptPrinter:
             self.printer.set(align="center", font="a")
             self.printer.textln(date)
             self.printer.textln()
+            self.printer.textln()
+            self.printer.textln()
+
 
             max_line_width = 48
             self.printer.set(align="left", font="a", bold=False)
