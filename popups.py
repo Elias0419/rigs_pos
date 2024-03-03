@@ -1874,7 +1874,7 @@ class PopupManager:
         self.label_errors_popup.open()
 
     def catch_receipt_printer_errors(self, e, order_details):
-        print(f"\n\n\n\n\n\{order_details}")
+
         if hasattr(self, "receipt_errors_popup") and self.receipt_errors_popup._is_open:
             self.receipt_errors_popup.dismiss()
         receipt_errors_layout = GridLayout(orientation="tb-lr", rows=2)
@@ -1885,7 +1885,7 @@ class PopupManager:
         )
         receipt_errors_icon_button = MDRaisedButton(
             text="Try Again",
-            on_press=lambda x: self.app.history_manager.receipt_printer.print_receipt(order_details),
+            on_press=lambda x: self.app.receipt_printer.re_initialize_after_error(order_details),
             size_hint_x=1,
         )
         receipt_errors_button = MDRaisedButton(

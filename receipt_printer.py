@@ -18,6 +18,10 @@ class ReceiptPrinter:
             print(e)
             pass
 
+    def re_initialize_after_error(self, order_details):
+        self.app.utilities.initialize_receipt_printer()
+        self.print_receipt(order_details)
+
     def print_receipt(self, order_details):
         try:
             logo = Image.open("images/rigs_logo_scaled.png")
@@ -88,7 +92,7 @@ class ReceiptPrinter:
 
             self.printer.cut()
         except Exception as e:
-            self.app.app.popup_manager.catch_receipt_printer_errors(e, order_details)
+            self.app.popup_manager.catch_receipt_printer_errors(e, order_details)
 
 
 
