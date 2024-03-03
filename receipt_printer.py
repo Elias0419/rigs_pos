@@ -29,10 +29,13 @@ class ReceiptPrinter:
 
             date = str(datetime.now().replace(microsecond=0))
             self.printer.set(align="center", font="a")
-            self.printer.textln(date)
             self.printer.textln()
             self.printer.textln()
-            self.printer.textln()
+            self.printer.textln("402C Main St")
+            self.printer.textln("Wakefield, RI")
+            self.printer.textln("401-363-9866")
+
+
 
 
             max_line_width = 48
@@ -78,6 +81,7 @@ class ReceiptPrinter:
 
             self.printer.textln()
             self.printer.textln(order_details["order_id"])
+            self.printer.textln(date)
             self.printer.cut()
         except Exception as e:
             print("Error during receipt printing:", e)
