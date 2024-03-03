@@ -718,6 +718,9 @@ class OrderDetailsPopup(Popup):
             "total_with_tax": total_with_tax,
             "timestamp": timestamp,
             "discount": discount,
+            "payment_method": payment_method,
+            "amount_tendered": amount_tendered,
+            "change_given": change_given,
         }
 
         return order_dict
