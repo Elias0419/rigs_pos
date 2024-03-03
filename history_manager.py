@@ -390,7 +390,7 @@ class HistoryView(BoxLayout):
 
             order_barcodes = [str(order[0]) for order in order_history]
 
-            best_match, score = process.extractOne(barcode_str, order_barcodes, scorer=fuzz.partial_ratio, score_cutoff=80)
+            best_match, score, *_ = process.extractOne(barcode_str, order_barcodes, scorer=fuzz.partial_ratio, score_cutoff=80)
 
             if best_match:
                 specific_order = next(
