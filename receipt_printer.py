@@ -65,14 +65,27 @@ class ReceiptPrinter:
                 self.printer.textln(f"Discount: -${order_details['discount']:.2f}")
 
             self.printer.textln(f"Tax: ${order_details['tax_amount']:.2f}")
-            self.printer.textln(f"Total: ${order_details['total_with_tax']:.2f}")
 
-            if "split_payments" in locals():
-                print("Printing split payment details...")
-                for payment in split_payments:
-                    method = payment["method"]
-                    amount = payment["amount"]
-                    self.printer.textln(f"{method}: ${amount:.2f}")
+
+
+            self.printer.textln(f"Total: ${order_details['total_with_tax']:.2f}")
+            if order_details["payment_method"] == "Cash":
+                self.printer.textln(f"Cash: {order_details['amount_tendered']}")
+                self.printer.textln(f"Change: {order_details['amount_tendered']}")
+
+            elif order_details["payment_method"] == "Split":
+                self.printer.textln("Split Payment")
+            elif order_details["payment_method"] == "Debit":
+                self.printer.textln("Debit Payment")
+            else:
+                self.printer.textln("Credit Payment")
+
+
+            # if "split_payments" in locals():
+            #     for payment in split_payments:
+            #         method = payment["method"]
+            #         amount = payment["amount"]
+            #         self.printer.textln(f"{method}: ${amount:.2f}")
 
             self.printer.set(align="center", font="b", bold=False)
             self.printer.textln()
@@ -85,6 +98,7 @@ class ReceiptPrinter:
             self.printer.barcode(barcode_data_short, "CODE128", pos="OFF")
             if reprint:
                     self.printer.set(align="center", font="a", bold=True)
+                    self.printer.textln()
                     self.printer.textln("Copy")
 
 
