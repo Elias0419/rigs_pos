@@ -61,22 +61,31 @@ class BarcodeScanner:
         device = usb.core.find(idVendor=self.idVendor, idProduct=self.idProduct)
         if device is None:
             raise ValueError("[Barcode Scanner]: Device Not Found")
+        try:
+            if device.is_kernel_driver_active(0):
+                device.detach_kernel_driver(0)
+        except Exception as e:
+            print(f"[Barcode Scanner] detach_kernel_driver fail\n{e}")
+        try:
+            device.set_configuration()
+        except Exception as e:
+            print(f"[Barcode Scanner] set_configuration fail\n{e}")
+        try:
+            configuration = device.get_active_configuration()
+        except Exception as e:
+            print(f"[Barcode Scanner] get_active_configuration fail\n{e}")
 
-        if device.is_kernel_driver_active(0):
-            device.detach_kernel_driver(0)
-
-        device.set_configuration()
-        configuration = device.get_active_configuration()
         interface = configuration[(0, 0)]
-
-        self.endpoint = usb.util.find_descriptor(
-            interface,
-            custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress)
-            == usb.util.ENDPOINT_IN,
-        )
-
-        if self.endpoint is None:
-            raise ValueError("[Barcode Scanner]: Endpoint not found")
+        try:
+            self.endpoint = usb.util.find_descriptor(
+                interface,
+                custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress)
+                == usb.util.ENDPOINT_IN,
+            )
+        except Exception as e:
+            print(f"[Barcode Scanner] set endpoint fail\n{e}")
+        # if self.endpoint is None:
+        #     raise ValueError("[Barcode Scanner]: Endpoint not found")
 
         return device
 
