@@ -93,7 +93,7 @@ class BarcodeScanner:
             42: ["\b", "\b"],
             43: ["\t", "\t"],
             44: [" ", " "],
-            45: ["_", "_"],
+            45: ["-", "-"],
             46: ["=", "+"],
             47: ["[", "{"],
             48: ["]", "}"],
@@ -159,7 +159,7 @@ class BarcodeScanner:
     def handle_scanned_barcode(self, barcode):
         try:
             # if "-" in barcode:
-            if "_" in barcode and any(c.isalpha() for c in barcode):
+            if "-" in barcode and any(c.isalpha() for c in barcode):
                 self.app.history_manager.display_order_details_from_barcode_scan(barcode)
             else:
                 closest_matches = self.find_closest_barcode(barcode)
