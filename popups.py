@@ -1873,6 +1873,9 @@ class PopupManager:
         )
         self.label_errors_popup.open()
 
+    def catch_receipt_printer_errors(self, e):
+        print(e)
+
     def unrecoverable_error(self):
         print("unrecoverable")
         error_layout = BoxLayout(orientation="vertical")

@@ -26,7 +26,9 @@ class ReceiptPrinter:
 
         try:
             self.printer.image(logo, (200, -60))
-
+        except Exception as e:
+            self.app.popup_manager.catch_receipt_printer_errors(e)
+        try:
             date = str(datetime.now().replace(microsecond=0))
             self.printer.set(align="center", font="a")
 
