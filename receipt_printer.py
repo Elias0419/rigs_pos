@@ -24,11 +24,11 @@ class ReceiptPrinter:
         except Exception as e:
             print("Error loading logo:", e)
 
+
+
+
         try:
             self.printer.image(logo, (200, -60))
-        except Exception as e:
-            self.app.popup_manager.catch_receipt_printer_errors(e)
-        try:
             date = str(datetime.now().replace(microsecond=0))
             self.printer.set(align="center", font="a")
 
@@ -88,7 +88,7 @@ class ReceiptPrinter:
 
             self.printer.cut()
         except Exception as e:
-            print("Error during receipt printing:", e)
+            self.app.app.popup_manager.catch_receipt_printer_errors(e, order_details)
 
 
 

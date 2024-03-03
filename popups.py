@@ -1873,8 +1873,39 @@ class PopupManager:
         )
         self.label_errors_popup.open()
 
-    def catch_receipt_printer_errors(self, e):
-        print(e)
+    def catch_receipt_printer_errors(self, e, order_details):
+        if hasattr(self, "receipt_errors_popup") and self.receipt_errors_popup._is_open:
+            self.receipt_errors_popup.dismiss()
+        receipt_errors_layout = GridLayout(orientation="tb-lr", rows=2)
+        receipt_errors_text = Label(
+            text=f"Caught an error from the receipt printer:\n\n{e}\n\nMake sure it's plugged in and turned on.",
+            size_hint_y=0.5,
+            pos_hint={"top": 1},
+        )
+        receipt_errors_icon_button = MDRaisedButton(
+            text="Try Again",
+            on_press=lambda x: self.app.history_manager.receipt_printer.print_receipt(order_details),
+            size_hint_x=1,
+        )
+        receipt_errors_button = MDRaisedButton(
+            text="Dismiss",
+            on_press=lambda x: self.receipt_errors_popup.dismiss(),
+            size_hint_x=1,
+        )
+        receipt_errors_layout.add_widget(receipt_errors_text)
+        buttons_layout = GridLayout(
+            orientation="lr-tb", cols=2, size_hint_y=0.1, spacing=5
+        )
+        buttons_layout.add_widget(receipt_errors_button)
+        buttons_layout.add_widget(receipt_errors_icon_button)
+        receipt_errors_layout.add_widget(buttons_layout)
+        self.receipt_errors_popup = Popup(
+            content=receipt_errors_layout,
+            size_hint=(0.4, 0.4),
+            title="Receipt Printer Error",
+        )
+        self.receipt_errors_popup.open()
+
 
     def unrecoverable_error(self):
         print("unrecoverable")
