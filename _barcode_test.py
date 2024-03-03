@@ -25,29 +25,60 @@ class BarcodeScanner:
         self.thread = threading.Thread(target=self.capture_raw_data, daemon=True)
         self.thread.start()
 
-    def initializeUSBDevice(self):
+        def initializeUSBDevice(self, max_attempts=5, delay_between_attempts=1):
+            attempt = 0
+            while attempt < max_attempts:
+                try:
+                    device = usb.core.find(idVendor=self.idVendor, idProduct=self.idProduct)
+                    if device is None:
+                        raise ValueError("[Barcode Scanner]: Device Not Found")
 
-        device = usb.core.find(idVendor=self.idVendor, idProduct=self.idProduct)
-        if device is None:
-            raise ValueError("[Barcode Scanner]: Device Not Found")
+                    if device.is_kernel_driver_active(0):
+                        device.detach_kernel_driver(0)
 
-        if device.is_kernel_driver_active(0):
-            device.detach_kernel_driver(0)
+                    device.set_configuration()
+                    configuration = device.get_active_configuration()
+                    interface = configuration[(0, 0)]
 
-        device.set_configuration()
-        configuration = device.get_active_configuration()
-        interface = configuration[(0, 0)]
+                    endpoint = usb.util.find_descriptor(
+                        interface,
+                        custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress)
+                        == usb.util.ENDPOINT_IN,
+                    )
 
-        self.endpoint = usb.util.find_descriptor(
-            interface,
-            custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress)
-            == usb.util.ENDPOINT_IN,
-        )
+                    if endpoint is None:
+                        raise ValueError("[Barcode Scanner]: Endpoint not found")
 
-        if self.endpoint is None:
-            raise ValueError("[Barcode Scanner]: Endpoint not found")
+                    return device
+                except ValueError as e:
+                    print(f"Attempt {attempt + 1} failed: {e}")
+                    time.sleep(delay_between_attempts)
+                    attempt += 1
+            raise ValueError("[Barcode Scanner]: Failed to initialize after multiple attempts")
 
-        return device
+    # def initializeUSBDevice(self):
+    #
+    #     device = usb.core.find(idVendor=self.idVendor, idProduct=self.idProduct)
+    #     if device is None:
+    #         raise ValueError("[Barcode Scanner]: Device Not Found")
+    #
+    #     if device.is_kernel_driver_active(0):
+    #         device.detach_kernel_driver(0)
+    #
+    #     device.set_configuration()
+    #     configuration = device.get_active_configuration()
+    #     interface = configuration[(0, 0)]
+    #
+    #     self.endpoint = usb.util.find_descriptor(
+    #         interface,
+    #         custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress)
+    #         == usb.util.ENDPOINT_IN,
+    #     )
+    #
+    #     if self.endpoint is None:
+    #         raise ValueError("[Barcode Scanner]: Endpoint not found")
+    #
+    #     return device
 
     def capture_raw_data(self):
 
