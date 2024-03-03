@@ -359,25 +359,51 @@ class HistoryView(BoxLayout):
             except Exception as e:
                 print(e)
 
+    # def display_order_details_from_barcode_scan(self, barcode):
+    #     try:
+    #
+    #         barcode_str = str(barcode)
+    #         order_history = self.app.db_manager.get_order_history()
+    #         specific_order = next(
+    #             (
+    #                 order
+    #                 for order in order_history
+    #                 if str(order[0]).startswith(barcode_str)
+    #             ),
+    #             None,
+    #         )
+    #
+    #         if specific_order:
+    #             popup = OrderDetailsPopup(specific_order, self.receipt_printer)
+    #             popup.open()
+    #         else:
+    #             self.order_not_found_popup(barcode_str)  # needs testing
+    #
+    #     except Exception as e:
+    #         print(f"[HistoryManager] display_order_details_from_barcode_scan\n{e}")
+
     def display_order_details_from_barcode_scan(self, barcode):
         try:
-
             barcode_str = str(barcode)
             order_history = self.app.db_manager.get_order_history()
-            specific_order = next(
-                (
-                    order
-                    for order in order_history
-                    if str(order[0]).startswith(barcode_str)
-                ),
-                None,
-            )
 
-            if specific_order:
-                popup = OrderDetailsPopup(specific_order, self.receipt_printer)
-                popup.open()
+            order_barcodes = [str(order[0]) for order in order_history]
+
+            best_match, score = process.extractOne(barcode_str, order_barcodes, scorer=fuzz.partial_ratio, score_cutoff=80)
+
+            if best_match:
+                specific_order = next(
+                    (order for order in order_history if str(order[0]) == best_match),
+                    None,
+                )
+
+                if specific_order:
+                    popup = OrderDetailsPopup(specific_order, self.receipt_printer)
+                    popup.open()
+                else:
+                    self.order_not_found_popup(barcode_str)  # needs testing
             else:
-                self.order_not_found_popup(barcode_str)  # needs testing
+                self.order_not_found_popup(barcode_str)
 
         except Exception as e:
             print(f"[HistoryManager] display_order_details_from_barcode_scan\n{e}")
