@@ -46,7 +46,7 @@ class Wrapper():
                     try:
                         result = subprocess.run(["/home/rigs/1/bin/python", "/home/rigs/fallback_rigs_pos/main.py"])
                         if result:
-                            self.send_email("Fallback successful","The application has successfully fallen back.")
+                            self.send_email("Fallback successful","The application has successfully fallen back.", recipient)
 
                     except:
                         self.send_email("Fallback Failed","The application has failed to fall back and is now stopped!")
