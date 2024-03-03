@@ -531,7 +531,7 @@ class OrderDetailsPopup(Popup):
         button_layout.add_widget(
             MDRaisedButton(
                 text="Print Receipt",
-                on_press=lambda instance: self.print_receipt(order=order),
+                on_press=lambda instance: self.print_receipt(instance, order=order),
                 size_hint=(1, 1)
             )
         )
