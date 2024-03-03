@@ -44,7 +44,6 @@ class Wrapper():
 
                     # self.set_emergency_reboot_flag()
                     try:
-                        #fallback_command = ['/home/rigs/1/bin/python', '/home/rigs/fallback_rigs_pos/main.py']
                         fallback_process = subprocess.Popen(['nohup', '/home/rigs/1/bin/python', '/home/rigs/fallback_rigs_pos/main.py'],
                                     stdout=open('fallback_stdout.log', 'w'),
                                     stderr=open('fallback_stderr.log', 'w'))
