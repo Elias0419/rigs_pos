@@ -40,14 +40,17 @@ class Wrapper():
             if result.returncode in [0, 1, 42]:
                 recent_restarts += 1
                 if recent_restarts >= max_restarts:
-                    self.send_email("App has failed!",f"Script exited with returncode {result.returncode}. Recent restart count: {recent_restarts}.", recipient )
+                    self.send_email("App has failed!",f"Script exited with returncode {result.returncode}.", recipient )
 
                     # self.set_emergency_reboot_flag()
-    #                 try:
-            #             result = subprocess.run(["../1/bin/python", "/net/fallback/main_fallback.py"])
-    #
-    #                 except:
-                    # sys.exit(43)
+                    try:
+                        result = subprocess.run(["/home/rigs/1/bin/python", "/home/rigs/fallback_rigs_pos/main.py"])
+                        if result:
+                            self.send_email("Fallback successful","The application has successfully fallen back.")
+
+                    except:
+                        self.send_email("Fallback Failed","The application has failed to fall back and is now stopped!")
+                        sys.exit(43)
                 continue
             elif result.returncode == 43:
                 self.send_email("Alert","Script has been stopped with adminstrator's return code", recipient )
