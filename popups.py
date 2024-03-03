@@ -1874,6 +1874,7 @@ class PopupManager:
         self.label_errors_popup.open()
 
     def catch_receipt_printer_errors(self, e, order_details):
+        print(order_details)
         if hasattr(self, "receipt_errors_popup") and self.receipt_errors_popup._is_open:
             self.receipt_errors_popup.dismiss()
         receipt_errors_layout = GridLayout(orientation="tb-lr", rows=2)
