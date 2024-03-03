@@ -71,8 +71,8 @@ class ReceiptPrinter:
 
             self.printer.textln(f"Total: ${order_details['total_with_tax']:.2f}")
             if order_details["payment_method"] == "Cash":
-                self.printer.textln(f"Cash: {order_details['amount_tendered']}")
-                self.printer.textln(f"Change: {order_details['change_given']}")
+                self.printer.textln(f"Cash: ${order_details['amount_tendered']:.2f}")
+                self.printer.textln(f"Change: ${order_details['change_given']:.2f}")
 
             elif order_details["payment_method"] == "Split":
                 self.printer.textln("Split Payment")
