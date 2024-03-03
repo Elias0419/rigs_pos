@@ -20,7 +20,9 @@ class ReceiptPrinter:
 
     def re_initialize_after_error(self, order_details):
         self.app.utilities.initialize_receipt_printer()
-        self.print_receipt(order_details)
+        success = self.print_receipt(order_details)
+        if success:
+            self.app.popup_manager.receipt_errors_popup.dismiss()
 
     def print_receipt(self, order_details):
         try:
@@ -91,8 +93,10 @@ class ReceiptPrinter:
             self.printer.textln()
 
             self.printer.cut()
+            return True
         except Exception as e:
             self.app.popup_manager.catch_receipt_printer_errors(e, order_details)
+            return False
 
 
 
