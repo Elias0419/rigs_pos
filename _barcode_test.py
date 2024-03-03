@@ -8,10 +8,12 @@ class BarcodeScanner:
     def __init__(self, ref):
         self.app = ref
         self.current_barcode = ""
-
+        # work
         self.idVendor = 0x05e0
         self.idProduct = 0x1200
-
+        # home
+        #self.idVendor = 0x28e9
+        #self.idProduct = 0x03da
         try:
             self.device = self.initializeUSBDevice()
         except ValueError as e:
