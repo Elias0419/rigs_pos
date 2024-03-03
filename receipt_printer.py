@@ -29,11 +29,12 @@ class ReceiptPrinter:
 
             date = str(datetime.now().replace(microsecond=0))
             self.printer.set(align="center", font="a")
-            self.printer.textln()
-            self.printer.textln()
+
             self.printer.textln("402C Main St")
             self.printer.textln("Wakefield, RI")
             self.printer.textln("401-363-9866")
+            self.printer.textln()
+            self.printer.textln()
 
 
 
@@ -77,11 +78,12 @@ class ReceiptPrinter:
             barcode_data = str(order_details["order_id"])
             short_uuid = barcode_data[:13]  # test truncation length
             barcode_data_short = "{B" + short_uuid
+            self.printer.textln(date)
+            self.printer.textln(order_details["order_id"])
             self.printer.barcode(barcode_data_short, "CODE128", pos="OFF")
 
             self.printer.textln()
-            self.printer.textln(order_details["order_id"])
-            self.printer.textln(date)
+
             self.printer.cut()
         except Exception as e:
             print("Error during receipt printing:", e)
