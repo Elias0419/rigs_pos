@@ -25,7 +25,7 @@ class ReceiptPrinter:
         if success:
             self.app.popup_manager.receipt_errors_popup.dismiss()
 
-    def print_receipt(self, order_details):
+    def print_receipt(self, order_details, reprint=False):
         try:
             logo = Image.open("images/rigs_logo_scaled.png")
         except Exception as e:
@@ -36,9 +36,7 @@ class ReceiptPrinter:
             date = str(datetime.now().replace(microsecond=0))
             self.printer.set(align="center", font="a")
             self.printer.textln()
-            self.printer.textln()
-            self.printer.textln("402C Main St")
-            self.printer.textln("Wakefield, RI")
+            self.printer.textln("402C Main St, Wakefield, RI")
             self.printer.textln("401-363-9866")
             self.printer.textln()
             self.printer.textln()
@@ -85,6 +83,11 @@ class ReceiptPrinter:
             self.printer.textln(date)
             self.printer.textln(order_details["order_id"])
             self.printer.barcode(barcode_data_short, "CODE128", pos="OFF")
+            if reprint:
+                    self.printer.set(align="center", font="a", bold=True)
+                    self.printer.textln("Copy")
+
+
 
             self.printer.cut()
             return True

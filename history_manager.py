@@ -657,7 +657,7 @@ class OrderDetailsPopup(Popup):
 
     def print_receipt(self, instance, order):
         order_dict = self.convert_order_to_dict(order)
-        self.receipt_printer.print_receipt(order_dict)
+        self.receipt_printer.print_receipt(order_dict, reprint=True)
 
     def refund(self, instance):
         pass
