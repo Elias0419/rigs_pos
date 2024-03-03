@@ -44,7 +44,8 @@ class Wrapper():
 
                     # self.set_emergency_reboot_flag()
                     try:
-                        fallback_process = subprocess.Popen(["/home/rigs/1/bin/python", "/home/rigs/fallback_rigs_pos/main.py"])
+                        fallback_command = ['nohup', '/home/rigs/1/bin/python', '/home/rigs/fallback_rigs_pos/main.py']
+                        fallback_process = subprocess.Popen(fallback_command, start_new_session=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                         time.sleep(5)
                         if fallback_process.poll() is None:
                             self.send_email("Fallback successful", "The application has successfully fallen back.", recipient)
