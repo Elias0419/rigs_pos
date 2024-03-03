@@ -19,23 +19,18 @@ class ReceiptPrinter:
             pass
 
     def print_receipt(self, order_details):
-        print("Starting to print receipt...")
-        print("Order details:", order_details)
         try:
             logo = Image.open("images/rigs_logo_scaled.png")
-            print("Logo loaded successfully.")
         except Exception as e:
             print("Error loading logo:", e)
 
         try:
-            self.printer.image(logo, (300, -60))
-            print("Logo printed successfully.")
+            self.printer.image(logo, (200, -60))
 
             date = str(datetime.now().replace(microsecond=0))
             self.printer.set(align="center", font="a")
             self.printer.textln(date)
             self.printer.textln()
-            print("Date printed:", date)
 
             max_line_width = 48
             self.printer.set(align="left", font="a", bold=False)
@@ -51,11 +46,9 @@ class ReceiptPrinter:
 
                 self.printer.textln(item_line)
                 self.printer.textln()
-                print("Item printed:", item_line)
 
             self.printer.set(align="right", font="a", bold=True)
             self.printer.textln()
-            print("Printing summary...")
 
             self.printer.textln(f"Subtotal: ${order_details['subtotal']:.2f}")
 
@@ -64,7 +57,6 @@ class ReceiptPrinter:
 
             self.printer.textln(f"Tax: ${order_details['tax_amount']:.2f}")
             self.printer.textln(f"Total: ${order_details['total_with_tax']:.2f}")
-            print("Summary printed successfully.")
 
             if "split_payments" in locals():
                 print("Printing split payment details...")
@@ -72,9 +64,7 @@ class ReceiptPrinter:
                     method = payment['method']
                     amount = payment['amount']
                     self.printer.textln(f"{method}: ${amount:.2f}")
-                    print(f"Split payment printed: {method}: ${amount:.2f}")
 
-            print("Attempting to print barcode...")
             self.printer.set(align="center", font="b", bold=False)
             self.printer.textln()
 
@@ -82,12 +72,10 @@ class ReceiptPrinter:
             short_uuid = barcode_data[:13]  # test truncation length
             barcode_data_short = "{B" + short_uuid
             self.printer.barcode(barcode_data_short, "CODE128", pos="OFF")
-            print("Barcode printed successfully.")
 
             self.printer.textln()
             self.printer.textln(order_details["order_id"])
             self.printer.cut()
-            print("Receipt cut successfully.")
         except Exception as e:
             print("Error during receipt printing:", e)
 
