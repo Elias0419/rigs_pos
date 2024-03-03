@@ -48,9 +48,11 @@ class Wrapper():
                         time.sleep(5)
                         if fallback_process.poll() is None:
                             self.send_email("Fallback successful", "The application has successfully fallen back.", recipient)
+                            break
                         else:
                             self.send_email("Fallback Failed", "The application has failed to fall back and is now stopped!", recipient)
                             sys.exit(43)
+
                     except:
                         self.send_email("Fallback Failed","The application has failed to fall back and is now stopped!", recipient)
                         sys.exit(43)
