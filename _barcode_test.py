@@ -204,7 +204,7 @@ class BarcodeScanner:
         closest_matches = []
         scores = process.extract(scanned_barcode, self.app.barcode_cache.keys(), scorer=fuzz.ratio, score_cutoff=score_cutoff)
 
-        for match, score in scores:
+        for match, score, *_ in scores:
             if score >= score_cutoff:
                 closest_matches.append(match)
 
