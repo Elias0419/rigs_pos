@@ -26,6 +26,7 @@ class ReceiptPrinter:
             self.app.popup_manager.receipt_errors_popup.dismiss()
 
     def print_receipt(self, order_details, reprint=False):
+        print(order_details)
         try:
             logo = Image.open("images/rigs_logo_scaled.png")
         except Exception as e:
@@ -69,13 +70,13 @@ class ReceiptPrinter:
 
 
             self.printer.textln(f"Total: ${order_details['total_with_tax']:.2f}")
-            if order_details["method"] == "Cash":
+            if order_details["payment_method"] == "Cash":
                 self.printer.textln(f"Cash: {order_details['amount_tendered']}")
                 self.printer.textln(f"Change: {order_details['amount_tendered']}")
 
-            elif order_details["method"] == "Split":
+            elif order_details["payment_method"] == "Split":
                 self.printer.textln("Split Payment")
-            elif order_details["method"] == "Debit":
+            elif order_details["payment_method"] == "Debit":
                 self.printer.textln("Debit Payment")
             else:
                 self.printer.textln("Credit Payment")
