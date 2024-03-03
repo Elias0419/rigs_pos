@@ -90,7 +90,7 @@ class HistoryView(BoxLayout):
 
         if ref is not None:
             self.app = ref
-            self.receipt_printer = ReceiptPrinter(self, "receipt_printer_config.yaml")
+            self.receipt_printer = self.app.receipt_printer
             self.initialize_total_layout()
             self.initialize_buttons()
             self.add_widget(self.totals_layout)

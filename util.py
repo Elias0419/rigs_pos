@@ -12,7 +12,7 @@ from kivy.uix.textinput import TextInput
 from open_cash_drawer import open_cash_drawer
 from barcode.upc import UniversalProductCodeA as upc_a
 from kivy.core.window import Window
-
+from receipt_printer import ReceiptPrinter
 
 class Utilities:
     def __init__(self, ref):
@@ -175,6 +175,12 @@ class Utilities:
             self.app.popup_manager.show_custom_item_popup(barcode)
         elif choice_text == "Add to Database":
             self.app.popup_manager.show_add_to_database_popup(barcode)
+
+    def initialize_receipt_printer(self):
+        self.app.receipt_printer = ReceiptPrinter(
+            self.app,
+            "receipt_printer_config.yaml"
+            )
 
     def initialize_barcode_cache(self):
         all_items = self.app.db_manager.get_all_items()

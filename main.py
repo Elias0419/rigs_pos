@@ -69,6 +69,12 @@ class CashRegisterApp(MDApp):
         self.utilities.load_settings()
 
     def build(self):
+        # self.receipt_printer = ReceiptPrinter(
+        #     self,
+        #     "receipt_printer_config.yaml"
+        #     )
+        self.utilities = Utilities(self)
+        self.utilities.initialize_receipt_printer()
         self.barcode_scanner = BarcodeScanner(self)
         self.db_manager = DatabaseManager("inventory.db", self)
         self.financial_summary = FinancialSummaryWidget(self)
@@ -76,15 +82,12 @@ class CashRegisterApp(MDApp):
         self.history_manager = HistoryView(self)
         self.order_history_popup = OrderManager(self)
         self.history_popup = HistoryPopup()
-        self.receipt_printer = ReceiptPrinter(
-            self,
-            "receipt_printer_config.yaml"
-            )
+
         self.inventory_manager = InventoryManagementView()
         self.inventory_row = InventoryManagementRow()
         self.label_printer = LabelPrinter(self)
         self.label_manager = LabelPrintingView(self)
-        self.utilities = Utilities(self)
+
         self.pin_reset_timer = ReusableTimer(5.0, self.utilities.reset_pin)
         self.calculator = Calculator()
         self.button_handler = ButtonHandler(self)
