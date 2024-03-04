@@ -240,9 +240,19 @@ class BarcodeScanner:
     #
     #     return closest_matches
 
+    # def find_closest_barcode(self, scanned_barcode, score_cutoff=90):
+    #     closest_matches = []
+    #     scores = process.extract(scanned_barcode, self.app.barcode_cache.keys(), scorer=fuzz.ratio, score_cutoff=score_cutoff)
+    #
+    #     for match, score, *_ in scores:
+    #         if score >= score_cutoff:
+    #             closest_matches.append(match)
+    #
+    #     return closest_matches
     def find_closest_barcode(self, scanned_barcode, score_cutoff=90):
         closest_matches = []
-        scores = process.extract(scanned_barcode, self.app.barcode_cache.keys(), scorer=fuzz.ratio, score_cutoff=score_cutoff)
+        # Use fuzz.partial_ratio as the scorer
+        scores = process.extract(scanned_barcode, self.app.barcode_cache.keys(), scorer=fuzz.partial_ratio, score_cutoff=score_cutoff)
 
         for match, score, *_ in scores:
             if score >= score_cutoff:
