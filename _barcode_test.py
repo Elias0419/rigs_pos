@@ -197,24 +197,56 @@ class BarcodeScanner:
         else:
             self.handle_scanned_barcode(barcode)
 
+    # def handle_scanned_barcode(self, barcode):
+    #     try:
+    #         # if "-" in barcode:
+    #         if "-" in barcode and any(c.isalpha() for c in barcode):
+    #             self.app.history_manager.display_order_details_from_barcode_scan(barcode)
+    #         else:
+    #             closest_matches = self.find_closest_barcode(barcode)
+    #             if len(closest_matches) == 1:
+    #
+    #                 item_details = self.app.db_manager.get_item_details(closest_matches[0])
+    #                 if item_details:
+    #                     self.process_item_details(item_details)
+    #             elif len(closest_matches) > 1:
+    #                 print(f"Muliple Matches\n{closest_matches}")
+    #                # self.app.popup_manager.show_item_selection_popup(closest_matches)
+    #             else:
+    #
+    #                 self.app.popup_manager.show_add_or_bypass_popup(barcode)
+    #     except Exception as e:
+    #         print(f"Exception in handle_scanned_barcode\n{e}")
+
     def handle_scanned_barcode(self, barcode):
         try:
             # if "-" in barcode:
             if "-" in barcode and any(c.isalpha() for c in barcode):
                 self.app.history_manager.display_order_details_from_barcode_scan(barcode)
             else:
-                closest_matches = self.find_closest_barcode(barcode)
-                if len(closest_matches) == 1:
+                known_barcodes = self.app.barcode_cache.keys()  # Get all known barcodes from cache
 
-                    item_details = self.app.db_manager.get_item_details(closest_matches[0])
+                # Check for an exact match first
+                if barcode in known_barcodes:
+                    print(f"this one was not truncated\n{barcode}")
+                    item_details = self.app.db_manager.get_item_details(barcode)
                     if item_details:
                         self.process_item_details(item_details)
-                elif len(closest_matches) > 1:
-                    print(f"Muliple Matches\n{closest_matches}")
-                   # self.app.popup_manager.show_item_selection_popup(closest_matches)
-                else:
+                    return  # Exit the method after processing
 
-                    self.app.popup_manager.show_add_or_bypass_popup(barcode)
+                # If no exact match, check for match minus the first character
+                #modified_barcode = barcode[1:]  # Remove the first character
+                for known_barcode in known_barcodes:
+                    if known_barcode[1:] == barcode:  # Compare with modified barcode
+                        print(f"this one was truncated and we have matched\n{known_barcode}")
+                        item_details = self.app.db_manager.get_item_details(known_barcode)
+                        if item_details:
+                            self.process_item_details(item_details)
+                        return  # Exit the method after processing
+
+                # If no matches found, handle as unknown barcode
+                self.app.popup_manager.show_add_or_bypass_popup(barcode)
+
         except Exception as e:
             print(f"Exception in handle_scanned_barcode\n{e}")
 
