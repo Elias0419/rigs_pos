@@ -2043,10 +2043,19 @@ class PopupManager:
             button = MDRaisedButton(text=item['name'])
             layout.add_widget(button)
         self.handle_duplicate_barcodes_popup = Popup(
+            title="Duplicate Barcode Detected!",
             content=layout,
-            size_hint=(0.8,0.8)
+            size_hint=(0.4,0.4),
+            on_press=lambda x, barcode=barcode: self.add_dupe_choice_to_order(barcode=barcode)
             )
         self.handle_duplicate_barcodes_popup.open()
+
+    def add_dupe_choice_to_order(self, barcode):
+        item_details = self.app.db_manager.get_item_details(barcode)
+        if item_details:
+            item_name, item_price = item_details[:2]
+            self.app.order_manager.add_item(item_name, item_price)
+            self.handle_duplicate_barcodes_popup.dismiss()
 
 
 class MarkupLabel(Label):
