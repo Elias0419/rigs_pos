@@ -249,7 +249,7 @@ class BarcodeScanner:
     #             closest_matches.append(match)
     #
     #     return closest_matches
-    def find_closest_barcode(self, scanned_barcode, score_cutoff=90):
+    def find_closest_barcode(self, scanned_barcode, score_cutoff=95):
         closest_matches = []
         # Use fuzz.partial_ratio as the scorer
         scores = process.extract(scanned_barcode, self.app.barcode_cache.keys(), scorer=fuzz.partial_ratio, score_cutoff=score_cutoff)
