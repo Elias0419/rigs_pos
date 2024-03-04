@@ -189,20 +189,21 @@ class Utilities:
         for item in all_items:
             barcode = item[0]
             if barcode not in barcode_cache:
-                barcode_cache[barcode] = [item]
+                barcode_cache[barcode] = {'items': [item], 'is_dupe': False}
             else:
-                barcode_cache[barcode].append(item)
+                barcode_cache[barcode]['items'].append(item)
+                barcode_cache[barcode]['is_dupe'] = True  # Mark as duplicate
 
         return barcode_cache
 
-    def update_barcode_cache(self, item_details):
 
+    def update_barcode_cache(self, item_details):
         barcode = item_details['barcode']
         if barcode not in self.app.barcode_cache:
-
-            self.app.barcode_cache[barcode] = [item_details]
+            self.app.barcode_cache[barcode] = {'items': [item_details], 'is_dupe': False}
         else:
-            self.app.barcode_cache[barcode].append(item_details)
+            self.app.barcode_cache[barcode]['items'].append(item_details)
+            self.app.barcode_cache[barcode]['is_dupe'] = True
 
     def initialize_categories(self):
         categories = [
