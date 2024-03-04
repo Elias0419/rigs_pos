@@ -245,7 +245,7 @@ class PopupManager:
             MDRaisedButton(
                 text="Update Details",
                 on_press=lambda x: self.app.utilities.update_confirm_and_close(
-                    barcode_input.text,
+                    self.item_barcode_input.text,
                     name_input.text,
                     price_input.text,
                     cost_input.text,
