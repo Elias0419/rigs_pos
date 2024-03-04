@@ -153,6 +153,7 @@ class ButtonHandler:
         self.app.popup_manager.payment_popup.dismiss()
         self.app.utilities.update_financial_summary()
         self.app.order_layout.clear_widgets()
+        self.app.order_manager.delete_order_from_disk(order_details)
 
     def on_receipt_button_press(self, instance):
         printer = self.app.receipt_printer

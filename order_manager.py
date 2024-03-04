@@ -1,4 +1,6 @@
 import uuid
+import json
+import os
 from open_cash_drawer import open_cash_drawer
 
 class OrderManager:
@@ -24,6 +26,7 @@ class OrderManager:
             self.payment_method = None
             self._total_with_tax = None
             self.order_id = str(uuid.uuid4())
+            self.saved_orders_dir = "saved_orders"
             self.app = ref
             self._init = True
 
@@ -127,27 +130,93 @@ class OrderManager:
         self.amount_tendered = 0.0
         self.change_given = 0.0
 
+
+    def save_order_to_disk(self):
+        if not os.path.exists(self.saved_orders_dir):
+            os.makedirs(self.saved_orders_dir)
+
+        order_details = self.get_order_details()
+        order_filename = f"order_{self.order_id}.json"
+
+        filepath = os.path.join(self.saved_orders_dir, order_filename)
+
+        with open(filepath, 'w') as file:
+            json.dump(order_details, file)
+
+    def delete_order_from_disk(self, order):
+        order_id = order["order_id"]
+        order_filename = f"order_{order_id}.json"
+        full_path = os.path.join(self.saved_orders_dir, order_filename)
+        try:
+            os.remove(full_path)
+        except Exception as e:
+            print(f"[Order Manager] Expected error in delete_order_from_disk\n{e}")
+
+    def load_order_from_disk(self, order):
+        order_id = order["order_id"]
+        order_filename = f"order_{order_id}.json"
+        full_path = os.path.join(self.saved_orders_dir, order_filename)
+
+        try:
+            with open(full_path, 'r') as file:
+                order_data = json.load(file)
+        except Exception as e:
+            print(f"[Order Manager] load_order_from_disk\n{e}")
+        try:
+            self.order_id = order_data["order_id"]
+            self.items = order_data["items"]
+            self.subtotal = order_data["subtotal"]
+            self.total = order_data["total"]
+            self.tax_rate = order_data["tax_rate"]
+            self.tax_amount = order_data["tax_amount"]
+            self._total_with_tax = order_data["total_with_tax"]
+            self.order_discount = order_data["discount"]
+            self.payment_method = order_data["payment_method"]
+            self.amount_tendered = order_data["amount_tendered"]
+            self.change_given = order_data["change_given"]
+            self.app.utilities.update_display()
+            self.app.utilities.update_financial_summary()
+            return True
+        except Exception as e:
+            print(e)
+
+
+    def list_all_saved_orders(self):
+        all_order_details = []
+        for file_name in os.listdir(self.saved_orders_dir):
+            if file_name.startswith('order_') and file_name.endswith('.json'):
+                full_path = os.path.join(self.saved_orders_dir, file_name)
+
+                try:
+                    with open(full_path, 'r') as file:
+                        order_data = json.load(file)
+                        item_names = [item['name'] for item in order_data['items'].values()]
+                        order_dict = {
+                            "order_id": order_data["order_id"],
+                            "items": item_names,
+                        }
+                        all_order_details.append(order_dict)
+                except Exception as e:
+                    print(f"[Order Manager] Error reading order file {file_name}\n{e}")
+
+        return all_order_details
+
+
     def adjust_item_quantity(self, item_id, adjustment):
         if item_id in self.items:
             item = self.items[item_id]
             original_quantity = item["quantity"]
-            new_quantity = max(original_quantity + adjustment, 1)  # Ensure quantity is at least 1
-
-            # Calculate per-item discount before adjustment
+            new_quantity = max(original_quantity + adjustment, 1)
             discount_data = item.get('discount', {'amount': 0, 'percent': False})
             discount_amount = float(discount_data['amount'])
             if discount_data['percent']:
-                # If the discount is a percent, calculate the dollar amount of the discount per item
                 per_item_discount = item["price"] * discount_amount / 100
             else:
-                # If the discount is a fixed amount, divide by the original quantity
                 per_item_discount = discount_amount / original_quantity
 
-            # Apply discount to new quantity
             total_discount_for_new_quantity = per_item_discount * new_quantity
             item["discount"] = {'amount': total_discount_for_new_quantity, 'percent': discount_data['percent']}
 
-            # Update item details
             single_item_price = float(item["price"])
             item["quantity"] = new_quantity
             item["total_price"] = single_item_price * new_quantity - total_discount_for_new_quantity

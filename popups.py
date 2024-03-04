@@ -2112,7 +2112,7 @@ class FinancialSummaryWidget(MDRaisedButton):
 
         discount_order_button = MDRaisedButton(
             text="Add Order Discount",
-            pos_hint={"center_x": 0.5, "center_y": 1 - 0.2},
+            pos_hint={"center_x": 0.5, "center_y": 1},
             size_hint=(1, 0.15),
             on_press=lambda x: self.app.popup_manager.add_order_discount_popup(),
         )
@@ -2128,12 +2128,20 @@ class FinancialSummaryWidget(MDRaisedButton):
             size_hint=(1, 0.15),
             on_press=lambda x: self.adjust_price(),
         )
-        clear_order_button = MDRaisedButton(
-            text="Clear Order",
+        save_order_button = MDRaisedButton(
+            text="Save Order",
             pos_hint={"center_x": 0.5, "center_y": 1 - 0.6},
             size_hint=(1, 0.15),
-            on_press=lambda x: self.clear_order(),
+            on_press=lambda x: self.save_order(),
         )
+        load_order_button = MDRaisedButton(
+            text="Load Order",
+            pos_hint={"center_x": 0.5, "center_y": 1 - 0.8},
+            size_hint=(1, 0.15),
+            on_press=lambda x: self.open_list_saved_orders_popup(),
+        )
+        order_mod_layout.add_widget(save_order_button)
+        order_mod_layout.add_widget(load_order_button)
         order_mod_layout.add_widget(discount_order_button)
         order_mod_layout.add_widget(adjust_price_button)
         order_mod_layout.add_widget(clear_order_button)
@@ -2146,6 +2154,59 @@ class FinancialSummaryWidget(MDRaisedButton):
             separator_height=0,
         )
         self.order_mod_popup.open()
+
+    def save_order(self):
+        self.app.order_manager.save_order_to_disk()
+        self.open_save_order_popup()
+        self.app.order_manager.clear_order()
+        self.order_mod_popup.dismiss()
+        self.app.utilities.update_display()
+        self.app.utilities.update_financial_summary()
+
+    def open_list_saved_orders_popup(self):
+        content_layout=GridLayout(orientation="lr-tb", cols=3, rows=10)
+        orders = self.app.order_manager.list_all_saved_orders()
+        for order in orders:
+            order_str = ""
+            for item in order["items"]:
+                order_str.join(item)
+            items = str(order["items"])
+            order_id = str(order["order_id"])
+            entry = MDLabel(text=f"{order_id}\n{items}", size_hint_y=0.1)
+            button = Button(text="Open", size_hint_y=0.1, on_press=lambda x, order=order:self.load_order(order=order))
+            del_button = Button(text="Delete", size_hint_y=0.1, on_press=lambda x, order=order:self.delete_order(order=order))
+            content_layout.add_widget(entry)
+            content_layout.add_widget(button)
+            content_layout.add_widget(del_button)
+        self.list_saved_orders_popup = Popup(content=content_layout, size_hint=(0.8,0.4))
+        self.list_saved_orders_popup.open()
+
+    def delete_order(self, order):
+        self.app.order_manager.delete_order_from_disk(order)
+        self.list_saved_orders_popup.dismiss()
+        self.open_list_saved_orders_popup()
+
+    def load_order(self, order):
+        self.app.order_manager.load_order_from_disk(order)
+        self.list_saved_orders_popup.dismiss()
+        self.app.financial_summary.order_mod_popup.dismiss()
+
+    def open_save_order_popup(self):
+        layout = GridLayout(orientation="tb-lr", rows=1, cols=1)
+        label = Label(text="Saved!", size_hint=(1, 0.5))
+        #button = MDRaisedButton(text="Dismiss", size_hint=(1, 0.5), on_press=lambda x: self.save_order_popup.dismiss())
+        layout.add_widget(label)
+        #layout.add_widget(button)
+        self.save_order_popup = Popup(size_hint=(0.2, 0.2),
+                                      content=layout,
+                                      title="",
+                                        background="images/transparent.png",
+                                        background_color=(0, 0, 0, 0),
+                                        separator_height=0,)
+        self.save_order_popup.open()
+
+        Clock.schedule_once(lambda dt: self.save_order_popup.dismiss(), 1)
+
 
     def adjust_price(self):
         self.app.popup_manager.show_adjust_price_popup()
