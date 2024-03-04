@@ -249,16 +249,18 @@ class BarcodeScanner:
     #             closest_matches.append(match)
     #
     #     return closest_matches
-    def find_closest_barcode(self, scanned_barcode, score_cutoff=95):
-        closest_matches = []
-        # Use fuzz.partial_ratio as the scorer
-        scores = process.extract(scanned_barcode, self.app.barcode_cache.keys(), scorer=fuzz.partial_ratio, score_cutoff=score_cutoff)
+    def find_closest_barcode(self, scanned_barcode, ignore_chars=1):
+        matches = []
+        known_barcodes = self.app.barcode_cache.keys()
+        # Slice to ignore first and last 'ignore_chars' characters
+        core_scanned = scanned_barcode[ignore_chars:-ignore_chars] if ignore_chars > 0 else scanned_barcode
 
-        for match, score, *_ in scores:
-            if score >= score_cutoff:
-                closest_matches.append(match)
+        for barcode in known_barcodes:
+            core_barcode = barcode[ignore_chars:-ignore_chars] if ignore_chars > 0 else barcode
+            if core_scanned == core_barcode:
+                matches.append(barcode)
 
-        return closest_matches
+        return matches
 
     def close(self):
         self.stop_thread.set()
