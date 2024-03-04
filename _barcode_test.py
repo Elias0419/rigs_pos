@@ -207,9 +207,9 @@ class BarcodeScanner:
             else:
                 known_barcodes = self.app.barcode_cache.keys()
 
-                # Check for an exact match first
+
                 if barcode in known_barcodes:
-                    print(f"this one was not truncated\n{barcode}")
+
                     item_details = self.app.db_manager.get_item_details(barcode)
                     if item_details:
                         self.process_item_details(item_details)
@@ -217,8 +217,8 @@ class BarcodeScanner:
 
 
                 for known_barcode in known_barcodes:
-                    if known_barcode[1:] == barcode:  # Compare with modified barcode
-                        print(f"this one was truncated and we have matched\n{known_barcode}")
+                    if known_barcode[1:] == barcode:
+
                         item_details = self.app.db_manager.get_item_details(known_barcode)
                         if item_details:
                             self.process_item_details(item_details)
