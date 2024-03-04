@@ -145,13 +145,21 @@ class DatabaseManager:
             cursor = conn.cursor()
 
             update_query = """UPDATE items
-                            SET name=?, price=?, cost=?, sku=?, category=?
+                            SET name=?, price=?, cost=?, sku=?, category=?, barcode=?
                             WHERE barcode=? AND (sku=? OR ? IS NULL AND sku IS NULL)"""
-            cursor.execute(update_query, (name, price, cost, sku, category, barcode, sku, sku))
+            cursor.execute(update_query, (name, price, cost, sku, category, barcode, barcode, sku, sku))
 
             if cursor.rowcount == 0:
                 print("No item found with barcode and SKU:", barcode, sku)
-                return False
+                alternative_query = """UPDATE items
+                                    SET barcode=?, cost=?, sku=?, category=?
+                                    WHERE name=? AND price=?"""
+                cursor.execute(alternative_query, (barcode, cost, sku, category, name, price))
+
+                if cursor.rowcount == 0:
+                    print("No item found with provided identifiers:", name, price)
+                    return False
+
             conn.commit()
             item_details = {
                 'barcode': barcode,
@@ -160,7 +168,6 @@ class DatabaseManager:
                 'cost': cost,
                 'sku': sku,
                 'category': category,
-                'parent_barcode': parent_barcode
             }
             self.app.utilities.update_barcode_cache(item_details)
         except Exception as e:
@@ -169,6 +176,7 @@ class DatabaseManager:
         finally:
             conn.close()
         return True
+
 
 
     def handle_duplicate_barcodes(self, barcode):
