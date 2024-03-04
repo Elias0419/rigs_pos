@@ -2038,18 +2038,20 @@ class PopupManager:
 
     def handle_duplicate_barcodes(self, barcode):
         items = self.app.db_manager.handle_duplicate_barcodes(barcode)
-        layout = GridLayout(rows=10, cols=1, spacing=5)
+        layout = GridLayout(rows=10, cols=1, spacing=5, size_hint=(1,1))
         for item in items:
             button = MDRaisedButton(
                 text=item['name'],
-                size_hint_x=1,
+                size_hint=(1,None),
                 on_press=lambda x, barcode=barcode, choice=item['name']: self.add_dupe_choice_to_order(barcode=barcode, choice=choice)
                 )
             layout.add_widget(button)
+            print(f"Button size: {button.size}, size_hint: {button.size_hint}, pos: {button.pos}")
+
         self.handle_duplicate_barcodes_popup = Popup(
             title="Duplicate Barcode Detected!",
             content=layout,
-            size_hint=(0.4,0.4),
+            size_hint=(0.2,0.6),
 
             )
         self.handle_duplicate_barcodes_popup.open()
