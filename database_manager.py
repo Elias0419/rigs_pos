@@ -170,6 +170,43 @@ class DatabaseManager:
             conn.close()
         return True
 
+
+    def handle_duplicate_barcodes(self, barcode):
+
+        query = """
+                SELECT barcode, name, price, cost, sku, category, parent_barcode
+                FROM items
+                WHERE barcode = ?
+               """
+        items = []
+
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(query, (barcode,))
+            rows = cursor.fetchall()
+
+
+            for row in rows:
+                item_details = {
+                    'barcode': row[0],
+                    'name': row[1],
+                    'price': row[2],
+                    'cost': row[3],
+                    'sku': row[4],
+                    'category': row[5],
+                    'parent_barcode': row[6]
+                }
+                items.append(item_details)
+
+        except sqlite3.Error as e:
+            print(f"Database error: {e}")
+        finally:
+            conn.close()
+
+        return items
+
+
     # def debug_print(self, order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given):
     #     variables = locals()  # Captures all the local variables in the function as a dictionary
     #
