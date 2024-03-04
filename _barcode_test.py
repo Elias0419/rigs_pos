@@ -209,7 +209,8 @@ class BarcodeScanner:
 
 
                 if barcode in known_barcodes:
-                    if barcode['is_dupe']:
+                    barcode_data = self.app.barcode_cache.get(barcode)
+                    if barcode_data['is_dupe']:
                         print(f'\n\n\n\n\n\ntest\n{barcode}')
 
 
