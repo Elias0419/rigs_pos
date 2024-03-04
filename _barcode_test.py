@@ -225,7 +225,7 @@ class BarcodeScanner:
                     if known_barcode[1:] == barcode:
                         barcode_data = self.app.barcode_cache.get(known_barcode)
                         if barcode_data['is_dupe']:
-                            print("dupe")
+                            print("sliced dupe")
                             found = True
                             return
                         else:
