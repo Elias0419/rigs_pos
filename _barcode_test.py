@@ -201,38 +201,34 @@ class BarcodeScanner:
 
     def handle_scanned_barcode(self, barcode):
         try:
-
             if "-" in barcode and any(c.isalpha() for c in barcode):
                 self.app.history_manager.display_order_details_from_barcode_scan(barcode)
             else:
                 known_barcodes = self.app.barcode_cache.keys()
 
-
                 if barcode in known_barcodes:
                     barcode_data = self.app.barcode_cache.get(barcode)
                     if barcode_data['is_dupe']:
-                        print(f'\n\n\n\n\n\ntest\n{barcode}')
+                        print("dupe")
+                    else:
+                        self.process_item_details(barcode_data['items'][0])
+                    return
+
+                for known_barcode in known_barcodes:
+                    if known_barcode[1:] == barcode[1:]:
+                        barcode_data = self.app.barcode_cache.get(known_barcode)
+                        if barcode_data['is_dupe']:
+                            print("dupe")
+                        else:
+                            self.process_item_details(barcode_data['items'][0])
+                        return
 
 
-        #             item_details = self.app.db_manager.get_item_details(barcode)
-        #             if item_details:
-        #                 self.process_item_details(item_details)
-        #             return
-        #
-        #
-        #         for known_barcode in known_barcodes:
-        #             if known_barcode[1:] == barcode:
-        #
-        #                 item_details = self.app.db_manager.get_item_details(known_barcode)
-        #                 if item_details:
-        #                     self.process_item_details(item_details)
-        #                 return
-        #
-        #
-        #         self.app.popup_manager.show_add_or_bypass_popup(barcode)
-        #
+                self.app.popup_manager.show_add_or_bypass_popup(barcode)
+
         except Exception as e:
             print(f"Exception in handle_scanned_barcode\n{e}")
+
 
     def process_item_details(self, item_details):
         item_name, item_price = item_details[:2]
