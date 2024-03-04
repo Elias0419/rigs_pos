@@ -211,18 +211,21 @@ class BarcodeScanner:
                     if barcode_data['is_dupe']:
                         print("dupe")
                     else:
-                        self.process_item_details(barcode_data['items'][0])
-                    return
-
-                for known_barcode in known_barcodes:
-                    if known_barcode[1:] == barcode[1:]:
-                        barcode_data = self.app.barcode_cache.get(known_barcode)
-                        if barcode_data['is_dupe']:
-                            print("dupe")
-                        else:
-                            self.process_item_details(barcode_data['items'][0])
+                        item_details = self.app.db_manager.get_item_details(barcode)
+                        if item_details:
+                            self.process_item_details(item_details)
                         return
 
+                    for known_barcode in known_barcodes:
+                        if known_barcode[1:] == barcode:
+                            barcode_data = self.app.barcode_cache.get(known_barcode)
+                            if barcode_data['is_dupe']:
+                                print("dupe")
+                            else:
+                                item_details = self.app.db_manager.get_item_details(known_barcode)
+                                if item_details:
+                                    self.process_item_details(item_details)
+                                return
 
                 self.app.popup_manager.show_add_or_bypass_popup(barcode)
 
