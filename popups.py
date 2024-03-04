@@ -2054,8 +2054,8 @@ class PopupManager:
         self.handle_duplicate_barcodes_popup.open()
 
     def add_dupe_choice_to_order(self, barcode, choice):
-        print("choice", choice, type(choice))
-        item_details = self.app.db_manager.get_item_details(barcode)
+
+        item_details = self.app.db_manager.get_item_details(barcode, dupe=True, name=choice)
         if item_details:
             print("found item details", item_details)
             item_name, item_price = item_details[:2]
