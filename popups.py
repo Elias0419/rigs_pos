@@ -2036,6 +2036,19 @@ class PopupManager:
         # self.app.inventory_manager.detach_from_parent()
 
 
+    def handle_duplicate_barcodes(self, barcode):
+        items = self.app.db_manager.handle_duplicate_barcodes(barcode)
+        layout = GridLayout(rows=10,cols=1)
+        for item in items:
+            button = MDRaisedButton(text=item['name'])
+            layout.add_widget(button)
+        self.handle_duplicate_barcodes_popup = Popup(
+            content=layout,
+            size_hint=(0.8,0.8)
+            )
+        self.handle_duplicate_barcodes_popup.open()
+
+
 class MarkupLabel(Label):
     pass
 

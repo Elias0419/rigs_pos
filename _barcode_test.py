@@ -211,7 +211,7 @@ class BarcodeScanner:
             if barcode in known_barcodes:
                 barcode_data = self.app.barcode_cache.get(barcode)
                 if barcode_data['is_dupe']:
-                    print("dupe")
+                    self.app.popup_manager.handle_duplicate_barcodes(barcode)
                     found = True
                     return
                 else:
@@ -225,7 +225,7 @@ class BarcodeScanner:
                     if known_barcode[1:] == barcode:
                         barcode_data = self.app.barcode_cache.get(known_barcode)
                         if barcode_data['is_dupe']:
-                            print("sliced dupe")
+                            self.app.popup_manager.handle_duplicate_barcodes(known_barcode)
                             found = True
                             return
                         else:
@@ -273,18 +273,18 @@ class BarcodeScanner:
     #             closest_matches.append(match)
     #
     #     return closest_matches
-    def find_closest_barcode(self, scanned_barcode, ignore_chars=1):
-        matches = []
-        known_barcodes = self.app.barcode_cache.keys()
-        # Slice to ignore first and last 'ignore_chars' characters
-        core_scanned = scanned_barcode[ignore_chars:-ignore_chars] if ignore_chars > 0 else scanned_barcode
-
-        for barcode in known_barcodes:
-            core_barcode = barcode[ignore_chars:-ignore_chars] if ignore_chars > 0 else barcode
-            if core_scanned == core_barcode:
-                matches.append(barcode)
-
-        return matches
+    # def find_closest_barcode(self, scanned_barcode, ignore_chars=1):
+    #     matches = []
+    #     known_barcodes = self.app.barcode_cache.keys()
+    #     # Slice to ignore first and last 'ignore_chars' characters
+    #     core_scanned = scanned_barcode[ignore_chars:-ignore_chars] if ignore_chars > 0 else scanned_barcode
+    #
+    #     for barcode in known_barcodes:
+    #         core_barcode = barcode[ignore_chars:-ignore_chars] if ignore_chars > 0 else barcode
+    #         if core_scanned == core_barcode:
+    #             matches.append(barcode)
+    #
+    #     return matches
 
     def close(self):
         self.stop_thread.set()
