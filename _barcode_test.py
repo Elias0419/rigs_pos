@@ -198,26 +198,25 @@ class BarcodeScanner:
             self.handle_scanned_barcode(barcode)
 
     def handle_scanned_barcode(self, barcode):
-        print(f"{barcode}\n")
-        # try:
-        #     # if "-" in barcode:
-        #     if "-" in barcode and any(c.isalpha() for c in barcode):
-        #         self.app.history_manager.display_order_details_from_barcode_scan(barcode)
-        #     else:
-        #         closest_matches = self.find_closest_barcode(barcode)
-        #         if len(closest_matches) == 1:
-        #
-        #             item_details = self.app.db_manager.get_item_details(closest_matches[0])
-        #             if item_details:
-        #                 self.process_item_details(item_details)
-        #         elif len(closest_matches) > 1:
-        #             print(f"Muliple Matches\n{closest_matches}")
-        #            # self.app.popup_manager.show_item_selection_popup(closest_matches)
-        #         else:
-        #
-        #             self.app.popup_manager.show_add_or_bypass_popup(barcode)
-        # except Exception as e:
-        #     print(f"Exception in handle_scanned_barcode\n{e}")
+        try:
+            # if "-" in barcode:
+            if "-" in barcode and any(c.isalpha() for c in barcode):
+                self.app.history_manager.display_order_details_from_barcode_scan(barcode)
+            else:
+                closest_matches = self.find_closest_barcode(barcode)
+                if len(closest_matches) == 1:
+
+                    item_details = self.app.db_manager.get_item_details(closest_matches[0])
+                    if item_details:
+                        self.process_item_details(item_details)
+                elif len(closest_matches) > 1:
+                    print(f"Muliple Matches\n{closest_matches}")
+                   # self.app.popup_manager.show_item_selection_popup(closest_matches)
+                else:
+
+                    self.app.popup_manager.show_add_or_bypass_popup(barcode)
+        except Exception as e:
+            print(f"Exception in handle_scanned_barcode\n{e}")
 
     def process_item_details(self, item_details):
         item_name, item_price = item_details[:2]
