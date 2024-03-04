@@ -209,26 +209,29 @@ class BarcodeScanner:
 
 
                 if barcode in known_barcodes:
-
-                    item_details = self.app.db_manager.get_item_details(barcode)
-                    if item_details:
-                        self.process_item_details(item_details)
-                    return
+                    if barcode['is_dupe']:
+                        print(f'\n\n\n\n\n\ntest\n{barcode}')
 
 
-                for known_barcode in known_barcodes:
-                    if known_barcode[1:] == barcode:
-
-                        item_details = self.app.db_manager.get_item_details(known_barcode)
-                        if item_details:
-                            self.process_item_details(item_details)
-                        return
-
-
-                self.app.popup_manager.show_add_or_bypass_popup(barcode)
-
-        except Exception as e:
-            print(f"Exception in handle_scanned_barcode\n{e}")
+        #             item_details = self.app.db_manager.get_item_details(barcode)
+        #             if item_details:
+        #                 self.process_item_details(item_details)
+        #             return
+        #
+        #
+        #         for known_barcode in known_barcodes:
+        #             if known_barcode[1:] == barcode:
+        #
+        #                 item_details = self.app.db_manager.get_item_details(known_barcode)
+        #                 if item_details:
+        #                     self.process_item_details(item_details)
+        #                 return
+        #
+        #
+        #         self.app.popup_manager.show_add_or_bypass_popup(barcode)
+        #
+        # except Exception as e:
+        #     print(f"Exception in handle_scanned_barcode\n{e}")
 
     def process_item_details(self, item_details):
         item_name, item_price = item_details[:2]
