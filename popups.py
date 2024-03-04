@@ -2053,9 +2053,12 @@ class PopupManager:
     def add_dupe_choice_to_order(self, barcode):
         item_details = self.app.db_manager.get_item_details(barcode)
         if item_details:
+            print("found item details", item_details)
             item_name, item_price = item_details[:2]
             self.app.order_manager.add_item(item_name, item_price)
             self.handle_duplicate_barcodes_popup.dismiss()
+            self.app.utilities.update_display()
+            self.app.utilities.update_financial_summary()
 
 
 class MarkupLabel(Label):
