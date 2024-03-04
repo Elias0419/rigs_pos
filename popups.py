@@ -2051,6 +2051,7 @@ class PopupManager:
         self.handle_duplicate_barcodes_popup.open()
 
     def add_dupe_choice_to_order(self, barcode):
+        print("press")
         item_details = self.app.db_manager.get_item_details(barcode)
         if item_details:
             print("found item details", item_details)
