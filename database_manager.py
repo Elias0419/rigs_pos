@@ -206,6 +206,33 @@ class DatabaseManager:
 
         return items
 
+    def get_item_details(self, barcode, dupe=False, name=None):
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+
+
+            if dupe and name is not None:
+                query = "SELECT name, price FROM items WHERE barcode = ? AND name = ?"
+                cursor.execute(query, (barcode, name))
+            else:
+                query = "SELECT name, price FROM items WHERE barcode = ?"
+                cursor.execute(query, (barcode,))
+
+            item = cursor.fetchone()
+
+
+            return item
+        except Exception as e:
+
+            print(f"[DatabaseManager]: get_item_details\n {e}")
+            return None
+        finally:
+
+            if conn:
+                conn.close()
+
+
 
     # def debug_print(self, order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given):
     #     variables = locals()  # Captures all the local variables in the function as a dictionary
@@ -372,13 +399,7 @@ class DatabaseManager:
             except Exception as e:
                 print(e)
 
-    def get_item_details(self, barcode):
-        conn = self._get_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT name, price FROM items WHERE barcode = ?", (barcode,))
-        item = cursor.fetchone()
-        conn.close()
-        return item
+
 
     def get_all_items(self):
         print("db manager get all")
