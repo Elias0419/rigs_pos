@@ -5,16 +5,17 @@ from Levenshtein import distance as levenshtein_distance
 from rapidfuzz import process, fuzz
 import time
 
+
 class BarcodeScanner:
     def __init__(self, ref):
         self.app = ref
         self.current_barcode = ""
         # work
-        self.idVendor = 0x05e0
+        self.idVendor = 0x05E0
         self.idProduct = 0x1200
         # home
-        #self.idVendor = 0x28e9
-        #self.idProduct = 0x03da
+        # self.idVendor = 0x28e9
+        # self.idProduct = 0x03da
         try:
             self.device = self.initializeUSBDevice()
         except ValueError as e:
@@ -24,37 +25,6 @@ class BarcodeScanner:
         self.stop_thread = threading.Event()
         self.thread = threading.Thread(target=self.capture_raw_data, daemon=True)
         self.thread.start()
-
-    # def initializeUSBDevice(self, max_attempts=5, delay_between_attempts=1):
-    #     attempt = 0
-    #     while attempt < max_attempts:
-    #         try:
-    #             device = usb.core.find(idVendor=self.idVendor, idProduct=self.idProduct)
-    #             if device is None:
-    #                 raise ValueError("[Barcode Scanner]: Device Not Found")
-    #
-    #             if device.is_kernel_driver_active(0):
-    #                 device.detach_kernel_driver(0)
-    #
-    #             device.set_configuration()
-    #             configuration = device.get_active_configuration()
-    #             interface = configuration[(0, 0)]
-    #
-    #             endpoint = usb.util.find_descriptor(
-    #                 interface,
-    #                 custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress)
-    #                 == usb.util.ENDPOINT_IN,
-    #             )
-    #
-    #             if endpoint is None:
-    #                 raise ValueError("[Barcode Scanner]: Endpoint not found")
-    #
-    #             return device
-    #         except ValueError as e:
-    #             print(f"Attempt {attempt + 1} failed: {e}")
-    #             time.sleep(delay_between_attempts)
-    #             attempt += 1
-    #     raise ValueError("[Barcode Scanner]: Failed to initialize after multiple attempts")
 
     def initializeUSBDevice(self):
 
@@ -84,8 +54,6 @@ class BarcodeScanner:
             )
         except Exception as e:
             print(f"[Barcode Scanner] set endpoint fail\n{e}")
-        # if self.endpoint is None:
-        #     raise ValueError("[Barcode Scanner]: Endpoint not found")
 
         return device
 
@@ -197,12 +165,12 @@ class BarcodeScanner:
         else:
             self.handle_scanned_barcode(barcode)
 
-
-
     def handle_scanned_barcode(self, barcode):
         try:
             if "-" in barcode and any(c.isalpha() for c in barcode):
-                self.app.history_manager.display_order_details_from_barcode_scan(barcode)
+                self.app.history_manager.display_order_details_from_barcode_scan(
+                    barcode
+                )
                 return
 
             known_barcodes = self.app.barcode_cache.keys()
@@ -210,7 +178,7 @@ class BarcodeScanner:
 
             if barcode in known_barcodes:
                 barcode_data = self.app.barcode_cache.get(barcode)
-                if barcode_data['is_dupe']:
+                if barcode_data["is_dupe"]:
                     self.app.popup_manager.handle_duplicate_barcodes(barcode)
                     found = True
                     return
@@ -224,12 +192,16 @@ class BarcodeScanner:
                 for known_barcode in known_barcodes:
                     if known_barcode[1:] == barcode:
                         barcode_data = self.app.barcode_cache.get(known_barcode)
-                        if barcode_data['is_dupe']:
-                            self.app.popup_manager.handle_duplicate_barcodes(known_barcode)
+                        if barcode_data["is_dupe"]:
+                            self.app.popup_manager.handle_duplicate_barcodes(
+                                known_barcode
+                            )
                             found = True
                             return
                         else:
-                            item_details = self.app.db_manager.get_item_details(known_barcode)
+                            item_details = self.app.db_manager.get_item_details(
+                                known_barcode
+                            )
                             if item_details:
                                 self.process_item_details(item_details)
                                 found = True
@@ -241,50 +213,11 @@ class BarcodeScanner:
         except Exception as e:
             print(f"Exception in handle_scanned_barcode\n{e}")
 
-
     def process_item_details(self, item_details):
         item_name, item_price = item_details[:2]
         self.app.order_manager.add_item(item_name, item_price)
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
-
-    # def find_closest_barcode(self, scanned_barcode, max_distance=1):
-    #     closest_matches = []
-    #     min_distance = float('inf')
-    #
-    #     for barcode in self.app.barcode_cache.keys():
-    #
-    #         dist = levenshtein_distance(scanned_barcode, barcode)
-    #
-    #         if dist < min_distance and dist <= max_distance:
-    #             closest_matches = [barcode]
-    #             min_distance = dist
-    #         elif dist == min_distance:
-    #             closest_matches.append(barcode)
-    #
-    #     return closest_matches
-
-    # def find_closest_barcode(self, scanned_barcode, score_cutoff=90):
-    #     closest_matches = []
-    #     scores = process.extract(scanned_barcode, self.app.barcode_cache.keys(), scorer=fuzz.ratio, score_cutoff=score_cutoff)
-    #
-    #     for match, score, *_ in scores:
-    #         if score >= score_cutoff:
-    #             closest_matches.append(match)
-    #
-    #     return closest_matches
-    # def find_closest_barcode(self, scanned_barcode, ignore_chars=1):
-    #     matches = []
-    #     known_barcodes = self.app.barcode_cache.keys()
-    #     # Slice to ignore first and last 'ignore_chars' characters
-    #     core_scanned = scanned_barcode[ignore_chars:-ignore_chars] if ignore_chars > 0 else scanned_barcode
-    #
-    #     for barcode in known_barcodes:
-    #         core_barcode = barcode[ignore_chars:-ignore_chars] if ignore_chars > 0 else barcode
-    #         if core_scanned == core_barcode:
-    #             matches.append(barcode)
-    #
-    #     return matches
 
     def close(self):
         self.stop_thread.set()
