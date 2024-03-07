@@ -1078,11 +1078,11 @@ class PopupManager:
         tool_buttons = [
             "Clear Order",
             "Calculator",
-            "Open Register",
             "Reporting",
             "Label Printer",
             "Inventory Management",
             "System",
+            "Open Register",
         ]
 
         for index, tool in enumerate(tool_buttons):
