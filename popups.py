@@ -2102,7 +2102,7 @@ class FocusPopup(Popup):
             self.textinput_to_focus.focus = True
 
 
-class FinancialSummaryWidget(MDRaisedButton):
+class FinancialSummaryWidget(MDFlatButton):
     _instance = None
 
     def __new__(cls, *args, **kwargs):
@@ -2115,11 +2115,11 @@ class FinancialSummaryWidget(MDRaisedButton):
             self.app = ref
             super(FinancialSummaryWidget, self).__init__(**kwargs)
             self.size_hint_y = None
-            self.size_hint_x = 1
+            self.size_hint_x = 0.6
             self.height = 80
             self.orientation = "vertical"
             self.order_mod_popup = None
-            print(self)
+            #print(self)
             self._initialized = True
 
     def update_summary(self, subtotal, tax, total_with_tax, discount):
