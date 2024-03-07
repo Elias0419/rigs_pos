@@ -17,7 +17,8 @@ Config.set('input', 'isolution multitouch', 'hidinput,/dev/input/event12')
 # Config.set('kivy', 'log_level', 'error')
 Config.set("graphics", "multisamples", "8")
 Config.set('graphics', 'kivy_clock', 'interrupt')
-
+from kivymd.toast import toast
+from kivymd.uix.snackbar import Snackbar
 from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.modules import monitor, inspector
@@ -26,7 +27,7 @@ from kivy.uix.image import Image
 
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import BoxLayout
-from kivymd.uix.button import MDIconButton
+from kivymd.uix.button import MDIconButton, MDFlatButton
 from kivymd.uix.gridlayout import GridLayout
 from kivymd.uix.label import MDLabel
 from kivymd.uix.boxlayout import MDBoxLayout
@@ -59,7 +60,7 @@ class CashRegisterApp(MDApp):
         self.is_guard_screen_displayed = False
         self.is_lock_screen_displayed = False
         self.override_tap_time = 0
-
+        self.click = 0
         self.current_context = "main"
         self.theme_cls.theme_style = "Dark"
         self.theme_cls.primary_palette = "Brown"
@@ -113,9 +114,12 @@ class CashRegisterApp(MDApp):
             row_default_height=60,
             row_force_default=True,
             size_hint_x=1 / 3,
+            size_hint_y=7 / 8,
         )
 
         top_area_layout.add_widget(self.order_layout)
+
+
         financial_layout = self.create_financial_layout()
         top_area_layout.add_widget(financial_layout)
         clock_layout = self.create_clock_layout()
@@ -150,7 +154,7 @@ class CashRegisterApp(MDApp):
         )
         btn_tools = self.utilities.create_md_raised_button(
             "Tools",
-            #lambda x: self.popup_manager.show_guard_screen(),
+            #lambda x: self.popup_manager.handle_duplicate_barcodes("00000000"),
             self.button_handler.on_button_press,
             #lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
             # lambda x: sys.exit(42),
@@ -216,6 +220,9 @@ class CashRegisterApp(MDApp):
         blank_space = MDLabel(
             text="", size_hint_y=1, height=450, valign="top", halign="center"
         )
+        blank_space2 = MDLabel(
+            text="", size_hint_y=1, height=450, valign="top", halign="center"
+        )
 
         self.clock_label = MDLabel(
             text="Loading...",
@@ -228,6 +235,7 @@ class CashRegisterApp(MDApp):
         line_container = MDBoxLayout(
             orientation="horizontal", size_hint_y=None, height=1
         )
+        #clear_order = MDIconButton(icon="delete")
         blue_line = MDBoxLayout(size_hint_x=0.2)
         blue_line.md_bg_color = (0.56, 0.56, 1, 1)
         blank_line = MDBoxLayout(size_hint_x=0.2)
@@ -245,6 +253,9 @@ class CashRegisterApp(MDApp):
         )
         clock_layout.add_widget(register_text)
         clock_layout.add_widget(line_container)
+        #clock_layout.add_widget(blank_space2)
+
+        #clock_layout.add_widget(clear_order)
         clock_layout.add_widget(blank_space)
         clock_layout.add_widget(padlock_button)
 
@@ -253,12 +264,70 @@ class CashRegisterApp(MDApp):
         return clock_layout
 
     def create_financial_layout(self):
-        financial_layout = GridLayout(cols=1, size_hint_x=1 / 3)
-
+        financial_layout = GridLayout(cols=3, rows=2, orientation = "lr-tb", size_hint_x=1 / 3)
+        blank_space = MDBoxLayout(size_hint_y=None, size_hint_x=0.2)
+        blank_space2 = MDBoxLayout(size_hint_x=0.2)
+        blank_space3 = MDBoxLayout(size_hint_x=0.6)
+        blank_space4 = MDBoxLayout(size_hint_x=0.2)
+        button_holder = MDBoxLayout(size_hint_y=None,size_hint_x=0.2, )
+        self.clear_order = MDIconButton(icon="trash-can-outline", pos_hint={'center_x': 1, 'center_y': 0.5}, on_press=lambda x: self.confirm_clear_order())
+        button_holder.add_widget(self.clear_order)
         self.financial_summary_widget = FinancialSummaryWidget(self)
+
+
+        financial_layout.add_widget(blank_space)
         financial_layout.add_widget(self.financial_summary_widget)
+        financial_layout.add_widget(button_holder)
+
+        financial_layout.add_widget(blank_space2)
+        financial_layout.add_widget(blank_space3)
+        financial_layout.add_widget(blank_space4)
 
         return financial_layout
+
+    def clear_order_widget(self):
+        if self.click == 0:
+            self.click += 1
+            self.clear_order.text = "Tap to Clear Order"
+        elif self.click == 1:
+            self.order_manager.clear_order()
+            self.utilities.update_display()
+            self.utilities.update_financial_summary()
+            self.clear_order.text = f"[size=30]X[/size]"
+            self.click = 0
+        Clock.unschedule(self.reset)
+        Clock.schedule_interval(self.reset, 3)
+
+    def reset(self, dt):
+        self.clear_order.text = f"[size=30]X[/size]"
+        self.click = 0
+
+
+    def confirm_clear_order(self):
+        if self.click == 0:
+            self.click += 1
+
+            toast('Tap again to clear order')
+
+            self.clear_order.icon = "trash-can"
+            self.clear_order.icon_color = "red"
+            Clock.unschedule(self.reset_confirmation)
+            Clock.schedule_once(self.reset_confirmation, 3)
+        else:
+            self.perform_clear_order()
+
+    def perform_clear_order(self):
+        self.order_manager.clear_order()
+        self.utilities.update_display()
+        self.utilities.update_financial_summary()
+        # Reset the icon to its original state.
+        self.clear_order.icon = "trash-can-outline"
+        self.click = 0
+
+    def reset_confirmation(self, dt):
+        # Reset everything if the user did not confirm within the time limit.
+        self.clear_order.icon = "trash-can-outline"
+        self.click = 0
 
     def reboot(self):
         print("reboot")
