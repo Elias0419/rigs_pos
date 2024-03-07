@@ -30,6 +30,7 @@ from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.textfield import MDTextField
 from kivy.utils import get_color_from_hex
+from kivymd.toast import toast
 
 
 class PopupManager:
@@ -2189,7 +2190,8 @@ class FinancialSummaryWidget(MDFlatButton):
 
     def save_order(self):
         self.app.order_manager.save_order_to_disk()
-        self.open_save_order_popup()
+        #self.open_save_order_popup()
+        toast('Saved!')
         self.app.order_manager.clear_order()
         self.order_mod_popup.dismiss()
         self.app.utilities.update_display()
