@@ -322,42 +322,45 @@ class OrderManager:
         return f"[b]{item_name}[/b] x{quantity} ${total_price:.2f}\n"
 
     def discount_single_item(self, discount_amount, item_id="", percent=False):
-        print("discount_single_item", item_id)
-        if item_id in self.items:
-            item = self.items[item_id]
-
-
-            item_price = float(item['price'])
-            discount_amount = float(discount_amount)
-            item_quantity = int(item['quantity'])
-
-            if percent:
-
-                discount_value = item_price * discount_amount / 100
-            else:
-
-                discount_value = discount_amount
-
-
-            discount_value = float(discount_value)
-
-            item['discount'] = {'amount': str(discount_value), 'percent': percent}
-            item['total_price'] = max(item_price * item_quantity - discount_value, 0)
-
-            self.recalculate_order_totals()
-
-        self.app.utilities.update_display()
-        self.app.utilities.update_financial_summary()
         try:
-            self.app.popup_manager.discount_amount_input.text = ""
+            print("discount_single_item", item_id)
+            if item_id in self.items:
+                item = self.items[item_id]
+
+
+                item_price = float(item['price'])
+                discount_amount = float(discount_amount)
+                item_quantity = int(item['quantity'])
+
+                if percent:
+
+                    discount_value = item_price * discount_amount / 100
+                else:
+
+                    discount_value = discount_amount
+
+
+                discount_value = float(discount_value)
+
+                item['discount'] = {'amount': str(discount_value), 'percent': percent}
+                item['total_price'] = max(item_price * item_quantity - discount_value, 0)
+
+                self.recalculate_order_totals()
+
+            self.app.utilities.update_display()
+            self.app.utilities.update_financial_summary()
+            try:
+                self.app.popup_manager.discount_amount_input.text = ""
+            except:
+                pass
+            self.app.popup_manager.discount_item_popup.dismiss()
+            try:
+                self.app.popup_manager.discount_popup.dismiss()
+            except:
+                pass
+            self.app.popup_manager.item_popup.dismiss()
         except:
             pass
-        self.app.popup_manager.discount_item_popup.dismiss()
-        try:
-            self.app.popup_manager.discount_popup.dismiss()
-        except:
-            pass
-        self.app.popup_manager.item_popup.dismiss()
 
 
     def discount_entire_order(self, discount_amount, percent=False):
