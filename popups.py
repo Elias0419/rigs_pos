@@ -2124,7 +2124,7 @@ class FinancialSummaryWidget(MDFlatButton):
             f"[size=20]Subtotal: $0.00\n"
             f"Discount: $0.00\n"
             f"Tax: $0.00\n\n[/size]"
-            f"[size=24]Total: [b]$0.00[/b][/size]"
+            f"[size=32]Total: [b]$0.00[/b][/size]"
         )
             #print(self)
             self._initialized = True
@@ -2134,7 +2134,7 @@ class FinancialSummaryWidget(MDFlatButton):
             f"[size=20]Subtotal: ${subtotal:.2f}\n"
             f"Discount: ${discount:.2f}\n"
             f"Tax: ${tax:.2f}\n\n[/size]"
-            f"[size=24]Total: [b]${total_with_tax:.2f}[/b][/size]"
+            f"[size=32]Total: [b]${total_with_tax:.2f}[/b][/size]"
         )
 
     def on_press(self):
