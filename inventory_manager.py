@@ -160,19 +160,32 @@ class InventoryManagementRow(BoxLayout):
         except ValueError:
             self.formatted_price = "Invalid"
 
-    def update_item_in_database(
-        self,
-        barcode_input,
-        name_input,
-        price_input,
-        cost_input,
-        sku_input,
-        category_input,
-    ):
+    def get_item_uuid(self, name_input, price_input):
+        """
+        Fetch the UUID for the item with the given barcode.
+        """
+        item_details = self.database_manager.get_item_details(name=name_input, price=price_input)
+        if item_details:
+            return item_details['item_id']  # Assuming 'item_id' is stored in the item_details
+        else:
+            return None
 
-        if barcode_input and name_input and price_input:
+    def update_item_in_database(
+            self,
+            barcode_input,
+            name_input,
+            price_input,
+            cost_input,
+            sku_input,
+            category_input,
+        ):
+        # Fetch the UUID for the item using the barcode or other unique identifier
+        item_id = self.get_item_uuid(name_input, price_input)
+        if item_id:
             try:
+                # Update the item using its UUID
                 self.database_manager.update_item(
+                    item_id,  # Use the UUID instead of the barcode
                     barcode_input,
                     name_input,
                     price_input,
@@ -182,7 +195,8 @@ class InventoryManagementRow(BoxLayout):
                 )
             except Exception as e:
                 print(e)
-
+        else:
+            print("Item not found or unable to fetch UUID for the given barcode.")
 
 class InventoryRow(BoxLayout):
     barcode = StringProperty()

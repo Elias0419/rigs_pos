@@ -1,6 +1,8 @@
 import sqlite3
 from datetime import datetime
 import json
+import uuid
+
 class DatabaseManager:
     _instance = None
 
@@ -37,6 +39,7 @@ class DatabaseManager:
                                 sku TEXT,
                                 category TEXT,
                                 parent_barcode TEXT,
+                                item_id TEXT,
                                 PRIMARY KEY (barcode, sku),
                                 FOREIGN KEY(parent_barcode) REFERENCES items(barcode)
                             )"""
@@ -96,27 +99,29 @@ class DatabaseManager:
         finally:
             conn.close()
 
+
     def add_item(
-        self,
-        barcode,
-        name,
-        price,
-        cost=None,
-        sku=None,
-        category=None,
-        parent_barcode=None,
-    ):
-        print("db add_item", "barcode",barcode,"name",name,"price",price,"cost",cost,"sku",sku,"category",category)
+            self,
+            barcode,
+            name,
+            price,
+            cost=None,
+            sku=None,
+            category=None,
+            parent_barcode=None,
+        ):
+        # Generate a new UUID for the item
+        item_id = uuid.uuid4()
+
+        print("db add_item", "barcode", barcode, "name", name, "price", price, "cost", cost, "sku", sku, "category", category, "item_id", item_id)
         self.create_items_table()
-
-
 
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO items (barcode, name, price, cost, sku, category, parent_barcode) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                (barcode, name, price, cost, sku, category, parent_barcode),
+                "INSERT INTO items (barcode, name, price, cost, sku, category, item_id, parent_barcode) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (barcode, name, price, cost, sku, category, str(item_id), parent_barcode),
             )
             conn.commit()
             item_details = {
@@ -126,6 +131,7 @@ class DatabaseManager:
                 'cost': cost,
                 'sku': sku,
                 'category': category,
+                'item_id': str(item_id),
                 'parent_barcode': parent_barcode
             }
             self.app.utilities.update_barcode_cache(item_details)
@@ -137,32 +143,24 @@ class DatabaseManager:
 
         return True
 
-
-    def update_item(self, barcode, name, price, cost=None, sku=None, category=None):
-        print("db update_item", barcode, name, price, cost, sku, category)
+    def update_item(self, item_id, barcode, name, price, cost=None, sku=None, category=None):
+        print("db update_item", "item_id", item_id, "name", name, "price", price, "cost", cost, "sku", sku, "category", category)
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
 
             update_query = """UPDATE items
-                            SET name=?, price=?, cost=?, sku=?, category=?, barcode=?
-                            WHERE barcode=? AND (sku=? OR ? IS NULL AND sku IS NULL)"""
-            cursor.execute(update_query, (name, price, cost, sku, category, barcode, barcode, sku, sku))
+                            SET barcode=?, name=?, price=?, cost=?, sku=?, category=?
+                            WHERE item_id=?"""
+            cursor.execute(update_query, (barcode, name, price, cost, sku, category, item_id))
 
             if cursor.rowcount == 0:
-                print("No item found with barcode and SKU:", barcode, sku)
-                alternative_query = """UPDATE items
-                                    SET barcode=?, cost=?, sku=?, category=?
-                                    WHERE name=? AND price=?"""
-                cursor.execute(alternative_query, (barcode, cost, sku, category, name, price))
-
-                if cursor.rowcount == 0:
-                    print("No item found with provided identifiers:", name, price)
-                    return False
+                print("No item found with UUID:", item_id)
+                return False
 
             conn.commit()
             item_details = {
-                'barcode': barcode,
+                'item_id': item_id,  # Include item_id in the item_details for completeness
                 'name': name,
                 'price': price,
                 'cost': cost,
@@ -203,7 +201,8 @@ class DatabaseManager:
                     'cost': row[3],
                     'sku': row[4],
                     'category': row[5],
-                    'parent_barcode': row[6]
+                    'item_id': row[6],
+                    'parent_barcode': row[7]
                 }
                 items.append(item_details)
 
@@ -214,31 +213,47 @@ class DatabaseManager:
 
         return items
 
-    def get_item_details(self, barcode, dupe=False, name=None):
+    def get_item_details(self, item_id="", name="", price=0.0):
+        conn = None
         try:
             conn = self._get_connection()
             cursor = conn.cursor()
 
-
-            if dupe and name is not None:
-                query = "SELECT name, price FROM items WHERE barcode = ? AND name = ?"
-                cursor.execute(query, (barcode, name))
+            item_details = None
+            # Determine the query based on the provided arguments
+            if item_id:
+                query = "SELECT name, price, barcode, cost, sku, category, parent_barcode FROM items WHERE item_id = ?"
+                cursor.execute(query, (item_id,))
+            elif name and price:
+                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE name = ? AND price = ?"
+                cursor.execute(query, (name, price))
             else:
-                query = "SELECT name, price FROM items WHERE barcode = ?"
-                cursor.execute(query, (barcode,))
+                print("[DatabaseManager]: get_item_details requires either item_id or both name and price.")
+                return None
 
             item = cursor.fetchone()
 
-
-            return item
+            if item:
+                print(f"\n\n\n\n{item}")
+                item_details = {
+                    'name': item[0],
+                    'price': item[1],
+                    'barcode': item[2],
+                    'cost': item[3],
+                    'sku': item[4],
+                    'category': item[5],
+                    'item_id': item[6],
+                    'parent_barcode': item[7]
+                }
         except Exception as e:
-
             print(f"[DatabaseManager]: get_item_details\n {e}")
-            return None
         finally:
-
             if conn:
                 conn.close()
+
+        return item_details
+
+
 
 
 
@@ -415,7 +430,7 @@ class DatabaseManager:
         cursor = conn.cursor()
         try:
             cursor.execute(
-                "SELECT barcode, name, price, cost, sku, category, parent_barcode FROM items"
+                "SELECT barcode, name, price, cost, sku, category, item_id, parent_barcode FROM items"
             )
             items = cursor.fetchall()
         except sqlite3.Error as e:
