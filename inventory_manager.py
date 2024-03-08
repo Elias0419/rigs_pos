@@ -47,10 +47,23 @@ class InventoryManagementView(BoxLayout):
     def handle_scanned_barcode(self, barcode):
         barcode = barcode.strip()
         items = self.database_manager.get_all_items()
+
         if any(item[0] == barcode for item in items):
             Clock.schedule_once(lambda dt: self.update_search_input(barcode), 0.1)
         else:
-            self.app.popup_manager.open_inventory_item_popup(barcode)
+
+            found = False
+            for item in items:
+
+                if item[0][1:] == barcode:
+
+                    Clock.schedule_once(lambda dt: self.update_search_input(item[0]), 0.1)
+                    found = True
+                    break
+
+            if not found:
+
+                self.app.popup_manager.open_inventory_item_popup(barcode)
 
     def handle_scanned_barcode_item(self, barcode):
         barcode = barcode.strip()
