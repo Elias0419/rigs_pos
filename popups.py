@@ -1206,7 +1206,7 @@ class PopupManager:
         self.custom_item_popup = FocusPopup(
             title="Custom Item",
             content=self.custom_item_popup_layout,
-            size_hint=(0.6, 0.6),
+            size_hint=(0.4, 0.6),
             on_dismiss=lambda x: setattr(self.cash_input, "text", ""),
         )
         self.custom_item_popup.focus_on_textinput(self.cash_input)
@@ -1352,22 +1352,24 @@ class PopupManager:
             btn.disabled = i >= len(common_amounts)
             keypad_layout.add_widget(btn)
 
-        custom_cash_button = Button(
-            text="Custom",
+        custom_cash_button = MDFlatButton(
+            text=f"[b][size=20]Custom[/size][/b]",
             on_press=self.open_custom_cash_popup,
             size_hint=(0.4, 0.8),
+            md_bg_color="grey"
         )
 
         confirm_button = self.app.utilities.create_md_raised_button(
-            f"[b]Confirm[/b]",
+            f"[b][size=20]Confirm[/size][/b]",
             self.app.order_manager.on_cash_confirm,
             (0.4, 0.8),
         )
 
-        cancel_button = Button(
-            text="Cancel",
+        cancel_button = MDFlatButton(
+            text=f"[b][size=20]Cancel[/size][/b]",
             on_press=self.app.utilities.on_cash_cancel,
             size_hint=(0.4, 0.8),
+            md_bg_color="grey"
         )
 
         other_buttons.add_widget(confirm_button)
@@ -1379,7 +1381,7 @@ class PopupManager:
         self.cash_popup = Popup(
             title="Amount Tendered",
             content=self.cash_popup_layout,
-            size_hint=(0.6, 0.8),
+            size_hint=(0.4, 0.6),
         )
         self.cash_popup.open()
 
