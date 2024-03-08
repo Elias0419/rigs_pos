@@ -56,7 +56,7 @@ class Utilities:
         return amounts
 
     def update_clock(self, *args):
-        self.app.clock_label.text = time.strftime("%I:%M %p\n%A\n%B %d, %Y\n")
+        self.app.clock_label.text = f"[size=26][b]{time.strftime('%I:%M %p %A %B %d, %Y')}[/b][/size]"
         self.app.clock_label.color = self.get_text_color()
 
     def update_lockscreen_clock(self, *args):

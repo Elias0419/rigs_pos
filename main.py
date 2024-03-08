@@ -80,7 +80,7 @@ class CashRegisterApp(MDApp):
         self.financial_summary = FinancialSummaryWidget(self)
         self.order_manager = OrderManager(self)
         self.history_manager = HistoryView(self)
-        self.order_history_popup = OrderManager(self)
+
         self.history_popup = HistoryPopup()
 
         self.inventory_manager = InventoryManagementView()
@@ -96,7 +96,7 @@ class CashRegisterApp(MDApp):
         self.wrapper = Wrapper(self)
         self.categories = self.utilities.initialize_categories()
         self.barcode_cache = self.utilities.initialize_barcode_cache()
-        blank = BoxLayout(size_hint_y=0.01)
+        blank = BoxLayout(size_hint_y=0.01, size_hint_x= 0.6)
         blank2 = BoxLayout(size_hint_y=0.01)
         blank3 = BoxLayout(size_hint_y=0.01)
         main_layout = GridLayout(
@@ -116,7 +116,7 @@ class CashRegisterApp(MDApp):
             spacing=5,
             row_default_height=60,
             row_force_default=True,
-            size_hint_x=1 / 3,
+            size_hint_x=1 / 2,
         )
         clock_layout = self.create_clock_layout()
         top_area_layout.add_widget(clock_layout)
@@ -208,33 +208,40 @@ class CashRegisterApp(MDApp):
         return base_layout
 
     def create_clock_layout(self):
-        clock_layout = GridLayout(orientation="tb-lr",rows=3, size_hint_x=1 / 3, size_hint_y=1, padding=(100,0,0,100))
+        clock_layout = GridLayout(orientation="tb-lr",rows=4, size_hint_x=0.75, size_hint_y=1, padding=(120,0,0,0))
         top_container = BoxLayout(orientation="vertical", size_hint_y=None, height=100)
         _nothing = BoxLayout(size_hint_y=1)
+        logo_container = BoxLayout(size_hint_y=0.2, padding=(-100,0,0,0))
+        logo = Image(source="images/rigs_logo_scaled.png")
+        logo_container.add_widget(logo)
         register_text = MDLabel(
             text="Cash Register",
             size_hint_y=None,
             font_style="H6",
             height=50,
-            valign="top",
+            valign="bottom",
             halign="center",
         )
         blank_space = MDLabel(
             text="", size_hint_y=1, height=450, valign="top", halign="center"
         )
-
+        clock_container = BoxLayout(size_hint_y=0.15)
         self.clock_label = MDLabel(
             text="Loading...",
             size_hint_y=None,
-            font_style="H6",
-            height=80,
+            #font_style="H6",
+            height=150,
+            size_hint_x=1,
             color=self.utilities.get_text_color(),
+            markup=True,
+            valign="bottom",
             #halign="center",
         )
+        clock_container.add_widget(self.clock_label)
         line_container = MDBoxLayout(
             orientation="horizontal",  height=1, size_hint_y=None,
         )
-        blue_line = MDBoxLayout(size_hint_x=0.2)
+        blue_line = MDBoxLayout(size_hint_x=0.4)
         blue_line.md_bg_color = (0.56, 0.56, 1, 1)
         blank_line = MDBoxLayout(size_hint_x=0.2)
         blank_line.md_bg_color = (0, 0, 0, 0)
@@ -253,9 +260,11 @@ class CashRegisterApp(MDApp):
         top_container.add_widget(line_container)
         clock_layout.add_widget(top_container)
         clock_layout.add_widget(_nothing)
+        clock_layout.add_widget(logo_container)
+
 
         Clock.schedule_interval(self.utilities.update_clock, 1)
-        clock_layout.add_widget(self.clock_label)
+        clock_layout.add_widget(clock_container)
         return clock_layout
 
     # def create_clock_layout(self):
