@@ -491,14 +491,13 @@ class PopupManager:
     def inventory_item_short_details(self, item_id):
 
         item_details = self.app.db_manager.get_item_details(item_id=item_id)
-        layout = BoxLayout()
-        content = MDLabel(text=f"{item_details}")
+        layout = BoxLayout(orientation="vertical")
+        content = MDLabel(text=f"{item_details['name']}\nPrice: {item_details['price']}\nCost: {item_details['cost']}\n{item_details['sku']}")
+        popup = Popup(content=layout, size_hint=(0.2,0.4))
+        button = Button(text="Dismiss", on_press=lambda x: popup.dismiss())
         layout.add_widget(content)
-        popup = Popup(content=layout, size_hint=(0.4,0.4))
+        layout.add_widget(button)
         popup.open()
-
-
-
 
 
     def close_item_popup(self):
