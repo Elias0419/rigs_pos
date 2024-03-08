@@ -204,8 +204,7 @@ class InventoryManagementRow(BoxLayout):
                 )
             except Exception as e:
                 print(e)
-        else:
-            print("Item not found or unable to fetch UUID for the given barcode.")
+
 
 class InventoryRow(BoxLayout):
     barcode = StringProperty()
@@ -220,10 +219,12 @@ class InventoryRow(BoxLayout):
         self.bind(price=self.update_formatted_price)
         self.bind(name=self.update_formatted_name)
         self.order_manager = OrderManager(None)
+        self.spacing = 5
+        self.padding = 5
         self.app = App.get_running_app()
 
     def update_formatted_name(self, instance, name):
-        formatted_name = f"[b]{name}[/b]" if name else "[b][/b]"
+        formatted_name = f"[b][size=20]{name}[/size][/b]" if name else "[b][/b]"
         self.formatted_name = formatted_name
 
     def update_formatted_price(self, instance, value):
@@ -252,7 +253,8 @@ class InventoryView(BoxLayout):
         super(InventoryView, self).__init__(**kwargs)
         self.order_manager = order_manager
         self.pos_hint = {"top": 1}
-
+        self.spacing = 5
+        self.padding = 10
     def show_inventory(self, inventory_items):
         self.full_inventory = inventory_items
         data = self.generate_data_for_rv(inventory_items)
