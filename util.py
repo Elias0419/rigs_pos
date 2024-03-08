@@ -7,13 +7,14 @@ import random
 
 import dbus
 from kivy.clock import Clock
-from kivymd.uix.button import MDRaisedButton
+from kivymd.uix.button import MDRaisedButton, MDFlatButton
 from kivy.uix.textinput import TextInput
 from open_cash_drawer import open_cash_drawer
 from barcode.upc import UniversalProductCodeA as upc_a
 from kivy.core.window import Window
 from receipt_printer import ReceiptPrinter
-
+from kivymd.uix.boxlayout import BoxLayout
+from kivymd.uix.label import MDLabel
 class Utilities:
     def __init__(self, ref):
         self.app = ref
@@ -114,30 +115,43 @@ class Utilities:
             item_total_price = item_info["total_price"]
             item_discount = item_info.get("discount", {"amount": 0, "percent": False})
             price_times_quantity = price * item_quantity
+
+            # Create the display text for item and price
             if item_quantity > 1:
                 if float(item_discount["amount"]) > 0:
-                    item_display_text = f"{item_name} x{item_quantity} ${price_times_quantity:.2f}\n - {float(item_discount['amount']):.2f} = ${item_total_price:.2f}"
+                    item_display_text = f"{item_name} x{item_quantity}"
+                    price_display_text = f"${price_times_quantity:.2f} - {float(item_discount['amount']):.2f} = ${item_total_price:.2f}"
                 else:
-                    item_display_text = (
-                        f"{item_name} x{item_quantity} ${item_total_price:.2f}"
-                    )
-
+                    item_display_text = f"{item_name} x{item_quantity}"
+                    price_display_text = f"${item_total_price:.2f}"
             else:
                 if float(item_discount["amount"]) > 0:
-                    item_display_text = f"{item_name} ${price_times_quantity:.2f}\n - {float(item_discount['amount']):.2f} = ${item_total_price:.2f}"
+                    item_display_text = f"{item_name}"
+                    price_display_text = f"${price_times_quantity:.2f} - {float(item_discount['amount']):.2f} = ${item_total_price:.2f}"
                 else:
-                    item_display_text = f"{item_name} ${item_total_price:.2f}"
-            item_button = MDRaisedButton(
-                text=item_display_text,
-                size_hint=(0.1, 0.1),
-                halign="center",
-                valign="center",
-            )
-            item_button.bind(
-                on_press=lambda x, item_id=item_id: self.app.popup_manager.show_item_details_popup(
-                    item_id
-                )
-            )
+                    item_display_text = f"{item_name}"
+                    price_display_text = f"${item_total_price:.2f}"
+
+            # Create a BoxLayout to contain the item name and price
+            item_layout = BoxLayout(orientation='horizontal', size_hint=(1,1))
+
+            # Add the item name label to the layout
+            item_label = MDLabel(text=f"[size=20]{item_display_text}[/size]")
+            item_layout.add_widget(item_label)
+
+            # Add a flexible spacer widget to push the price to the right
+            spacer = MDLabel(size_hint_x=1)
+            item_layout.add_widget(spacer)
+
+            # Add the price label to the layout
+            price_label = MDLabel(text=f"[size=20]{price_display_text}[/size]")
+            item_layout.add_widget(price_label)
+
+            # Wrap the layout in a button for interaction
+            item_button = MDFlatButton(size_hint=(1,1))
+            item_button.add_widget(item_layout)
+            item_button.bind(on_press=lambda x, item_id=item_id: self.app.popup_manager.show_item_details_popup(item_id))
+
             self.app.order_layout.add_widget(item_button)
 
     def update_financial_summary(self):

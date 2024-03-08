@@ -2102,7 +2102,7 @@ class FocusPopup(Popup):
             self.textinput_to_focus.focus = True
 
 
-class FinancialSummaryWidget(MDRaisedButton):
+class FinancialSummaryWidget(MDFlatButton):
     _instance = None
 
     def __new__(cls, *args, **kwargs):
@@ -2117,17 +2117,24 @@ class FinancialSummaryWidget(MDRaisedButton):
             self.size_hint_y = None
             self.size_hint_x = 1
             self.height = 80
-            self.orientation = "vertical"
+            self.text_size= self.width, None
+            self.halign = "right"
             self.order_mod_popup = None
             print(self)
             self._initialized = True
+            self.text = (
+            f"[size=20]Subtotal: $0.00\n"
+            f"Discount: $0.00\n"
+            f"Tax: $0.00\n[/size]"
+            f"[size=32]Total: [b]$0.00[/b][/size]"
+        )
 
     def update_summary(self, subtotal, tax, total_with_tax, discount):
         self.text = (
             f"[size=20]Subtotal: ${subtotal:.2f}\n"
             f"Discount: ${discount:.2f}\n"
-            f"Tax: ${tax:.2f}\n\n[/size]"
-            f"[size=24]Total: [b]${total_with_tax:.2f}[/b][/size]"
+            f"Tax: ${tax:.2f}\n[/size]"
+            f"[size=32]Total: [b]${total_with_tax:.2f}[/b][/size]"
         )
 
     def on_press(self):
