@@ -214,7 +214,7 @@ class DatabaseManager:
         return items
 
     def get_item_details(self, item_id="", name="", price=0.0):
-        print("get_item_details", item_id)
+
         conn = None
         try:
             conn = self._get_connection()
@@ -235,7 +235,7 @@ class DatabaseManager:
             item = cursor.fetchone()
 
             if item:
-                print(f"\n\n\n\n{item}")
+
                 item_details = {
                     'name': item[0],
                     'price': item[1],
