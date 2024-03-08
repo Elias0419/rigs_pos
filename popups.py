@@ -2120,6 +2120,12 @@ class FinancialSummaryWidget(MDFlatButton):
             self.height = 80
             self.orientation = "vertical"
             self.order_mod_popup = None
+            self.text = (
+            f"[size=20]Subtotal: $0.00\n"
+            f"Discount: $0.00\n"
+            f"Tax: $0.00\n\n[/size]"
+            f"[size=24]Total: [b]$0.00[/b][/size]"
+        )
             #print(self)
             self._initialized = True
 
