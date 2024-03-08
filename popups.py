@@ -1266,7 +1266,7 @@ class PopupManager:
         items_and_totals_layout.add_widget(totals_layout)
         popup_layout.add_widget(items_and_totals_layout)
 
-        buttons_layout = GridLayout(orientation="tb-lr", spacing=5, cols=1, rows=5)
+        buttons_layout = GridLayout(orientation="tb-lr", spacing=5, padding=5, cols=1, rows=5, size_hint_x=1 / 3)
 
         btn_pay_cash = self.app.utilities.create_md_raised_button(
             f"[b][size=20]Pay Cash[/b][/size]",
@@ -1310,7 +1310,7 @@ class PopupManager:
         self.finalize_order_popup = Popup(
             title=f"Finalize Order - {order_details['order_id']}",
             content=popup_layout,
-            size_hint=(0.6, 0.8),
+            size_hint=(0.4, 0.6),
         )
         self.finalize_order_popup.open()
 
