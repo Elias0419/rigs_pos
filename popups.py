@@ -482,7 +482,12 @@ class PopupManager:
         item_popup_layout.add_widget(cancel_button_layout)
 
         self.item_popup = Popup(
-            title="Item Details", content=item_popup_layout, size_hint=(0.4, 0.4)
+            title="",
+            content=item_popup_layout,
+            size_hint=(0.4, 0.4),
+            background="images/transparent.png",
+            background_color=(0, 0, 0, 0),
+            separator_height=0,
         )
         self.item_popup.open()
 
@@ -515,7 +520,7 @@ class PopupManager:
         self.discount_item_popup = Popup(
             title="Add Discount",
             content=discount_item_popup_layout,
-            size_hint=(0.6, 0.8),
+            size_hint=(0.2, 0.6),
         )
 
         discounts = [
@@ -575,19 +580,21 @@ class PopupManager:
     def custom_add_item_discount_popup(self, item_id, instance=None):
 
         discount_popup_layout = BoxLayout(orientation="vertical", spacing=10)
-        self.discount_popup = Popup(
-            title="Add Discount",
-            content=discount_popup_layout,
-            size_hint=(0.8, 0.8),
-        )
+
         self.discount_amount_input = TextInput(
             text="",
-            disabled=True,
+            #disabled=True,
             multiline=False,
             input_filter="float",
             font_size=30,
             size_hint_y=None,
             height=50,
+        )
+        self.discount_popup = self.create_focus_popup(
+            title="Add Discount",
+            content=discount_popup_layout,
+            size_hint=(0.2, 0.4),
+            textinput=self.discount_amount_input
         )
         discount_popup_layout.add_widget(self.discount_amount_input)
 
