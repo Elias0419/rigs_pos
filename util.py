@@ -116,7 +116,6 @@ class Utilities:
             item_discount = item_info.get("discount", {"amount": 0, "percent": False})
             price_times_quantity = price * item_quantity
 
-            # Create the display text for item and price
             if item_quantity > 1:
                 if float(item_discount["amount"]) > 0:
                     item_display_text = f"{item_name} x{item_quantity}"
@@ -132,22 +131,17 @@ class Utilities:
                     item_display_text = f"{item_name}"
                     price_display_text = f"${item_total_price:.2f}"
 
-            # Create a BoxLayout to contain the item name and price
             item_layout = BoxLayout(orientation='horizontal', size_hint=(1,1))
 
-            # Add the item name label to the layout
             item_label = MDLabel(text=f"[size=20]{item_display_text}[/size]")
             item_layout.add_widget(item_label)
 
-            # Add a flexible spacer widget to push the price to the right
             spacer = MDLabel(size_hint_x=1)
             item_layout.add_widget(spacer)
 
-            # Add the price label to the layout
             price_label = MDLabel(text=f"[size=20]{price_display_text}[/size]")
             item_layout.add_widget(price_label)
 
-            # Wrap the layout in a button for interaction
             item_button = MDFlatButton(size_hint=(1,1))
             item_button.add_widget(item_layout)
             item_button.bind(on_press=lambda x, item_id=item_id: self.app.popup_manager.show_item_details_popup(item_id))
