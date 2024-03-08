@@ -214,13 +214,14 @@ class DatabaseManager:
         return items
 
     def get_item_details(self, item_id="", name="", price=0.0):
+        print("get_item_details", item_id)
         conn = None
         try:
             conn = self._get_connection()
             cursor = conn.cursor()
 
             item_details = None
-            # Determine the query based on the provided arguments
+
             if item_id:
                 query = "SELECT name, price, barcode, cost, sku, category, parent_barcode FROM items WHERE item_id = ?"
                 cursor.execute(query, (item_id,))
@@ -242,9 +243,14 @@ class DatabaseManager:
                     'cost': item[3],
                     'sku': item[4],
                     'category': item[5],
-                    'item_id': item[6],
-                    'parent_barcode': item[7]
                 }
+
+                if item_id:
+                    item_details['parent_barcode'] = item[6]
+                else:
+                    item_details['item_id'] = item[6]
+                    item_details['parent_barcode'] = item[7]
+
         except Exception as e:
             print(f"[DatabaseManager]: get_item_details\n {e}")
         finally:

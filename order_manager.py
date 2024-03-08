@@ -56,8 +56,16 @@ class OrderManager:
         self.update_tax_amount()
         self._update_total_with_tax()
 
+    def get_item_id(self, item_name, item_price):
+
+        item_details = self.app.db_manager.get_item_details(name=item_name, price=item_price)
+        item_id = item_details["item_id"]
+
+        return item_id
+
+
     def add_item(self, item_name, item_price):
-        item_id = str(uuid.uuid4())
+        item_id = self.get_item_id(item_name, item_price)
 
         existing_item = next(
             (

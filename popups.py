@@ -31,6 +31,7 @@ from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.textfield import MDTextField
 from kivy.utils import get_color_from_hex
 from kivymd.toast import toast
+from kivy.uix.anchorlayout import AnchorLayout
 
 
 class PopupManager:
@@ -193,6 +194,7 @@ class PopupManager:
     def open_category_button_popup(self):
         category_button_popup = self.create_category_popup()
         category_button_popup.open()
+
 
     def inventory_item_popup_row(self, instance):
 
@@ -385,74 +387,119 @@ class PopupManager:
         self.add_or_bypass_popup.open()
 
     def show_item_details_popup(self, item_id):
+
+        print("show_item_details_popup",item_id)
         item_info = self.app.order_manager.items.get(item_id)
         if item_info:
             item_name = item_info["name"]
             item_quantity = item_info["quantity"]
             item_price = item_info["total_price"]
+            original_price = item_price / item_quantity
             item_discount = item_info.get("discount", {"amount": 0, "percent": False})
-        item_popup_layout = GridLayout(rows=3, size_hint=(0.8, 0.8))
-        details_layout = BoxLayout(orientation="vertical")
-        try:
-            details_layout.add_widget(
-                Label(text=f"Name: {item_name}\nPrice: ${item_price}")
-            )
-        except Exception as e:
-            print("Error in popups.py show_item_details_popup", e)
-        item_popup_layout.add_widget(details_layout)
+        item_popup_layout = GridLayout(rows=3, cols=3, orientation="lr-tb", size_hint=(1, 1), spacing=5, padding=10)
+        details_layout = BoxLayout(orientation="vertical",size_hint=(1,1))
+        _blank = BoxLayout(size_hint=(1,1),)
+        _blank2 = BoxLayout(size_hint=(1,1),)
 
-        quantity_layout = BoxLayout(
+        details_text = MDLabel(text=f"[size=20]{item_name}\n\n${original_price} x {item_quantity} = ${item_price:.2f}[/size]",size_hint=(1,1), halign="center")
+        details_button = MDFlatButton(text="",size_hint=(1,1), md_bg_color="grey", on_press=lambda x: self.inventory_item_short_details(item_id))
+        details_button.add_widget(details_text)
+        details_layout.add_widget(details_button)
+
+
+        minus_container = AnchorLayout(anchor_x='center', anchor_y='center')
+        minus_button = MDFlatButton(
+                text=f"[size=100]-[/size]",
+                on_press=lambda x: self.app.order_manager.adjust_item_quantity_in(item_id, -1),
+            )
+        minus_container.add_widget(
+            minus_button
+        )
+
+        quantity_container = AnchorLayout(anchor_x='center', anchor_y='center')
+        quantity_label = MDLabel(text=f"[size=30]{str(item_quantity)}[/size]", halign="center", valign="center")
+        quantity_container.add_widget(quantity_label)
+
+
+        plus_container = AnchorLayout(anchor_x='center', anchor_y='center')
+        plus_button =  MDFlatButton(
+                #icon = "plus",
+                text=f"[size=75]+[/size]",
+                on_press = lambda x: self.app.order_manager.adjust_item_quantity_in(item_id, 1),
+                #pos_hint={}
+                # center_x=0.5,
+                # center_y=0.5,
+            )
+        plus_container.add_widget(
+           plus_button
+        )
+
+
+        dicount_button_layout = BoxLayout(
             orientation="horizontal",
-            size_hint_y=None,
-            height="48dp",
+            size_hint=(1,1),
         )
-        quantity_layout.add_widget(
+        dicount_button_layout.add_widget(
             self.app.utilities.create_md_raised_button(
-                "-",
-                lambda x: self.app.order_manager.adjust_item_quantity_in(item_id, -1),
-            )
-        )
-        quantity_layout.add_widget(Label(text=str(item_quantity)))
-        quantity_layout.add_widget(
-            self.app.utilities.create_md_raised_button(
-                "+",
-                lambda x: self.app.order_manager.adjust_item_quantity_in(item_id, 1),
-            )
-        )
-        item_popup_layout.add_widget(quantity_layout)
-
-        buttons_layout = BoxLayout(
-            orientation="horizontal", spacing=5, size_hint_y=None, size_hint_x=1
-        )
-        buttons_layout.add_widget(
-            self.app.utilities.create_md_raised_button(
-                "Add Discount",
+                f"[b][size=20]Add Discount[/size][/b]",
                 lambda x, item_id=item_id: self.open_add_discount_popup(item_id),
                 # self.add_discount_popup,
                 (1, 0.4),
             )
         )
 
-        buttons_layout.add_widget(
+        remove_button_layout = BoxLayout(
+            orientation="horizontal", size_hint=(1,1),
+        )
+
+        remove_button_layout.add_widget(
             self.app.utilities.create_md_raised_button(
-                "Remove Item",
+                f"[b][size=20]Remove Item[/size][/b]",
                 lambda x: self.app.order_manager.remove_item_in(item_name, item_price),
                 (1, 0.4),
             )
         )
-        buttons_layout.add_widget(
+
+        cancel_button_layout = BoxLayout(
+            orientation="horizontal", size_hint=(1,1),
+        )
+        cancel_button_layout.add_widget(
             Button(
                 text="Cancel",
                 size_hint=(1, 0.4),
                 on_press=lambda x: self.close_item_popup(),
             )
         )
-        item_popup_layout.add_widget(buttons_layout)
+
+        item_popup_layout.add_widget(_blank)
+        item_popup_layout.add_widget(details_layout)
+        item_popup_layout.add_widget(_blank2)
+        item_popup_layout.add_widget(minus_container)
+        item_popup_layout.add_widget(quantity_container)
+        item_popup_layout.add_widget(plus_container)
+        item_popup_layout.add_widget(dicount_button_layout)
+        item_popup_layout.add_widget(remove_button_layout)
+        item_popup_layout.add_widget(cancel_button_layout)
 
         self.item_popup = Popup(
             title="Item Details", content=item_popup_layout, size_hint=(0.4, 0.4)
         )
         self.item_popup.open()
+
+
+
+    def inventory_item_short_details(self, item_id):
+
+        item_details = self.app.db_manager.get_item_details(item_id=item_id)
+        layout = BoxLayout()
+        content = MDLabel(text=f"{item_details}")
+        layout.add_widget(content)
+        popup = Popup(content=layout, size_hint=(0.4,0.4))
+        popup.open()
+
+
+
+
 
     def close_item_popup(self):
         if self.item_popup:
@@ -1927,7 +1974,6 @@ class PopupManager:
         error_popup.open()
 
     def open_inventory_item_popup(self, barcode=None):
-
         self.app.current_context = "inventory_item"
 
         content = BoxLayout(orientation="vertical", padding=10)
