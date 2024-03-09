@@ -457,6 +457,22 @@ class DatabaseManager:
         conn.close()
         return exists
 
+    def get_all_distrib(self):
+
+        conn = self._get_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        query = 'SELECT * FROM distributor_info'
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+
+        distributors = {row['id']: {'name': row['name'], 'contact_info': row['contact_info'], 'item_name': row['item_name'], 'item_id': row['item_id'], 'price': row['price'], 'notes': row['notes']} for row in rows}
+
+        conn.close()
+        return distributors
+
+
 
 
 

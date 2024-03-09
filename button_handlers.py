@@ -1,6 +1,5 @@
 import sys
 import re
-
 from open_cash_drawer import open_cash_drawer
 
 
@@ -31,7 +30,8 @@ class ButtonHandler:
         self.app.calculator.show_calculator_popup()
 
     def show_distrib(self):
-        self.app.distrib_manager.show_distrib_manager()
+
+        self.app.dist_popup.show_dist_reporting_popup()
 
     def on_tool_button_press(self, instance):
         tool_actions = {
