@@ -389,7 +389,7 @@ class Utilities:
 
 
         except Exception as e:
-            print(f"Exception in check_inactivity\n{e}")
+            #print(f"Exception in check_inactivity\n{e}")
             pass
 
     # def check_inactivity(self, *args):
@@ -432,7 +432,7 @@ class Utilities:
         )
 
         if method == "Cash":
-            print("method", method)
+
             self.app.popup_manager.show_split_cash_popup(amount)
             self.app.popup_manager.split_payment_numeric_popup.dismiss()
         elif method == "Debit":
