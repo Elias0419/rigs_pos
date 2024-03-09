@@ -32,7 +32,9 @@ from kivymd.uix.textfield import MDTextField
 from kivy.utils import get_color_from_hex
 from kivymd.toast import toast
 from kivy.uix.anchorlayout import AnchorLayout
+from kivymd.uix.floatlayout import MDFloatLayout
 
+from kivymd.uix.card import MDCard
 
 class PopupManager:
     def __init__(self, ref):
@@ -1449,57 +1451,74 @@ class PopupManager:
         self.custom_cash_popup.open()
 
     def show_payment_confirmation_popup(self):
-        confirmation_layout = BoxLayout(
-            orientation="vertical",
-            size_hint=(1, 1),
-            spacing=5,
-            padding=5
-        )
+
+        confirmation_layout = MDFloatLayout(size_hint=(1, 1))
+
+
         total_with_tax = self.app.order_manager.calculate_total_with_tax()
         order_details = self.app.order_manager.get_order_details()
-        order_summary = "Order Complete:\n\n"
 
+
+        order_summary = "Order Complete:\n\n"
         for item_id, item_details in self.app.order_manager.items.items():
             item_name = item_details["name"]
             quantity = item_details["quantity"]
-            total_price_for_item = item_details["total_price"]
-
-            try:
-                total_price_float = float(total_price_for_item)
-            except ValueError as e:
-                print(e)
-                continue
-
             order_summary += f"{item_name} x{quantity}\n"
 
-        confirmation_layout.add_widget(Label(text=order_summary, size_hint=(0.5, 0.9)))
-        confirmation_layout.add_widget(
-            MDLabel(
-                text=f"[b]${total_with_tax:.2f} Paid With {order_details['payment_method']}[/b]",
-                size_hint_y=0.2,
-                halign="center",
-            )
-        )
-        button_layout = BoxLayout(orientation="vertical", spacing=5, size_hint=(1, 0.4))
-        done_button = self.app.utilities.create_md_raised_button(
-            f"[size=20][b]Done[/b][/size]",
-            self.app.button_handler.on_done_button_press,
-            (1, 1),
+
+        card = MDCard(
+            orientation="vertical",
+            size_hint=(0.8, 0.8),
+            pos_hint={"center_x": 0.5, "center_y": 0.5},
+            spacing=10,
+            padding=10
         )
 
-        receipt_button = self.app.utilities.create_md_raised_button(
-            f"[size=20][b]Print Receipt[/b][/size]",
-            self.app.button_handler.on_receipt_button_press,
-            (1, 1),
+        # Add widgets to the card
+        card.add_widget(MDLabel(
+            text=order_summary,
+            halign="center",
+            theme_text_color="Secondary"
+        ))
+
+        card.add_widget(MDLabel(
+            text=f"[b]${total_with_tax:.2f} Paid With {order_details['payment_method']}[/b]",
+            halign="center",
+            theme_text_color="Primary",
+            markup=True
+        ))
+
+
+        button_layout = MDFloatLayout(size_hint_y=0.3)
+        done_button = MDRaisedButton(
+            text="[size=20][b]Done[/b][/size]",
+            on_release=self.app.button_handler.on_done_button_press,
+            pos_hint={"center_x": 0.25, "center_y": 0.5},
+            size_hint=(0.45, 1),
+            markup=True
         )
 
+        receipt_button = MDRaisedButton(
+            text="[size=20][b]Print Receipt[/b][/size]",
+            on_release=self.app.button_handler.on_receipt_button_press,
+            pos_hint={"center_x": 0.75, "center_y": 0.5},
+            size_hint=(0.45, 1),
+            markup=True
+        )
+
+        card.add_widget(button_layout)
         button_layout.add_widget(done_button)
         button_layout.add_widget(receipt_button)
-        confirmation_layout.add_widget(button_layout)
+
+
+        confirmation_layout.add_widget(card)
+
+
         self.payment_popup = Popup(
             title="Payment Confirmation",
             content=confirmation_layout,
-            size_hint=(0.4, 0.8),
+            size_hint=(None, None),
+            size=("500dp", "800dp"),
             auto_dismiss=False,
         )
         self.finalize_order_popup.dismiss()
