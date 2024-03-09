@@ -1222,59 +1222,61 @@ class PopupManager:
     def show_order_popup(self, order_summary):
 
         order_details = self.app.order_manager.get_order_details()
-        popup_layout = GridLayout(orientation="lr-tb", spacing=5, cols=2, rows=1)
-        items_and_totals_layout = GridLayout(
-            orientation="tb-lr", spacing=5, cols=1, rows=3
-        )
-        items_layout = BoxLayout(
-            orientation="vertical",
+        popup_layout = GridLayout(orientation="tb-lr", spacing=5, padding=5, cols=2, rows=2)
+
+        items_layout = GridLayout(
+            orientation="lr-tb",
             size_hint_y=1,
+            rows=20,
+            cols=2
         )
 
-        def determine_label_height(text, max_line_length):
 
-            if len(text) > max_line_length:
-                return 40
-            else:
-                return 20
-
-        max_line_length = 42
 
         for item_id, item_details in order_details["items"].items():
-            item_text = f"{item_details['quantity']}x {item_details['name']} - ${item_details['total_price']:.2f}"
-            text_height = determine_label_height(item_text, max_line_length)
+            item_text = f"{item_details['quantity']}x {item_details['name']}"
+            item_price = f"${item_details['total_price']:.2f}"
             item_label = MDLabel(
-                text=item_text, halign="left", size_hint_y=None, height=text_height
+                text=item_text, halign="left", size_hint_x = 7 / 8, size_hint_y = None, height = 40
             )
+            price_label = MDLabel(
+                text=item_price, halign="right", size_hint_x = 1 / 8, size_hint_y = None, height = 40
+                )
             items_layout.add_widget(item_label)
-        items_and_totals_layout.add_widget(items_layout)
-        spacer = Widget(size_hint_y=1)
-        items_and_totals_layout.add_widget(spacer)
-        totals_layout = BoxLayout(size_hint_y=None, height=100, orientation="vertical")
+            items_layout.add_widget(price_label)
+
+
+        totals_container = AnchorLayout(anchor_x="right", size_hint_y=0.1)
+        totals_layout = GridLayout(orientation="tb-lr", rows=4)
         subtotal_label = MDLabel(
-            text=f"Subtotal: ${order_details['subtotal']:.2f}", halign="left"
+            text=f"Subtotal: ${order_details['subtotal']:.2f}", halign="right"
         )
         tax_label = MDLabel(
-            text=f"Tax: ${order_details['tax_amount']:.2f}", halign="left"
+            text=f"Tax: ${order_details['tax_amount']:.2f}", halign="right"
         )
         total_label = MDLabel(
             text=f"[size=25]Total: [b]${order_details['total_with_tax']:.2f}[/b][/size]",
-            halign="left",
+            halign="right",
         )
 
         totals_layout.add_widget(subtotal_label)
         if order_details["discount"] > 0:
             discount_label = MDLabel(
-                text=f"Discount: -${order_details['discount']:.2f}", halign="left"
+                text=f"Discount: -${order_details['discount']:.2f}", halign="right"
             )
             totals_layout.add_widget(discount_label)
+        else:
+            _blank = MDLabel(text="",size_hint_y=None, height=1)
+            totals_layout.add_widget(_blank)
+
         totals_layout.add_widget(tax_label)
         totals_layout.add_widget(total_label)
-        items_and_totals_layout.add_widget(totals_layout)
-        popup_layout.add_widget(items_and_totals_layout)
-
-        buttons_layout = GridLayout(orientation="tb-lr", spacing=5, padding=5, cols=1, rows=5, size_hint_x=1 / 3)
-
+        totals_container.add_widget(totals_layout)
+        # items_and_totals_layout.add_widget(totals_layout)
+        popup_layout.add_widget(items_layout)
+        popup_layout.add_widget(totals_container)
+        buttons_layout_top = GridLayout(orientation="tb-lr", spacing=5, padding=5, cols=1, rows=3, size_hint_x=1 / 3, size_hint_y = 3 / 5)
+        buttons_layout_bottom = GridLayout(orientation="tb-lr", spacing=5, padding=5, cols=1, rows=3, size_hint_x=1 / 3, size_hint_y = 2 / 5)
         btn_pay_cash = self.app.utilities.create_md_raised_button(
             f"[b][size=20]Pay Cash[/b][/size]",
             self.app.button_handler.on_payment_button_press,
@@ -1303,16 +1305,13 @@ class PopupManager:
             on_press=self.app.button_handler.on_payment_button_press,
             size_hint=(0.8, 1),
         )
-        buttons_layout.add_widget(btn_pay_cash)
-        buttons_layout.add_widget(btn_pay_debit)
-        buttons_layout.add_widget(btn_pay_credit)
-        buttons_layout.add_widget(btn_pay_split)
-        buttons_layout.add_widget(btn_cancel)
-        popup_layout.add_widget(buttons_layout)
-
-        bottom_layout = BoxLayout(
-            orientation="vertical", size_hint_y=None, height=90, spacing=5
-        )
+        buttons_layout_top.add_widget(btn_pay_cash)
+        buttons_layout_top.add_widget(btn_pay_debit)
+        buttons_layout_top.add_widget(btn_pay_credit)
+        buttons_layout_bottom.add_widget(btn_pay_split)
+        buttons_layout_bottom.add_widget(btn_cancel)
+        popup_layout.add_widget(buttons_layout_top)
+        popup_layout.add_widget(buttons_layout_bottom)
 
         self.finalize_order_popup = Popup(
             title=f"Finalize Order - {order_details['order_id']}",
@@ -1453,7 +1452,8 @@ class PopupManager:
         confirmation_layout = BoxLayout(
             orientation="vertical",
             size_hint=(1, 1),
-            spacing=10,
+            spacing=5,
+            padding=5
         )
         total_with_tax = self.app.order_manager.calculate_total_with_tax()
         order_details = self.app.order_manager.get_order_details()
@@ -1482,13 +1482,13 @@ class PopupManager:
         )
         button_layout = BoxLayout(orientation="vertical", spacing=5, size_hint=(1, 0.4))
         done_button = self.app.utilities.create_md_raised_button(
-            "Done",
+            f"[size=20][b]Done[/b][/size]",
             self.app.button_handler.on_done_button_press,
             (1, 1),
         )
 
         receipt_button = self.app.utilities.create_md_raised_button(
-            "Print Receipt",
+            f"[size=20][b]Print Receipt[/b][/size]",
             self.app.button_handler.on_receipt_button_press,
             (1, 1),
         )
@@ -1507,15 +1507,15 @@ class PopupManager:
 
     def show_make_change_popup(self, change):
         change_layout = BoxLayout(orientation="vertical", spacing=10)
-        change_layout.add_widget(Label(text=f"Change to return: ${change:.2f}"))
+        change_layout.add_widget(MDLabel(text=f"[size=30]Change to return: [b]${change:.2f}[/b][/size]", halign="center"))
 
         done_button = self.app.utilities.create_md_raised_button(
-            "Done", self.app.utilities.on_change_done, (1, 0.4)
+            f"[size=20][b]Done[/b][/size]", self.app.utilities.on_change_done, (1, 0.4)
         )
         change_layout.add_widget(done_button)
 
         self.change_popup = Popup(
-            title="Change Calculation", content=change_layout, size_hint=(0.6, 0.3)
+            title="Change Calculation", content=change_layout, size_hint=(0.4, 0.4)
         )
         self.change_popup.open()
 
@@ -1532,12 +1532,14 @@ class PopupManager:
         }
         self.show_split_payment_numeric_popup()
 
+
+
     def split_cash_make_change(self, change, amount):
         split_change_layout = BoxLayout(orientation="vertical", spacing=10)
-        split_change_layout.add_widget(Label(text=f"Change to return: ${change:.2f}"))
+        split_change_layout.add_widget(MDLabel(text=f"[size=30]Change to return: [b]${change:.2f}[/b][/size]"))
 
         split_done_button = self.app.utilities.create_md_raised_button(
-            "Done",
+            f"[size=20][b]Done[/b][/size]",
             lambda x: self.app.utilities.split_cash_continue(amount),
             size_hint=(1, 0.4),
             height=50,
@@ -1547,7 +1549,7 @@ class PopupManager:
         self.split_change_popup = Popup(
             title="Change Calculation",
             content=split_change_layout,
-            size_hint=(0.6, 0.3),
+            size_hint=(0.4, 0.4),
         )
         self.split_change_popup.open()
 
@@ -1617,9 +1619,9 @@ class PopupManager:
         self.split_cash_popup = Popup(
             title="Amount Tendered",
             content=self.split_cash_popup_layout,
-            size_hint=(0.8, 0.8),
+            size_hint=(0.4, 0.6),
         )
-        print("End of split cash popup")
+
         self.split_cash_popup.open()
 
     def show_split_cash_confirm(self, amount):
@@ -1687,18 +1689,15 @@ class PopupManager:
         self.split_payment_numeric_popup_layout = BoxLayout(
             orientation="vertical", spacing=10
         )
-        self.split_payment_numeric_popup = Popup(
-            title=f"Split Payment - Remaining Amount: {self.split_payment_info['remaining_amount']:.2f} ",
-            content=self.split_payment_numeric_popup_layout,
-            size_hint=(0.8, 0.8),
-        )
+
         if subsequent_payment:
             self.split_payment_numeric_cash_input = TextInput(
                 text=f"{self.split_payment_info['remaining_amount']:.2f}",
-                disabled=True,
+                hint_text="Enter next payment amount and then choose payment type below",
+                #disabled=True,
                 multiline=False,
                 input_filter="float",
-                font_size=30,
+                font_size=20,
                 size_hint_y=None,
                 height=50,
             )
@@ -1709,16 +1708,24 @@ class PopupManager:
         else:
             self.split_payment_numeric_cash_input = TextInput(
                 text="",
-                disabled=True,
+                hint_text="Enter first payment amount and then choose payment type below",
+                #disabled=True,
                 multiline=False,
                 input_filter="float",
-                font_size=30,
+                font_size=20,
                 size_hint_y=None,
                 height=50,
             )
             self.split_payment_numeric_popup_layout.add_widget(
                 self.split_payment_numeric_cash_input
             )
+
+        self.split_payment_numeric_popup = self.create_focus_popup(
+            title=f"Split Payment - Remaining Amount: {self.split_payment_info['remaining_amount']:.2f} ",
+            content=self.split_payment_numeric_popup_layout,
+            size_hint=(0.4, 0.6),
+            textinput=self.split_payment_numeric_cash_input
+        )
 
         keypad_layout = GridLayout(cols=3, rows=4, spacing=10)
 
@@ -1849,7 +1856,7 @@ class PopupManager:
         self.split_custom_cash_popup = Popup(
             title="Split Custom Cash",
             content=self.split_custom_cash_popup_layout,
-            size_hint=(0.8, 0.8),
+            size_hint=(0.4, 0.6),
         )
         self.split_custom_cash_popup.open()
 
