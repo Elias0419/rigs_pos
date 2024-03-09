@@ -96,17 +96,19 @@ class CashRegisterApp(MDApp):
         self.wrapper = Wrapper(self)
         self.categories = self.utilities.initialize_categories()
         self.barcode_cache = self.utilities.initialize_barcode_cache()
-        blank = BoxLayout(size_hint_y=0.01, size_hint_x= 0.6)
+        blank = BoxLayout(size_hint_y=0.01, size_hint_x= 0.4)
         blank2 = BoxLayout(size_hint_y=0.01)
         blank3 = BoxLayout(size_hint_y=0.01)
         main_layout = GridLayout(
-            cols=1, spacing=5, orientation="tb-lr", row_default_height=60
+            cols=1, spacing=5, orientation="lr-tb", row_default_height=60
         )
+
         top_area_layout = GridLayout(
-            cols=3,
+            cols=4,
             rows=1,
             orientation="lr-tb",
-            row_default_height=60
+            row_default_height=60,
+            size_hint_x=0.95
             )
         right_area_layout=GridLayout(rows=2, orientation="tb-lr", padding=50)
         self.order_layout = GridLayout(
@@ -128,9 +130,14 @@ class CashRegisterApp(MDApp):
         financial_layout.add_widget(financial_button)
         right_area_layout.add_widget(financial_layout)
         top_area_layout.add_widget(right_area_layout)
-
-
+        sidebar = BoxLayout(orientation="vertical", size_hint_x=0.05)
+        lock_icon = MDIconButton(icon="lock")
+        trash_icon = MDIconButton(icon="trash-can")
+        sidebar.add_widget(lock_icon)
+        sidebar.add_widget(trash_icon)
+        top_area_layout.add_widget(sidebar)
         main_layout.add_widget(top_area_layout)
+        #main_layout.add_widget(sidebar)
         button_layout = GridLayout(
             cols=4,
             spacing=5,

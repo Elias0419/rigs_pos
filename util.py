@@ -15,6 +15,8 @@ from kivy.core.window import Window
 from receipt_printer import ReceiptPrinter
 from kivymd.uix.boxlayout import BoxLayout
 from kivymd.uix.label import MDLabel
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.gridlayout import GridLayout
 class Utilities:
     def __init__(self, ref):
         self.app = ref
@@ -118,35 +120,59 @@ class Utilities:
 
             if item_quantity > 1:
                 if float(item_discount["amount"]) > 0:
-                    item_display_text = f"{item_name} x{item_quantity}"
-                    price_display_text = f"${price_times_quantity:.2f} - {float(item_discount['amount']):.2f} = ${item_total_price:.2f}"
+                    item_display_text = f"{item_name}"
+                    price_display_text = f"${price_times_quantity:.2f} - {float(item_discount['amount']):.2f}\n = ${item_total_price:.2f}"
+                    quantity_display_text =  f"{item_quantity}"
                 else:
-                    item_display_text = f"{item_name} x{item_quantity}"
+                    item_display_text = f"{item_name}"
                     price_display_text = f"${item_total_price:.2f}"
+                    quantity_display_text =  f"{item_quantity}"
             else:
                 if float(item_discount["amount"]) > 0:
                     item_display_text = f"{item_name}"
-                    price_display_text = f"${price_times_quantity:.2f} - {float(item_discount['amount']):.2f} = ${item_total_price:.2f}"
+                    price_display_text = f"${price_times_quantity:.2f} - {float(item_discount['amount']):.2f}\n = ${item_total_price:.2f}"
+                    quantity_display_text =  ""
                 else:
                     item_display_text = f"{item_name}"
                     price_display_text = f"${item_total_price:.2f}"
+                    quantity_display_text =  ""
 
-            item_layout = BoxLayout(orientation='horizontal', size_hint=(1,1))
-
+            blue_line = MDBoxLayout(size_hint_x=1, size_hint_y=None,height=1)
+            blue_line.md_bg_color = (0.56, 0.56, 1, 1)
+            blue_line2 = MDBoxLayout(size_hint_x=1, size_hint_y=None,height=1)
+            blue_line2.md_bg_color = (0.56, 0.56, 1, 1)
+            blue_line3 = MDBoxLayout(size_hint_x=1, size_hint_y=None,height=1)
+            blue_line3.md_bg_color = (0.56, 0.56, 1, 1)
+            item_layout = GridLayout(orientation='lr-tb', cols=3, rows=2, size_hint=(1,1))
+            item_label_container = BoxLayout(size_hint_x=None, width=550)
             item_label = MDLabel(text=f"[size=20]{item_display_text}[/size]")
-            item_layout.add_widget(item_label)
+            item_label_container.add_widget(item_label)
+
 
             spacer = MDLabel(size_hint_x=1)
-            item_layout.add_widget(spacer)
+            #item_layout.add_widget(spacer)
+            price_label_container = BoxLayout(size_hint_x=None, width=150)
+            price_label = MDLabel(text=f"[size=20]{price_display_text}[/size]", halign="right")
+            price_label_container.add_widget(price_label)
 
-            price_label = MDLabel(text=f"[size=20]{price_display_text}[/size]")
-            item_layout.add_widget(price_label)
+            quantity_label_container = BoxLayout(size_hint_x=None, width=50)
+            quantity_label = MDLabel(text=f"[size=20]{quantity_display_text}[/size]")
+            quantity_label_container.add_widget(quantity_label)
+
+            item_layout.add_widget(item_label_container)
+            item_layout.add_widget(quantity_label_container)
+            item_layout.add_widget(price_label_container)
+            item_layout.add_widget(blue_line)
+            item_layout.add_widget(blue_line2)
+            item_layout.add_widget(blue_line3)
+
 
             item_button = MDFlatButton(size_hint=(1,1))
             item_button.add_widget(item_layout)
             item_button.bind(on_press=lambda x, item_id=item_id: self.app.popup_manager.show_item_details_popup(item_id))
 
             self.app.order_layout.add_widget(item_button)
+            # self.app.order_layout.add_widget(blue_line)
 
     def update_financial_summary(self):
         subtotal = self.app.order_manager.subtotal
