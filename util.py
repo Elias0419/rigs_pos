@@ -218,9 +218,10 @@ class Utilities:
             )
 
     def initialize_barcode_cache(self):
+
         all_items = self.app.db_manager.get_all_items()
         barcode_cache = {}
-
+        #print(len(barcode_cache))
         for item in all_items:
             barcode = item[0]
             if barcode not in barcode_cache:
@@ -228,7 +229,7 @@ class Utilities:
             else:
                 barcode_cache[barcode]['items'].append(item)
                 barcode_cache[barcode]['is_dupe'] = True  # Mark as duplicate
-
+        print(len(barcode_cache))
         return barcode_cache
 
     def initialize_invetory_cache(self):
