@@ -174,21 +174,25 @@ class BarcodeScanner:
                 return
 
             known_barcodes = self.app.barcode_cache.keys()
+            print(f"handle\n\n\n\n{len(known_barcodes)}")
             found = False
 
             if barcode in known_barcodes:
+                print(f"if\n\n\n\n{len(barcode)}")
                 barcode_data = self.app.barcode_cache.get(barcode)
                 if barcode_data["is_dupe"]:
                     self.app.popup_manager.handle_duplicate_barcodes(barcode)
                     found = True
                     return
                 else:
+                    print(f"else\n\n\n\n{len(barcode)}")
                     item_details = self.app.db_manager.get_item_details(barcode)
                     if item_details:
                         self.process_item_details(item_details)
                         found = True
 
             if not found:
+                print(f"not_found\n\n\n\n")
                 for known_barcode in known_barcodes:
                     if known_barcode[1:] == barcode:
                         barcode_data = self.app.barcode_cache.get(known_barcode)
