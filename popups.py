@@ -1115,7 +1115,7 @@ class PopupManager:
 
     def show_inventory(self):
 
-        inventory = self.app.db_manager.get_all_items()
+        inventory = self.app.inventory_cache
         inventory_view = InventoryView(order_manager=self.app.order_manager)
         inventory_view.show_inventory(inventory)
         self.inventory_popup = self.create_focus_popup(
