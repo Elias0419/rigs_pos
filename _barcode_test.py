@@ -176,6 +176,8 @@ class BarcodeScanner:
 
             known_barcodes = self.app.barcode_cache.keys()
             #print(f"{known_barcodes}\n{len(known_barcodes)}")
+            print(f"Checking cache for 070330658721:", "070330658721" in known_barcodes)
+
             found = False
 
             if barcode in known_barcodes:
