@@ -1474,7 +1474,7 @@ class PopupManager:
             padding=10
         )
 
-        # Add widgets to the card
+
         card.add_widget(MDLabel(
             text=order_summary,
             halign="center",
