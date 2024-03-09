@@ -2195,27 +2195,35 @@ class FinancialSummaryWidget(MDFlatButton):
         if not hasattr(self, "_initialized"):
             self.app = ref
             super(FinancialSummaryWidget, self).__init__(**kwargs)
+
             self.size_hint_y = None
-            self.size_hint_x = 0.6
-            self.height = 80
-            self.orientation = "vertical"
-            self.order_mod_popup = None
-            self.text = (
-            f"[size=20]Subtotal: $0.00\n"
-            f"Discount: $0.00\n"
-            f"Tax: $0.00\n\n[/size]"
-            f"[size=32]Total: [b]$0.00[/b][/size]"
-        )
-            #print(self)
+            self.size_hint_x = 1
+            self.height = 150
+
+            self.text = ""
+
+            self.layout = BoxLayout(orientation='vertical', size_hint=(1, 1))
+
+            self.subtotal_label = MDLabel(markup=True, halign="right")
+            self.discount_label = MDLabel(markup=True, halign="right")
+            self.tax_label = MDLabel(markup=True, halign="right")
+            self.total_label = MDLabel(markup=True, font_style='H5', halign="right")
+
+            self.layout.add_widget(self.subtotal_label)
+            self.layout.add_widget(self.discount_label)
+            self.layout.add_widget(self.tax_label)
+            self.layout.add_widget(self.total_label)
+
+            self.add_widget(self.layout)
+
             self._initialized = True
+            self.update_summary(0, 0, 0, 0)
 
     def update_summary(self, subtotal, tax, total_with_tax, discount):
-        self.text = (
-            f"[size=20]Subtotal: ${subtotal:.2f}\n"
-            f"Discount: ${discount:.2f}\n"
-            f"Tax: ${tax:.2f}\n\n[/size]"
-            f"[size=32]Total: [b]${total_with_tax:.2f}[/b][/size]"
-        )
+        self.subtotal_label.text = f"[size=20]Subtotal: ${subtotal:.2f}[/size]"
+        self.discount_label.text = f"[size=20]Discount: ${discount:.2f}[/size]"
+        self.tax_label.text = f"[size=20]Tax: ${tax:.2f}[/size]"
+        self.total_label.text = f"[size=32]Total: [b]${total_with_tax:.2f}[/b][/size]"
 
     def on_press(self):
         self.open_order_modification_popup()
@@ -2276,8 +2284,7 @@ class FinancialSummaryWidget(MDFlatButton):
 
     def save_order(self):
         self.app.order_manager.save_order_to_disk()
-        #self.open_save_order_popup()
-        toast('Saved!')
+        self.open_save_order_popup()
         self.app.order_manager.clear_order()
         self.order_mod_popup.dismiss()
         self.app.utilities.update_display()
@@ -2331,6 +2338,7 @@ class FinancialSummaryWidget(MDFlatButton):
     def adjust_price(self):
         self.app.popup_manager.show_adjust_price_popup()
         self.order_mod_popup.dismiss()
+
 
 
 class Calculator:
