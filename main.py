@@ -95,7 +95,7 @@ class CashRegisterApp(MDApp):
         self.categories = self.utilities.initialize_categories()
         self.barcode_cache = self.utilities.initialize_barcode_cache()
         self.inventory_cache = self.utilities.initialize_invetory_cache()
-
+        blank = BoxLayout(size_hint_y=0.01, size_hint_x=0.4)
         main_layout = GridLayout(
             cols=1, spacing=5, orientation="lr-tb", row_default_height=60
         )
