@@ -97,71 +97,71 @@ class CashRegisterApp(MDApp):
         self.inventory_cache = self.utilities.initialize_invetory_cache()
 
         main_layout = GridLayout(
-            cols=1, spacing=5, orientation="tb-lr", row_default_height=60
+            cols=1, spacing=5, orientation="lr-tb", row_default_height=60
         )
+
         top_area_layout = GridLayout(
-            cols=3,
-            orientation="lr-tb",
-            row_default_height=60
-            )
+            cols=4, rows=1, orientation="lr-tb", row_default_height=60, size_hint_x=0.95
+        )
+        right_area_layout = GridLayout(rows=2, orientation="tb-lr", padding=50)
         self.order_layout = GridLayout(
             orientation="tb-lr",
             cols=2,
-            rows=13,
+            rows=10,
             spacing=5,
             row_default_height=60,
             row_force_default=True,
-            size_hint_x=1 / 3,
-            size_hint_y=7 / 8,
+            size_hint_x=1 / 2,
         )
-
-        top_area_layout.add_widget(self.order_layout)
-
-
-        financial_layout = self.create_financial_layout()
-        top_area_layout.add_widget(financial_layout)
         clock_layout = self.create_clock_layout()
         top_area_layout.add_widget(clock_layout)
+        top_area_layout.add_widget(blank)
+        right_area_layout.add_widget(self.order_layout)
+
+        financial_button = self.create_financial_layout()
+        financial_layout = BoxLayout(size_hint_y=0.2)
+        financial_layout.add_widget(financial_button)
+        right_area_layout.add_widget(financial_layout)
+        top_area_layout.add_widget(right_area_layout)
+        sidebar = BoxLayout(orientation="vertical", size_hint_x=0.05)
+        lock_icon = MDIconButton(icon="lock")
+        trash_icon = MDIconButton(icon="trash-can")
+        sidebar.add_widget(lock_icon)
+        sidebar.add_widget(trash_icon)
+        top_area_layout.add_widget(sidebar)
         main_layout.add_widget(top_area_layout)
+        # main_layout.add_widget(sidebar)
         button_layout = GridLayout(
-            cols=4,
-            spacing=10,
-            padding=10,
-            size_hint_y=0.05,
-            size_hint_x=1,
-            orientation="lr-tb"
+            cols=4, spacing=5, size_hint_y=0.05, size_hint_x=1, orientation="lr-tb"
         )
 
         btn_pay = self.utilities.create_md_raised_button(
-            f"[size=32][b]Pay[/size][/b]",
+            "Pay",
             self.button_handler.on_button_press,
             (8, 8),
-            # "H6",
+            "H6",
         )
 
         btn_custom_item = self.utilities.create_md_raised_button(
-            f"[size=32][b]Custom[/size][/b]",
-
+            "Custom",
             self.button_handler.on_button_press,
             (8, 8),
-            # "H6",
+            "H6",
         )
         btn_inventory = self.utilities.create_md_raised_button(
-            f"[size=32][b]Search[/size][/b]",
-
+            "Search",
             self.button_handler.on_button_press,
             (8, 8),
-           # "H6",
+            "H6",
         )
         btn_tools = self.utilities.create_md_raised_button(
-            f"[size=32][b]Tools[/size][/b]",
-
-            #lambda x: self.popup_manager.handle_duplicate_barcodes("00000000"),
+            "Tools",
+            # lambda x: self.popup_manager.show_guard_screen(),
             self.button_handler.on_button_press,
-            #lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
+            # lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
             # lambda x: sys.exit(42),
             (8, 8),
-            # "H6",
+            "H6",
         )
         button_layout.add_widget(btn_pay)
         button_layout.add_widget(btn_custom_item)
@@ -170,35 +170,18 @@ class CashRegisterApp(MDApp):
         main_layout.add_widget(button_layout)
 
         Clock.schedule_interval(self.utilities.check_inactivity, 10)
-        Clock.schedule_interval(
-            self.barcode_scanner.check_for_scanned_barcode,
-            0.1
-            )
+        Clock.schedule_interval(self.barcode_scanner.check_for_scanned_barcode, 0.1)
 
         base_layout = FloatLayout()
         try:
-            if self.theme_cls.theme_style == "Light":
-                bg_image = Image(
-                    source="images/gradient_wallpaper.png",
-                    fit_mode='fill'
-                )
-                base_layout.add_widget(bg_image)
-            else:
-                bg_image = Image(
-                    source="images/grey_mountains.jpg",
-                    fit_mode='fill'
-                )
-                base_layout.add_widget(bg_image)
-
+            bg_image = Image(source="images/grey_mountains.jpg", fit_mode="fill")
+            base_layout.add_widget(bg_image)
 
         except Exception as e:
             print(e)
             with base_layout.canvas.before:
                 Color(0.78, 0.78, 0.78, 1)
-                self.rect = Rectangle(
-                    size=base_layout.size,
-                    pos=base_layout.pos
-                    )
+                self.rect = Rectangle(size=base_layout.size, pos=base_layout.pos)
 
             def update_rect(instance, value):
                 instance.rect.size = instance.size
@@ -210,81 +193,79 @@ class CashRegisterApp(MDApp):
         return base_layout
 
     def create_clock_layout(self):
-        clock_layout = BoxLayout(orientation="vertical", size_hint_x=1 / 3)
+        clock_layout = GridLayout(
+            orientation="tb-lr",
+            rows=4,
+            size_hint_x=0.75,
+            size_hint_y=1,
+            padding=(60, 0, 0, 0),
+        )
+        top_container = BoxLayout(orientation="vertical", size_hint_y=0.1, padding=10)
+        _nothing = BoxLayout(size_hint_y=1)
+        logo_container = BoxLayout(size_hint_y=0.2, padding=(-200, 0, 0, 0))
+        logo = Image(source="images/rigs_logo_scaled.png")
+        logo_container.add_widget(logo)
         register_text = MDLabel(
             text="Cash Register",
             size_hint_y=None,
-            # font_style="H8",
+            font_style="H6",
             height=50,
-            valign="bottom",
-            halign="center",
+            # valign="bottom",
+            # halign="center",
         )
         blank_space = MDLabel(
             text="", size_hint_y=1, height=450, valign="top", halign="center"
         )
-        blank_space2 = MDLabel(
-            text="", size_hint_y=1, height=450, valign="top", halign="center"
-        )
-
+        clock_container = BoxLayout(size_hint_y=0.15)
         self.clock_label = MDLabel(
             text="Loading...",
             size_hint_y=None,
-            font_style="H6",
-            height=80,
+            # font_style="H6",
+            height=150,
+            size_hint_x=1,
             color=self.utilities.get_text_color(),
-            halign="center",
+            markup=True,
+            valign="bottom",
+            # halign="center",
         )
+        clock_container.add_widget(self.clock_label)
         line_container = MDBoxLayout(
-            orientation="horizontal", size_hint_y=None, height=1
+            orientation="horizontal",
+            height=1,
+            size_hint_y=None,
         )
-        #clear_order = MDIconButton(icon="delete")
-        blue_line = MDBoxLayout(size_hint_x=0.2)
+        blue_line = MDBoxLayout(size_hint_x=0.4)
         blue_line.md_bg_color = (0.56, 0.56, 1, 1)
         blank_line = MDBoxLayout(size_hint_x=0.2)
         blank_line.md_bg_color = (0, 0, 0, 0)
         blank_line2 = MDBoxLayout(size_hint_x=0.2)
         blank_line2.md_bg_color = (0, 0, 0, 0)
-        line_container.add_widget(blank_line)
         line_container.add_widget(blue_line)
+        line_container.add_widget(blank_line)
+
         line_container.add_widget(blank_line2)
         padlock_button = MDIconButton(
             icon="lock",
-            pos_hint={"right": 1},
-            on_press=lambda x: self.utilities.trigger_guard_and_lock(
-                trigger=True),
+            # pos_hint={"right": 1},
+            on_press=lambda x: self.utilities.trigger_guard_and_lock(trigger=True),
         )
-        clock_layout.add_widget(register_text)
-        clock_layout.add_widget(line_container)
-
-        clock_layout.add_widget(blank_space)
-        clock_layout.add_widget(padlock_button)
+        top_container.add_widget(register_text)
+        top_container.add_widget(line_container)
+        clock_layout.add_widget(top_container)
+        clock_layout.add_widget(_nothing)
+        clock_layout.add_widget(logo_container)
 
         Clock.schedule_interval(self.utilities.update_clock, 1)
-        clock_layout.add_widget(self.clock_label)
+        clock_layout.add_widget(clock_container)
         return clock_layout
 
     def create_financial_layout(self):
-        financial_layout = GridLayout(cols=3, rows=2, orientation = "lr-tb", size_hint_x=1 / 3)
-        blank_space = MDBoxLayout(size_hint_y=None, size_hint_x=0.2)
-        blank_space2 = MDBoxLayout(size_hint_x=0.2)
-        blank_space3 = MDBoxLayout(size_hint_x=0.6)
-        blank_space4 = MDBoxLayout(size_hint_x=0.2)
-        button_holder = MDBoxLayout(size_hint_y=None,size_hint_x=0.2, )
-        self.clear_order = MDIconButton(icon="trash-can-outline", pos_hint={'center_x': 1, 'center_y': 0.5}, on_press=lambda x: self.confirm_clear_order())
-        button_holder.add_widget(self.clear_order)
+        financial_layout = GridLayout(cols=1, size_hint_x=1 / 3)
+
         self.financial_summary_widget = FinancialSummaryWidget(self)
-
-
-        financial_layout.add_widget(blank_space)
         financial_layout.add_widget(self.financial_summary_widget)
-        financial_layout.add_widget(button_holder)
-
-        financial_layout.add_widget(blank_space2)
-        financial_layout.add_widget(blank_space3)
-        financial_layout.add_widget(blank_space4)
 
         return financial_layout
-
     def clear_order_widget(self):
         if self.click == 0:
             self.click += 1
