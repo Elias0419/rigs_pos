@@ -175,7 +175,7 @@ class BarcodeScanner:
                 return
 
             known_barcodes = self.app.barcode_cache.keys()
-            print(f"{known_barcodes}\n{len(known_barcodes)}")
+            #print(f"{known_barcodes}\n{len(known_barcodes)}")
             found = False
 
             if barcode in known_barcodes:
