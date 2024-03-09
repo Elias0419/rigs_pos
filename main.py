@@ -95,7 +95,7 @@ class CashRegisterApp(MDApp):
         self.categories = self.utilities.initialize_categories()
         self.barcode_cache = self.utilities.initialize_barcode_cache()
         self.inventory_cache = self.utilities.initialize_invetory_cache()
-        blank = BoxLayout(size_hint_y=0.01, size_hint_x=0.4)
+
         main_layout = GridLayout(
             cols=1, spacing=5, orientation="lr-tb", row_default_height=60
         )
@@ -115,7 +115,16 @@ class CashRegisterApp(MDApp):
         )
         clock_layout = self.create_clock_layout()
         top_area_layout.add_widget(clock_layout)
-        top_area_layout.add_widget(blank)
+
+        center_container = GridLayout(rows=2, orientation="tb-lr", size_hint_y=0.01, size_hint_x=0.4)
+        trash_icon_container = MDBoxLayout(size_hint_y=0.1)
+        _blank = BoxLayout(size_hint_y=0.9)
+        trash_icon = MDIconButton(icon="trash-can",pos_hint={"top":0.95, "right": 0})
+        trash_icon_container.add_widget(trash_icon)
+        center_container.add_widget(trash_icon_container)
+        center_container.add_widget(_blank)
+        top_area_layout.add_widget(center_container)
+
         right_area_layout.add_widget(self.order_layout)
 
         financial_button = self.create_financial_layout()
@@ -125,14 +134,14 @@ class CashRegisterApp(MDApp):
         top_area_layout.add_widget(right_area_layout)
         sidebar = BoxLayout(orientation="vertical", size_hint_x=0.05)
         lock_icon = MDIconButton(icon="lock")
-        trash_icon = MDIconButton(icon="trash-can")
+
         sidebar.add_widget(lock_icon)
-        sidebar.add_widget(trash_icon)
+        #sidebar.add_widget(trash_icon)
         top_area_layout.add_widget(sidebar)
         main_layout.add_widget(top_area_layout)
         # main_layout.add_widget(sidebar)
         button_layout = GridLayout(
-            cols=4, spacing=5, size_hint_y=0.05, size_hint_x=1, orientation="lr-tb"
+            cols=4, spacing=10, padding=10, size_hint_y=0.05, size_hint_x=1, orientation="lr-tb"
         )
 
         btn_pay = self.utilities.create_md_raised_button(
