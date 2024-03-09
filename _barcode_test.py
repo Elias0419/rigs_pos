@@ -224,10 +224,13 @@ class BarcodeScanner:
             print(f"Exception in handle_scanned_barcode\n{e}")
 
     def process_item_details(self, item_details):
-        item_name, item_price = item_details[:2]
+        item_name = item_details.get('name', 'Error!')
+        item_price = item_details.get('price', 0.0)
+
         self.app.order_manager.add_item(item_name, item_price)
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
+
 
     def close(self):
         self.stop_thread.set()
