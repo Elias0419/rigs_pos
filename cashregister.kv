@@ -309,5 +309,64 @@
             #height: self.minimum_height
             orientation: 'vertical'
 
+<DistRow>:
+    canvas.after:
+        Color:
+            rgba: 0.5, 0.5, 0.5, 1
+        Line:
+            points: self.x, self.y, self.x + self.width, self.y
+            width: 1
+
+    GridLayout:
+        orientation: 'lr-tb'
+        cols: 5
+
+
+        Label:
+            id: text
+            text: root.text
+            size_hint_x: 0.65
+            text_size: self.size
+            halign: "left"
+
+        Label:
+            id: secondary_text
+            text: root.secondary_text
+            size_hint_x: 0.1
+
+        Label:
+            id: item_name
+            text: root.item_name
+            size_hint_x: 0.15
+
+        Label:
+            id: price
+            text: root.price_str
+            size_hint_x: 0.1
+
+        Label:
+            id: notes
+            text: root.notes
+            size_hint_x: 0.15
+
+    Button:
+        size_hint_x: 0.1
+        text: "Details"
+        on_press: root.history_view.display_order_details(root.order_id)
+
+<DistView>:
+    orientation: 'vertical'
+    RecycleView:
+        id: dist_rv
+        viewclass: 'DistRow'
+        size_hint_x: 1
+        RecycleBoxLayout:
+            default_size: None, dp(32)
+            default_size_hint: 1, None
+            size_hint_y: None
+            height: len(dist_rv.data) * dp(32)
+            #height: self.minimum_height
+            orientation: 'vertical'
+
 
 

@@ -2151,15 +2151,7 @@ class PopupManager:
             self.app.utilities.update_display()
             self.app.utilities.update_financial_summary()
 
-    def create_distrib_popup(self):
-        print("create")
-        layout = BoxLayout()
-        content = self.app.distrib_manager.create_rv()
 
-        print(content)
-        layout.add_widget(content)
-        popup = Popup(content = layout, size_hint=(0.8,0.8))
-        return popup
 
 
 

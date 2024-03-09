@@ -45,7 +45,7 @@ from popups import PopupManager, FinancialSummaryWidget, Calculator
 from receipt_printer import ReceiptPrinter
 from util import Utilities, ReusableTimer#, CustomTextInput
 from wrapper import Wrapper
-
+from distributor_manager import DistPopup, DistView
 
 Window.maximize()
 Window.borderless = True
@@ -88,6 +88,8 @@ class CashRegisterApp(MDApp):
 
         self.pin_reset_timer = ReusableTimer(5.0, self.utilities.reset_pin)
         self.calculator = Calculator()
+        self.dist_manager = DistView(self)
+        self.dist_popup = DistPopup()
         self.button_handler = ButtonHandler(self)
         self.popup_manager = PopupManager(self)
 
