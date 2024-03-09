@@ -1139,11 +1139,12 @@ class PopupManager:
             "Inventory Management",
             "System",
             "Open Register",
+            "Distrib TEST"
         ]
 
         for index, tool in enumerate(tool_buttons):
             btn = MDRaisedButton(
-                text=tool,
+                text=f'[b][size=20]{tool}[/b][/size]',
                 size_hint=(1, 0.125),
                 pos_hint={"center_x": 0.5, "center_y": 1 - 0.15 * index},
                 on_press=self.app.button_handler.on_tool_button_press,
