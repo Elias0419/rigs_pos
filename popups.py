@@ -1145,19 +1145,21 @@ class PopupManager:
         for index, tool in enumerate(tool_buttons):
             btn = MDRaisedButton(
                 text=f'[b][size=20]{tool}[/b][/size]',
-                size_hint=(1, 0.125),
-                pos_hint={"center_x": 0.5, "center_y": 1 - 0.15 * index},
+                size_hint=(1, None),
+                height=80,
+                pos_hint={"center_x": 0.5, "center_y": 1 - 0.1 * index},
                 on_press=self.app.button_handler.on_tool_button_press,
             )
             float_layout.add_widget(btn)
 
         self.tools_popup = Popup(
             content=float_layout,
-            size_hint=(0.2, 0.6),
+            size_hint=(0.2, 0.8),
             title="",
             background="images/transparent.png",
             background_color=(0, 0, 0, 0),
             separator_height=0,
+            #pos_hint={"top":1}
         )
         self.tools_popup.open()
 
@@ -2148,6 +2150,17 @@ class PopupManager:
             self.handle_duplicate_barcodes_popup.dismiss()
             self.app.utilities.update_display()
             self.app.utilities.update_financial_summary()
+
+    def create_distrib_popup(self):
+        print("create")
+        layout = BoxLayout()
+        content = self.app.distrib_manager.create_rv()
+
+        print(content)
+        layout.add_widget(content)
+        popup = Popup(content = layout, size_hint=(0.8,0.8))
+        return popup
+
 
 
 class MarkupLabel(Label):
