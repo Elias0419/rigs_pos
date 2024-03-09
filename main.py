@@ -145,26 +145,30 @@ class CashRegisterApp(MDApp):
         )
 
         btn_pay = self.utilities.create_md_raised_button(
-            "Pay",
+            f"[b][size=40]Pay[/b][/size]",
             self.button_handler.on_button_press,
             (8, 8),
             "H6",
         )
 
         btn_custom_item = self.utilities.create_md_raised_button(
-            "Custom",
+            f"[b][size=40]Custom[/b][/size]",
+
             self.button_handler.on_button_press,
             (8, 8),
             "H6",
         )
         btn_inventory = self.utilities.create_md_raised_button(
-            "Search",
+            f"[b][size=40]Search[/b][/size]",
+
             self.button_handler.on_button_press,
             (8, 8),
             "H6",
         )
         btn_tools = self.utilities.create_md_raised_button(
-            "Tools",
+            f"[b][size=40]Tools[/b][/size]",
+
+
             # lambda x: self.popup_manager.show_guard_screen(),
             self.button_handler.on_button_press,
             # lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
