@@ -166,7 +166,6 @@ class BarcodeScanner:
             self.handle_scanned_barcode(barcode)
 
     def handle_scanned_barcode(self, barcode):
-        print(f'scanned barcode: {barcode}\n{type(barcode)}')
         try:
             if "-" in barcode and any(c.isalpha() for c in barcode):
                 self.app.history_manager.display_order_details_from_barcode_scan(
@@ -176,12 +175,10 @@ class BarcodeScanner:
 
             known_barcodes = self.app.barcode_cache.keys()
             #print(f"{known_barcodes}\n{len(known_barcodes)}")
-            print(f"Checking cache for 070330658721:", "070330658721" in known_barcodes)
 
             found = False
 
             if barcode in known_barcodes:
-                print("if is true", barcode)
                 barcode_data = self.app.barcode_cache.get(barcode)
 
                 if barcode_data["is_dupe"]:
@@ -189,7 +186,6 @@ class BarcodeScanner:
                     found = True
                     return
                 else:
-                    print(f"else\n\n\n\n{len(barcode)}")
                     item_details = self.app.db_manager.get_item_details(barcode=barcode)
                     print(item_details)
                     if item_details:
@@ -198,7 +194,6 @@ class BarcodeScanner:
                         return
 
             if not found:
-                print(f"not_found\n\n\n\n")
                 for known_barcode in known_barcodes:
                     if known_barcode[1:] == barcode:
                         barcode_data = self.app.barcode_cache.get(known_barcode)
