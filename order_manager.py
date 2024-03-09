@@ -57,11 +57,15 @@ class OrderManager:
         self._update_total_with_tax()
 
     def get_item_id(self, item_name, item_price):
+        if item_name == "Custom Item":
+            item_id = str(uuid.uuid4())
+            return item_id
+        else:
+            item_details = self.app.db_manager.get_item_details(name=item_name, price=item_price)
+            print(item_details)
+            item_id = item_details["item_id"]
 
-        item_details = self.app.db_manager.get_item_details(name=item_name, price=item_price)
-        item_id = item_details["item_id"]
-
-        return item_id
+            return item_id
 
 
     def add_item(self, item_name, item_price):
@@ -91,6 +95,7 @@ class OrderManager:
         self.total += item_price
         self.subtotal += item_price
         self._update_total_with_tax()
+
 
     def remove_item(self, item_name):
 
