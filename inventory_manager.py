@@ -255,7 +255,9 @@ class InventoryView(BoxLayout):
         self.pos_hint = {"top": 1}
         self.spacing = 5
         self.padding = 10
+
     def show_inventory(self, inventory_items):
+
         self.full_inventory = inventory_items
         data = self.generate_data_for_rv(inventory_items)
         for item in data:
