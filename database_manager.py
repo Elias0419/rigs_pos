@@ -246,7 +246,6 @@ class DatabaseManager:
                     'category': item[5],
                 }
 
-                # Adjust based on provided parameters
                 if item_id or barcode:
                     item_details['parent_barcode'] = item[6]
                 else:
