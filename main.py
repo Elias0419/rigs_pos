@@ -70,10 +70,7 @@ class CashRegisterApp(MDApp):
         self.utilities.load_settings()
 
     def build(self):
-        # self.receipt_printer = ReceiptPrinter(
-        #     self,
-        #     "receipt_printer_config.yaml"
-        #     )
+
         self.utilities = Utilities(self)
         self.utilities.initialize_receipt_printer()
         self.barcode_scanner = BarcodeScanner(self)
@@ -93,10 +90,11 @@ class CashRegisterApp(MDApp):
         self.calculator = Calculator()
         self.button_handler = ButtonHandler(self)
         self.popup_manager = PopupManager(self)
-        #self.custom_textinput = CustomTextInput(self)
+
         self.wrapper = Wrapper(self)
         self.categories = self.utilities.initialize_categories()
         self.barcode_cache = self.utilities.initialize_barcode_cache()
+        self.inventory_cache = self.utilities.initialize_invetory_cache()
 
         main_layout = GridLayout(
             cols=1, spacing=5, orientation="tb-lr", row_default_height=60
@@ -257,9 +255,7 @@ class CashRegisterApp(MDApp):
         )
         clock_layout.add_widget(register_text)
         clock_layout.add_widget(line_container)
-        #clock_layout.add_widget(blank_space2)
 
-        #clock_layout.add_widget(clear_order)
         clock_layout.add_widget(blank_space)
         clock_layout.add_widget(padlock_button)
 
@@ -324,12 +320,12 @@ class CashRegisterApp(MDApp):
         self.order_manager.clear_order()
         self.utilities.update_display()
         self.utilities.update_financial_summary()
-        # Reset the icon to its original state.
+
         self.clear_order.icon = "trash-can-outline"
         self.click = 0
 
     def reset_confirmation(self, dt):
-        # Reset everything if the user did not confirm within the time limit.
+
         self.clear_order.icon = "trash-can-outline"
         self.click = 0
 

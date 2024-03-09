@@ -196,6 +196,9 @@ class Utilities:
 
         return barcode_cache
 
+    def initialize_invetory_cache(self):
+        inventory = self.app.db_manager.get_all_items()
+        return inventory
 
     def update_barcode_cache(self, item_details):
         barcode = item_details['barcode']
