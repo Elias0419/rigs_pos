@@ -127,39 +127,43 @@ class CashRegisterApp(MDApp):
         main_layout.add_widget(top_area_layout)
         button_layout = GridLayout(
             cols=4,
-            spacing=5,
+            spacing=10,
+            padding=10,
             size_hint_y=0.05,
             size_hint_x=1,
             orientation="lr-tb"
         )
 
         btn_pay = self.utilities.create_md_raised_button(
-            "Pay",
+            f"[size=32][b]Pay[/size][/b]",
             self.button_handler.on_button_press,
             (8, 8),
-            "H6",
+            # "H6",
         )
 
         btn_custom_item = self.utilities.create_md_raised_button(
-            "Custom",
+            f"[size=32][b]Custom[/size][/b]",
+
             self.button_handler.on_button_press,
             (8, 8),
-            "H6",
+            # "H6",
         )
         btn_inventory = self.utilities.create_md_raised_button(
-            "Search",
+            f"[size=32][b]Search[/size][/b]",
+
             self.button_handler.on_button_press,
             (8, 8),
-            "H6",
+           # "H6",
         )
         btn_tools = self.utilities.create_md_raised_button(
-            "Tools",
+            f"[size=32][b]Tools[/size][/b]",
+
             #lambda x: self.popup_manager.handle_duplicate_barcodes("00000000"),
             self.button_handler.on_button_press,
             #lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
             # lambda x: sys.exit(42),
             (8, 8),
-            "H6",
+            # "H6",
         )
         button_layout.add_widget(btn_pay)
         button_layout.add_widget(btn_custom_item)

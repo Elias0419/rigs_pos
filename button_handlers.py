@@ -122,9 +122,14 @@ class ButtonHandler:
             "Search": self.show_inventory,
         }
 
-        action = button_actions.get(instance.text)
-        if action:
-            action()
+        # action = button_actions.get(instance.text)
+        # if action:
+        #     action()
+
+        for action_text, action in button_actions.items():
+            if action_text in instance.text:
+                action()
+                break
 
     def pay_order(self):
         total = self.app.order_manager.calculate_total_with_tax()
