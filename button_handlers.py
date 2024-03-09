@@ -30,6 +30,9 @@ class ButtonHandler:
     def show_calcultor_popup(self):
         self.app.calculator.show_calculator_popup()
 
+    def show_distrib(self):
+        self.app.distrib_manager.show_distrib_manager()
+
     def on_tool_button_press(self, instance):
         tool_actions = {
             "Clear Order": self.clear_order,
@@ -39,10 +42,12 @@ class ButtonHandler:
             "Inventory Management": self.show_inventory_management_view,
             "System": self.show_system_popup,
             "Calculator": self.show_calcultor_popup,
+            "Distrib TEST": self.show_distrib
         }
-        action = tool_actions.get(instance.text)
-        if action:
-            action()
+        for action_text, action in tool_actions.items():
+            if action_text in instance.text:
+                action()
+                break
         self.app.popup_manager.tools_popup.dismiss()
 
     def handle_numeric_input(self, input_field, instance_text):
