@@ -126,7 +126,7 @@ class CashRegisterApp(MDApp):
         right_area_layout.add_widget(self.order_layout)
 
         financial_button = self.create_financial_layout()
-        financial_layout = BoxLayout(size_hint_y=0.2, padding=(0,0,200,0))
+        financial_layout = BoxLayout(size_hint_y=0.2)
         financial_layout.add_widget(financial_button)
         right_area_layout.add_widget(financial_layout)
         top_area_layout.add_widget(right_area_layout)
@@ -215,10 +215,10 @@ class CashRegisterApp(MDApp):
         return base_layout
 
     def create_clock_layout(self):
-        clock_layout = GridLayout(orientation="tb-lr",rows=4, size_hint_x=0.75, size_hint_y=1, padding=(120,0,0,0))
-        top_container = BoxLayout(orientation="vertical", size_hint_y=None, height=100)
+        clock_layout = GridLayout(orientation="tb-lr",rows=4, size_hint_x=0.75, size_hint_y=1, padding=(60,0,0,0))
+        top_container = BoxLayout(orientation="vertical", size_hint_y=0.1, padding=10)
         _nothing = BoxLayout(size_hint_y=1)
-        logo_container = BoxLayout(size_hint_y=0.2, padding=(-100,0,0,0))
+        logo_container = BoxLayout(size_hint_y=0.2, padding=(-200,0,0,0))
         logo = Image(source="images/rigs_logo_scaled.png")
         logo_container.add_widget(logo)
         register_text = MDLabel(
@@ -226,8 +226,8 @@ class CashRegisterApp(MDApp):
             size_hint_y=None,
             font_style="H6",
             height=50,
-            valign="bottom",
-            halign="center",
+            # valign="bottom",
+            # halign="center",
         )
         blank_space = MDLabel(
             text="", size_hint_y=1, height=450, valign="top", halign="center"
@@ -254,8 +254,9 @@ class CashRegisterApp(MDApp):
         blank_line.md_bg_color = (0, 0, 0, 0)
         blank_line2 = MDBoxLayout(size_hint_x=0.2)
         blank_line2.md_bg_color = (0, 0, 0, 0)
-        line_container.add_widget(blank_line)
         line_container.add_widget(blue_line)
+        line_container.add_widget(blank_line)
+
         line_container.add_widget(blank_line2)
         padlock_button = MDIconButton(
             icon="lock",
