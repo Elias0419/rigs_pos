@@ -213,8 +213,7 @@ class DatabaseManager:
 
         return items
 
-    def get_item_details(self, item_id="", name="", price=0.0):
-
+    def get_item_details(self, item_id="", name="", price=0.0, barcode=""):
         conn = None
         try:
             conn = self._get_connection()
@@ -225,17 +224,19 @@ class DatabaseManager:
             if item_id:
                 query = "SELECT name, price, barcode, cost, sku, category, parent_barcode FROM items WHERE item_id = ?"
                 cursor.execute(query, (item_id,))
+            elif barcode:
+                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE barcode = ?"
+                cursor.execute(query, (barcode,))
             elif name and price:
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE name = ? AND price = ?"
                 cursor.execute(query, (name, price))
             else:
-                print("[DatabaseManager]: get_item_details requires either item_id or both name and price.")
+                print("[DatabaseManager]: get_item_details requires either item_id, barcode, or both name and price.")
                 return None
 
             item = cursor.fetchone()
 
             if item:
-
                 item_details = {
                     'name': item[0],
                     'price': item[1],
@@ -245,7 +246,8 @@ class DatabaseManager:
                     'category': item[5],
                 }
 
-                if item_id:
+                # Adjust based on provided parameters
+                if item_id or barcode:
                     item_details['parent_barcode'] = item[6]
                 else:
                     item_details['item_id'] = item[6]
@@ -258,7 +260,6 @@ class DatabaseManager:
                 conn.close()
 
         return item_details
-
 
 
 
@@ -431,14 +432,16 @@ class DatabaseManager:
 
 
     def get_all_items(self):
-        print("db manager get all")
+       # print(f"db manager get all\n\n\n\n")
         conn = self._get_connection()
+        #print(f"{conn}\n\n\n\n")
         cursor = conn.cursor()
         try:
             cursor.execute(
                 "SELECT barcode, name, price, cost, sku, category, item_id, parent_barcode FROM items"
             )
             items = cursor.fetchall()
+          #  print(len(items))
         except sqlite3.Error as e:
             print(e)
             items = []
