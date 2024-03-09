@@ -166,6 +166,7 @@ class BarcodeScanner:
             self.handle_scanned_barcode(barcode)
 
     def handle_scanned_barcode(self, barcode):
+        print(f'scanned barcode: {barcode}')
         try:
             if "-" in barcode and any(c.isalpha() for c in barcode):
                 self.app.history_manager.display_order_details_from_barcode_scan(
@@ -174,7 +175,7 @@ class BarcodeScanner:
                 return
 
             known_barcodes = self.app.barcode_cache.keys()
-            print(known_barcodes)
+            print(f"{known_barcodes}\n{len(known_barcodes)}")
             found = False
 
             if barcode in known_barcodes:
