@@ -195,6 +195,7 @@ class BarcodeScanner:
                     if item_details:
                         self.process_item_details(item_details)
                         found = True
+                        return
 
             if not found:
                 print(f"not_found\n\n\n\n")
