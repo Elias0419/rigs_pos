@@ -6,7 +6,7 @@
 
 import eel
 import sys
-
+import os
 from kivy.config import Config
 
 #Config.set('kivy', 'keyboard_mode', 'systemanddock')
@@ -24,6 +24,7 @@ from kivy.core.window import Window
 from kivy.modules import monitor, inspector
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.image import Image
+from kivy.uix.popup import Popup
 
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import BoxLayout
@@ -70,7 +71,6 @@ class CashRegisterApp(MDApp):
         self.utilities.load_settings()
 
     def build(self):
-
         self.utilities = Utilities(self)
         self.utilities.initialize_receipt_printer()
         self.barcode_scanner = BarcodeScanner(self)
@@ -97,115 +97,161 @@ class CashRegisterApp(MDApp):
         self.categories = self.utilities.initialize_categories()
         self.barcode_cache = self.utilities.initialize_barcode_cache()
         self.inventory_cache = self.utilities.initialize_invetory_cache()
+        self.dual_pane_mode = False
+        self.check_dual_pane_mode()
+        if self.dual_pane_mode:
+            layout = self.main_init(dual_pane_mode=True)
+        else:
+            layout = self.main_init()
+        return layout
 
-        main_layout = GridLayout(
-            cols=1, spacing=5, orientation="lr-tb", row_default_height=60
-        )
+    def enable_dual_pane_mode(self):
+        flag_file_path = "dual_pane_mode.flag"
+        with open(flag_file_path, 'w') as f:
+            f.write("Activate dual pane mode")
+        sys.exit(42)
 
-        top_area_layout = GridLayout(
-            cols=4, rows=1, orientation="lr-tb", row_default_height=60, size_hint_x=0.95
-        )
-        right_area_layout = GridLayout(rows=2, orientation="tb-lr", padding=50)
-        self.order_layout = GridLayout(
-            orientation="tb-lr",
-            cols=2,
-            rows=10,
-            spacing=5,
-            row_default_height=60,
-            row_force_default=True,
-            size_hint_x=1 / 2,
-        )
-        clock_layout = self.create_clock_layout()
-        top_area_layout.add_widget(clock_layout)
+    def check_dual_pane_mode(self):
+        flag_file_path = "dual_pane_mode.flag"
+        if os.path.exists(flag_file_path):
+            self.dual_pane_mode = True
+            os.remove(flag_file_path)
 
-        center_container = GridLayout(rows=2, orientation="tb-lr", size_hint_y=0.01, size_hint_x=0.4)
-        trash_icon_container = MDBoxLayout(size_hint_y=0.1)
-        _blank = BoxLayout(size_hint_y=0.9)
-        self.trash_icon = MDIconButton(icon="trash-can",pos_hint={"top":0.95, "right": 0}, on_press=lambda x: self.confirm_clear_order())
-        trash_icon_container.add_widget(self.trash_icon)
-        #center_container.add_widget(trash_icon_container)
-        center_container.add_widget(_blank)
-        top_area_layout.add_widget(center_container)
+    def dual_pane(self):
+        layout=GridLayout(orientation="lr-tb", cols=2)
+        left = self.main_init()
+        right = self.test_pane()
+        layout.add_widget(left)
+        layout.add_widget(right)
+        popup = Popup(content=layout, size_hint=(1,1))
+        popup.open()
 
-        right_area_layout.add_widget(self.order_layout)
-
-        financial_button = self.create_financial_layout()
-        financial_layout = BoxLayout(size_hint_y=0.2)
-        financial_layout.add_widget(financial_button)
-        right_area_layout.add_widget(financial_layout)
-        top_area_layout.add_widget(right_area_layout)
-        sidebar = BoxLayout(orientation="vertical", size_hint_x=0.05)
-        lock_icon = MDIconButton(icon="lock")
-        sidebar.add_widget(trash_icon_container)
-        sidebar.add_widget(lock_icon)
-        #sidebar.add_widget(trash_icon)
-        top_area_layout.add_widget(sidebar)
-        main_layout.add_widget(top_area_layout)
-        # main_layout.add_widget(sidebar)
-        button_layout = GridLayout(
-            cols=4, spacing=10, padding=10, size_hint_y=0.05, size_hint_x=1, orientation="lr-tb"
-        )
-
-        btn_pay = self.utilities.create_md_raised_button(
-            f"[b][size=40]Pay[/b][/size]",
-            self.button_handler.on_button_press,
-            (8, 8),
-            "H6",
-        )
-
-        btn_custom_item = self.utilities.create_md_raised_button(
-            f"[b][size=40]Custom[/b][/size]",
-
-            self.button_handler.on_button_press,
-            (8, 8),
-            "H6",
-        )
-        btn_inventory = self.utilities.create_md_raised_button(
-            f"[b][size=40]Search[/b][/size]",
-
-            self.button_handler.on_button_press,
-            (8, 8),
-            "H6",
-        )
-        btn_tools = self.utilities.create_md_raised_button(
-            f"[b][size=40]Tools[/b][/size]",
+    def test_pane(self):
+        layout=MDBoxLayout(orientation="vertical")
+        for i in range(20):
+            label = MDLabel(text=f"{i}layout=GridLayout(orientation='lr-tb'', cols=2)")
+            layout.add_widget(label)
+        return layout
 
 
-            # lambda x: self.popup_manager.show_guard_screen(),
-            self.button_handler.on_button_press,
-            # lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
-            # lambda x: sys.exit(42),
-            (8, 8),
-            "H6",
-        )
-        button_layout.add_widget(btn_pay)
-        button_layout.add_widget(btn_custom_item)
-        button_layout.add_widget(btn_inventory)
-        button_layout.add_widget(btn_tools)
-        main_layout.add_widget(button_layout)
+    def main_init(self, dual_pane_mode=False):
 
-        Clock.schedule_interval(self.utilities.check_inactivity, 10)
-        Clock.schedule_interval(self.barcode_scanner.check_for_scanned_barcode, 0.1)
+            if dual_pane_mode:
+                dual_pane_layout = GridLayout(orientation="lr-tb", cols=2)
+            main_layout = GridLayout(
+                cols=1, spacing=5, orientation="lr-tb", row_default_height=60
+            )
 
-        base_layout = FloatLayout()
-        try:
-            bg_image = Image(source="images/grey_mountains.jpg", fit_mode="fill")
-            base_layout.add_widget(bg_image)
+            top_area_layout = GridLayout(
+                cols=4, rows=1, orientation="lr-tb", row_default_height=60, size_hint_x=0.95
+            )
+            right_area_layout = GridLayout(rows=2, orientation="tb-lr", padding=50)
+            self.order_layout = GridLayout(
+                orientation="tb-lr",
+                cols=2,
+                rows=10,
+                spacing=5,
+                row_default_height=60,
+                row_force_default=True,
+                size_hint_x=1 / 2,
+            )
+            clock_layout = self.create_clock_layout()
+            top_area_layout.add_widget(clock_layout)
 
-        except Exception as e:
-            print(e)
-            with base_layout.canvas.before:
-                Color(0.78, 0.78, 0.78, 1)
-                self.rect = Rectangle(size=base_layout.size, pos=base_layout.pos)
+            center_container = GridLayout(rows=2, orientation="tb-lr", size_hint_y=0.01, size_hint_x=0.4)
+            trash_icon_container = MDBoxLayout(size_hint_y=0.1)
+            _blank = BoxLayout(size_hint_y=0.9)
+            self.trash_icon = MDIconButton(icon="trash-can",pos_hint={"top":0.95, "right": 0}, on_press=lambda x: self.confirm_clear_order())
+            trash_icon_container.add_widget(self.trash_icon)
+            #center_container.add_widget(trash_icon_container)
+            center_container.add_widget(_blank)
+            top_area_layout.add_widget(center_container)
 
-            def update_rect(instance, value):
-                instance.rect.size = instance.size
-                instance.rect.pos = instance.pos
+            right_area_layout.add_widget(self.order_layout)
 
-            base_layout.bind(size=update_rect, pos=update_rect)
+            financial_button = self.create_financial_layout()
+            financial_layout = BoxLayout(size_hint_y=0.2)
+            financial_layout.add_widget(financial_button)
+            right_area_layout.add_widget(financial_layout)
+            top_area_layout.add_widget(right_area_layout)
+            sidebar = BoxLayout(orientation="vertical", size_hint_x=0.05)
+            lock_icon = MDIconButton(icon="lock")
+            sidebar.add_widget(trash_icon_container)
+            sidebar.add_widget(lock_icon)
+            #sidebar.add_widget(trash_icon)
+            top_area_layout.add_widget(sidebar)
+            main_layout.add_widget(top_area_layout)
+            # main_layout.add_widget(sidebar)
+            button_layout = GridLayout(
+                cols=4, spacing=10, padding=10, size_hint_y=0.05, size_hint_x=1, orientation="lr-tb"
+            )
 
-        base_layout.add_widget(main_layout)
-        return base_layout
+            btn_pay = self.utilities.create_md_raised_button(
+                f"[b][size=40]Pay[/b][/size]",
+                self.button_handler.on_button_press,
+                (8, 8),
+                "H6",
+            )
+
+            btn_custom_item = self.utilities.create_md_raised_button(
+                f"[b][size=40]Custom[/b][/size]",
+
+                self.button_handler.on_button_press,
+                (8, 8),
+                "H6",
+            )
+            btn_inventory = self.utilities.create_md_raised_button(
+                f"[b][size=40]Search[/b][/size]",
+
+                self.button_handler.on_button_press,
+                (8, 8),
+                "H6",
+            )
+            btn_tools = self.utilities.create_md_raised_button(
+                f"[b][size=40]Tools[/b][/size]",
+
+
+                #lambda x: self.enable_dual_pane_mode(),
+                self.button_handler.on_button_press,
+                # lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
+                # lambda x: sys.exit(42),
+                (8, 8),
+                "H6",
+            )
+            button_layout.add_widget(btn_pay)
+            button_layout.add_widget(btn_custom_item)
+            button_layout.add_widget(btn_inventory)
+            button_layout.add_widget(btn_tools)
+            main_layout.add_widget(button_layout)
+
+            Clock.schedule_interval(self.utilities.check_inactivity, 10)
+            Clock.schedule_interval(self.barcode_scanner.check_for_scanned_barcode, 0.1)
+
+            base_layout = FloatLayout()
+            try:
+                bg_image = Image(source="images/grey_mountains.jpg", fit_mode="fill")
+                base_layout.add_widget(bg_image)
+
+            except Exception as e:
+                print(e)
+                with base_layout.canvas.before:
+                    Color(0.78, 0.78, 0.78, 1)
+                    self.rect = Rectangle(size=base_layout.size, pos=base_layout.pos)
+
+                def update_rect(instance, value):
+                    instance.rect.size = instance.size
+                    instance.rect.pos = instance.pos
+
+                base_layout.bind(size=update_rect, pos=update_rect)
+
+            base_layout.add_widget(main_layout)
+            if dual_pane_mode:
+                blank_layout = self.popup_manager.show_lock_screen(dual_pane=True)
+                dual_pane_layout.add_widget(base_layout)
+                dual_pane_layout.add_widget(blank_layout)
+                return dual_pane_layout
+            else:
+                return base_layout
 
     def create_clock_layout(self):
         clock_layout = GridLayout(
