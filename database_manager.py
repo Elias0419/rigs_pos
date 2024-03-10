@@ -25,6 +25,8 @@ class DatabaseManager:
         self.create_items_table()
         self.create_order_history_table()
         self.create_modified_orders_table()
+        self.create_dist_table()
+
 
     def create_items_table(self):
         conn = self._get_connection()
@@ -98,6 +100,33 @@ class DatabaseManager:
             print(e)
         finally:
             conn.close()
+
+           # distributors = {row['id']: {'name': row['name'], 'contact_info': row['contact_info'], 'item_name': row['item_name'], 'item_id': row['item_id'], 'price': row['price'], 'notes': row['notes']} for row in rows}
+
+
+
+    def create_dist_table(self):
+            conn = self._get_connection()
+            try:
+                cursor = conn.cursor()
+                cursor.execute(
+                    """CREATE TABLE IF NOT EXISTS distributor_info (
+                                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                    name TEXT NOT NULL,
+                                    contact_info TEXT,
+                                    item_name TEXT,
+                                    item_id TEXT,
+                                    price REAL,
+                                    notes TEXT,
+                                    FOREIGN KEY(item_id) REFERENCES items(item_id)
+                                )"""
+                )
+                conn.commit()
+            except sqlite3.Error as e:
+                print(e)
+            finally:
+                conn.close()
+
 
 
     def add_item(
