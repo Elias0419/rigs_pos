@@ -1128,9 +1128,8 @@ class PopupManager:
         self.inventory_popup.open()
 
     def show_tools_popup(self):
-
-        float_layout = FloatLayout()
-
+        # float_layout = FloatLayout()
+        float_layout = GridLayout(orientation="tb-lr", rows=10, spacing=5, padding=5)
         tool_buttons = [
             "Clear Order",
             "Calculator",
@@ -1142,12 +1141,21 @@ class PopupManager:
             "Distrib TEST"
         ]
 
+        btn_height_hint = 0.2
+        spacing_hint = 0.01
+        total_spacing_hint = (len(tool_buttons) - 1) * spacing_hint
+        total_btns_height = len(tool_buttons) * btn_height_hint
+        start_y = 1 - (btn_height_hint / 2)
+        total_height_needed = total_btns_height + total_spacing_hint
+
         for index, tool in enumerate(tool_buttons):
+            center_y = start_y - (index * (btn_height_hint + spacing_hint)) / (1 if total_height_needed < 1 else total_height_needed)
             btn = MDRaisedButton(
                 text=f'[b][size=20]{tool}[/b][/size]',
-                size_hint=(1, None),
-                height=80,
-                pos_hint={"center_x": 0.5, "center_y": 1 - 0.1 * index},
+                size_hint=(1, 1),
+                #size_hint_y=None,
+                height=200,
+                # pos_hint={"center_x": 0.5, "center_y": center_y},
                 on_press=self.app.button_handler.on_tool_button_press,
             )
             float_layout.add_widget(btn)
