@@ -121,9 +121,9 @@ class CashRegisterApp(MDApp):
         center_container = GridLayout(rows=2, orientation="tb-lr", size_hint_y=0.01, size_hint_x=0.4)
         trash_icon_container = MDBoxLayout(size_hint_y=0.1)
         _blank = BoxLayout(size_hint_y=0.9)
-        trash_icon = MDIconButton(icon="trash-can",pos_hint={"top":0.95, "right": 0})
-        trash_icon_container.add_widget(trash_icon)
-        center_container.add_widget(trash_icon_container)
+        self.trash_icon = MDIconButton(icon="trash-can",pos_hint={"top":0.95, "right": 0}, on_press=lambda x: self.confirm_clear_order())
+        trash_icon_container.add_widget(self.trash_icon)
+        #center_container.add_widget(trash_icon_container)
         center_container.add_widget(_blank)
         top_area_layout.add_widget(center_container)
 
@@ -136,7 +136,7 @@ class CashRegisterApp(MDApp):
         top_area_layout.add_widget(right_area_layout)
         sidebar = BoxLayout(orientation="vertical", size_hint_x=0.05)
         lock_icon = MDIconButton(icon="lock")
-
+        sidebar.add_widget(trash_icon_container)
         sidebar.add_widget(lock_icon)
         #sidebar.add_widget(trash_icon)
         top_area_layout.add_widget(sidebar)
@@ -305,8 +305,8 @@ class CashRegisterApp(MDApp):
 
             toast('Tap again to clear order')
 
-            self.clear_order.icon = "trash-can"
-            self.clear_order.icon_color = "red"
+            self.trash_icon.icon = "trash-can"
+            self.trash_icon.icon_color = "red"
             Clock.unschedule(self.reset_confirmation)
             Clock.schedule_once(self.reset_confirmation, 3)
         else:
@@ -317,12 +317,12 @@ class CashRegisterApp(MDApp):
         self.utilities.update_display()
         self.utilities.update_financial_summary()
 
-        self.clear_order.icon = "trash-can-outline"
+        self.trash_icon.icon = "trash-can-outline"
         self.click = 0
 
     def reset_confirmation(self, dt):
 
-        self.clear_order.icon = "trash-can-outline"
+        self.trash_icon.icon = "trash-can-outline"
         self.click = 0
 
     def reboot(self):
