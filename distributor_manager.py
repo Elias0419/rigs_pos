@@ -1,8 +1,10 @@
 from kivy.properties import StringProperty, NumericProperty
 from kivy.uix.popup import Popup
-from kivy.uix.popup import Popup
 from kivymd.uix.boxlayout import BoxLayout
 from database_manager import DatabaseManager
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.textinput import TextInput
+from kivymd.uix.button import MDRaisedButton, MDFlatButton, MDIconButton
 
 
 class DistPopup(Popup):
@@ -22,12 +24,20 @@ class DistPopup(Popup):
 
     def show_dist_reporting_popup(self, instance=None):
         order_dist = self.db_manager.get_all_distrib()
-
+        container = BoxLayout(orientation="vertical")
         dist_view = DistView()
 
         dist_view.show_reporting_popup(order_dist)
-
-        self.content = dist_view
+        search_bar = GridLayout(orientation="lr-tb", size_hint_y=0.05, cols=3)
+        dist_filter = TextInput(hint_text="dist", size_hint_x=40)
+        item_filter = TextInput(hint_text="item", size_hint_x=40)
+        price_filter = MDRaisedButton(text="price", size_hint_x=20)
+        search_bar.add_widget(dist_filter)
+        search_bar.add_widget(item_filter)
+        search_bar.add_widget(price_filter)
+        container.add_widget(search_bar)
+        container.add_widget(dist_view)
+        self.content = container
         self.size_hint = (0.9, 0.9)
         self.title = f"Order Dist"
         self.open()
@@ -48,7 +58,8 @@ class DistRow(BoxLayout):
 
         super(DistRow, self).__init__(**kwargs)
         self.order_dist = None
-
+    def do_nothin(self):
+        pass
 
 class DistView(BoxLayout):
     _instance = None
