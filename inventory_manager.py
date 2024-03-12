@@ -173,9 +173,10 @@ class InventoryManagementRow(BoxLayout):
         except ValueError:
             self.formatted_price = "Invalid"
 
-    def get_item_uuid(self, name_input, price_input):
+    def get_item_uuid(self, name_input=None, price_input=None, barcode_input=None):
 
-        item_details = self.database_manager.get_item_details(name=name_input, price=price_input)
+        item_details = self.database_manager.get_item_details(name=name_input, price=price_input, barcode=barcode_input)
+        #print(item_details)
         if item_details:
             return item_details['item_id']
         else:
@@ -190,9 +191,14 @@ class InventoryManagementRow(BoxLayout):
             sku_input,
             category_input,
         ):
-        item_id = self.get_item_uuid(name_input, price_input)
+
+        item_id = self.get_item_uuid(name_input=name_input)
+        if item_id == None:
+            item_id = self.get_item_uuid(barcode_input=barcode_input)
+
         if item_id:
             try:
+                print(f"{name_input}\n\n\n\n")
                 self.database_manager.update_item(
                     item_id,
                     barcode_input,
