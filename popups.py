@@ -1723,7 +1723,7 @@ class PopupManager:
         if subsequent_payment:
             self.split_payment_numeric_cash_input = TextInput(
                 text=f"{self.split_payment_info['remaining_amount']:.2f}",
-                hint_text="Enter next payment amount and then choose payment type below",
+
                 #disabled=True,
                 multiline=False,
                 input_filter="float",
