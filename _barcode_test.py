@@ -181,7 +181,7 @@ class BarcodeScanner:
             if barcode in known_barcodes:
                 print("handle", barcode)
                 barcode_data = self.app.barcode_cache.get(barcode)
-                print("handle", barcode_data)
+                print("handle barcode data", barcode_data)
                 if barcode_data["is_dupe"]:
                     self.app.popup_manager.handle_duplicate_barcodes(barcode=barcode)
                     found = True
@@ -198,6 +198,7 @@ class BarcodeScanner:
                 for known_barcode in known_barcodes:
                     if known_barcode[1:] == barcode:
                         barcode_data = self.app.barcode_cache.get(known_barcode)
+
                         if barcode_data["is_dupe"]:
                             self.app.popup_manager.handle_duplicate_barcodes(
                                 known_barcode
