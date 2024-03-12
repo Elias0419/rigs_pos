@@ -15,6 +15,7 @@ from kivy.uix.gridlayout import GridLayout
 from database_manager import DatabaseManager
 from receipt_printer import ReceiptPrinter
 from rapidfuzz import process, fuzz
+from kivymd.uix.label import MDLabel
 
 
 class NullableStringProperty(StringProperty):
@@ -99,13 +100,20 @@ class HistoryView(BoxLayout):
             Clock.schedule_once(self.init_filter, 0.1)
 
     def initialize_total_layout(self):
-        self.totals_layout = GridLayout(orientation="lr-tb", cols=3, size_hint=(1, 0.1))
-        self.total_amount_label = Label(text="Total: $0.00")
-        self.blank = Label(text="Current Filter: today")
-        self.total_cash_label = Label(text="Total Cash: $0.00")
-        self.totals_layout.add_widget(self.total_amount_label)
-        self.totals_layout.add_widget(self.blank)
+        blank = BoxLayout()
+        self.totals_layout = GridLayout(orientation="lr-tb", cols=5, size_hint=(1, 0.1))
+        self.history_search = TextInput(hint_text="Search by item name")
+        self.history_search.bind(text=self.on_search_text_changed)
+        self.total_amount_label = MDLabel(text="Total: $0.00")
+        self.current_filter_label = MDLabel(text="Current Filter: today")
+        self.total_cash_label = MDLabel(text="Total Cash: $0.00")
+        self.totals_layout.add_widget(self.history_search)
+        self.totals_layout.add_widget(blank)
+        self.totals_layout.add_widget(self.current_filter_label)
         self.totals_layout.add_widget(self.total_cash_label)
+        self.totals_layout.add_widget(self.total_amount_label)
+
+
         self.button_layout = BoxLayout(orientation="horizontal", size_hint=(1, 0.4))
 
     def initialize_buttons(self):
@@ -166,11 +174,11 @@ class HistoryView(BoxLayout):
         total_cash = sum(float(order["amount_tendered"]) - float(order["change_given"]) for order in self.rv_data)
 
         self.total_amount_label.text = (
-            f"Total: {total_amount:.2f} + {total_tax:.2f} tax = ${total_with_tax:.2f}"
+            f"[size=20]Total: {total_amount:.2f} + {total_tax:.2f} tax = [b]${total_with_tax:.2f}[/b][/size]"
         )
 
-        self.total_cash_label.text = f"Cash: {total_tendered:.2f} - {total_change:.2f} change = ${total_cash:.2f}"
-        self.blank.text = f"Current Filter: {self.current_filter}"
+        self.total_cash_label.text = f"[size=20]Cash: {total_tendered:.2f} - {total_change:.2f} change = [b]${total_cash:.2f}[/b][/size]"
+        self.current_filter_label.text = f"Current Filter: {self.current_filter}"
 
     def show_reporting_popup(self, order_history):
         self.order_history = order_history
@@ -334,6 +342,36 @@ class HistoryView(BoxLayout):
 
     def set_order_history(self, order_history):
         self.order_history = order_history
+
+
+    def on_search_text_changed(self, instance, value):
+        if len(value) >= 1:
+            self.current_filter = "search"
+            self.search_order_by_item_name(value)
+
+        else:
+            self.current_filter = "today"
+            self.filter_today()
+
+    def search_order_by_item_name(self, search_term):
+        search_term = search_term.lower()
+        filtered_history = []
+
+        for order in self.order_history:
+
+            items_str = order[1]
+            try:
+                items = json.loads(items_str)
+                for item in items:
+                    if search_term in item['name'].lower():
+                        filtered_history.append(order)
+                        break
+            except json.JSONDecodeError as e:
+                print(f"[OrderManager]: search_order_by_item_name\n{e}")
+                continue
+
+        self.update_rv_data(filtered_history)
+        self.update_totals()
 
     def display_order_details(
         self,
