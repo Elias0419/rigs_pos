@@ -254,6 +254,7 @@ class DatabaseManager:
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE item_id = ?"
                 cursor.execute(query, (item_id,))
             elif barcode:
+                print("barcode", barcode)
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE barcode = ?"
                 cursor.execute(query, (barcode,))
             elif name and price:
