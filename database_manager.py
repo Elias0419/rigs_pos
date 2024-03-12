@@ -101,8 +101,6 @@ class DatabaseManager:
         finally:
             conn.close()
 
-           # distributors = {row['id']: {'name': row['name'], 'contact_info': row['contact_info'], 'item_name': row['item_name'], 'item_id': row['item_id'], 'price': row['price'], 'notes': row['notes']} for row in rows}
-
 
 
     def create_dist_table(self):
