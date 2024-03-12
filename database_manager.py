@@ -272,6 +272,7 @@ class DatabaseManager:
                 return None
 
             item = cursor.fetchone()
+            print("item", item)
             if item:
                 item_details = {
                     'name': item[0],
