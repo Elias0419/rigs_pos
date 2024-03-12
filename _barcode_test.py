@@ -179,7 +179,7 @@ class BarcodeScanner:
             found = False
 
             if barcode in known_barcodes:
-                print("handle" barcode)
+                print("handle", barcode)
                 barcode_data = self.app.barcode_cache.get(barcode)
                 print("handle", barcode_data)
                 if barcode_data["is_dupe"]:
