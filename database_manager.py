@@ -170,13 +170,16 @@ class DatabaseManager:
 
         return True
 
-    def update_item(self, item_id, barcode, name, price, cost=None, sku=None, category=None, parent_barcode=None):
-        print("db update_item", "item_id", item_id, "barcode", barcode, "name", name, "price", price, "cost", cost, "sku", sku, "category", category, "parent_barcode", parent_barcode)
+    def update_item(self, item_id, barcode, name, price, cost=None, sku=None, category=None):
+        print("db update_item", "item_id", item_id, "name", name, "price", price, "cost", cost, "sku", sku, "category", category)
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            update_query = """UPDATE items SET barcode=?, name=?, price=?, cost=?, sku=?, category=?, parent_barcode=? WHERE item_id=?"""
-            cursor.execute(update_query, (barcode, name, price, cost, sku, category, parent_barcode, item_id))
+
+            update_query = """UPDATE items
+                            SET barcode=?, name=?, price=?, cost=?, sku=?, category=?
+                            WHERE item_id=?"""
+            cursor.execute(update_query, (barcode, name, price, cost, sku, category, item_id))
 
             if cursor.rowcount == 0:
                 print("No item found with UUID:", item_id)
@@ -184,16 +187,13 @@ class DatabaseManager:
 
             conn.commit()
             item_details = {
-                'item_id': item_id,
-                'barcode': barcode,
+                'item_id': item_id,  # Include item_id in the item_details for completeness
                 'name': name,
                 'price': price,
                 'cost': cost,
                 'sku': sku,
                 'category': category,
-                'parent_barcode': parent_barcode,
             }
-
             self.app.utilities.update_barcode_cache(item_details)
         except Exception as e:
             print(e)
@@ -201,7 +201,6 @@ class DatabaseManager:
         finally:
             conn.close()
         return True
-
 
 
 
@@ -249,30 +248,32 @@ class DatabaseManager:
 
             item_details = None
 
-            # Build the query based on provided parameters
             if item_id:
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE item_id = ?"
                 cursor.execute(query, (item_id,))
             elif barcode:
-                print("barcode", barcode)
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE barcode = ?"
                 cursor.execute(query, (barcode,))
+
             elif name and price:
+                print("name and price")
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE name = ? AND price = ?"
                 cursor.execute(query, (name, price))
+                if cursor.rowcount == 0:
 
-                if cursor.fetchone() is None:
                     query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE name = ?"
                     cursor.execute(query, (name,))
+
             elif name:
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE name = ?"
                 cursor.execute(query, (name,))
+
             else:
                 print("[DatabaseManager]: get_item_details requires either item_id, barcode, or both name and price.")
                 return None
 
             item = cursor.fetchone()
-            print("item", item)
+
             if item:
                 item_details = {
                     'name': item[0],
@@ -281,9 +282,13 @@ class DatabaseManager:
                     'cost': item[3],
                     'sku': item[4],
                     'category': item[5],
-                    'item_id': item[6],
-                    'parent_barcode': item[7]
                 }
+
+                if item_id or barcode:
+                    item_details['parent_barcode'] = item[6]
+                else:
+                    item_details['item_id'] = item[6]
+                    item_details['parent_barcode'] = item[7]
 
         except Exception as e:
             print(f"[DatabaseManager]: get_item_details\n {e}")
