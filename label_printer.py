@@ -20,6 +20,7 @@ from kivy.uix.button import Button
 from kivy.graphics import Rectangle, Color, Line
 from kivy.uix.widget import Widget
 from kivymd.uix.boxlayout import MDBoxLayout
+import threading
 
 
 class LabelPrintingRow(BoxLayout):
@@ -439,7 +440,7 @@ class LabelPrinter:
                 font=additional_font,
             )
 
-        # label_image.show()
+        #label_image.show()
         qlr = brother_ql.BrotherQLRaster("QL-710W")
         # qlr.exception_on_warning = True
         convert(qlr=qlr, images=[label_image], label="23x23", cut=False)
@@ -454,22 +455,37 @@ class LabelPrinter:
             self.app.popup_manager.catch_label_printing_errors(e)
             return False
 
+
+    def threaded_printing(self, item):
+        thread_name = threading.current_thread().name
+
+        include_text = "optional_text" in item and item["optional_text"] != ""
+        optional_text = item.get("optional_text", "")
+        for _ in range(item["quantity"]):
+            success = self.print_barcode_label(
+                item["barcode"],
+                item["price"],
+                include_text=include_text,
+                optional_text=optional_text,
+            )
+            if not success:
+                self.print_success = False
+
+
     def process_queue(self):
         self.print_success = True
+        threads = []
+
 
         for item in self.print_queue:
-            include_text = "optional_text" in item and item["optional_text"] != ""
-            optional_text = item.get("optional_text", "")
-            for _ in range(item["quantity"]):
-                success = self.print_barcode_label(
-                    item["barcode"],
-                    item["price"],
-                    # f"{item['name']}_label.png",
-                    include_text=include_text,
-                    optional_text=optional_text,
-                )
-                if not success:
-                    self.print_success = False
+            t = threading.Thread(target=self.threaded_printing, args=(item,))
+            threads.append(t)
+
+            t.start()
+
+        for t in threads:
+            t.join()
+
 
         if self.print_success:
             self.print_queue.clear()
@@ -479,6 +495,34 @@ class LabelPrinter:
                 self.app.popup_manager.label_errors_popup.dismiss()
             except:
                 pass
+
+
+
+    # def process_queue(self):
+    #     self.print_success = True
+    #
+    #     for item in self.print_queue:
+    #         include_text = "optional_text" in item and item["optional_text"] != ""
+    #         optional_text = item.get("optional_text", "")
+    #         for _ in range(item["quantity"]):
+    #             success = self.print_barcode_label(
+    #                 item["barcode"],
+    #                 item["price"],
+    #                 # f"{item['name']}_label.png",
+    #                 include_text=include_text,
+    #                 optional_text=optional_text,
+    #             )
+    #             if not success:
+    #                 self.print_success = False
+    #
+    #     if self.print_success:
+    #         self.print_queue.clear()
+    #         self.save_queue()
+    #         self.app.label_manager.print_queue_popup.dismiss()
+    #         try:
+    #             self.app.popup_manager.label_errors_popup.dismiss()
+    #         except:
+    #             pass
 
     def remove_from_queue(self, name):
         for i, item in enumerate(self.print_queue):
