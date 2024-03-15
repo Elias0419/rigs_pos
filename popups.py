@@ -1482,7 +1482,7 @@ class PopupManager:
             size_hint=(0.8, 0.8),
             pos_hint={"center_x": 0.5, "center_y": 0.5},
             spacing=10,
-            padding=10
+            # padding=10xxx
         )
 
 
@@ -1533,7 +1533,17 @@ class PopupManager:
             auto_dismiss=False,
         )
         self.finalize_order_popup.dismiss()
+        self.timeout_event = Clock.schedule_once(lambda dt: self.automatic_done_actions(), 60)
         self.payment_popup.open()
+
+    def automatic_done_actions(self):
+        order_details = self.app.order_manager.get_order_details()
+        self.app.db_manager.send_order_to_history_database(order_details, self.app.order_manager, self.app.db_manager)
+        self.app.order_manager.clear_order()
+        self.payment_popup.dismiss()
+        self.app.utilities.update_financial_summary()
+        self.app.order_layout.clear_widgets()
+        self.app.order_manager.delete_order_from_disk(order_details)
 
     def show_make_change_popup(self, change):
         change_layout = BoxLayout(orientation="vertical", spacing=10)
