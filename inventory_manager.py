@@ -72,12 +72,16 @@ class InventoryManagementView(BoxLayout):
     def show_inventory_for_manager(self, inventory_items):
         self.full_inventory = inventory_items
 
-    def refresh_inventory(self):
+    def refresh_inventory(self, query=None):
+        query = self.ids.inv_search_input.text
 
         updated_inventory = self.database_manager.get_all_items()
 
         self.show_inventory_for_manager(updated_inventory)
-        Clock.schedule_once(lambda dt: self.filter_inventory(None), 0.1)
+        if len(query) > 0:
+            Clock.schedule_once(lambda dt: self.filter_inventory(query), 0.1)
+        else:
+            Clock.schedule_once(lambda dt: self.filter_inventory(None), 0.1) # current filter?
 
     def add_item_to_database(
         self,
@@ -98,6 +102,7 @@ class InventoryManagementView(BoxLayout):
                     sku_input.text,
                     category_input.text,
                 )
+                self.app.utilities.update_inventory_cache()
             except Exception as e:
                 print(e)
 
@@ -114,7 +119,8 @@ class InventoryManagementView(BoxLayout):
 
     def open_inventory_manager(self):
         #self.detach_from_parent()
-        self.app.popup_manager.open_inventory_item_popup()
+
+        self.app.popup_manager.open_inventory_item_popup(query=query)
 
     def generate_data_for_rv(self, items):
         data = [
@@ -198,7 +204,7 @@ class InventoryManagementRow(BoxLayout):
 
         if item_id:
             try:
-                print(f"{name_input}\n\n\n\n")
+               # print(f"{name_input}\n\n\n\n")
                 self.database_manager.update_item(
                     item_id,
                     barcode_input,
@@ -208,6 +214,7 @@ class InventoryManagementRow(BoxLayout):
                     sku_input,
                     category_input,
                 )
+                self.app.utilities.update_inventory_cache()
             except Exception as e:
                 print(e)
 

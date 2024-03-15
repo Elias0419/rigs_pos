@@ -236,6 +236,10 @@ class Utilities:
         inventory = self.app.db_manager.get_all_items()
         return inventory
 
+    def update_inventory_cache(self):
+        inventory = self.app.db_manager.get_all_items()
+        self.app.inventory_cache = inventory
+
     def update_barcode_cache(self, item_details):
         barcode = item_details['barcode']
         if barcode not in self.app.barcode_cache:
@@ -613,6 +617,7 @@ class Utilities:
         sku_input,
         category_input,
         popup,
+        query=None
     ):
 
         if len(name_input.text) > 0:
@@ -625,7 +630,7 @@ class Utilities:
                 sku_input,
                 category_input,
             )
-            self.app.inventory_manager.refresh_inventory()
+            self.app.inventory_manager.refresh_inventory(query=query)
             self.app.popup_manager.inventory_item_popup.dismiss()
 
     def set_generated_barcode(self, barcode_input):
