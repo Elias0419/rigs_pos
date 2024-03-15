@@ -2028,7 +2028,8 @@ class PopupManager:
         )
         error_popup.open()
 
-    def open_inventory_item_popup(self, barcode=None):
+    def open_inventory_item_popup(self, barcode=None, query=None):
+
         self.app.current_context = "inventory_item"
 
         content = BoxLayout(orientation="vertical", padding=10)
@@ -2094,6 +2095,7 @@ class PopupManager:
                     sku_input,
                     self.add_to_db_category_input_inv,
                     self.inventory_item_popup,
+                    query=query
                 ),
             )
         )
@@ -2130,7 +2132,7 @@ class PopupManager:
         self.inventory_item_popup.bind(
             on_dismiss=lambda x: self.on_inventory_item_dismiss(x)
         )
-        self.app.inventory_manager.refresh_inventory()
+        #self.app.inventory_manager.refresh_inventory()
         self.inventory_item_popup.open()
 
     def on_inventory_item_dismiss(self, instance):
