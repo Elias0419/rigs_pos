@@ -866,7 +866,7 @@ class PopupManager:
 
     def show_label_printing_view(self):
 
-        inventory = self.app.db_manager.get_all_items()
+        inventory = self.app.inventory_cache
         label_printing_view = self.app.label_manager
         self.app.current_context = "label"
 
