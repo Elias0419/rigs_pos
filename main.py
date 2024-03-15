@@ -96,7 +96,7 @@ class CashRegisterApp(MDApp):
         self.wrapper = Wrapper(self)
         self.categories = self.utilities.initialize_categories()
         self.barcode_cache = self.utilities.initialize_barcode_cache()
-        self.inventory_cache = self.utilities.initialize_invetory_cache()
+        self.inventory_cache = self.utilities.initialize_inventory_cache()
         self.dual_pane_mode = False
         self.check_dual_pane_mode()
         if self.dual_pane_mode:

@@ -232,7 +232,7 @@ class Utilities:
         print(len(barcode_cache))
         return barcode_cache
 
-    def initialize_invetory_cache(self):
+    def initialize_inventory_cache(self):
         inventory = self.app.db_manager.get_all_items()
         return inventory
 
