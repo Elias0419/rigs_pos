@@ -1,7 +1,7 @@
 import sys
 import re
 from open_cash_drawer import open_cash_drawer
-
+from kivy.clock import Clock
 
 class ButtonHandler:
     def __init__(self, ref):
@@ -154,6 +154,7 @@ class ButtonHandler:
 
 
     def on_done_button_press(self, instance):
+        Clock.unschedule(self.app.popup_manager.timeout_event)
         order_details = self.app.order_manager.get_order_details()
 
         self.app.db_manager.send_order_to_history_database(
