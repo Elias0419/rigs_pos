@@ -1,8 +1,7 @@
 import threading
 import usb.core
 import usb.util
-from Levenshtein import distance as levenshtein_distance
-from rapidfuzz import process, fuzz
+
 import time
 
 
