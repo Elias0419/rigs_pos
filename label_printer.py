@@ -536,7 +536,7 @@ class LabelPrinter:
 
 
     def process_queue(self):
-        print_thread = threading.Thread(target=self._process_print_queue_thread, daemon=True).start()
+        print_thread = threading.Thread(target=self._process_print_queue_thread, daemon=True)
 
         print_thread.start()
 
