@@ -156,8 +156,8 @@ class LabelPrintingView(BoxLayout):
 
     def show_print_queue(self):
 
-        queue_layout = BoxLayout(orientation="vertical", spacing=5)
-        item_layout = BoxLayout(orientation="vertical", spacing=5)
+        queue_layout = BoxLayout(orientation="vertical", spacing=5, padding=5)
+        item_layout = BoxLayout(orientation="vertical", spacing=5, padding=5)
         for item in self.label_printer.print_queue:
             name_label = Label(text=f"{item['name']}", size_hint_x=0.2)
             qty_label = Label(text=f"Qty: {item['quantity']}", size_hint_x=0.05)
@@ -212,46 +212,46 @@ class LabelPrintingView(BoxLayout):
 
             item_layout.add_widget(line)
 
-        btn_layout = BoxLayout(orientation="horizontal", spacing=5, size_hint_y=0.2)
+        btn_layout = BoxLayout(orientation="horizontal", spacing=5, padding=5, size_hint_y=0.2)
         btn_layout.add_widget(
             MDRaisedButton(
-                text="Print Now", on_press=self.print_now, size_hint=(0.2, 1)
+                text=f"[b][size=20]Print Now[/size][/b]", on_press=self.print_now, size_hint=(0.2, 1)
+            )
+        )
+        btn_layout.add_widget(BoxLayout(size_hint_x=0.2))
+        btn_layout.add_widget(
+            MDFlatButton(
+                text="Cancel", on_press=self.cancel_print, size_hint=(0.1, 1), md_bg_color="grey"
             )
         )
         btn_layout.add_widget(
-            MDRaisedButton(
-                text="Cancel", on_press=self.cancel_print, size_hint=(0.2, 1)
-            )
-        )
-        btn_layout.add_widget(
-            MDRaisedButton(
-                text="Clear Queue", on_press=self.clear_queue, size_hint=(0.2, 1)
+            MDFlatButton(
+                text="Clear Queue", on_press=self.clear_queue, size_hint=(0.1, 1), md_bg_color="grey"
             )
         )
 
         queue_layout.add_widget(item_layout)
         queue_layout.add_widget(btn_layout)
         self.print_queue_popup = Popup(
-            title="Print Queue", content=queue_layout, size_hint=(0.8, 0.6)
-        )
+            title="Print Queue", content=queue_layout, size_hint=(0.8, 0.6),)
 
         self.print_queue_popup.open()
 
     def add_label_text(self, item_str):
-        add_lable_layout = BoxLayout(orientation="vertical")
-        add_label_text_layout = BoxLayout(orientation="vertical")
+        add_lable_layout = BoxLayout(orientation="vertical", size_hint_y=1)
+        add_label_text_layout = BoxLayout(orientation="vertical",size_hint_y=0.5)
         name_truncated = item_str[:15]
-        add_label_text_label = Label(text="15 Characters Max")
-        self.add_label_text_input = TextInput(text=name_truncated, size_hint=(1, 0.4))
-        add_label_text_layout.add_widget(add_label_text_label)
+       # add_label_text_label = Label(text="15 Characters Max")
+        self.add_label_text_input = TextInput(text=name_truncated, size_hint=(1, 0.1), multiline=False)
+        #add_label_text_layout.add_widget(add_label_text_label)
         add_label_text_layout.add_widget(self.add_label_text_input)
-        add_label_button_layout = BoxLayout(orientation="horizontal", spacing=5)
+        add_label_button_layout = BoxLayout(orientation="horizontal", spacing=5, size_hint=(1,0.5))
         add_label_confirm_button = MDRaisedButton(
             text="Confirm",
-            on_press=lambda x: self.on_add_label_confirm_button_press(item_str),
+            on_press=lambda x: self.on_add_label_confirm_button_press(item_str), size_hint=(1,1)
         )
         add_label_cancel_button = MDRaisedButton(
-            text="Cancel", on_press=lambda x: self.add_label_popup.dismiss()
+            text="Cancel", on_press=lambda x: self.add_label_popup.dismiss(), size_hint=(1,1)
         )
         add_label_button_layout.add_widget(add_label_confirm_button)
         add_label_button_layout.add_widget(add_label_cancel_button)
@@ -261,8 +261,8 @@ class LabelPrintingView(BoxLayout):
             title="Add Text to Selected Label",
             content=add_lable_layout,
             textinput=self.add_label_text_input,
-            pos_hint={"top": 1},
-            size_hint=(0.4, 0.4),
+            #pos_hint={"top": 1},
+            size_hint=(0.4, 0.2),
         )
         self.add_label_popup.open()
 
@@ -411,39 +411,40 @@ class LabelPrinter:
             if i["name"] == name:
                 if len(i["optional_text"]) > 0:
                     label_image = self.print_barcode_label(i["barcode"], i["price"], optional_text = i["optional_text"], include_text=True, preview=True)
-                    self.preview_popup(label_image)
+                    self.open_preview_popup(label_image)
                     break
                 else:
                     label_image = self.print_barcode_label(i["barcode"], i["price"], preview=True)
-                    self.preview_popup(label_image)
+                    self.open_preview_popup(label_image)
                     break
 
-    def preview_popup(self, label_image):
+    def open_preview_popup(self, label_image):
 
         blank_image = Image.open("images/blank_label.png")
-
         label_image = label_image.convert('RGBA')
         blank_image = blank_image.convert('RGBA')
-
         blank_width, blank_height = blank_image.size
         label_width, label_height = label_image.size
         x_position = (blank_width - label_width) // 2
         y_position = (blank_height - label_height) // 2
 
         blank_image.paste(label_image, (x_position, y_position), label_image)
-
         data = BytesIO()
         blank_image.save(data, format='PNG')
         data.seek(0)
 
         core_image = CoreImage(data, ext='png')
         kivy_image = KivyImage(texture=core_image.texture)
-
-        layout = BoxLayout()
+        layout = BoxLayout(orientation="vertical")
         layout.add_widget(kivy_image)
 
-        popup = Popup(content=layout, size_hint=(0.5, 0.5))
-        popup.open()
+        self.preview_popup = Popup(content=layout, size_hint=(0.2, 0.2), title="",
+            background="images/transparent.png",
+            background_color=(0, 0, 0, 0),
+            separator_height=0,)
+
+
+        self.preview_popup.open()
 
 
     def print_barcode_label(
@@ -496,25 +497,25 @@ class LabelPrinter:
             additional_text_bbox = draw.textbbox((0, 0), optional_text, font=additional_font)
             additional_text_width = additional_text_bbox[2] - additional_text_bbox[0]
             x_additional_text = (label_width - additional_text_width) / 2
-            additional_text_y_position = barcode_y_position + barcode_height + 10
+            additional_text_y_position = barcode_y_position + barcode_height #+ 10
             draw.text((x_additional_text, additional_text_y_position), optional_text, fill="black", font=additional_font)
         if preview:
             return label_image
         else:
-            label_image.show()
-            # qlr = brother_ql.BrotherQLRaster("QL-710W")
-            # # qlr.exception_on_warning = True
-            # convert(qlr=qlr, images=[label_image], label="23x23", cut=False)
-            # try:
-            #     send(
-            #         instructions=qlr.data,
-            #         printer_identifier="usb://0x04F9:0x2043",
-            #         backend_identifier="pyusb",
-            #     )
-            #     return True
-            # except Exception as e:
-            #     self.app.popup_manager.catch_label_printing_errors(e)
-            #     return False
+            #label_image.show()
+            qlr = brother_ql.BrotherQLRaster("QL-710W")
+            # qlr.exception_on_warning = True
+            convert(qlr=qlr, images=[label_image], label="23x23", cut=False)
+            try:
+                send(
+                    instructions=qlr.data,
+                    printer_identifier="usb://0x04F9:0x2043",
+                    backend_identifier="pyusb",
+                )
+                return True
+            except Exception as e:
+                self.app.popup_manager.catch_label_printing_errors(e)
+                return False
 
 
     def threaded_printing(self, item):
