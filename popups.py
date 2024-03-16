@@ -2234,10 +2234,11 @@ class FinancialSummaryWidget(MDFlatButton):
             self.discount_label = MDLabel(markup=True, halign="right")
             self.tax_label = MDLabel(markup=True, halign="right")
             self.total_label = MDLabel(markup=True, font_style='H5', halign="right")
-
+            self.blank = BoxLayout(size_hint_y=None, height=20)
             self.layout.add_widget(self.subtotal_label)
             self.layout.add_widget(self.discount_label)
             self.layout.add_widget(self.tax_label)
+            self.layout.add_widget(self.blank)
             self.layout.add_widget(self.total_label)
 
             self.add_widget(self.layout)
