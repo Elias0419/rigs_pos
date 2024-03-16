@@ -259,7 +259,7 @@ class CashRegisterApp(MDApp):
             rows=4,
             size_hint_x=0.75,
             size_hint_y=1,
-            padding=(60, 0, 0, 0),
+            padding=(60, 0, 0, -10),
         )
         top_container = BoxLayout(orientation="vertical", size_hint_y=0.1, padding=10)
         _nothing = BoxLayout(size_hint_y=1)
