@@ -25,6 +25,7 @@ from kivy.uix.image import Image as KImage
 from io import BytesIO
 from kivy.core.image import Image as CoreImage
 from kivy.uix.image import Image as KivyImage
+import queue
 
 class LabelPrintingRow(BoxLayout):
     barcode = StringProperty()
@@ -535,18 +536,19 @@ class LabelPrinter:
 
 
     def process_queue(self):
+        threading.Thread(target=self._process_print_queue_thread, daemon=True).start()
+
+
+
+    def _process_print_queue_thread(self):
+
         self.print_success = True
-        threads = []
-
-
         for item in self.print_queue:
-            t = threading.Thread(target=self.threaded_printing, args=(item,))
-            threads.append(t)
+            success = self.threaded_printing(item)
+            if not success:
+                self.print_success = False
+                break
 
-            t.start()
-
-        for t in threads:
-            t.join()
 
 
         if self.print_success:
