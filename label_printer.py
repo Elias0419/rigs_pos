@@ -542,7 +542,7 @@ class LabelPrinter:
 
 
     def _process_print_queue_thread(self):
-
+        self.print_success = True
         for item in self.print_queue:
             success = self.print_barcode_label(
                 barcode_data=item["barcode"],
