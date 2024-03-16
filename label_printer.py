@@ -536,15 +536,20 @@ class LabelPrinter:
 
 
     def process_queue(self):
-        threading.Thread(target=self._process_print_queue_thread, daemon=True).start()
+        print_thread = threading.Thread(target=self._process_print_queue_thread, daemon=True).start()
 
+        print_thread.start()
 
 
     def _process_print_queue_thread(self):
 
-        self.print_success = True
         for item in self.print_queue:
-            success = self.threaded_printing(item)
+            success = self.print_barcode_label(
+                barcode_data=item["barcode"],
+                item_price=item["price"],
+                include_text="optional_text" in item and item["optional_text"] != "",
+                optional_text=item.get("optional_text", "")
+            )
             if not success:
                 self.print_success = False
                 break
