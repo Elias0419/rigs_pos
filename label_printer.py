@@ -21,7 +21,10 @@ from kivy.graphics import Rectangle, Color, Line
 from kivy.uix.widget import Widget
 from kivymd.uix.boxlayout import MDBoxLayout
 import threading
-
+from kivy.uix.image import Image as KImage
+from io import BytesIO
+from kivy.core.image import Image as CoreImage
+from kivy.uix.image import Image as KivyImage
 
 class LabelPrintingRow(BoxLayout):
     barcode = StringProperty()
@@ -158,7 +161,7 @@ class LabelPrintingView(BoxLayout):
         for item in self.label_printer.print_queue:
             name_label = Label(text=f"{item['name']}", size_hint_x=0.2)
             qty_label = Label(text=f"Qty: {item['quantity']}", size_hint_x=0.05)
-            text_label = Label(text=f"Text: {item['optional_text']}", size_hint_x=0.2)
+            text_label = Label(text=f"Text: {item['optional_text']}", size_hint_x=0.2, halign="left")
             plus_button = MDIconButton(
                 icon="plus",
                 on_press=lambda x, item=item: self.increment_quantity(
@@ -187,13 +190,21 @@ class LabelPrintingView(BoxLayout):
                 ),
                 size_hint_x=0.1,
             )
-            item_row = GridLayout(cols=7, spacing=5, size_hint_y=None, height=40)
+            preview_button = Button(
+                text="Preview",
+                on_press=lambda x, item=item: self.label_printer.preview_barcode_label(
+                    name=item["name"]
+                ),
+                size_hint_x=0.1,
+            )
+            item_row = GridLayout(cols=8, spacing=5, size_hint_y=None, height=40)
             item_row.add_widget(name_label)
             item_row.add_widget(qty_label)
             item_row.add_widget(text_label)
             item_row.add_widget(plus_button)
             item_row.add_widget(minus_button)
             item_row.add_widget(text_button)
+            item_row.add_widget(preview_button)
             item_row.add_widget(rm_button)
             item_layout.add_widget(item_row)
             line = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=1)
@@ -381,6 +392,49 @@ class LabelPrinter:
         self.print_queue.clear()
         self.save_queue()
 
+    def calculate_dynamic_font_size(self, draw, text, max_width, start_font_size=40, min_font_size=10, font_path="/usr/share/fonts/TTF/Arial.TTF"):
+        font_size = start_font_size
+        font = ImageFont.truetype(font_path, font_size)
+        text_bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = text_bbox[2] - text_bbox[0]
+
+        while text_width > max_width and font_size > min_font_size:
+            font_size -= 1
+            font = ImageFont.truetype(font_path, font_size)
+            text_bbox = draw.textbbox((0, 0), text, font=font)
+            text_width = text_bbox[2] - text_bbox[0]
+
+        return font_size
+
+    def preview_barcode_label(self, name):
+        for i in self.print_queue:
+            if i["name"] == name:
+                if len(i["optional_text"]) > 0:
+                    label_image = self.print_barcode_label(i["barcode"], i["price"], optional_text = i["optional_text"], include_text=True, preview=True)
+                    self.preview_popup(label_image)
+                    break
+                else:
+                    label_image = self.print_barcode_label(i["barcode"], i["price"], preview=True)
+                    self.preview_popup(label_image)
+                    break
+
+    def preview_popup(self, label_image):
+
+        data = BytesIO()
+        label_image.save(data, format='PNG')
+        data.seek(0)
+
+
+        core_image = CoreImage(data, ext='png')
+        kivy_image = KivyImage(texture=core_image.texture)
+
+
+        layout = BoxLayout()
+        layout.add_widget(kivy_image)
+        popup = Popup(content=layout, size_hint=(0.5, 0.5))
+        popup.open()
+
+
     def print_barcode_label(
         self,
         barcode_data,
@@ -388,6 +442,7 @@ class LabelPrinter:
         save_path=None,
         include_text=False,
         optional_text="",
+        preview=False
     ):
         label_width, label_height = 202, 202
         barcode_y_position = 35
@@ -423,37 +478,32 @@ class LabelPrinter:
         label_image.paste(barcode_image, barcode_position)
 
         if include_text and optional_text:
-            additional_text_font_size = 20
-            additional_font = ImageFont.truetype(
-                "/usr/share/fonts/TTF/Arial.TTF", additional_text_font_size
-            )
-            additional_text_bbox = draw.textbbox(
-                (0, 0), optional_text, font=additional_font
-            )
+            max_optional_text_width = label_width
+            additional_text_font_size = self.calculate_dynamic_font_size(draw, optional_text, max_optional_text_width)
+            additional_font = ImageFont.truetype("/usr/share/fonts/TTF/Arial.TTF", additional_text_font_size)
+
+            additional_text_bbox = draw.textbbox((0, 0), optional_text, font=additional_font)
             additional_text_width = additional_text_bbox[2] - additional_text_bbox[0]
             x_additional_text = (label_width - additional_text_width) / 2
             additional_text_y_position = barcode_y_position + barcode_height + 10
-            draw.text(
-                (x_additional_text, additional_text_y_position),
-                optional_text,
-                fill="black",
-                font=additional_font,
-            )
-
-        #label_image.show()
-        qlr = brother_ql.BrotherQLRaster("QL-710W")
-        # qlr.exception_on_warning = True
-        convert(qlr=qlr, images=[label_image], label="23x23", cut=False)
-        try:
-            send(
-                instructions=qlr.data,
-                printer_identifier="usb://0x04F9:0x2043",
-                backend_identifier="pyusb",
-            )
-            return True
-        except Exception as e:
-            self.app.popup_manager.catch_label_printing_errors(e)
-            return False
+            draw.text((x_additional_text, additional_text_y_position), optional_text, fill="black", font=additional_font)
+        if preview:
+            return label_image
+        else:
+            label_image.show()
+            # qlr = brother_ql.BrotherQLRaster("QL-710W")
+            # # qlr.exception_on_warning = True
+            # convert(qlr=qlr, images=[label_image], label="23x23", cut=False)
+            # try:
+            #     send(
+            #         instructions=qlr.data,
+            #         printer_identifier="usb://0x04F9:0x2043",
+            #         backend_identifier="pyusb",
+            #     )
+            #     return True
+            # except Exception as e:
+            #     self.app.popup_manager.catch_label_printing_errors(e)
+            #     return False
 
 
     def threaded_printing(self, item):
@@ -498,31 +548,6 @@ class LabelPrinter:
 
 
 
-    # def process_queue(self):
-    #     self.print_success = True
-    #
-    #     for item in self.print_queue:
-    #         include_text = "optional_text" in item and item["optional_text"] != ""
-    #         optional_text = item.get("optional_text", "")
-    #         for _ in range(item["quantity"]):
-    #             success = self.print_barcode_label(
-    #                 item["barcode"],
-    #                 item["price"],
-    #                 # f"{item['name']}_label.png",
-    #                 include_text=include_text,
-    #                 optional_text=optional_text,
-    #             )
-    #             if not success:
-    #                 self.print_success = False
-    #
-    #     if self.print_success:
-    #         self.print_queue.clear()
-    #         self.save_queue()
-    #         self.app.label_manager.print_queue_popup.dismiss()
-    #         try:
-    #             self.app.popup_manager.label_errors_popup.dismiss()
-    #         except:
-    #             pass
 
     def remove_from_queue(self, name):
         for i, item in enumerate(self.print_queue):
@@ -539,7 +564,11 @@ class PrintQueueRow(BoxLayout):
     remove_callback = ObjectProperty()
     quantity_changed_callback = ObjectProperty()
     add_label_text_callback = ObjectProperty()
+    preview_barcode_label_callback = ObjectProperty()
     optional_text = StringProperty()
+
+    def __init__(self):
+        self.label_printer = LabelPrinter()
 
     def on_remove_button_press(self):
         if self.remove_callback:
@@ -551,6 +580,12 @@ class PrintQueueRow(BoxLayout):
         if self.add_label_text_callback:
             self.add_label_text_callback(self.name, optional_text)
         self.add_label_popup.dismiss()
+
+    def preview_barcode_label(self):
+        if self.preview_barcode_label_callback:
+            self.preview_barcode_label_callback(self.name)
+        for name in self.label_printer.print_queue:
+            print(" poo",name)
 
 
 class LabelQueueLayout(BoxLayout):
