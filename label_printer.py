@@ -420,17 +420,28 @@ class LabelPrinter:
 
     def preview_popup(self, label_image):
 
-        data = BytesIO()
-        label_image.save(data, format='PNG')
-        data.seek(0)
+        blank_image = Image.open("images/blank_label.png")
 
+        label_image = label_image.convert('RGBA')
+        blank_image = blank_image.convert('RGBA')
+
+        blank_width, blank_height = blank_image.size
+        label_width, label_height = label_image.size
+        x_position = (blank_width - label_width) // 2
+        y_position = (blank_height - label_height) // 2
+
+        blank_image.paste(label_image, (x_position, y_position), label_image)
+
+        data = BytesIO()
+        blank_image.save(data, format='PNG')
+        data.seek(0)
 
         core_image = CoreImage(data, ext='png')
         kivy_image = KivyImage(texture=core_image.texture)
 
-
         layout = BoxLayout()
         layout.add_widget(kivy_image)
+
         popup = Popup(content=layout, size_hint=(0.5, 0.5))
         popup.open()
 
