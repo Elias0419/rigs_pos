@@ -120,66 +120,7 @@
             #height: self.minimum_height
             orientation: 'vertical'
 
-<PrintQueueRow>:
-    canvas.after:
-        Color:
-            rgba: 0.5, 0.5, 0.5, 1
-        Line:
-            points: self.x, self.y, self.x + self.width, self.y
-            width: 1
-    orientation: 'horizontal'
-    #size_hint_y: None
-    height: dp(48)
-    spacing: 5
 
-    Label:
-        text: root.name
-    Label:
-        text: root.optional_text
-        #size_hint_x: 1.5
-        #text_size: self.size
-        #halign: 'center'
-        #valign: 'middle'
-    BoxLayout:
-        orientation: 'horizontal'
-        #size_hint_x: None
-        #width: dp(100)
-        spacing: 10
-
-        MDRaisedButton:
-            text: "-"
-            #width: dp(48)
-            on_press: root.decrement_quantity()
-        Label:
-            text: root.quantity
-            size_hint: (None,0.8)
-            #size_hint_x: 0.3
-            #width: dp(48)
-        MDRaisedButton:
-            text: "+"
-            #width: dp(48)
-
-            on_press: root.increment_quantity()
-    MDRaisedButton:
-        text: "Add Text"
-        on_press: root.add_label_text()
-
-    MDRaisedButton:
-        text: "Remove"
-        on_press: root.on_remove_button_press()
-
-<LabelQueueLayout>:
-    BoxLayout:
-        id: label_queue_rv
-        size_hint: (1, 1)
-        viewclass: 'PrintQueueRow'
-       # RecycleBoxLayout:
-        #    default_size: None, dp(48)
-         #   default_size_hint: 1, None
-          #  size_hint_y: None
-           # #height: self.minimum_height
-            #height: len(label_queue_rv.data) * dp(40)
-            #orientation: 'vertical'
 <InventoryManagementRow>:
     canvas.after:
         Color:
