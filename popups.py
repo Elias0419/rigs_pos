@@ -870,7 +870,6 @@ class PopupManager:
 
         inventory = self.app.inventory_cache
         self.label_printing_view = self.app.label_manager
-        self.app.current_context = "label"
 
         self.label_printing_view.show_inventory_for_label_printing(inventory)
         if dual_pane_mode:
@@ -891,6 +890,7 @@ class PopupManager:
             except Exception as e:
                 print(f"expected error in popup manager show_label_printing_view\n{e}")
         else:
+            self.app.current_context = "label"
 
             self.label_printing_popup = Popup(
                 title="Label Printing", content=self.label_printing_view, size_hint=(0.9, 0.9)
@@ -995,10 +995,11 @@ class PopupManager:
         self.inventory_management_view = InventoryManagementView()
         inventory = self.app.db_manager.get_all_items()
         self.inventory_management_view.show_inventory_for_manager(inventory)
-        self.app.current_context = "inventory"
+
         if dual_pane_mode:
             return self.inventory_management_view
         else:
+            self.app.current_context = "inventory"
             self.inventory_management_view_popup = Popup(
                 title="Inventory Management",
                 content=self.inventory_management_view,
