@@ -6,6 +6,11 @@
 
 
 from kivy.config import Config
+#Config.set('kivy', 'keyboard_mode', 'systemanddock')
+#Config.set('input', 'isolution multitouch', 'hidinput,/dev/input/event12')
+Config.set('graphics', 'show_cursor', '0')
+Config.set("graphics", "multisamples", "8")
+Config.set('graphics', 'kivy_clock', 'interrupt')
 from kivy.core.window import Window
 from kivy.modules import monitor, inspector
 from kivymd.app import MDApp
