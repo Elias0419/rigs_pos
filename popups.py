@@ -905,6 +905,7 @@ class PopupManager:
             self.overlay_popup.dismiss()
             self.dual_popup.dismiss()
             self.app.utilities.dual_button.text = ""
+            self.app.current_context = "main"
         except:
             pass
 
