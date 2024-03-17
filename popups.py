@@ -1232,7 +1232,7 @@ class PopupManager:
         self.inventory_popup = self.create_focus_popup(
             title="Inventory",
             content=inventory_view,
-            textinput=inventory_view.ids.label_search_input,
+            textinput=inventory_view.ids.inventory_search_input,
             size_hint=(0.4, 1),
             pos_hint={"top": 1},
         )
