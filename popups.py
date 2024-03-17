@@ -912,11 +912,11 @@ class PopupManager:
         if self.overlay_popup.pos_hint == {"right":1}:
             self.overlay_popup.dismiss()
             self.toggle_overlay_popup(pane="left")
-            self.app.current_context = "inventory"
+            self.app.current_context = "label"
         else:
             self.overlay_popup.dismiss()
             self.toggle_overlay_popup(pane="right")
-            self.app.current_context = "label"
+            self.app.current_context = "inventory"
 
     def toggle_overlay_popup(self, pane="right"):
         #container = MDBoxLayout()
