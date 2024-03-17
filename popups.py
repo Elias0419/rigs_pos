@@ -33,7 +33,7 @@ from kivy.utils import get_color_from_hex
 from kivymd.toast import toast
 from kivy.uix.anchorlayout import AnchorLayout
 from kivymd.uix.floatlayout import MDFloatLayout
-
+from kivy.graphics import Color, Rectangle
 from kivymd.uix.card import MDCard
 
 class PopupManager:
@@ -864,37 +864,126 @@ class PopupManager:
         )
         self.system_popup.open()
 
-    def show_label_printing_view(self):
+    def show_label_printing_view(self, dual_pane_mode=False):
 
         inventory = self.app.inventory_cache
         label_printing_view = self.app.label_manager
         self.app.current_context = "label"
 
         label_printing_view.show_inventory_for_label_printing(inventory)
-        self.label_printing_popup = Popup(
-            title="Label Printing", content=label_printing_view, size_hint=(0.9, 0.9)
-        )
-        self.label_printing_popup.bind(
-            on_dismiss=self.app.utilities.reset_to_main_context
-        )
-        self.label_printing_popup.open()
+        if dual_pane_mode:
+            try:
+                container = MDGridLayout(orientation="tb-lr", rows=2)
+                button_container = MDBoxLayout(size_hint_y=0.05)
+                view_container = MDBoxLayout(size_hint_y=0.9)
+                button = MDFlatButton(text="Go Back to Cash Register", md_bg_color="grey", size_hint=(1,1), _no_ripple_effect=True, on_press=lambda x: self.minimize_dual_popup())
+                button_container.add_widget(button)
+                view_container.add_widget(label_printing_view)
+                container.add_widget(view_container)
+                container.add_widget(button_container)
+                return container
+            except Exception as e:
+                print("expected error in popup manager show_label_printing_view")
+        else:
 
-    def show_inventory_management_view(self):
+            self.label_printing_popup = Popup(
+                title="Label Printing", content=label_printing_view, size_hint=(0.9, 0.9)
+            )
+            self.label_printing_popup.bind(
+                on_dismiss=self.app.utilities.reset_to_main_context
+            )
+            self.label_printing_popup.open()
+
+    def toggle_active_pane(self):
+        if self.overlay_popup.pos_hint == {"right":1}:
+            self.overlay_popup.dismiss()
+            self.toggle_overlay_popup(pane="left")
+            self.app.current_context = "inventory"
+        else:
+            self.overlay_popup.dismiss()
+            self.toggle_overlay_popup(pane="right")
+            self.app.current_context = "label"
+
+    def toggle_overlay_popup(self, pane="right"):
+        #container = MDBoxLayout()
+        layout = MDFlatButton(size_hint=(1,1), md_bg_color="grey",_no_ripple_effect=True, opacity=0.75, on_press=lambda x: self.toggle_active_pane())
+        #container.add_widget(layout)
+        if pane == "right":
+
+            self.overlay_popup  = NonModalPopup(content=layout,
+                        title="",
+                        size_hint_x=0.505,
+                        pos_hint={"right":1},
+                        background="images/transparent.png",
+                        background_color=(0, 0, 0, 0),
+                        separator_height=0,
+                        overlay_color=(0, 0, 0, 0),
+                        auto_dismiss=False
+                        )
+            self.overlay_popup.open()
+        else:
+            self.overlay_popup  = NonModalPopup(content=layout,
+                        title="",
+                        size_hint_x=0.505,
+                        pos_hint= {'x': 0.0, 'y': 0},
+                        background="images/transparent.png",
+                        background_color=(0, 0, 0, 0),
+                        separator_height=0,
+                        overlay_color=(0, 0, 0, 0),
+                        auto_dismiss=False
+                        )
+            self.overlay_popup.open()
+
+    def minimize_dual_popup(self):
+        self.dual_popup.opacity = 0
+        self.dual_popup.disabled = True
+        self.overlay_popup.dismiss()
+        self.app.current_context = "main"
+
+    def maximize_dual_popup(self):
+        self.dual_popup.opacity = 1
+        self.dual_popup.disabled = False
+        self.toggle_overlay_popup()
+        self.app.current_context = "inventory"
+
+
+    def show_dual_inventory_and_label_managers(self, toggle="inventory"):
+        layout = GridLayout(orientation="lr-tb", cols=3, size_hint=(1,1))
+        if toggle == "inventory":
+            try:
+                inv_layout = self.show_inventory_management_view(dual_pane_mode=True)
+
+                label_layout = self.show_label_printing_view(dual_pane_mode=True)
+
+
+                divider = MDBoxLayout(orientation="vertical", size_hint_x=None, width=5, size_hint_y=1, md_bg_color="blue")
+                layout.add_widget(inv_layout)
+                layout.add_widget(divider)
+                layout.add_widget(label_layout)
+                self.dual_popup = ConditionalModalPopup(content=layout,overlay_color=(0, 0, 0, 0), auto_dismiss=False, title="Inventory Manager" + " " * 275 + "Label Printer")
+                self.dual_popup.open()
+                self.toggle_overlay_popup()
+            except:
+                pass
+
+    def show_inventory_management_view(self, dual_pane_mode=False):
 
         self.inventory_management_view = InventoryManagementView()
         inventory = self.app.db_manager.get_all_items()
         self.inventory_management_view.show_inventory_for_manager(inventory)
         self.app.current_context = "inventory"
-
-        self.inventory_management_view_popup = Popup(
-            title="Inventory Management",
-            content=self.inventory_management_view,
-            size_hint=(0.9, 0.9),
-        )
-        self.inventory_management_view_popup.bind(
-            on_dismiss=self.on_inventory_manager_dismiss
-        )
-        self.inventory_management_view_popup.open()
+        if dual_pane_mode:
+            return self.inventory_management_view
+        else:
+            self.inventory_management_view_popup = Popup(
+                title="Inventory Management",
+                content=self.inventory_management_view,
+                size_hint=(0.9, 0.9),
+            )
+            self.inventory_management_view_popup.bind(
+                on_dismiss=self.on_inventory_manager_dismiss
+            )
+            self.inventory_management_view_popup.open()
 
     def on_inventory_manager_dismiss(self, instance):
         self.app.utilities.reset_to_main_context(instance)
@@ -2485,6 +2574,35 @@ class Calculator:
         )
         calculator_popup.open()
 
+class NonModalPopup(Popup):
+    def on_touch_down(self, touch):
+        super_result = super().on_touch_down(touch)
+        return False
+
+    def on_touch_move(self, touch):
+        super_result = super().on_touch_move(touch)
+        return False
+
+    def on_touch_up(self, touch):
+        super_result = super().on_touch_up(touch)
+        return False
+
+
+class ConditionalModalPopup(Popup):
+    def on_touch_down(self, touch):
+        if self.opacity == 0:
+            return False
+        return super(ConditionalModalPopup, self).on_touch_down(touch)
+
+    def on_touch_move(self, touch):
+        if self.opacity == 0:
+            return False
+        return super(ConditionalModalPopup, self).on_touch_move(touch)
+
+    def on_touch_up(self, touch):
+        if self.opacity == 0:
+            return False
+        return super(ConditionalModalPopup, self).on_touch_up(touch)
 
 class TouchableMDBoxLayout(BoxLayout):
     def __init__(self, checkbox, **kwargs):

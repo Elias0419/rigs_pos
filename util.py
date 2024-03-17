@@ -418,17 +418,17 @@ class Utilities:
         )
         btn_inventory = self.create_md_raised_button(
             f"[b][size=40]Search[/b][/size]",
-
-            self.app.button_handler.on_button_press,
+            lambda x: self.app.popup_manager.maximize_dual_popup(),
+            #self.app.button_handler.on_button_press,
             (8, 8),
             "H6",
         )
         btn_tools = self.create_md_raised_button(
             f"[b][size=40]Tools[/b][/size]",
 
-
+            lambda x: self.app.popup_manager.show_dual_inventory_and_label_managers(),
             #lambda x: self.enable_dual_pane_mode(),
-            self.app.button_handler.on_button_press,
+            #self.app.button_handler.on_button_press,
             # lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
             # lambda x: sys.exit(42),
             (8, 8),
