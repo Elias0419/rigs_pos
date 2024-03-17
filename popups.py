@@ -963,6 +963,8 @@ class PopupManager:
 
 
     def show_dual_inventory_and_label_managers(self, toggle="inventory"):
+        self.app.current_context = "inventory"
+
         if hasattr(self, 'label_printing_view') and self.label_printing_view.parent:
             self.label_printing_view.parent.remove_widget(self.label_printing_view)
 
