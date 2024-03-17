@@ -33,6 +33,9 @@ class ButtonHandler:
 
         self.app.dist_popup.show_dist_reporting_popup()
 
+    def show_dual_pane_mode(self):
+        self.app.popup_manager.show_dual_inventory_and_label_managers()
+
     def on_tool_button_press(self, instance):
         tool_actions = {
             "Clear Order": self.clear_order,
@@ -42,7 +45,8 @@ class ButtonHandler:
             "Inventory Management": self.show_inventory_management_view,
             "System": self.show_system_popup,
             "Calculator": self.show_calcultor_popup,
-            "Distrib TEST": self.show_distrib
+            "Distrib TEST": self.show_distrib,
+            "Dual Pane Mode": self.show_dual_pane_mode,
         }
         for action_text, action in tool_actions.items():
             if action_text in instance.text:

@@ -103,8 +103,22 @@ class InventoryManagementView(BoxLayout):
                     category_input.text,
                 )
                 self.app.utilities.update_inventory_cache()
+                self.refresh_label_inventory_for_dual_pane_mode()
+
+
             except Exception as e:
                 print(e)
+
+    def refresh_label_inventory_for_dual_pane_mode(self):
+        try:
+            self.app.popup_manager.view_container.remove_widget(self.app.popup_manager.label_printing_view)
+            inventory = self.app.inventory_cache
+
+
+            self.app.popup_manager.label_printing_view.show_inventory_for_label_printing(inventory)
+            self.app.popup_manager.view_container.add_widget(self.app.popup_manager.label_printing_view)
+        except Exception as e:
+            print(f"[Inventory Manager]\nrefresh_label_inventory_for_dual_pane_mode\n{e}")
 
     def reset_inventory_context(self):
 
@@ -120,7 +134,7 @@ class InventoryManagementView(BoxLayout):
     def open_inventory_manager(self):
         #self.detach_from_parent()
 
-        self.app.popup_manager.open_inventory_item_popup(query=query)
+        self.app.popup_manager.open_inventory_item_popup()
 
     def generate_data_for_rv(self, items):
         data = [

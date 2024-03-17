@@ -865,34 +865,48 @@ class PopupManager:
         self.system_popup.open()
 
     def show_label_printing_view(self, dual_pane_mode=False):
+        if hasattr(self, 'label_printing_view') and self.label_printing_view.parent:
+            self.label_printing_view.parent.remove_widget(self.label_printing_view)
 
         inventory = self.app.inventory_cache
-        label_printing_view = self.app.label_manager
+        self.label_printing_view = self.app.label_manager
         self.app.current_context = "label"
 
-        label_printing_view.show_inventory_for_label_printing(inventory)
+        self.label_printing_view.show_inventory_for_label_printing(inventory)
         if dual_pane_mode:
             try:
                 container = MDGridLayout(orientation="tb-lr", rows=2)
-                button_container = MDBoxLayout(size_hint_y=0.05)
-                view_container = MDBoxLayout(size_hint_y=0.9)
+                button_container = MDBoxLayout(size_hint_y=0.05, orientation="horizontal", spacing=10, padding=5)
+                self.view_container = MDBoxLayout(size_hint_y=0.9)
                 button = MDFlatButton(text="Go Back to Cash Register", md_bg_color="grey", size_hint=(1,1), _no_ripple_effect=True, on_press=lambda x: self.minimize_dual_popup())
+                button2 = MDFlatButton(text="Exit Dual Pane Mode", md_bg_color="grey", size_hint=(1,1), _no_ripple_effect=True, on_press=lambda x: self.exit_dual_pane_mode())
                 button_container.add_widget(button)
-                view_container.add_widget(label_printing_view)
-                container.add_widget(view_container)
+                button_container.add_widget(button2)
+                if self.label_printing_view.parent:
+                    self.label_printing_view.parent.remove_widget(self.label_printing_view)
+                self.view_container.add_widget(self.label_printing_view)
+                container.add_widget(self.view_container)
                 container.add_widget(button_container)
                 return container
             except Exception as e:
-                print("expected error in popup manager show_label_printing_view")
+                print(f"expected error in popup manager show_label_printing_view\n{e}")
         else:
 
             self.label_printing_popup = Popup(
-                title="Label Printing", content=label_printing_view, size_hint=(0.9, 0.9)
+                title="Label Printing", content=self.label_printing_view, size_hint=(0.9, 0.9)
             )
             self.label_printing_popup.bind(
                 on_dismiss=self.app.utilities.reset_to_main_context
             )
             self.label_printing_popup.open()
+
+    def exit_dual_pane_mode(self):
+        try:
+            self.overlay_popup.dismiss()
+            self.dual_popup.dismiss()
+            self.app.utilities.dual_button.text = ""
+        except:
+            pass
 
     def toggle_active_pane(self):
         if self.overlay_popup.pos_hint == {"right":1}:
@@ -939,6 +953,7 @@ class PopupManager:
         self.dual_popup.disabled = True
         self.overlay_popup.dismiss()
         self.app.current_context = "main"
+        self.app.utilities.modify_clock_layout_for_dual_pane_mode()
 
     def maximize_dual_popup(self):
         self.dual_popup.opacity = 1
@@ -948,25 +963,32 @@ class PopupManager:
 
 
     def show_dual_inventory_and_label_managers(self, toggle="inventory"):
-        layout = GridLayout(orientation="lr-tb", cols=3, size_hint=(1,1))
+        if hasattr(self, 'label_printing_view') and self.label_printing_view.parent:
+            self.label_printing_view.parent.remove_widget(self.label_printing_view)
+
+        if hasattr(self, 'inventory_management_view') and self.inventory_management_view.parent:
+            self.inventory_management_view.parent.remove_widget(self.inventory_management_view)
+        self.dual_layout = GridLayout(orientation="lr-tb", cols=3, size_hint=(1,1))
         if toggle == "inventory":
             try:
                 inv_layout = self.show_inventory_management_view(dual_pane_mode=True)
 
-                label_layout = self.show_label_printing_view(dual_pane_mode=True)
+                self.dual_label_layout = self.show_label_printing_view(dual_pane_mode=True)
 
 
                 divider = MDBoxLayout(orientation="vertical", size_hint_x=None, width=5, size_hint_y=1, md_bg_color="blue")
-                layout.add_widget(inv_layout)
-                layout.add_widget(divider)
-                layout.add_widget(label_layout)
-                self.dual_popup = ConditionalModalPopup(content=layout,overlay_color=(0, 0, 0, 0), auto_dismiss=False, title="Inventory Manager" + " " * 275 + "Label Printer")
+                self.dual_layout.add_widget(inv_layout)
+                self.dual_layout.add_widget(divider)
+                self.dual_layout.add_widget(self.dual_label_layout)
+                self.dual_popup = ConditionalModalPopup(content=self.dual_layout,overlay_color=(0, 0, 0, 0), auto_dismiss=False, title="Inventory Manager" + " " * 275 + "Label Printer")
                 self.dual_popup.open()
                 self.toggle_overlay_popup()
-            except:
-                pass
+            except Exception as e:
+                print(f"[popups]\nshow_dual_inventory_and_label_managers\n{e}")
 
     def show_inventory_management_view(self, dual_pane_mode=False):
+        if hasattr(self, 'inventory_management_view') and self.inventory_management_view.parent:
+            self.inventory_management_view.parent.remove_widget(self.inventory_management_view)
 
         self.inventory_management_view = InventoryManagementView()
         inventory = self.app.db_manager.get_all_items()
@@ -1226,8 +1248,10 @@ class PopupManager:
             "Label Printer",
             "Inventory Management",
             "System",
+
+            #"Distrib TEST",
+            "Dual Pane Mode",
             "Open Register",
-            "Distrib TEST"
         ]
 
         btn_height_hint = 0.2

@@ -354,11 +354,11 @@ class Utilities:
 
         if dual_pane_mode:
             dual_pane_layout = GridLayout(orientation="lr-tb", cols=2)
-        main_layout = GridLayout(
+        self.main_layout = GridLayout(
             cols=1, spacing=5, orientation="lr-tb", row_default_height=60
         )
 
-        top_area_layout = GridLayout(
+        self.top_area_layout = GridLayout(
             cols=4, rows=1, orientation="lr-tb", row_default_height=60, size_hint_x=0.95
         )
         right_area_layout = GridLayout(rows=2, orientation="tb-lr", padding=50)
@@ -371,8 +371,8 @@ class Utilities:
             row_force_default=True,
             size_hint_x=1 / 2,
         )
-        clock_layout = self.create_clock_layout()
-        top_area_layout.add_widget(clock_layout)
+        self.clock_layout = self.create_clock_layout()
+        self.top_area_layout.add_widget(self.clock_layout)
 
         center_container = GridLayout(rows=2, orientation="tb-lr", size_hint_y=0.01, size_hint_x=0.4)
         trash_icon_container = MDBoxLayout(size_hint_y=0.1)
@@ -381,7 +381,7 @@ class Utilities:
         trash_icon_container.add_widget(self.app.trash_icon)
         #center_container.add_widget(trash_icon_container)
         center_container.add_widget(_blank)
-        top_area_layout.add_widget(center_container)
+        self.top_area_layout.add_widget(center_container)
 
         right_area_layout.add_widget(self.app.order_layout)
 
@@ -389,14 +389,14 @@ class Utilities:
         financial_layout = BoxLayout(size_hint_y=0.2)
         financial_layout.add_widget(financial_button)
         right_area_layout.add_widget(financial_layout)
-        top_area_layout.add_widget(right_area_layout)
+        self.top_area_layout.add_widget(right_area_layout)
         sidebar = BoxLayout(orientation="vertical", size_hint_x=0.05)
         lock_icon = MDIconButton(icon="lock")
         sidebar.add_widget(trash_icon_container)
         sidebar.add_widget(lock_icon)
         #sidebar.add_widget(trash_icon)
-        top_area_layout.add_widget(sidebar)
-        main_layout.add_widget(top_area_layout)
+        self.top_area_layout.add_widget(sidebar)
+        self.main_layout.add_widget(self.top_area_layout)
         # main_layout.add_widget(sidebar)
         button_layout = GridLayout(
             cols=4, spacing=10, padding=10, size_hint_y=0.05, size_hint_x=1, orientation="lr-tb"
@@ -418,17 +418,17 @@ class Utilities:
         )
         btn_inventory = self.create_md_raised_button(
             f"[b][size=40]Search[/b][/size]",
-            lambda x: self.app.popup_manager.maximize_dual_popup(),
-            #self.app.button_handler.on_button_press,
+            #lambda x: self.app.popup_manager.maximize_dual_popup(),
+            self.app.button_handler.on_button_press,
             (8, 8),
             "H6",
         )
         btn_tools = self.create_md_raised_button(
             f"[b][size=40]Tools[/b][/size]",
-
-            lambda x: self.app.popup_manager.show_dual_inventory_and_label_managers(),
+            #lambda x: self.modify_clock_layout_for_dual_pane_mode(),
+            #lambda x: self.app.popup_manager.show_dual_inventory_and_label_managers(),
             #lambda x: self.enable_dual_pane_mode(),
-            #self.app.button_handler.on_button_press,
+            self.app.button_handler.on_button_press,
             # lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
             # lambda x: sys.exit(42),
             (8, 8),
@@ -438,45 +438,50 @@ class Utilities:
         button_layout.add_widget(btn_custom_item)
         button_layout.add_widget(btn_inventory)
         button_layout.add_widget(btn_tools)
-        main_layout.add_widget(button_layout)
+        self.main_layout.add_widget(button_layout)
 
         Clock.schedule_interval(self.check_inactivity, 10)
         Clock.schedule_interval(self.app.barcode_scanner.check_for_scanned_barcode, 0.1)
 
-        base_layout = FloatLayout()
+        self.base_layout = FloatLayout()
         try:
             bg_image = Image(source="images/grey_mountains.jpg", fit_mode="fill")
-            base_layout.add_widget(bg_image)
+            self.base_layout.add_widget(bg_image)
 
         except Exception as e:
             print(e)
-            with base_layout.canvas.before:
+            with self.base_layout.canvas.before:
                 Color(0.78, 0.78, 0.78, 1)
-                self.rect = Rectangle(size=base_layout.size, pos=base_layout.pos)
+                self.rect = Rectangle(size=self.base_layout.size, pos=self.base_layout.pos)
 
             def update_rect(instance, value):
                 instance.rect.size = instance.size
                 instance.rect.pos = instance.pos
 
-            base_layout.bind(size=update_rect, pos=update_rect)
+            self.base_layout.bind(size=update_rect, pos=update_rect)
 
-        base_layout.add_widget(main_layout)
+        self.base_layout.add_widget(self.main_layout)
         if dual_pane_mode:
             blank_layout = self.app.popup_manager.show_lock_screen(dual_pane=True)
-            dual_pane_layout.add_widget(base_layout)
+            dual_pane_layout.add_widget(self.base_layout)
             dual_pane_layout.add_widget(blank_layout)
             return dual_pane_layout
         else:
-            return base_layout
+            return self.base_layout
 
-    def create_clock_layout(self):
-        clock_layout = GridLayout(
+    def modify_clock_layout_for_dual_pane_mode(self):
+        self.dual_button.text = "Go Back To Dual Pane Mode"
+
+    def create_clock_layout(self, dual_pane_mode=False):
+
+        self.clock_layout = GridLayout(
             orientation="tb-lr",
-            rows=4,
+            rows=5,
             size_hint_x=0.75,
             size_hint_y=1,
             padding=(60, 0, 0, -10),
         )
+
         top_container = BoxLayout(orientation="vertical", size_hint_y=0.1, padding=10)
         _nothing = BoxLayout(size_hint_y=1)
         logo_container = BoxLayout(size_hint_y=0.2, padding=(-200, 0, 0, 0))
@@ -521,20 +526,29 @@ class Utilities:
         line_container.add_widget(blank_line)
 
         line_container.add_widget(blank_line2)
-        padlock_button = MDIconButton(
-            icon="lock",
+        self.dual_button = MDFlatButton(
+            text = "",
             # pos_hint={"right": 1},
-            on_press=lambda x: self.trigger_guard_and_lock(trigger=True),
+            on_press=lambda x: self.maximize_dual_popup(),
         )
+
         top_container.add_widget(register_text)
         top_container.add_widget(line_container)
-        clock_layout.add_widget(top_container)
-        clock_layout.add_widget(_nothing)
-        clock_layout.add_widget(logo_container)
+        self.clock_layout.add_widget(top_container)
+        self.clock_layout.add_widget(self.dual_button)
+
+        self.clock_layout.add_widget(_nothing)
+        self.clock_layout.add_widget(logo_container)
 
         Clock.schedule_interval(self.update_clock, 1)
-        clock_layout.add_widget(clock_container)
-        return clock_layout
+        self.clock_layout.add_widget(clock_container)
+        return self.clock_layout
+
+    def maximize_dual_popup(self):
+        try:
+            self.app.popup_manager.maximize_dual_popup()
+        except:
+            pass
 
     def create_financial_layout(self):
         financial_layout = GridLayout(cols=1, size_hint_x=1 / 3)
