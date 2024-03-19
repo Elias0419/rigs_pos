@@ -26,7 +26,7 @@ from io import BytesIO
 from kivy.core.image import Image as CoreImage
 from kivy.uix.image import Image as KivyImage
 import queue
-
+from kivy.clock import Clock
 class LabelPrintingRow(BoxLayout):
     barcode = StringProperty()
     name = StringProperty()
@@ -503,8 +503,8 @@ class LabelPrinter:
         if preview:
             return label_image
         else:
-            #label_image.show()
-
+            # label_image.show()
+            # return True
             qlr = brother_ql.BrotherQLRaster("QL-710W")
             # qlr.exception_on_warning = True
             convert(qlr=qlr, images=[label_image], label="23x23", cut=False)
@@ -517,9 +517,11 @@ class LabelPrinter:
                 )
                 return True
             except Exception as e:
-                self.app.popup_manager.catch_label_printing_errors(e)
+                self.catch_label_printing_errors(e)
                 return False
 
+    def catch_label_printing_errors(self, e):
+        Clock.schedule_once(lambda dt: self.app.popup_manager.catch_label_printing_errors(e), 0)
 
     def threaded_printing(self, item):
         thread_name = threading.current_thread().name
