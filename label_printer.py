@@ -540,17 +540,21 @@ class LabelPrinter:
         print("Starting to process print queue")
         self.print_success = True
         for item in self.print_queue:
-            print(f"Processing item: {item['barcode']}")
-            success = self.print_barcode_label(
-                barcode_data=item["barcode"],
-                item_price=item["price"],
-                include_text="optional_text" in item and item["optional_text"] != "",
-                optional_text=item.get("optional_text", "")
-            )
-            if not success:
-                print(f"Failed to print item: {item['barcode']}")
-                self.print_success = False
-                break
+            item_quantity = item.get("quantity", 1)  # Default to 1 if quantity isn't specified
+            print(f"Processing item: {item['barcode']} with quantity: {item_quantity}")
+            for _ in range(item_quantity):
+                success = self.print_barcode_label(
+                    barcode_data=item["barcode"],
+                    item_price=item["price"],
+                    include_text="optional_text" in item and item["optional_text"] != "",
+                    optional_text=item.get("optional_text", "")
+                )
+                if not success:
+                    print(f"Failed to print item: {item['barcode']}")
+                    self.print_success = False
+                    break  # Breaks out of the inner loop
+            if not self.print_success:
+                break  # Breaks out of the outer loop if a failure occurred
 
         if self.print_success:
             print("All items printed successfully. Clearing queue.")
