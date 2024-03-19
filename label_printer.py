@@ -503,12 +503,9 @@ class LabelPrinter:
         if preview:
             return label_image
         else:
-            print("Creating Brother QL Raster")
             qlr = brother_ql.BrotherQLRaster("QL-710W")
-            print("Converting image to Brother QL format")
             convert(qlr=qlr, images=[label_image], label="23x23", cut=False)
             try:
-                print("Attempting to send print job to printer")
                 send(
                     instructions=qlr.data,
                     printer_identifier="usb://0x04F9:0x2043",
@@ -517,13 +514,11 @@ class LabelPrinter:
                 print("Print job sent successfully")
                 return True
             except Exception as e:
-                print(f"Caught exception in print_barcode_label: {e}")
                 self.catch_label_printing_errors(e)
                 return False
 
 
     def catch_label_printing_errors(self, e):
-        print(f"Scheduling error handling for: {e}")
         Clock.schedule_once(lambda dt: self.app.popup_manager.catch_label_printing_errors(e), 0)
 
 
@@ -537,11 +532,9 @@ class LabelPrinter:
 
 
     def _process_print_queue_thread(self):
-        print("Starting to process print queue")
         self.print_success = True
         for item in self.print_queue:
-            item_quantity = item.get("quantity", 1)  # Default to 1 if quantity isn't specified
-            print(f"Processing item: {item['barcode']} with quantity: {item_quantity}")
+            item_quantity = item.get("quantity", 1)
             for _ in range(item_quantity):
                 success = self.print_barcode_label(
                     barcode_data=item["barcode"],
@@ -550,14 +543,13 @@ class LabelPrinter:
                     optional_text=item.get("optional_text", "")
                 )
                 if not success:
-                    print(f"Failed to print item: {item['barcode']}")
+
                     self.print_success = False
-                    break  # Breaks out of the inner loop
+                    break
             if not self.print_success:
-                break  # Breaks out of the outer loop if a failure occurred
+                break
 
         if self.print_success:
-            print("All items printed successfully. Clearing queue.")
             self.print_queue.clear()
             self.save_queue()
             self.app.label_manager.print_queue_popup.dismiss()
@@ -565,9 +557,6 @@ class LabelPrinter:
                 self.app.popup_manager.label_errors_popup.dismiss()
             except Exception as e:
                 print(f"Exception while dismissing error popup: {e}")
-
-
-
 
 
     def remove_from_queue(self, name):
