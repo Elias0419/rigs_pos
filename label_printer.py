@@ -27,11 +27,20 @@ from kivy.core.image import Image as CoreImage
 from kivy.uix.image import Image as KivyImage
 import queue
 from kivy.clock import Clock
+from kivy.app import App
+
 class LabelPrintingRow(BoxLayout):
     barcode = StringProperty()
     name = StringProperty()
     price = StringProperty()
     label_printer = ObjectProperty()
+
+    def __init__(self, **kwargs):
+        super(LabelPrintingRow, self).__init__(**kwargs)
+        self.app = App.get_running_app()
+
+
+
 
     def add_to_print_queue(self):
         self.show_label_popup()
@@ -85,8 +94,17 @@ class LabelPrintingRow(BoxLayout):
 
         popup.open()
 
+    def refresh_print_queue_for_embed(self):
+        try:
+            self.app.popup_manager.queue_container.remove_widget(self.app.popup_manager.print_queue_embed)
+            self.app.popup_manager.print_queue_embed = self.app.label_manager.show_print_queue(embed=True)
+            self.app.popup_manager.queue_container.add_widget(self.app.popup_manager.print_queue_embed)
+        except Exception as e:
+            print(f"Expected error in refresh_print_queue_for_embed\n{e}")
+
     def on_add_button_press(self, quantity_input, popup):
         self.add_quantity_to_queue(quantity_input.text)
+        self.refresh_print_queue_for_embed()
         popup.dismiss()
 
     def add_quantity_to_queue(self, quantity):
@@ -110,7 +128,7 @@ class LabelPrintingView(BoxLayout):
             self.full_inventory = []
             self.app = ref
             self.label_printer = self.app.label_printer
-
+            self.print_queue_ref = LabelPrintingRow()
             self._init = True
 
     def detach_from_parent(self):
@@ -118,9 +136,13 @@ class LabelPrintingView(BoxLayout):
             self.parent.remove_widget(self)
 
     def refresh_and_show_print_queue(self):
-        if self.print_queue_popup is not None:
-            self.print_queue_popup.dismiss()
-        self.show_print_queue()
+        try:
+            if self.print_queue_popup is not None:
+                self.print_queue_popup.dismiss()
+            self.show_print_queue()
+        except Exception as e:
+            print(f"Expected error in refresh_and_show_print_queue")
+        self.print_queue_ref.refresh_print_queue_for_embed()
 
     def update_print_queue_with_label_text(self, item_name, optional_text):
         updated = False
@@ -139,23 +161,33 @@ class LabelPrintingView(BoxLayout):
         self.full_inventory = inventory_items
         self.ids.label_rv.data = self.generate_data_for_rv(inventory_items)
 
-    def remove_from_queue(self, item_name):
+    def remove_from_queue(self, item_name, embed=False):
         removed, is_empty = self.label_printer.remove_from_queue(item_name)
         if removed:
             if is_empty:
-                self.print_queue_popup.dismiss()
+                if embed:
+                     self.print_queue_ref.refresh_print_queue_for_embed()
+                else:
+                    self.print_queue_popup.dismiss()
+
+
             else:
-                self.print_queue_popup.dismiss()
-                self.show_print_queue()
-        else:
-            print("Item not found in queue")
+                if embed:
+                    self.print_queue_ref.refresh_print_queue_for_embed()
+                else:
+                    self.print_queue_popup.dismiss()
+                    self.show_print_queue()
+
+
+
+
 
     def handle_scanned_barcode(self, barcode):
         barcode = barcode.strip()
 
         self.ids.label_search_input.text = barcode
 
-    def show_print_queue(self):
+    def show_print_queue(self, embed = False):
 
         queue_layout = BoxLayout(orientation="vertical", spacing=5, padding=5)
         item_layout = BoxLayout(orientation="vertical", spacing=5, padding=5)
@@ -163,27 +195,54 @@ class LabelPrintingView(BoxLayout):
             name_label = Label(text=f"{item['name']}", size_hint_x=0.2)
             qty_label = Label(text=f"Qty: {item['quantity']}", size_hint_x=0.05)
             text_label = Label(text=f"Text: {item['optional_text']}", size_hint_x=0.2, halign="left")
-            plus_button = MDIconButton(
-                icon="plus",
-                on_press=lambda x, item=item: self.increment_quantity(
-                    item_str=item["name"]
-                ),
-                size_hint_x=0.1,
-            )
-            minus_button = MDIconButton(
-                icon="minus",
-                on_press=lambda x, item=item: self.decrement_quantity(
-                    item_str=item["name"]
-                ),
-                size_hint_x=0.1,
-            )
-            rm_button = Button(
-                text="Remove",
-                on_press=lambda x, item=item: self.remove_from_queue(
-                    item_name=item["name"]
-                ),
-                size_hint_x=0.1,
-            )
+            if embed:
+                plus_button = MDIconButton(
+                    icon="plus",
+                    on_press=lambda x, item=item: self.increment_quantity(
+                        item_str=item["name"],
+                        embed=True
+                    ),
+                    size_hint_x=0.1,
+                )
+                minus_button = MDIconButton(
+                    icon="minus",
+                    on_press=lambda x, item=item: self.decrement_quantity(
+                        item_str=item["name"],
+                        embed=True
+                    ),
+                    size_hint_x=0.1,
+                )
+                rm_button = Button(
+                    text="Remove",
+                    on_press=lambda x, item=item: self.remove_from_queue(
+                        item_name=item["name"],
+                        embed=True
+                    ),
+                    size_hint_x=0.1,
+                )
+            else:
+                plus_button = MDIconButton(
+                    icon="plus",
+                    on_press=lambda x, item=item: self.increment_quantity(
+                        item_str=item["name"]
+                    ),
+                    size_hint_x=0.1,
+                )
+                minus_button = MDIconButton(
+                    icon="minus",
+                    on_press=lambda x, item=item: self.decrement_quantity(
+                        item_str=item["name"]
+                    ),
+                    size_hint_x=0.1,
+                )
+
+                rm_button = Button(
+                    text="Remove",
+                    on_press=lambda x, item=item: self.remove_from_queue(
+                        item_name=item["name"]
+                    ),
+                    size_hint_x=0.1,
+                )
             text_button = Button(
                 text="Add Text",
                 on_press=lambda x, item=item: self.add_label_text(
@@ -220,23 +279,36 @@ class LabelPrintingView(BoxLayout):
             )
         )
         btn_layout.add_widget(BoxLayout(size_hint_x=0.2))
-        btn_layout.add_widget(
-            MDFlatButton(
-                text="Cancel", on_press=self.cancel_print, size_hint=(0.1, 1), md_bg_color="grey"
+        if embed:
+            pass
+        else:
+            btn_layout.add_widget(
+                MDFlatButton(
+                    text="Cancel", on_press=self.cancel_print, size_hint=(0.1, 1), md_bg_color="grey"
+                )
             )
-        )
-        btn_layout.add_widget(
-            MDFlatButton(
-                text="Clear Queue", on_press=self.clear_queue, size_hint=(0.1, 1), md_bg_color="grey"
+        if embed:
+            btn_layout.add_widget(
+                MDFlatButton(
+                    text="Clear Queue", on_press=lambda x:self.clear_queue(embed=True), size_hint=(0.1, 1), md_bg_color="grey",
+                )
             )
-        )
+        else:
+            btn_layout.add_widget(
+                MDFlatButton(
+                    text="Clear Queue", on_press=lambda x:self.clear_queue(embed=False), size_hint=(0.1, 1), md_bg_color="grey"
+                )
+            )
 
         queue_layout.add_widget(item_layout)
         queue_layout.add_widget(btn_layout)
-        self.print_queue_popup = Popup(
-            title="Print Queue", content=queue_layout, size_hint=(0.8, 0.6),)
+        if embed:
+            return queue_layout
+        else:
+            self.print_queue_popup = Popup(
+                title="Print Queue", content=queue_layout, size_hint=(0.8, 0.6),)
 
-        self.print_queue_popup.open()
+            self.print_queue_popup.open()
 
     def add_label_text(self, item_str):
         add_lable_layout = BoxLayout(orientation="vertical", size_hint_y=1)
@@ -276,31 +348,43 @@ class LabelPrintingView(BoxLayout):
                 self.refresh_and_show_print_queue()
                 break
 
-    def increment_quantity(self, item_str):
+    def increment_quantity(self, item_str, embed=False):
         for item in self.label_printer.print_queue:
             if item["name"] == item_str:
                 item["quantity"] += 1
                 self.label_printer.save_queue()
-                self.refresh_and_show_print_queue()
+                if embed:
+                    self.print_queue_ref.refresh_print_queue_for_embed()
+                else:
+                    self.refresh_and_show_print_queue()
                 break
 
-    def decrement_quantity(self, item_str):
+    def decrement_quantity(self, item_str, embed=False):
         for item in self.label_printer.print_queue:
             if item["name"] == item_str:
                 if item["quantity"] > 1:
                     item["quantity"] -= 1
                     self.label_printer.save_queue()
-                    self.refresh_and_show_print_queue()
+                    if embed:
+                        self.print_queue_ref.refresh_print_queue_for_embed()
+                    else:
+                        self.refresh_and_show_print_queue()
                     break
 
     def update_print_queue_quantity(self, item_name, new_quantity):
         self.label_printer.update_queue_item_quantity(item_name, new_quantity)
         self.label_printer.save_queue()
 
-    def clear_queue(self, instance):
+    def clear_queue(self, embed=False):
         self.label_printer.clear_queue()
         self.label_printer.save_queue()
-        self.print_queue_popup.dismiss()
+        if embed:
+            self.print_queue_ref.refresh_print_queue_for_embed()
+        else:
+           self.print_queue_popup.dismiss()
+
+
+
 
     def print_now(self, instance):
         self.label_printer.process_queue()
