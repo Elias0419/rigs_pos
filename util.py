@@ -39,13 +39,120 @@ class Utilities:
     def __init__(self, ref):
         self.app = ref
 
-    # def toggle_category_selection(self, instance, category):
-    #     if category in self.app.selected_categories:
-    #         self.app.selected_categories.remove(category)
-    #         instance.text = category
-    #     else:
-    #         self.app.selected_categories.append(category)
-    #         instance.text = f"{category}\n (Selected)"
+    def initialize_global_variables(self):
+        self.app.correct_pin = "1234"
+        self.app.entered_pin = ""
+        self.app.is_guard_screen_displayed = False
+        self.app.is_lock_screen_displayed = False
+        self.app.override_tap_time = 0
+        self.app.click = 0
+        self.app.current_context = "main"
+        self.app.theme_cls.theme_style = "Dark"
+        self.app.theme_cls.primary_palette = "Brown"
+        self.app.selected_categories = []
+
+
+    def instantiate_modules(self):
+        self.initialize_receipt_printer()
+        self.app.barcode_scanner = BarcodeScanner(self.app)
+        self.app.db_manager = DatabaseManager("inventory.db", self.app)
+        self.app.financial_summary = FinancialSummaryWidget(self.app)
+        self.app.order_manager = OrderManager(self.app)
+        self.app.history_manager = HistoryView(self.app)
+        #self.app.order_history_popup = OrderManager(self.app)
+        self.app.history_popup = HistoryPopup()
+        self.app.inventory_manager = InventoryManagementView()
+        self.app.inventory_row = InventoryManagementRow()
+        self.app.label_printer = LabelPrinter(self.app)
+        self.app.label_manager = LabelPrintingView(self.app)
+        self.app.pin_reset_timer = ReusableTimer(5.0, self.reset_pin)
+        self.app.calculator = Calculator()
+        self.app.dist_manager = DistView(self.app)
+        self.app.dist_popup = DistPopup()
+        self.app.button_handler = ButtonHandler(self.app)
+        self.app.popup_manager = PopupManager(self.app)
+        self.app.wrapper = Wrapper(self)
+        self.app.categories = self.initialize_categories()
+        self.app.barcode_cache = self.initialize_barcode_cache()
+        self.app.inventory_cache = self.initialize_inventory_cache()
+
+
+    def initialize_receipt_printer(self):
+        self.app.receipt_printer = ReceiptPrinter(
+            self.app,
+            "receipt_printer_config.yaml"
+            )
+
+    def initialize_barcode_cache(self):
+
+        all_items = self.app.db_manager.get_all_items()
+        barcode_cache = {}
+        #print(len(barcode_cache))
+        for item in all_items:
+            barcode = item[0]
+            if barcode not in barcode_cache:
+                barcode_cache[barcode] = {'items': [item], 'is_dupe': False}
+            else:
+                barcode_cache[barcode]['items'].append(item)
+                barcode_cache[barcode]['is_dupe'] = True  # Mark as duplicate
+        print(len(barcode_cache))
+        return barcode_cache
+
+    def initialize_inventory_cache(self):
+        inventory = self.app.db_manager.get_all_items()
+        return inventory
+
+    def update_inventory_cache(self):
+        inventory = self.app.db_manager.get_all_items()
+        self.app.inventory_cache = inventory
+
+    def update_barcode_cache(self, item_details):
+        barcode = item_details['barcode']
+        if barcode not in self.app.barcode_cache:
+            self.app.barcode_cache[barcode] = {'items': [item_details], 'is_dupe': False}
+        else:
+            self.app.barcode_cache[barcode]['items'].append(item_details)
+            self.app.barcode_cache[barcode]['is_dupe'] = True
+
+    def initialize_categories(self):
+        categories = [
+            "Cdb",
+            "Rig",
+            "Nails",
+            "Tubes",
+            "Hand Pipes",
+            "Chillum",
+            "Ecig",
+            "Butane",
+            "Torch",
+            "Toro",
+            "Slides H",
+            "Quartz",
+            "Vaporizers",
+            "Lighter",
+            "9mm Thick",
+            "Cleaning",
+            "Edible",
+            "Bubbler",
+            "Sherlock",
+            "Spoon",
+            "Silicone",
+            "Scales",
+            "Slides",
+            "Imported Glass",
+            "Ash Catcher",
+            "Soft Glass",
+            "Vaporizers",
+            "Pendant",
+            "Smoker Accessory",
+            "Ecig Accessories",
+            "Happy Fruit",
+            "Concentrate Accessories",
+            "Conc. Devices, Atomizers",
+            "Erigs And Accessory",
+            "Mods Batteries Kits",
+        ]
+        return categories
 
 
     def reset_pin_timer(self):
@@ -228,120 +335,8 @@ class Utilities:
         elif choice_text == "Add to Database":
             self.app.popup_manager.show_add_to_database_popup(barcode)
 
-    def initialize_receipt_printer(self):
-        self.app.receipt_printer = ReceiptPrinter(
-            self.app,
-            "receipt_printer_config.yaml"
-            )
-
-    def initialize_barcode_cache(self):
-
-        all_items = self.app.db_manager.get_all_items()
-        barcode_cache = {}
-        #print(len(barcode_cache))
-        for item in all_items:
-            barcode = item[0]
-            if barcode not in barcode_cache:
-                barcode_cache[barcode] = {'items': [item], 'is_dupe': False}
-            else:
-                barcode_cache[barcode]['items'].append(item)
-                barcode_cache[barcode]['is_dupe'] = True  # Mark as duplicate
-        print(len(barcode_cache))
-        return barcode_cache
-
-    def initialize_inventory_cache(self):
-        inventory = self.app.db_manager.get_all_items()
-        return inventory
-
-    def update_inventory_cache(self):
-        inventory = self.app.db_manager.get_all_items()
-        self.app.inventory_cache = inventory
-
-    def update_barcode_cache(self, item_details):
-        barcode = item_details['barcode']
-        if barcode not in self.app.barcode_cache:
-            self.app.barcode_cache[barcode] = {'items': [item_details], 'is_dupe': False}
-        else:
-            self.app.barcode_cache[barcode]['items'].append(item_details)
-            self.app.barcode_cache[barcode]['is_dupe'] = True
-
-    def initialize_categories(self):
-        categories = [
-            "Cdb",
-            "Rig",
-            "Nails",
-            "Tubes",
-            "Hand Pipes",
-            "Chillum",
-            "Ecig",
-            "Butane",
-            "Torch",
-            "Toro",
-            "Slides H",
-            "Quartz",
-            "Vaporizers",
-            "Lighter",
-            "9mm Thick",
-            "Cleaning",
-            "Edible",
-            "Bubbler",
-            "Sherlock",
-            "Spoon",
-            "Silicone",
-            "Scales",
-            "Slides",
-            "Imported Glass",
-            "Ash Catcher",
-            "Soft Glass",
-            "Vaporizers",
-            "Pendant",
-            "Smoker Accessory",
-            "Ecig Accessories",
-            "Happy Fruit",
-            "Concentrate Accessories",
-            "Conc. Devices, Atomizers",
-            "Erigs And Accessory",
-            "Mods Batteries Kits",
-        ]
-        return categories
-
-    def initialize_global_variables(self):
-        self.app.correct_pin = "1234"
-        self.app.entered_pin = ""
-        self.app.is_guard_screen_displayed = False
-        self.app.is_lock_screen_displayed = False
-        self.app.override_tap_time = 0
-        self.app.click = 0
-        self.app.current_context = "main"
-        self.app.theme_cls.theme_style = "Dark"
-        self.app.theme_cls.primary_palette = "Brown"
-        self.app.selected_categories = []
 
 
-    def instantiate_modules(self, module_name=None, dual_pane_mode=False):
-
-        self.initialize_receipt_printer()
-        self.app.barcode_scanner = BarcodeScanner(self.app)
-        self.app.db_manager = DatabaseManager("inventory.db", self.app)
-        self.app.financial_summary = FinancialSummaryWidget(self.app)
-        self.app.order_manager = OrderManager(self.app)
-        self.app.history_manager = HistoryView(self.app)
-        self.app.order_history_popup = OrderManager(self.app)
-        self.app.history_popup = HistoryPopup()
-        self.app.inventory_manager = InventoryManagementView()
-        self.app.inventory_row = InventoryManagementRow()
-        self.app.label_printer = LabelPrinter(self.app)
-        self.app.label_manager = LabelPrintingView(self.app)
-        self.app.pin_reset_timer = ReusableTimer(5.0, self.reset_pin)
-        self.app.calculator = Calculator()
-        self.app.dist_manager = DistView(self.app)
-        self.app.dist_popup = DistPopup()
-        self.app.button_handler = ButtonHandler(self.app)
-        self.app.popup_manager = PopupManager(self.app)
-        self.app.wrapper = Wrapper(self)
-        self.app.categories = self.initialize_categories()
-        self.app.barcode_cache = self.initialize_barcode_cache()
-        self.app.inventory_cache = self.initialize_inventory_cache()
 
     def check_dual_pane_mode(self):
         flag_file_path = "dual_pane_mode.flag"
@@ -571,9 +566,7 @@ class Utilities:
         Clock.unschedule(self.reset)
         Clock.schedule_interval(self.reset, 3)
 
-    def reset(self, dt):
-        self.clear_order.text = f"[size=30]X[/size]"
-        self.click = 0
+
 
 
     def confirm_clear_order(self):
@@ -602,11 +595,6 @@ class Utilities:
         self.app.trash_icon.icon = "trash-can-outline"
         self.click = 0
 
-    def enable_dual_pane_mode(self):
-        flag_file_path = "dual_pane_mode.flag"
-        with open(flag_file_path, 'w') as f:
-            f.write("Activate dual pane mode")
-        sys.exit(42)
 
 
     # def reboot(self):
@@ -792,22 +780,7 @@ class Utilities:
             #print(f"Exception in check_inactivity\n{e}")
             pass
 
-    # def check_inactivity(self, *args):
-    #     try:
-    #         # Call xprintidle to get the idle time in milliseconds
-    #         idle_time_output = subprocess.check_output(["xprintidle"]).decode().strip()
-    #         idle_time = int(idle_time_output)
-    #
-    #         # Check if the idle time exceeds the threshold (600000 ms = 10 minutes)
-    #         # if idle_time > 600000:
-    #         if idle_time > 6000:
-    #             print(idle_time, "if")
-    #             self.trigger_guard_and_lock(trigger=False)
-    #         print(idle_time)
-    #
-    #     except Exception as e:
-    #         print(f"Exception in check_inactivity\n{e}")
-    #         pass
+
 
     def clear_split_numeric_input(self):
         self.app.popup_manager.split_payment_numeric_cash_input.text = ""
@@ -1103,44 +1076,3 @@ class ReusableTimer:
 
 
 
-# class CustomTextInput(TextInput):
-#     def __init__(self, ref=None, **kwargs):
-#         super(CustomTextInput, self).__init__(**kwargs)
-#         self.bind(focus=self.on_focus)
-#         self.app = ref
-#         self._keyboard = None
-#
-#     def on_focus(self, instance, value):
-#         if value:
-#             self.request_keyboard()
-#         else:
-#             if self._keyboard is not None:
-#                 self.release_keyboard()
-#
-#     def request_keyboard(self):
-#         if self._keyboard is None:
-#             self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
-#             self._keyboard.bind(on_key_down=self._on_keyboard_down)
-#
-#
-#
-#         if hasattr(self._keyboard, 'widget') and self._keyboard.widget:
-#             vkeyboard = self._keyboard.widget
-#             vkeyboard.docked = False
-#             vkeyboard.pos = (100, 100)
-#
-#     def release_keyboard(self):
-#         if self._keyboard is not None:
-#             self._keyboard.unbind(on_key_down=self._on_keyboard_down)
-#             self._keyboard.release()
-#             self._keyboard = None
-#
-#
-#     def _keyboard_closed(self):
-#
-#         self.release_keyboard()
-#
-#     def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
-#
-#
-#         pass
