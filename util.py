@@ -233,7 +233,6 @@ class Utilities:
                     print(e)
 
     def update_display(self):
-        print("called update display")
         self.app.order_layout.clear_widgets()
         for item_id, item_info in self.app.order_manager.items.items():
             item_name = item_info["name"]
@@ -243,25 +242,28 @@ class Utilities:
             item_discount = item_info.get("discount", {"amount": 0, "percent": False})
             price_times_quantity = price * item_quantity
 
-            if item_quantity > 1:
-                if float(item_discount["amount"]) > 0:
-                    item_display_text = f"{item_name}"
-                    price_display_text = f"${price_times_quantity:.2f} - {float(item_discount['amount']):.2f}\n = ${item_total_price:.2f}"
-                    quantity_display_text =  f"{item_quantity}"
-                else:
-                    item_display_text = f"{item_name}"
-                    price_display_text = f"${item_total_price:.2f}"
-                    quantity_display_text =  f"{item_quantity}"
-            else:
-                if float(item_discount["amount"]) > 0:
-                    item_display_text = f"{item_name}"
-                    price_display_text = f"${price_times_quantity:.2f} - {float(item_discount['amount']):.2f}\n = ${item_total_price:.2f}"
-                    quantity_display_text =  ""
-                else:
-                    item_display_text = f"{item_name}"
-                    price_display_text = f"${item_total_price:.2f}"
-                    quantity_display_text =  ""
+            if type(item_total_price) is float:
 
+                if item_quantity > 1:
+                    if float(item_discount["amount"]) > 0:
+                        item_display_text = f"{item_name}"
+                        price_display_text = f"${price_times_quantity:.2f} - {float(item_discount['amount']):.2f}\n = ${item_total_price:.2f}"
+                        quantity_display_text =  f"{item_quantity}"
+                    else:
+                        item_display_text = f"{item_name}"
+                        price_display_text = f"${item_total_price:.2f}"
+                        quantity_display_text =  f"{item_quantity}"
+                else:
+                    if float(item_discount["amount"]) > 0:
+                        item_display_text = f"{item_name}"
+                        price_display_text = f"${price_times_quantity:.2f} - {float(item_discount['amount']):.2f}\n = ${item_total_price:.2f}"
+                        quantity_display_text =  ""
+                    else:
+                        item_display_text = f"{item_name}"
+                        price_display_text = f"${item_total_price:.2f}"
+                        quantity_display_text =  ""
+            else:
+                return
             blue_line = MDBoxLayout(size_hint_x=1, size_hint_y=None,height=1)
             blue_line.md_bg_color = (0.56, 0.56, 1, 1)
             blue_line2 = MDBoxLayout(size_hint_x=1, size_hint_y=None,height=1)
