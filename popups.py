@@ -1296,15 +1296,25 @@ class PopupManager:
 
     def show_custom_item_popup(self, barcode="01234567890"):
 
-        self.custom_item_popup_layout = BoxLayout(orientation="vertical", spacing=5)
+        self.custom_item_popup_layout = BoxLayout(orientation="vertical", spacing=5, padding=5)
         self.cash_input = TextInput(
             text="",
+            hint_text="Enter Price",
             multiline=False,
             input_filter="float",
             font_size=30,
             size_hint_y=None,
             height=50,
         )
+        self.custom_item_name_input = TextInput(
+            text="Custom Item",
+            hint_text="Enter Name",
+            multiline=False,
+            font_size=30,
+            size_hint_y=None,
+            height=50,
+        )
+        self.custom_item_popup_layout.add_widget(self.custom_item_name_input)
         self.custom_item_popup_layout.add_widget(self.cash_input)
 
         keypad_layout = GridLayout(cols=3, spacing=10)
@@ -1331,8 +1341,8 @@ class PopupManager:
             keypad_layout.add_widget(btn)
 
         confirm_button = self.app.utilities.create_md_raised_button(
-            "Confirm",
-            self.app.order_manager.add_custom_item,
+            "[size=20][b]Confirm[/b][/size]",
+            lambda x: self.app.order_manager.add_custom_item(x, name=self.custom_item_name_input.text, price=self.cash_input.text),
             (0.8, 0.8),
         )
 

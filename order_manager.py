@@ -68,8 +68,11 @@ class OrderManager:
             return item_id
 
 
-    def add_item(self, item_name, item_price):
-        item_id = self.get_item_id(item_name, item_price)
+    def add_item(self, item_name, item_price, custom_item=False, item_id=None):
+        if custom_item:
+            item_id=item_id
+        else:
+            item_id = self.get_item_id(item_name, item_price)
 
         existing_item = next(
             (
@@ -274,15 +277,22 @@ class OrderManager:
         self.amount_tendered = amount_tendered if amount_tendered is not None else 0.0
         self.change_given = change if change is not None else 0.0
 
-    def add_custom_item(self, instance):
-        price = self.app.popup_manager.cash_input.text
+    def add_custom_item(self, instance, name="Custom Item", price=0.00):
+
+        #price = self.app.popup_manager.cash_input.text
+        item_id = str(uuid.uuid4())
         try:
             price = float(price)
         except Exception as e:
             print("Exception in add custom item order_manager.py,", e)
+            return
+        # try:
+        custom_item_name = name
         try:
-            custom_item_name = "Custom Item"
-            self.add_item(custom_item_name, price)
+            self.add_item(custom_item_name, price, custom_item=True, item_id=item_id)
+        except Exception as e:
+            print("Exception in add custom item order_manager.py,", e)
+        try:
             self.app.utilities.update_display()
             self.app.utilities.update_financial_summary()
             self.app.popup_manager.custom_item_popup.dismiss()
