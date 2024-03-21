@@ -753,6 +753,7 @@ class PopupManager:
         self.custom_discount_order_popup.open()
 
     def add_order_discount_popup(self):
+        print("pop")
         discount_order_popup_layout = GridLayout(
             orientation="tb-lr", spacing=5, cols=1, rows=2
         )
@@ -804,6 +805,7 @@ class PopupManager:
         self.discount_order_popup.open()
 
     def apply_discount(self, value, discount_type):
+        print(value, type)
         if discount_type == "percent":
 
             self.app.order_manager.discount_entire_order(
@@ -2369,7 +2371,7 @@ class FinancialSummaryWidget(MDFlatButton):
             self.size_hint_y = None
             self.size_hint_x = 1
             self.height = 150
-
+            self._no_ripple_effect = True
             self.text = ""
 
             self.layout = BoxLayout(orientation='vertical', size_hint=(1, 1))
@@ -2406,36 +2408,49 @@ class FinancialSummaryWidget(MDFlatButton):
         self.order_mod_popup.dismiss()
 
     def open_order_modification_popup(self):
-        order_mod_layout = FloatLayout()
-
-        discount_order_button = MDRaisedButton(
-            text="Add Order Discount",
-            pos_hint={"center_x": 0.5, "center_y": 1},
+        order_mod_layout = MDBoxLayout(orientation="vertical", spacing=5, padding=5)
+        if float(self.app.order_manager.order_discount) > 0:
+            discount_order_button = MDFlatButton(
+                text="[b][size=20]Remove Order Discount[/b][/size]",
+                #pos_hint={"center_x": 0.5, "center_y": 1},
+                size_hint=(1, 0.15),
+                md_bg_color=(0.5,0.5,0.5,0.05),
+                on_press=lambda x: self.remove_order_discount(),
+            )
+        else:
+             discount_order_button = MDFlatButton(
+                text="[b][size=20]Add Order Discount[/b][/size]",
+                #pos_hint={"center_x": 0.5, "center_y": 1},
+                size_hint=(1, 0.15),
+                md_bg_color=(0.5,0.5,0.5,0.05),
+                on_press=lambda x: self.app.popup_manager.add_order_discount_popup(),
+            )
+        clear_order_button = MDFlatButton(
+            text="[b][size=20]Clear Order[/b][/size]",
+            #pos_hint={"center_x": 0.5, "center_y": 1 - 0.2},
             size_hint=(1, 0.15),
-            on_press=lambda x: self.app.popup_manager.add_order_discount_popup(),
-        )
-        clear_order_button = MDRaisedButton(
-            text="Clear Order",
-            pos_hint={"center_x": 0.5, "center_y": 1 - 0.2},
-            size_hint=(1, 0.15),
+            md_bg_color=(0.5,0.5,0.5,0.05),
             on_press=lambda x: self.clear_order(),
         )
-        adjust_price_button = MDRaisedButton(
-            text="Adjust Payment",
-            pos_hint={"center_x": 0.5, "center_y": 1 - 0.4},
+        adjust_price_button = MDFlatButton(
+            text="[b][size=20]Adjust Payment[/b][/size]",
+            #pos_hint={"center_x": 0.5, "center_y": 1 - 0.4},
             size_hint=(1, 0.15),
+            md_bg_color=(0.5,0.5,0.5,0.05),
             on_press=lambda x: self.adjust_price(),
         )
-        save_order_button = MDRaisedButton(
-            text="Save Order",
-            pos_hint={"center_x": 0.5, "center_y": 1 - 0.6},
+        save_order_button = MDFlatButton(
+            text="[b][size=20]Save Order[/b][/size]",
+            #pos_hint={"center_x": 0.5, "center_y": 1 - 0.6},
             size_hint=(1, 0.15),
+            md_bg_color=(0.5,0.5,0.5,0.05),
             on_press=lambda x: self.save_order(),
         )
-        load_order_button = MDRaisedButton(
-            text="Load Order",
-            pos_hint={"center_x": 0.5, "center_y": 1 - 0.8},
+        load_order_button = MDFlatButton(
+            text="[b][size=20]Load Order[/b][/size]",
+            #pos_hint={"center_x": 0.5, "center_y": 1 - 0.8},
             size_hint=(1, 0.15),
+            md_bg_color=(0.5,0.5,0.5,0.05),
             on_press=lambda x: self.open_list_saved_orders_popup(),
         )
         order_mod_layout.add_widget(save_order_button)
@@ -2450,12 +2465,20 @@ class FinancialSummaryWidget(MDFlatButton):
             background="images/transparent.png",
             background_color=(0, 0, 0, 0),
             separator_height=0,
+            pos_hint={"center_x":0.72, "center_y":0.4},
+            #padding=(0,250,600,0),
+            overlay_color = [0, 0, 0, 0]
         )
         self.order_mod_popup.open()
 
+    def remove_order_discount(self):
+        self.app.order_manager.remove_order_discount()
+        self.order_mod_popup.dismiss()
+
     def save_order(self):
         self.app.order_manager.save_order_to_disk()
-        self.open_save_order_popup()
+        #self.open_save_order_popup()
+        toast("Saved!")
         self.app.order_manager.clear_order()
         self.order_mod_popup.dismiss()
         self.app.utilities.update_display()
