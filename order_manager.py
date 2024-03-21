@@ -336,6 +336,14 @@ class OrderManager:
     def create_order_summary_item(self, item_name, quantity, total_price):
         return f"[b]{item_name}[/b] x{quantity} ${total_price:.2f}\n"
 
+    def remove_order_discount(self):
+        if float(self.order_discount) > 0:
+            self.order_discount = 0
+            self.recalculate_order_totals()
+            self.app.utilities.update_display()
+            self.app.utilities.update_financial_summary()
+
+
     def remove_single_item_discount(self, item_id):
         if item_id in self.items:
             item = self.items[item_id]
