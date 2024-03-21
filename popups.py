@@ -441,14 +441,25 @@ class PopupManager:
             orientation="horizontal",
             size_hint=(1,1),
         )
-        dicount_button_layout.add_widget(
-            self.app.utilities.create_md_raised_button(
-                f"[b][size=20]Add Discount[/size][/b]",
-                lambda x, item_id=item_id: self.open_add_discount_popup(item_id),
-                # self.add_discount_popup,
-                (1, 0.4),
+        if float(item_discount["amount"]) > 0:
+            dicount_button_layout.add_widget(
+                self.app.utilities.create_md_raised_button(
+                    f"[b][size=20]Remove Discount[/size][/b]",
+                    lambda x, item_id=item_id: self.app.order_manager.remove_single_item_discount(item_id),
+                    # self.add_discount_popup,
+                    (1, 0.4),
+                )
             )
-        )
+
+        else:
+            dicount_button_layout.add_widget(
+                self.app.utilities.create_md_raised_button(
+                    f"[b][size=20]Add Discount[/size][/b]",
+                    lambda x, item_id=item_id: self.open_add_discount_popup(item_id),
+                    # self.add_discount_popup,
+                    (1, 0.4),
+                )
+            )
 
         remove_button_layout = BoxLayout(
             orientation="horizontal", size_hint=(1,1),
