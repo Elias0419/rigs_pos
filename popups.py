@@ -760,7 +760,7 @@ class PopupManager:
         self.discount_order_popup = Popup(
             title="Add Discount",
             content=discount_order_popup_layout,
-            size_hint=(0.6, 0.8),
+            size_hint=(0.2, 0.6),
         )
 
         discounts = [
@@ -1037,22 +1037,25 @@ class PopupManager:
 
     def show_adjust_price_popup(self):
 
-        self.adjust_price_popup_layout = BoxLayout(orientation="vertical", spacing=10)
-        self.adjust_price_popup = Popup(
-            title="Enter Target Amount",
-            content=self.adjust_price_popup_layout,
-            size_hint=(0.8, 0.8),
-            on_dismiss=lambda x: setattr(self.adjust_price_cash_input, "text", ""),
-        )
+        self.adjust_price_popup_layout = BoxLayout(orientation="vertical", spacing=5, padding=5)
+
 
         self.adjust_price_cash_input = TextInput(
             text="",
-            disabled=True,
+            #disabled=True,
+            hint_text="Enter Target Amount",
             multiline=False,
             input_filter="float",
             font_size=30,
             size_hint_y=None,
             height=50,
+        )
+        self.adjust_price_popup = self.create_focus_popup(
+            title="Adjust Payment",
+            content=self.adjust_price_popup_layout,
+            size_hint=(0.2, 0.4),
+            on_dismiss=lambda x: setattr(self.adjust_price_cash_input, "text", ""),
+            textinput=self.adjust_price_cash_input
         )
         self.adjust_price_popup_layout.add_widget(self.adjust_price_cash_input)
 
@@ -1068,15 +1071,26 @@ class PopupManager:
             "7",
             "8",
             "9",
+            "",
             "0",
         ]
         for button in numeric_buttons:
-            btn = Button(
-                text=button,
-                on_press=self.app.button_handler.on_adjust_price_numeric_button_press,
-                size_hint=(0.8, 0.8),
-            )
-            keypad_layout.add_widget(btn)
+            if button == "":
+                btn = MDFlatButton(
+
+                    size_hint=(0.8, 0.8),
+                    md_bg_color=(0,0,0,0)
+                )
+                keypad_layout.add_widget(btn)
+
+            else:
+                btn = MDFlatButton(
+                    text=button,
+                    on_press=self.app.button_handler.on_adjust_price_numeric_button_press,
+                    size_hint=(0.8, 0.8),
+                    md_bg_color="grey"
+                )
+                keypad_layout.add_widget(btn)
 
         buttons_layout = GridLayout(cols=4, size_hint_y=1 / 7, spacing=5)
         confirm_button = self.app.utilities.create_md_raised_button(
@@ -2082,9 +2096,14 @@ class PopupManager:
                 except Exception as e:
                     print(e)
 
-    def create_focus_popup(self, title, content, textinput, size_hint, pos_hint={}):
+    def do_nothing(self, instance):
+        pass
+
+    def create_focus_popup(self, title, content, textinput, size_hint, pos_hint={}, on_dismiss=None):
+        if on_dismiss is None:
+            on_dismiss = self.do_nothing
         popup = FocusPopup(
-            title=title, content=content, size_hint=size_hint, pos_hint=pos_hint
+            title=title, content=content, size_hint=size_hint, pos_hint=pos_hint, on_dismiss=on_dismiss
         )
         popup.focus_on_textinput(textinput)
         return popup
@@ -2477,12 +2496,53 @@ class FinancialSummaryWidget(MDFlatButton):
 
     def save_order(self):
         self.app.order_manager.save_order_to_disk()
+        self.add_saved_orders_to_clock_layout()
         #self.open_save_order_popup()
         toast("Saved!")
         self.app.order_manager.clear_order()
         self.order_mod_popup.dismiss()
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
+
+    def add_saved_orders_to_clock_layout(self):
+        orders = self.app.order_manager.list_all_saved_orders()
+
+        # Collect all button objects into a list
+        buttons = [
+            self.app.utilities.saved_order_button1,
+            self.app.utilities.saved_order_button2,
+            self.app.utilities.saved_order_button3,
+            self.app.utilities.saved_order_button4,
+            self.app.utilities.saved_order_button5,
+        ]
+
+        # Reset all button texts to empty in case there are fewer orders than buttons
+        for button in buttons:
+            button.text = ""
+
+        # Assign order texts to buttons
+        for order, button in zip(orders, buttons):
+            items = str(order["items"])
+            items_trunc = items[:10]  # truncate to 10 characters
+            # order_id = str(order["order_id"])  # You might want to use this in future
+            button.text = items_trunc
+            button.on_press = lambda order=order: self.load_order(order=order)
+
+
+
+
+    def delete_order(self, order):
+        self.app.order_manager.delete_order_from_disk(order)
+        try:
+            self.list_saved_orders_popup.dismiss()
+            self.open_list_saved_orders_popup()
+        except:
+            pass
+
+    def load_order(self, order):
+        self.app.order_manager.load_order_from_disk(order)
+        self.delete_order(order)
+        self.add_saved_orders_to_clock_layout()
 
     def open_list_saved_orders_popup(self):
         content_layout=GridLayout(orientation="lr-tb", cols=3, rows=10)
@@ -2502,15 +2562,6 @@ class FinancialSummaryWidget(MDFlatButton):
         self.list_saved_orders_popup = Popup(content=content_layout, size_hint=(0.8,0.4))
         self.list_saved_orders_popup.open()
 
-    def delete_order(self, order):
-        self.app.order_manager.delete_order_from_disk(order)
-        self.list_saved_orders_popup.dismiss()
-        self.open_list_saved_orders_popup()
-
-    def load_order(self, order):
-        self.app.order_manager.load_order_from_disk(order)
-        self.list_saved_orders_popup.dismiss()
-        self.app.financial_summary.order_mod_popup.dismiss()
 
     def open_save_order_popup(self):
         layout = GridLayout(orientation="tb-lr", rows=1, cols=1)
