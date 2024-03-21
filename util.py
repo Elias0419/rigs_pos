@@ -480,7 +480,17 @@ class Utilities:
         )
 
         top_container = BoxLayout(orientation="vertical", size_hint_y=0.1, padding=10)
-        _nothing = BoxLayout(size_hint_y=1)
+        saved_orders_container = MDBoxLayout(size_hint_y=1,orientation="vertical")
+        self.saved_order_button1 = MDFlatButton(text="", on_press= lambda x: self.do_nothing())
+        self.saved_order_button2 = MDFlatButton(text="", on_press=lambda x: self.do_nothing())
+        self.saved_order_button3 = MDFlatButton(text="", on_press=lambda x: self.do_nothing())
+        self.saved_order_button4 = MDFlatButton(text="", on_press=lambda x: self.do_nothing())
+        self.saved_order_button5 = MDFlatButton(text="", on_press=lambda x: self.do_nothing())
+        saved_orders_container.add_widget(self.saved_order_button1)
+        saved_orders_container.add_widget(self.saved_order_button2)
+        saved_orders_container.add_widget(self.saved_order_button3)
+        saved_orders_container.add_widget(self.saved_order_button4)
+        saved_orders_container.add_widget(self.saved_order_button5)
         logo_container = BoxLayout(size_hint_y=0.2, padding=(-200, 0, 0, 0))
         logo = Image(source="images/rigs_logo_scaled.png")
         logo_container.add_widget(logo)
@@ -534,13 +544,16 @@ class Utilities:
         self.clock_layout.add_widget(top_container)
         self.clock_layout.add_widget(self.dual_button)
 
-        self.clock_layout.add_widget(_nothing)
+        self.clock_layout.add_widget(saved_orders_container)
+        self.app.financial_summary.add_saved_orders_to_clock_layout()
         self.clock_layout.add_widget(logo_container)
 
         Clock.schedule_interval(self.update_clock, 1)
         self.clock_layout.add_widget(clock_container)
         return self.clock_layout
 
+    def do_nothing(self):
+        pass
     def maximize_dual_popup(self):
         try:
             self.app.popup_manager.maximize_dual_popup()
