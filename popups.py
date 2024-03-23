@@ -2500,14 +2500,21 @@ class FinancialSummaryWidget(MDFlatButton):
         #self.open_save_order_popup()
         toast("Saved!")
         self.app.order_manager.clear_order()
-        self.order_mod_popup.dismiss()
+        try:
+            self.order_mod_popup.dismiss()
+        except Exception as e:
+            print(f"[Popups]: save_order expected errror\n{e}")
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
 
     def add_saved_orders_to_clock_layout(self):
         orders = self.app.order_manager.list_all_saved_orders()
-
-        # Collect all button objects into a list
+        if len(orders) > 0:
+            self.app.utilities.saved_order_title.text="Saved Orders"
+            self.app.utilities.saved_order_divider.md_bg_color="blue"
+        else:
+            self.app.utilities.saved_order_title.text=""
+            self.app.utilities.saved_order_divider.md_bg_color=(0,0,0,0)
         buttons = [
             self.app.utilities.saved_order_button1,
             self.app.utilities.saved_order_button2,
@@ -2516,17 +2523,18 @@ class FinancialSummaryWidget(MDFlatButton):
             self.app.utilities.saved_order_button5,
         ]
 
-        # Reset all button texts to empty in case there are fewer orders than buttons
         for button in buttons:
             button.text = ""
 
-        # Assign order texts to buttons
         for order, button in zip(orders, buttons):
             items = str(order["items"])
-            items_trunc = items[:10]  # truncate to 10 characters
-            # order_id = str(order["order_id"])  # You might want to use this in future
+
+            items_no_brackets = items.replace("[", "").replace("]", "").replace("'", "")
+            items_trunc = items_no_brackets[:10]
+
             button.text = items_trunc
-            button.on_press = lambda order=order: self.load_order(order=order)
+            button.on_press = lambda order=order, button=button: self.load_order(order=order, button=button)
+            button.md_bg_color="grey"
 
 
 
@@ -2539,8 +2547,9 @@ class FinancialSummaryWidget(MDFlatButton):
         except:
             pass
 
-    def load_order(self, order):
+    def load_order(self, order, button):
         self.app.order_manager.load_order_from_disk(order)
+        button.md_bg_color=(0,0,0,0)
         self.delete_order(order)
         self.add_saved_orders_to_clock_layout()
 

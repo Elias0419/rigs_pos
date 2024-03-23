@@ -35,6 +35,7 @@ from receipt_printer import ReceiptPrinter
 from wrapper import Wrapper
 from distributor_manager import DistPopup, DistView
 
+
 class Utilities:
     def __init__(self, ref):
         self.app = ref
@@ -51,7 +52,6 @@ class Utilities:
         self.app.theme_cls.primary_palette = "Brown"
         self.app.selected_categories = []
 
-
     def instantiate_modules(self):
         self.initialize_receipt_printer()
         self.app.barcode_scanner = BarcodeScanner(self.app)
@@ -59,7 +59,7 @@ class Utilities:
         self.app.financial_summary = FinancialSummaryWidget(self.app)
         self.app.order_manager = OrderManager(self.app)
         self.app.history_manager = HistoryView(self.app)
-        #self.app.order_history_popup = OrderManager(self.app)
+        # self.app.order_history_popup = OrderManager(self.app)
         self.app.history_popup = HistoryPopup()
         self.app.inventory_manager = InventoryManagementView()
         self.app.inventory_row = InventoryManagementRow()
@@ -76,25 +76,23 @@ class Utilities:
         self.app.barcode_cache = self.initialize_barcode_cache()
         self.app.inventory_cache = self.initialize_inventory_cache()
 
-
     def initialize_receipt_printer(self):
         self.app.receipt_printer = ReceiptPrinter(
-            self.app,
-            "receipt_printer_config.yaml"
-            )
+            self.app, "receipt_printer_config.yaml"
+        )
 
     def initialize_barcode_cache(self):
 
         all_items = self.app.db_manager.get_all_items()
         barcode_cache = {}
-        #print(len(barcode_cache))
+        # print(len(barcode_cache))
         for item in all_items:
             barcode = item[0]
             if barcode not in barcode_cache:
-                barcode_cache[barcode] = {'items': [item], 'is_dupe': False}
+                barcode_cache[barcode] = {"items": [item], "is_dupe": False}
             else:
-                barcode_cache[barcode]['items'].append(item)
-                barcode_cache[barcode]['is_dupe'] = True  # Mark as duplicate
+                barcode_cache[barcode]["items"].append(item)
+                barcode_cache[barcode]["is_dupe"] = True  # Mark as duplicate
         print(len(barcode_cache))
         return barcode_cache
 
@@ -107,12 +105,15 @@ class Utilities:
         self.app.inventory_cache = inventory
 
     def update_barcode_cache(self, item_details):
-        barcode = item_details['barcode']
+        barcode = item_details["barcode"]
         if barcode not in self.app.barcode_cache:
-            self.app.barcode_cache[barcode] = {'items': [item_details], 'is_dupe': False}
+            self.app.barcode_cache[barcode] = {
+                "items": [item_details],
+                "is_dupe": False,
+            }
         else:
-            self.app.barcode_cache[barcode]['items'].append(item_details)
-            self.app.barcode_cache[barcode]['is_dupe'] = True
+            self.app.barcode_cache[barcode]["items"].append(item_details)
+            self.app.barcode_cache[barcode]["is_dupe"] = True
 
     def initialize_categories(self):
         categories = [
@@ -154,7 +155,6 @@ class Utilities:
         ]
         return categories
 
-
     def reset_pin_timer(self):
         print("reset_pin_timer", self.app.pin_reset_timer)
         if self.app.pin_reset_timer is not None:
@@ -183,7 +183,9 @@ class Utilities:
         return amounts
 
     def update_clock(self, *args):
-        self.app.clock_label.text = f"[size=26][b]{time.strftime('%I:%M %p %A %B %d, %Y')}[/b][/size]"
+        self.app.clock_label.text = (
+            f"[size=26][b]{time.strftime('%I:%M %p %A %B %d, %Y')}[/b][/size]"
+        )
         self.app.clock_label.color = self.get_text_color()
 
     def update_lockscreen_clock(self, *args):
@@ -248,38 +250,41 @@ class Utilities:
                     if float(item_discount["amount"]) > 0:
                         item_display_text = f"{item_name}"
                         price_display_text = f"${price_times_quantity:.2f} - {float(item_discount['amount']):.2f}\n = ${item_total_price:.2f}"
-                        quantity_display_text =  f"{item_quantity}"
+                        quantity_display_text = f"{item_quantity}"
                     else:
                         item_display_text = f"{item_name}"
                         price_display_text = f"${item_total_price:.2f}"
-                        quantity_display_text =  f"{item_quantity}"
+                        quantity_display_text = f"{item_quantity}"
                 else:
                     if float(item_discount["amount"]) > 0:
                         item_display_text = f"{item_name}"
                         price_display_text = f"${price_times_quantity:.2f} - {float(item_discount['amount']):.2f}\n = ${item_total_price:.2f}"
-                        quantity_display_text =  ""
+                        quantity_display_text = ""
                     else:
                         item_display_text = f"{item_name}"
                         price_display_text = f"${item_total_price:.2f}"
-                        quantity_display_text =  ""
+                        quantity_display_text = ""
             else:
                 return
-            blue_line = MDBoxLayout(size_hint_x=1, size_hint_y=None,height=1)
+            blue_line = MDBoxLayout(size_hint_x=1, size_hint_y=None, height=1)
             blue_line.md_bg_color = (0.56, 0.56, 1, 1)
-            blue_line2 = MDBoxLayout(size_hint_x=1, size_hint_y=None,height=1)
+            blue_line2 = MDBoxLayout(size_hint_x=1, size_hint_y=None, height=1)
             blue_line2.md_bg_color = (0.56, 0.56, 1, 1)
-            blue_line3 = MDBoxLayout(size_hint_x=1, size_hint_y=None,height=1)
+            blue_line3 = MDBoxLayout(size_hint_x=1, size_hint_y=None, height=1)
             blue_line3.md_bg_color = (0.56, 0.56, 1, 1)
-            item_layout = GridLayout(orientation='lr-tb', cols=3, rows=2, size_hint=(1,1))
+            item_layout = GridLayout(
+                orientation="lr-tb", cols=3, rows=2, size_hint=(1, 1)
+            )
             item_label_container = BoxLayout(size_hint_x=None, width=550)
             item_label = MDLabel(text=f"[size=20]{item_display_text}[/size]")
             item_label_container.add_widget(item_label)
 
-
             spacer = MDLabel(size_hint_x=1)
-            #item_layout.add_widget(spacer)
+            # item_layout.add_widget(spacer)
             price_label_container = BoxLayout(size_hint_x=None, width=150)
-            price_label = MDLabel(text=f"[size=20]{price_display_text}[/size]", halign="right")
+            price_label = MDLabel(
+                text=f"[size=20]{price_display_text}[/size]", halign="right"
+            )
             price_label_container.add_widget(price_label)
 
             quantity_label_container = BoxLayout(size_hint_x=None, width=50)
@@ -293,10 +298,13 @@ class Utilities:
             item_layout.add_widget(blue_line2)
             item_layout.add_widget(blue_line3)
 
-
-            item_button = MDFlatButton(size_hint=(1,1))
+            item_button = MDFlatButton(size_hint=(1, 1))
             item_button.add_widget(item_layout)
-            item_button.bind(on_press=lambda x, item_id=item_id: self.app.popup_manager.show_item_details_popup(item_id))
+            item_button.bind(
+                on_press=lambda x, item_id=item_id: self.app.popup_manager.show_item_details_popup(
+                    item_id
+                )
+            )
 
             self.app.order_layout.add_widget(item_button)
             # self.app.order_layout.add_widget(blue_line)
@@ -337,15 +345,11 @@ class Utilities:
         elif choice_text == "Add to Database":
             self.app.popup_manager.show_add_to_database_popup(barcode)
 
-
-
-
     def check_dual_pane_mode(self):
         flag_file_path = "dual_pane_mode.flag"
         if os.path.exists(flag_file_path):
             self.dual_pane_mode = True
             os.remove(flag_file_path)
-
 
     def create_main_layout(self, dual_pane_mode=False):
 
@@ -356,7 +360,7 @@ class Utilities:
         )
 
         self.top_area_layout = GridLayout(
-            cols=4, rows=1, orientation="lr-tb", row_default_height=60, size_hint_x=0.95
+            cols=4, rows=1, orientation="lr-tb", row_default_height=60, size_hint_x=0.92
         )
         right_area_layout = GridLayout(rows=2, orientation="tb-lr", padding=50)
         self.app.order_layout = GridLayout(
@@ -371,12 +375,28 @@ class Utilities:
         self.clock_layout = self.create_clock_layout()
         self.top_area_layout.add_widget(self.clock_layout)
 
-        center_container = GridLayout(rows=2, orientation="tb-lr", size_hint_y=0.01, size_hint_x=0.4)
-        trash_icon_container = MDBoxLayout(size_hint_y=0.1)
+        center_container = GridLayout(
+            rows=2, orientation="tb-lr", size_hint_y=0.01, size_hint_x=0.4
+        )
+        trash_icon_container = MDBoxLayout(size_hint_y=None, height=100)
         _blank = BoxLayout(size_hint_y=0.9)
-        self.app.trash_icon = MDIconButton(icon="trash-can",pos_hint={"top":0.95, "right": 0}, on_press=lambda x: self.confirm_clear_order())
+        self.app.trash_icon = MDIconButton(
+            icon="trash-can",
+            pos_hint={"top": 0.75, "right": 0},
+            on_press=lambda x: self.confirm_clear_order(),
+        )
         trash_icon_container.add_widget(self.app.trash_icon)
-        #center_container.add_widget(trash_icon_container)
+
+        save_icon_container = MDBoxLayout(size_hint_y=0.1)
+        #_blank = BoxLayout(size_hint_y=0.9)
+        self.app.save_icon = MDIconButton(
+            icon="content-save",
+            pos_hint={"top": 0.90, "right": 0},
+            on_press=lambda x: self.app.financial_summary.save_order(),
+        )
+        save_icon_container.add_widget(self.app.save_icon)
+
+        # center_container.add_widget(trash_icon_container)
         center_container.add_widget(_blank)
         self.top_area_layout.add_widget(center_container)
 
@@ -387,16 +407,22 @@ class Utilities:
         financial_layout.add_widget(financial_button)
         right_area_layout.add_widget(financial_layout)
         self.top_area_layout.add_widget(right_area_layout)
-        sidebar = BoxLayout(orientation="vertical", size_hint_x=0.05)
+        sidebar = BoxLayout(orientation="vertical", size_hint_x=0.07)
         lock_icon = MDIconButton(icon="lock")
         sidebar.add_widget(trash_icon_container)
+        sidebar.add_widget(save_icon_container)
         sidebar.add_widget(lock_icon)
-        #sidebar.add_widget(trash_icon)
+        # sidebar.add_widget(trash_icon)
         self.top_area_layout.add_widget(sidebar)
         self.main_layout.add_widget(self.top_area_layout)
         # main_layout.add_widget(sidebar)
         button_layout = GridLayout(
-            cols=4, spacing=10, padding=10, size_hint_y=0.05, size_hint_x=1, orientation="lr-tb"
+            cols=4,
+            spacing=10,
+            padding=10,
+            size_hint_y=0.05,
+            size_hint_x=1,
+            orientation="lr-tb",
         )
 
         btn_pay = self.create_md_raised_button(
@@ -408,23 +434,22 @@ class Utilities:
 
         btn_custom_item = self.create_md_raised_button(
             f"[b][size=40]Custom[/b][/size]",
-
             self.app.button_handler.on_button_press,
             (8, 8),
             "H6",
         )
         btn_inventory = self.create_md_raised_button(
             f"[b][size=40]Search[/b][/size]",
-            #lambda x: self.app.popup_manager.maximize_dual_popup(),
+            # lambda x: self.app.popup_manager.maximize_dual_popup(),
             self.app.button_handler.on_button_press,
             (8, 8),
             "H6",
         )
         btn_tools = self.create_md_raised_button(
             f"[b][size=40]Tools[/b][/size]",
-            #lambda x: self.modify_clock_layout_for_dual_pane_mode(),
-            #lambda x: self.app.popup_manager.show_dual_inventory_and_label_managers(),
-            #lambda x: self.enable_dual_pane_mode(),
+            # lambda x: self.modify_clock_layout_for_dual_pane_mode(),
+            # lambda x: self.app.popup_manager.show_dual_inventory_and_label_managers(),
+            # lambda x: self.enable_dual_pane_mode(),
             self.app.button_handler.on_button_press,
             # lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
             # lambda x: sys.exit(42),
@@ -449,7 +474,9 @@ class Utilities:
             print(e)
             with self.base_layout.canvas.before:
                 Color(0.78, 0.78, 0.78, 1)
-                self.rect = Rectangle(size=self.base_layout.size, pos=self.base_layout.pos)
+                self.rect = Rectangle(
+                    size=self.base_layout.size, pos=self.base_layout.pos
+                )
 
             def update_rect(instance, value):
                 instance.rect.size = instance.size
@@ -480,12 +507,59 @@ class Utilities:
         )
 
         top_container = BoxLayout(orientation="vertical", size_hint_y=0.1, padding=10)
-        saved_orders_container = MDBoxLayout(size_hint_y=1,orientation="vertical")
-        self.saved_order_button1 = MDFlatButton(text="", on_press= lambda x: self.do_nothing())
-        self.saved_order_button2 = MDFlatButton(text="", on_press=lambda x: self.do_nothing())
-        self.saved_order_button3 = MDFlatButton(text="", on_press=lambda x: self.do_nothing())
-        self.saved_order_button4 = MDFlatButton(text="", on_press=lambda x: self.do_nothing())
-        self.saved_order_button5 = MDFlatButton(text="", on_press=lambda x: self.do_nothing())
+        saved_orders_container = MDBoxLayout(
+            size_hint_y=1, orientation="vertical", spacing=20, padding=(0, 0, 0, 100)
+        )
+        self.saved_order_title_container=MDBoxLayout(orientation="vertical")
+        self.saved_order_title = MDLabel(
+            text="", adaptive_height=False, size_hint_y=None, height=50
+        )
+        self.saved_order_divider = MDBoxLayout(size_hint_x=0.5, size_hint_y=None, height=1, md_bg_color=(0,0,0,0))
+        self.saved_order_title_container.add_widget(self.saved_order_title)
+        self.saved_order_title_container.add_widget(self.saved_order_divider)
+
+        self.saved_order_button1 = MDFlatButton(
+            text="",
+            on_press=lambda x: self.do_nothing(),
+            md_bg_color=(0, 0, 0, 0),
+            size_hint=(0.5, None),
+            _min_height=50,
+            _no_ripple_effect=True,
+        )
+        self.saved_order_button2 = MDFlatButton(
+            text="",
+            on_press=lambda x: self.do_nothing(),
+            md_bg_color=(0, 0, 0, 0),
+            size_hint=(0.5, None),
+            _min_height=50,
+            _no_ripple_effect=True,
+        )
+        self.saved_order_button3 = MDFlatButton(
+            text="",
+            on_press=lambda x: self.do_nothing(),
+            md_bg_color=(0, 0, 0, 0),
+            size_hint=(0.5, None),
+            _min_height=50,
+            _no_ripple_effect=True,
+        )
+        self.saved_order_button4 = MDFlatButton(
+            text="",
+            on_press=lambda x: self.do_nothing(),
+            md_bg_color=(0, 0, 0, 0),
+            size_hint=(0.5, None),
+            _min_height=50,
+            _no_ripple_effect=True,
+        )
+        self.saved_order_button5 = MDFlatButton(
+            text="",
+            on_press=lambda x: self.do_nothing(),
+            md_bg_color=(0, 0, 0, 0),
+            size_hint=(0.5, None),
+            _min_height=50,
+            _no_ripple_effect=True,
+        )
+        saved_orders_container.add_widget(self.saved_order_title_container)
+        #saved_orders_container.add_widget(self.saved_order_divider)
         saved_orders_container.add_widget(self.saved_order_button1)
         saved_orders_container.add_widget(self.saved_order_button2)
         saved_orders_container.add_widget(self.saved_order_button3)
@@ -534,7 +608,7 @@ class Utilities:
 
         line_container.add_widget(blank_line2)
         self.dual_button = MDFlatButton(
-            text = "",
+            text="",
             # pos_hint={"right": 1},
             on_press=lambda x: self.maximize_dual_popup(),
         )
@@ -554,6 +628,7 @@ class Utilities:
 
     def do_nothing(self):
         pass
+
     def maximize_dual_popup(self):
         try:
             self.app.popup_manager.maximize_dual_popup()
@@ -581,14 +656,11 @@ class Utilities:
         Clock.unschedule(self.reset)
         Clock.schedule_interval(self.reset, 3)
 
-
-
-
     def confirm_clear_order(self):
         if self.app.click == 0:
             self.app.click += 1
 
-            toast('Tap again to clear order')
+            toast("Tap again to clear order")
 
             self.app.trash_icon.icon = "trash-can"
             self.app.trash_icon.icon_color = "red"
@@ -609,8 +681,6 @@ class Utilities:
 
         self.app.trash_icon.icon = "trash-can-outline"
         self.click = 0
-
-
 
     # def reboot(self):
     #     print("reboot")
@@ -696,18 +766,16 @@ class Utilities:
 
     def trigger_guard_and_lock(self, trigger=False):
 
-
         if trigger:
 
-            #self.app.popup_manager.show_lock_screen()
+            # self.app.popup_manager.show_lock_screen()
             self.app.is_lock_screen_displayed = True
         elif (
-
             not self.app.is_guard_screen_displayed
             and not self.app.is_lock_screen_displayed
         ):
 
-            #self.app.popup_manager.show_lock_screen()
+            # self.app.popup_manager.show_lock_screen()
             self.app.popup_manager.show_guard_screen()
             self.app.is_lock_screen_displayed = True
             self.app.is_guard_screen_displayed = True
@@ -778,11 +846,9 @@ class Utilities:
             )
             idle_time = screensaver_interface.GetSessionIdleTime()
 
-
             hours, remainder = divmod(idle_time, 3600000)
             minutes, seconds = divmod(remainder, 60000)
             seconds //= 1000
-
 
             human_readable_time = f"{hours}h:{minutes}m:{seconds}s"
 
@@ -790,12 +856,9 @@ class Utilities:
 
                 self.trigger_guard_and_lock(trigger=False)
 
-
         except Exception as e:
-            #print(f"Exception in check_inactivity\n{e}")
+            # print(f"Exception in check_inactivity\n{e}")
             pass
-
-
 
     def clear_split_numeric_input(self):
         self.app.popup_manager.split_payment_numeric_cash_input.text = ""
@@ -920,7 +983,6 @@ class Utilities:
         except:
             pass
 
-
     def dismiss_entire_discount_popup(self):
         try:
             self.app.popup_manager.custom_discount_order_amount_input.text = ""
@@ -962,7 +1024,7 @@ class Utilities:
         sku_input,
         category_input,
         popup,
-        query=None
+        query=None,
     ):
 
         if len(name_input.text) > 0:
@@ -999,16 +1061,12 @@ class Utilities:
         self.app.popup_manager.category_button_popup.dismiss()
 
     def apply_categories_inv(self):
-        categories_str = ", ".join(
-            self.app.popup_manager.selected_categories_inv
-            )
+        categories_str = ", ".join(self.app.popup_manager.selected_categories_inv)
         self.app.popup_manager.add_to_db_category_input_inv.text = categories_str
         self.app.popup_manager.category_button_popup_inv.dismiss()
 
     def apply_categories_row(self):
-        categories_str = ", ".join(
-            self.app.popup_manager.selected_categories_row
-            )
+        categories_str = ", ".join(self.app.popup_manager.selected_categories_row)
         self.app.popup_manager.add_to_db_category_input_row.text = categories_str
         self.app.popup_manager.category_button_popup_row.dismiss()
 
@@ -1038,12 +1096,9 @@ class Utilities:
             if category in self.app.popup_manager.selected_categories_inv:
                 self.app.popup_manager.selected_categories_inv.append(category)
 
-
     def show_add_item_popup(self, scanned_barcode):
         self.barcode = scanned_barcode
         self.app.popup_manager.inventory_item_popup()
-
-
 
     def open_inventory_manager_row(self, instance):
         self.app.current_context = "inventory_item"
@@ -1088,6 +1143,3 @@ class ReusableTimer:
 
     def reset(self):
         self.start()
-
-
-
