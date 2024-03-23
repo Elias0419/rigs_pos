@@ -778,9 +778,9 @@ class Utilities:
         self.app.popup_manager.dismiss_popups("split_custom_cash_popup")
 
     def trigger_guard_and_lock(self, trigger=False):
-
+        print(f"guard {self.app.is_guard_screen_displayed}\nlock {self.app.is_lock_screen_displayed}")
         if trigger:
-
+            self.app.disable_lock_screen = False
             self.app.popup_manager.show_lock_screen()
             self.app.is_lock_screen_displayed = True
         elif (
