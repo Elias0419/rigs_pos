@@ -198,7 +198,7 @@ class ButtonHandler:
                     if hasattr(self, 'reset_event'):
                         self.reset_event.cancel()
 
-                self.reset_event = Clock.schedule_once(self.lock_screen_reset, reset_time)
+                    self.reset_event = Clock.schedule_once(self.lock_screen_reset, reset_time)
             else:
                 self.app.utilities.indicate_incorrect_pin(
                     self.app.popup_manager.lock_popup
