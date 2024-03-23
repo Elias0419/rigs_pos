@@ -222,6 +222,8 @@ class ButtonHandler:
         self.app.disable_lock_screen = False
         self.app.popup_manager.lock_popup.dismiss()
         self.app.popup_manager.guard_popup.dismiss()
+        self.app.is_lock_screen_displayed = False
+        self.app.is_guard_screen_displayed = False
         self.app.utilities.trigger_guard_and_lock()
 
     def on_preset_amount_press(self, instance):
