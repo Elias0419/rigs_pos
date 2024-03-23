@@ -2530,7 +2530,7 @@ class FinancialSummaryWidget(MDFlatButton):
             items = str(order["items"])
 
             items_no_brackets = items.replace("[", "").replace("]", "").replace("'", "")
-            items_trunc = items_no_brackets[:10]
+            items_trunc = items_no_brackets[:30] + "..."
 
             button.text = items_trunc
             button.on_press = lambda order=order, button=button: self.load_order(order=order, button=button)
