@@ -2,6 +2,7 @@ import sys
 import re
 from open_cash_drawer import open_cash_drawer
 from kivy.clock import Clock
+from datetime import datetime
 
 class ButtonHandler:
     def __init__(self, ref):
@@ -191,6 +192,13 @@ class ButtonHandler:
                 self.app.is_guard_screen_displayed = False
                 self.app.is_lock_screen_displayed = False
                 self.app.pin_reset_timer.stop()
+                if self.app.popup_manager.disable_lock_screen_checkbox.active:
+                    self.app.disable_lock_screen = True
+                    reset_time = self.calculate_reset_time()
+                    if hasattr(self, 'reset_event'):
+                        self.reset_event.cancel()
+
+                self.reset_event = Clock.schedule_once(self.lock_screen_reset, reset_time)
             else:
                 self.app.utilities.indicate_incorrect_pin(
                     self.app.popup_manager.lock_popup
@@ -200,6 +208,18 @@ class ButtonHandler:
                 self.app.pin_reset_timer.reset()
             self.app.entered_pin = ""
             self.app.popup_manager.pin_input.text = ""
+
+    def calculate_reset_time(self):
+        now = datetime.now()
+        ten_pm_today = now.replace(hour=11, minute=41, second=0, microsecond=0)
+        if now >= ten_pm_today:
+            ten_pm_today += timedelta(days=1)
+        delay = (ten_pm_today - now).total_seconds()
+        return delay
+
+
+    def lock_screen_reset(self, *args):
+        self.app.disable_lock_screen = False
 
     def on_preset_amount_press(self, instance):
         amount = re.sub(r"\[.*?\]", "", instance.text)

@@ -45,6 +45,7 @@ class Utilities:
         self.app.entered_pin = ""
         self.app.is_guard_screen_displayed = False
         self.app.is_lock_screen_displayed = False
+        self.app.disable_lock_screen = False
         self.app.override_tap_time = 0
         self.app.click = 0
         self.app.current_context = "main"
@@ -450,7 +451,8 @@ class Utilities:
             # lambda x: self.modify_clock_layout_for_dual_pane_mode(),
             # lambda x: self.app.popup_manager.show_dual_inventory_and_label_managers(),
             # lambda x: self.enable_dual_pane_mode(),
-            self.app.button_handler.on_button_press,
+            #self.app.button_handler.on_button_press,
+            lambda x: self.trigger_guard_and_lock(),
             # lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
             # lambda x: sys.exit(42),
             (8, 8),
@@ -779,14 +781,14 @@ class Utilities:
 
         if trigger:
 
-            # self.app.popup_manager.show_lock_screen()
+            self.app.popup_manager.show_lock_screen()
             self.app.is_lock_screen_displayed = True
         elif (
             not self.app.is_guard_screen_displayed
             and not self.app.is_lock_screen_displayed
         ):
 
-            # self.app.popup_manager.show_lock_screen()
+            self.app.popup_manager.show_lock_screen()
             self.app.popup_manager.show_guard_screen()
             self.app.is_lock_screen_displayed = True
             self.app.is_guard_screen_displayed = True
@@ -863,12 +865,14 @@ class Utilities:
 
             human_readable_time = f"{hours}h:{minutes}m:{seconds}s"
 
-            if idle_time > 600000:
+            #if idle_time > 600000: # 10 minutes
+            if idle_time > 10000: # 10 secs
+
 
                 self.trigger_guard_and_lock(trigger=False)
 
         except Exception as e:
-            # print(f"Exception in check_inactivity\n{e}")
+            print(f"Exception in check_inactivity\n{e}")
             pass
 
     def clear_split_numeric_input(self):
