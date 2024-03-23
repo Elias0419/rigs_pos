@@ -211,7 +211,7 @@ class ButtonHandler:
 
     def calculate_reset_time(self):
         now = datetime.now()
-        ten_pm_today = now.replace(hour=12, minute=11, second=0, microsecond=0)
+        ten_pm_today = now.replace(hour=22, minute=0, second=0, microsecond=0)
         if now >= ten_pm_today:
             ten_pm_today += timedelta(days=1)
         delay = (ten_pm_today - now).total_seconds()
