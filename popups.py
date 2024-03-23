@@ -1122,23 +1122,27 @@ class PopupManager:
         if not self.app.is_guard_screen_displayed:
             guard_layout = BoxLayout(orientation="vertical")
 
-            clock_label = Label(size_hint_y=0.1, font_size=30)
+            clock_label = Label(size_hint_y=0.1, font_size=50, bold=True)
 
             def update_time(*args):
                 clock_label.text = datetime.now().strftime("%I:%M %p")
 
             Clock.schedule_interval(update_time, 1)
 
-            guard_image = Image(source="images/guard.jpg")
+            guard_image = Image(source="images/rigs_logo_scaled.png")
 
-            guard_layout.add_widget(clock_label)
+
             guard_layout.add_widget(guard_image)
+            guard_layout.add_widget(clock_label)
 
             self.guard_popup = Popup(
-                title="Guard Screen",
+                title="",
                 content=guard_layout,
                 size_hint=(1, 1),
                 auto_dismiss=False,
+                background_color=(0, 0, 0, 0),
+                separator_height=0,
+                overlay_color=(0.1, 0.1, 0.1,1)
             )
             self.guard_popup.bind(
                 on_touch_down=lambda x, touch: self.app.utilities.dismiss_guard_popup()
