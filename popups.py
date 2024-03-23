@@ -9,6 +9,10 @@ from kivy.uix.popup import Popup
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.button import MDRaisedButton, MDFlatButton, MDIconButton
+
+from  kivymd.uix.selectioncontrol import MDCheckbox
+
+
 from kivy.uix.textinput import TextInput
 from kivymd.color_definitions import palette
 from kivy.uix.floatlayout import FloatLayout
@@ -1150,71 +1154,77 @@ class PopupManager:
             update_time()
 
     def show_lock_screen(self):
+        if self.app.disable_lock_screen:
+            self.do_nothing()
+        else:
+            if not self.app.is_lock_screen_displayed:
 
-        if not self.app.is_lock_screen_displayed:
+                lock_layout = BoxLayout(orientation="horizontal", size_hint=(1, 1))
+                lock_button_layout = BoxLayout(orientation="vertical", size_hint=(0.5, 1))
+                self.lockscreen_keypad_layout = GridLayout(cols=3, spacing=1)
 
-            lock_layout = BoxLayout(orientation="horizontal", size_hint=(1, 1))
-            lock_button_layout = BoxLayout(orientation="vertical", size_hint=(0.5, 1))
-            self.lockscreen_keypad_layout = GridLayout(cols=3, spacing=1)
+                numeric_buttons = [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                    "6",
+                    "7",
+                    "8",
+                    "9",
+                    "0",
+                    "Reset",
+                    " ",
+                ]
 
-            numeric_buttons = [
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "7",
-                "8",
-                "9",
-                "0",
-                "Reset",
-                " ",
-            ]
+                for button in numeric_buttons:
+                    if button != " ":
+                        btn = MarkupButton(
+                            text=f"[b][size=20]{button}[/size][/b]",
+                            color=(1, 1, 1, 1),
+                            size_hint=(0.8, 0.8),
+                            on_press=partial(
+                                self.app.button_handler.on_lock_screen_button_press, button
+                            ),
+                            background_normal="images/lockscreen_background_up.png",
+                            background_down="images/lockscreen_background_down.png",
+                        )
+                        self.lockscreen_keypad_layout.add_widget(btn)
 
-            for button in numeric_buttons:
-                if button != " ":
-                    btn = MarkupButton(
-                        text=f"[b][size=20]{button}[/size][/b]",
-                        color=(1, 1, 1, 1),
-                        size_hint=(0.8, 0.8),
-                        on_press=partial(
-                            self.app.button_handler.on_lock_screen_button_press, button
-                        ),
-                        background_normal="images/lockscreen_background_up.png",
-                        background_down="images/lockscreen_background_down.png",
-                    )
-                    self.lockscreen_keypad_layout.add_widget(btn)
+                    else:
+                        btn_2 = Button(
+                            size_hint=(0.8, 0.8),
+                            opacity=0,
+                            background_color=(0, 0, 0, 0),
+                        )
+                        btn_2.bind(on_press=self.app.utilities.manual_override)
+                        self.lockscreen_keypad_layout.add_widget(btn_2)
+                clock_layout = self.create_clock_layout()
 
-                else:
-                    btn_2 = Button(
-                        size_hint=(0.8, 0.8),
-                        opacity=0,
-                        background_color=(0, 0, 0, 0),
-                    )
-                    btn_2.bind(on_press=self.app.utilities.manual_override)
-                    self.lockscreen_keypad_layout.add_widget(btn_2)
-            clock_layout = self.create_clock_layout()
 
-            lock_button_layout.add_widget(self.lockscreen_keypad_layout)
-            lock_layout.add_widget(lock_button_layout)
-            # lock_layout.add_widget(self.pin_input)
-            lock_layout.add_widget(clock_layout)
-            self.lock_popup = Popup(
-                title="",
-                content=lock_layout,
-                size_hint=(1, 1),
-                auto_dismiss=False,
-                background_color=(0.78, 0.78, 0.78, 1),
-            )
 
-            self.lock_popup.bind(
-                on_dismiss=lambda instance: setattr(
-                    self, "is_lock_screen_displayed", False
+
+                lock_button_layout.add_widget(self.lockscreen_keypad_layout)
+                lock_layout.add_widget(lock_button_layout)
+                # lock_layout.add_widget(self.pin_input)
+                #lock_layout.add_widget(checkbox_layout)
+                lock_layout.add_widget(clock_layout)
+                self.lock_popup = Popup(
+                    title="",
+                    content=lock_layout,
+                    size_hint=(1, 1),
+                    auto_dismiss=False,
+                    background_color=(0.78, 0.78, 0.78, 1),
                 )
-            )
 
-            self.lock_popup.open()
+                self.lock_popup.bind(
+                    on_dismiss=lambda instance: setattr(
+                        self.app, "is_lock_screen_displayed", False
+                    )
+                )
+
+                self.lock_popup.open()
 
     def flash_buttons_red(self):  # move to utils
 
@@ -1240,6 +1250,13 @@ class PopupManager:
             halign="center",
         )
         clock_layout = BoxLayout(orientation="vertical", size_hint_x=1 / 3)
+        self.disable_lock_screen_checkbox = MDCheckbox(size_hint=(None, None), size=("48dp", "48dp"))
+        disable_lock_screen_label = Label(text="Disable Lock Screen", size_hint=(None, None), size=("200dp", "48dp"))
+
+        # Layout for the checkbox and label
+        checkbox_layout = BoxLayout(orientation="horizontal", size_hint=(1, None), height="48dp")
+        checkbox_layout.add_widget(self.disable_lock_screen_checkbox)
+        checkbox_layout.add_widget(disable_lock_screen_label)
         image_path = "images/RIGS2.png"
         if os.path.exists(image_path):
             img = Image(source=image_path, size_hint=(1, 0.75))
@@ -1259,6 +1276,7 @@ class PopupManager:
         clock_layout.add_widget(img)
         clock_layout.add_widget(self.pin_input)
         clock_layout.add_widget(self.clock_label)
+        clock_layout.add_widget(checkbox_layout)
         return clock_layout
 
     def show_inventory(self):
