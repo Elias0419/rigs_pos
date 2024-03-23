@@ -2515,6 +2515,14 @@ class FinancialSummaryWidget(MDFlatButton):
         else:
             self.app.utilities.saved_order_title.text=""
             self.app.utilities.saved_order_divider.md_bg_color=(0,0,0,0)
+        labels = [
+            self.app.utilities.saved_order_button1_label,
+            self.app.utilities.saved_order_button2_label,
+            self.app.utilities.saved_order_button3_label,
+            self.app.utilities.saved_order_button4_label,
+            self.app.utilities.saved_order_button5_label,
+        ]
+
         buttons = [
             self.app.utilities.saved_order_button1,
             self.app.utilities.saved_order_button2,
@@ -2523,23 +2531,21 @@ class FinancialSummaryWidget(MDFlatButton):
             self.app.utilities.saved_order_button5,
         ]
 
-        for button in buttons:
-            button.text = ""
 
-        for order, button in zip(orders, buttons):
+        for label in labels:
+            label.text = ""
+
+        for order, label, button in zip(orders, labels, buttons):
             items = str(order["items"])
 
             items_no_brackets = items.replace("[", "").replace("]", "").replace("'", "")
-            if len(items_no_brackets) > 30:
-                items_trunc = items_no_brackets[:30] + "..."
+            if len(items_no_brackets) > 50:
+                items_trunc = items_no_brackets[:50] + "..."
             else:
                 items_trunc = items_no_brackets
 
-            button.text = items_trunc
+            label.text = items_trunc
             button.on_press = lambda order=order, button=button: self.load_order(order=order, button=button)
-            button.md_bg_color="grey"
-
-
 
 
     def delete_order(self, order):

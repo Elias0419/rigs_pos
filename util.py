@@ -522,42 +522,53 @@ class Utilities:
             text="",
             on_press=lambda x: self.do_nothing(),
             md_bg_color=(0, 0, 0, 0),
-            size_hint=(0.5, None),
+            size_hint=(0.75, None),
             _min_height=50,
             _no_ripple_effect=True,
         )
+        self.saved_order_button1_label=MDLabel(text="", halign="left")
+        self.saved_order_button1.add_widget(self.saved_order_button1_label)
         self.saved_order_button2 = MDFlatButton(
             text="",
             on_press=lambda x: self.do_nothing(),
             md_bg_color=(0, 0, 0, 0),
-            size_hint=(0.5, None),
+            size_hint=(0.75, None),
             _min_height=50,
             _no_ripple_effect=True,
         )
+        self.saved_order_button2_label=MDLabel(text="", halign="left")
+        self.saved_order_button2.add_widget(self.saved_order_button2_label)
+
         self.saved_order_button3 = MDFlatButton(
             text="",
             on_press=lambda x: self.do_nothing(),
             md_bg_color=(0, 0, 0, 0),
-            size_hint=(0.5, None),
+            size_hint=(0.75, None),
             _min_height=50,
             _no_ripple_effect=True,
         )
+        self.saved_order_button3_label=MDLabel(text="", halign="left")
+        self.saved_order_button3.add_widget(self.saved_order_button3_label)
         self.saved_order_button4 = MDFlatButton(
             text="",
             on_press=lambda x: self.do_nothing(),
             md_bg_color=(0, 0, 0, 0),
-            size_hint=(0.5, None),
+            size_hint=(0.75, None),
             _min_height=50,
             _no_ripple_effect=True,
         )
+        self.saved_order_button4_label=MDLabel(text="", halign="left")
+        self.saved_order_button4.add_widget(self.saved_order_button4_label)
         self.saved_order_button5 = MDFlatButton(
             text="",
             on_press=lambda x: self.do_nothing(),
             md_bg_color=(0, 0, 0, 0),
-            size_hint=(0.5, None),
+            size_hint=(0.75, None),
             _min_height=50,
             _no_ripple_effect=True,
         )
+        self.saved_order_button5_label=MDLabel(text="", halign="left")
+        self.saved_order_button5.add_widget(self.saved_order_button5_label)
         saved_orders_container.add_widget(self.saved_order_title_container)
         #saved_orders_container.add_widget(self.saved_order_divider)
         saved_orders_container.add_widget(self.saved_order_button1)
