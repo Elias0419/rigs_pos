@@ -787,7 +787,7 @@ class Utilities:
             not self.app.is_guard_screen_displayed
             and not self.app.is_lock_screen_displayed
         ):
-
+            print("elif 1")
             self.app.popup_manager.show_lock_screen()
             self.app.popup_manager.show_guard_screen()
             self.app.is_lock_screen_displayed = True
@@ -795,7 +795,7 @@ class Utilities:
         elif (
             self.app.is_lock_screen_displayed and not self.app.is_guard_screen_displayed
         ):
-
+            print("elif 2")
             self.app.popup_manager.show_guard_screen()
             self.app.is_guard_screen_displayed = True
 
