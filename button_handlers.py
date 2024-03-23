@@ -220,6 +220,9 @@ class ButtonHandler:
 
     def lock_screen_reset(self, *args):
         self.app.disable_lock_screen = False
+        self.app.popup_manager.lock_popup.dismiss()
+        self.app.popup_manager.guard_popup.dismiss()
+        self.app.popup_manager.trigger_guard_and_lock()
 
     def on_preset_amount_press(self, instance):
         amount = re.sub(r"\[.*?\]", "", instance.text)
