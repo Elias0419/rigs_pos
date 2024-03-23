@@ -203,7 +203,7 @@ class ButtonHandler:
                 self.app.utilities.indicate_incorrect_pin(
                     self.app.popup_manager.lock_popup
                 )
-                self.app.popup_manager.flash_buttons_red()
+                #self.app.popup_manager.flash_buttons_red()
                 self.app.popup_manager.pin_input.text = ""
                 self.app.pin_reset_timer.reset()
             self.app.entered_pin = ""
