@@ -1155,7 +1155,7 @@ class PopupManager:
 
     def show_lock_screen(self):
         if self.app.disable_lock_screen:
-            self.do_nothing()
+            self.do_nothing(None)
         else:
             if not self.app.is_lock_screen_displayed:
 
