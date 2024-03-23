@@ -451,8 +451,8 @@ class Utilities:
             # lambda x: self.modify_clock_layout_for_dual_pane_mode(),
             # lambda x: self.app.popup_manager.show_dual_inventory_and_label_managers(),
             # lambda x: self.enable_dual_pane_mode(),
-            self.app.button_handler.on_button_press,
-            #lambda x: self.app.popup_manager.show_lock_screen(),
+            #self.app.button_handler.on_button_press,
+            lambda x: self.app.popup_manager.show_guard_screen(),
             # lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
             # lambda x: sys.exit(42),
             (8, 8),
@@ -798,6 +798,13 @@ class Utilities:
 
             self.app.popup_manager.show_guard_screen()
             self.app.is_guard_screen_displayed = True
+
+        elif (
+            self.app.is_guard_screen_displayed and not self.app.is_lock_screen_displayed
+        ):
+
+            self.app.popup_manager.show_lock_screen()
+            self.app.is_lock_screen_displayed = True
 
     def reboot(self, instance):
         try:
