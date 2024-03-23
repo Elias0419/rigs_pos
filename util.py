@@ -409,7 +409,7 @@ class Utilities:
         right_area_layout.add_widget(financial_layout)
         self.top_area_layout.add_widget(right_area_layout)
         sidebar = BoxLayout(orientation="vertical", size_hint_x=0.07)
-        lock_icon = MDIconButton(icon="lock")
+        lock_icon = MDIconButton(icon="lock", on_press=lambda x: self.trigger_guard_and_lock(trigger=True))
         sidebar.add_widget(trash_icon_container)
         sidebar.add_widget(save_icon_container)
         sidebar.add_widget(lock_icon)
