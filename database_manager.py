@@ -242,6 +242,7 @@ class DatabaseManager:
         return items
 
     def get_item_details(self, item_id="", name="", price=0.0, barcode=""):
+        print(f"called get with\nbarcode {barcode}\nname {name}")
         conn = None
         try:
             conn = self._get_connection()
@@ -250,13 +251,16 @@ class DatabaseManager:
             item_details = None
 
             if item_id:
+                print("if item_id")
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE item_id = ?"
                 cursor.execute(query, (item_id,))
             elif barcode:
+                print("elif barcode:")
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE barcode = ?"
                 cursor.execute(query, (barcode,))
 
             elif name and price:
+                print("elif name and price:")
                 print("name and price")
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE name = ? AND price = ?"
                 cursor.execute(query, (name, price))
@@ -266,10 +270,12 @@ class DatabaseManager:
                     cursor.execute(query, (name,))
 
             elif name:
+                print("elif name")
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE name = ?"
                 cursor.execute(query, (name,))
 
             else:
+                print("else")
                 print("[DatabaseManager]: get_item_details requires either item_id, barcode, or both name and price.")
                 return None
 
