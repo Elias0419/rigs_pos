@@ -2366,7 +2366,7 @@ class PopupManager:
             button = MDRaisedButton(
                 text=item['name'],
                 size_hint=(1,None),
-                on_press=lambda x, barcode=barcode, choice=item['name']: self.add_dupe_choice_to_order(barcode=barcode, choice=choice)
+                on_press=lambda x, barcode=barcode, choice=item['name'], price=item['price']: self.add_dupe_choice_to_order(barcode=barcode, choice=choice, price=price)
                 )
             layout.add_widget(button)
             print(f"Button size: {button.size}, size_hint: {button.size_hint}, pos: {button.pos}")
@@ -2379,9 +2379,9 @@ class PopupManager:
             )
         self.handle_duplicate_barcodes_popup.open()
 
-    def add_dupe_choice_to_order(self, barcode, choice):
+    def add_dupe_choice_to_order(self, barcode, choice, price):
         print(f"barcode {barcode}\nchoice {choice}")
-        item_details = self.app.db_manager.get_item_details(barcode=barcode, name=choice, dupe=True)
+        item_details = self.app.db_manager.get_item_details(barcode=barcode, name=choice, dupe=True, price=price)
         print(f"item_details {item_details}")
         if item_details:
             print("found item details", item_details)
