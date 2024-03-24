@@ -241,7 +241,7 @@ class DatabaseManager:
 
         return items
 
-    def get_item_details(self, item_id="", name="", price=0.0, barcode=""):
+    def get_item_details(self, item_id="", name="", price=0.0, barcode="", dupe=False):
         print(f"called get with\nbarcode {barcode}\nname {name}\nitem_id {item_id}")
         conn = None
         try:
@@ -249,8 +249,16 @@ class DatabaseManager:
             cursor = conn.cursor()
 
             item_details = None
+            if dupe:
+                print("dupe")
+                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE name = ? AND price = ?"
+                cursor.execute(query, (name, price))
+                if cursor.rowcount == 0:
 
-            if item_id:
+                    query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE name = ?"
+                    cursor.execute(query, (name,))
+
+            elif item_id:
                 print("if item_id")
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE item_id = ?"
                 cursor.execute(query, (item_id,))
