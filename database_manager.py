@@ -242,7 +242,7 @@ class DatabaseManager:
         return items
 
     def get_item_details(self, item_id="", name="", price=0.0, barcode=""):
-        print(f"called get with\nbarcode {barcode}\nname {name}")
+        print(f"called get with\nbarcode {barcode}\nname {name}\nitem_id {item_id}")
         conn = None
         try:
             conn = self._get_connection()
