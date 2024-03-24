@@ -2385,7 +2385,8 @@ class PopupManager:
         print(f"item_details {item_details}")
         if item_details:
             print("found item details", item_details)
-            item_name, item_price = item_details[:2]
+            item_name = item_details['name']
+            item_price = item_details['price']
             self.app.order_manager.add_item(item_name, item_price)
             self.handle_duplicate_barcodes_popup.dismiss()
             self.app.utilities.update_display()
