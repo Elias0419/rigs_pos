@@ -39,7 +39,7 @@ from kivy.uix.anchorlayout import AnchorLayout
 from kivymd.uix.floatlayout import MDFloatLayout
 from kivy.graphics import Color, Rectangle
 from kivymd.uix.card import MDCard
-
+from PIL import Image as PILImage
 class PopupManager:
     def __init__(self, ref):
         self.app = ref
@@ -2463,9 +2463,39 @@ class FinancialSummaryWidget(MDFlatButton):
         self.discount_label.text = f"[size=20]Discount: ${discount:.2f}[/size]"
         self.tax_label.text = f"[size=20]Tax: ${tax:.2f}[/size]"
         self.total_label.text = f"[size=32]Total: [b]${total_with_tax:.2f}[/b][/size]"
+        # self.update_mirror_image()
 
     def on_press(self):
         self.open_order_modification_popup()
+
+    def update_mirror_image(self, *args):
+        snapshot_path = 'mirror_snapshot.png'
+        self.export_to_png(snapshot_path)
+        cropped_img = self.crop_bottom_right_corner("mirror_snapshot.png","cropped_mirror_snapshot.png")
+        try:
+            self.app.utilities.mirror_image.source = "cropped_mirror_snapshot.png"
+            self.app.utilities.mirror_image.reload()
+        except:
+            pass
+        # Clock.schedule_once(lambda x: self.delay_image_loading(snapshot_path),1)
+
+    # def delay_image_loading(self, snapshot_path):
+    #     self.app.utilities.mirror_image.source = snapshot_path
+    #     self.app.utilities.mirror_image.reload()
+
+    def crop_bottom_right_corner(self, source_path, target_path, crop_size=(250, 50)):
+        with PILImage.open(source_path) as img:
+            original_width, original_height = img.size
+            crop_width, crop_height = crop_size
+
+            left = original_width - crop_width
+            upper = original_height - crop_height
+            right = original_width
+            lower = original_height
+
+            crop_rectangle = (left, upper, right, lower)
+            cropped_img = img.crop(crop_rectangle)
+            cropped_img.save(target_path)
 
     def clear_order(self):
         self.app.order_layout.clear_widgets()
