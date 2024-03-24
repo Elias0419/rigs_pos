@@ -203,7 +203,7 @@ class ButtonHandler:
                 self.app.utilities.indicate_incorrect_pin(
                     self.app.popup_manager.lock_popup
                 )
-                #self.app.popup_manager.flash_buttons_red()
+
                 self.app.popup_manager.pin_input.text = ""
                 self.app.pin_reset_timer.reset()
             self.app.entered_pin = ""
@@ -211,10 +211,10 @@ class ButtonHandler:
 
     def calculate_reset_time(self):
         now = datetime.now()
-        ten_pm_today = now.replace(hour=22, minute=0, second=0, microsecond=0)
-        if now >= ten_pm_today:
-            ten_pm_today += timedelta(days=1)
-        delay = (ten_pm_today - now).total_seconds()
+        target_time = now.replace(hour=22, minute=0, second=0, microsecond=0)
+        if now >= target_time:
+            target_time += timedelta(days=1)
+        delay = (target_time - now).total_seconds()
         return delay
 
 

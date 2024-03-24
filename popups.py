@@ -2469,19 +2469,16 @@ class FinancialSummaryWidget(MDFlatButton):
         self.open_order_modification_popup()
 
     def update_mirror_image(self, *args):
-        snapshot_path = 'mirror_snapshot.png'
-        self.export_to_png(snapshot_path)
-        cropped_img = self.crop_bottom_right_corner("mirror_snapshot.png","cropped_mirror_snapshot.png")
         try:
+            snapshot_path = 'mirror_snapshot.png'
+            self.export_to_png(snapshot_path)
+            cropped_img = self.crop_bottom_right_corner("mirror_snapshot.png","cropped_mirror_snapshot.png")
+
             self.app.utilities.mirror_image.source = "cropped_mirror_snapshot.png"
             self.app.utilities.mirror_image.reload()
         except:
             pass
-        # Clock.schedule_once(lambda x: self.delay_image_loading(snapshot_path),1)
 
-    # def delay_image_loading(self, snapshot_path):
-    #     self.app.utilities.mirror_image.source = snapshot_path
-    #     self.app.utilities.mirror_image.reload()
 
     def crop_bottom_right_corner(self, source_path, target_path, crop_size=(250, 50)):
         with PILImage.open(source_path) as img:
