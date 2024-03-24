@@ -101,7 +101,7 @@ class LabelPrintingRow(BoxLayout):
         # except Exception as e:
         #     print(f"Expected error in refresh_print_queue_for_embed\n{e}")
 
-    def refresh_print_queue_for_embed_main_thread(self):
+    def refresh_print_queue_for_embed_main_thread(self, **args):
         self.app.popup_manager.queue_container.remove_widget(self.app.popup_manager.print_queue_embed)
         self.app.popup_manager.print_queue_embed = self.app.label_manager.show_print_queue(embed=True)
         self.app.popup_manager.queue_container.add_widget(self.app.popup_manager.print_queue_embed)
