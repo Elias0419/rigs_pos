@@ -45,34 +45,38 @@ class LabelPrintingRow(BoxLayout):
     def add_to_print_queue(self):
         self.show_label_popup()
 
-    def create_focus_popup(self, title, content, textinput, size_hint, pos_hint={}):
+    def create_focus_popup(self, title, content, textinput, size_hint, pos_hint={}, separator_height=1):
         popup = FocusPopup(
-            title=title, content=content, size_hint=size_hint, pos_hint=pos_hint
+            title=title, content=content, size_hint=size_hint, pos_hint=pos_hint, separator_height=separator_height
         )
         popup.focus_on_textinput(textinput)
         return popup
 
     def show_label_popup(self):
         content = BoxLayout(orientation="vertical")
-        quantity_input = TextInput(text="", size_hint=(1, 0.4), input_filter="int")
-        content.add_widget(Label(text=f"Enter quantity for {self.name}"))
+        quantity_input = TextInput(text="1", size_hint=(1, 0.4), input_filter="int", font_size=25)
+        label_container = MDBoxLayout(size_hint_y=0.1)
+        label = Label(text=f"Enter quantity for {self.name}")
+        label_container.add_widget(label)
+        content.add_widget(label_container)
         content.add_widget(quantity_input)
         btn_layout = BoxLayout(
-            orientation="horizontal", size_hint=(0.8, 0.8), spacing=10
+            orientation="horizontal", size_hint=(0.8, 0.4), spacing=10
         )
         popup = self.create_focus_popup(
-            title="Label Quantity",
+            title="",
             content=content,
             textinput=quantity_input,
-            size_hint=(0.4, 0.4),
-            pos_hint={"top": 1},
+            size_hint=(0.4, 0.2),
+            #pos_hint={"top": 1},
+            separator_height=0,
         )
 
         add_button = MDRaisedButton(
             text="Add",
             size_hint=(0.2, 0.8),
             on_press=lambda x: self.on_add_button_press(quantity_input, popup),
-            disabled=True,
+
         )
 
         btn_layout.add_widget(add_button)
@@ -96,7 +100,6 @@ class LabelPrintingRow(BoxLayout):
 
     def refresh_print_queue_for_embed(self):
         Clock.schedule_once(self.refresh_print_queue_for_embed_main_thread, 0.1)
-        # try:
 
 
 
@@ -423,9 +426,9 @@ class LabelPrintingView(BoxLayout):
 
         self.ids.label_rv.data = self.generate_data_for_rv(filtered_items)
 
-    def create_focus_popup(self, title, content, textinput, size_hint, pos_hint={}):
+    def create_focus_popup(self, title, content, textinput, size_hint, pos_hint={}, separator_height=1):
         popup = FocusPopup(
-            title=title, content=content, size_hint=size_hint, pos_hint=pos_hint
+            title=title, content=content, size_hint=size_hint, pos_hint=pos_hint, separator_height=separator_height
         )
         popup.focus_on_textinput(textinput)
         return popup
