@@ -500,8 +500,7 @@ class Utilities:
         else:
             return self.base_layout
 
-    def modify_clock_layout_for_dual_pane_mode(self):
-        self.dual_button.text = f"[b][size=20]Go Back To Dual Pane Mode[/b][/size]"
+
 
     def create_clock_layout(self, dual_pane_mode=False):
 
@@ -646,6 +645,10 @@ class Utilities:
         Clock.schedule_interval(self.update_clock, 1)
         self.clock_layout.add_widget(clock_container)
         return self.clock_layout
+
+
+    def modify_clock_layout_for_dual_pane_mode(self):
+        self.dual_button.text = f"[b][size=20]Go Back To Dual Pane Mode[/b][/size]"
 
     def do_nothing(self):
         pass
@@ -1046,6 +1049,7 @@ class Utilities:
             sku_input,
             category_input,
         )
+        self.update_inventory_cache()
         self.app.inventory_manager.refresh_inventory()
         popup.dismiss()
 
