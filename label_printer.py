@@ -98,13 +98,15 @@ class LabelPrintingRow(BoxLayout):
         Clock.schedule_once(self.refresh_print_queue_for_embed_main_thread, 0.1)
         # try:
 
-        # except Exception as e:
-        #     print(f"Expected error in refresh_print_queue_for_embed\n{e}")
+
 
     def refresh_print_queue_for_embed_main_thread(self, *args):
-        self.app.popup_manager.queue_container.remove_widget(self.app.popup_manager.print_queue_embed)
-        self.app.popup_manager.print_queue_embed = self.app.label_manager.show_print_queue(embed=True)
-        self.app.popup_manager.queue_container.add_widget(self.app.popup_manager.print_queue_embed)
+        try:
+            self.app.popup_manager.queue_container.remove_widget(self.app.popup_manager.print_queue_embed)
+            self.app.popup_manager.print_queue_embed = self.app.label_manager.show_print_queue(embed=True)
+            self.app.popup_manager.queue_container.add_widget(self.app.popup_manager.print_queue_embed)
+        except Exception as e:
+            print(f"Expected error in refresh_print_queue_for_embed\n{e}")
 
     def on_add_button_press(self, quantity_input, popup):
         self.add_quantity_to_queue(quantity_input.text)
