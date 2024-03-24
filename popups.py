@@ -1754,7 +1754,7 @@ class PopupManager:
 
     def show_make_change_popup(self, change):
         change_layout = BoxLayout(orientation="vertical", spacing=10)
-        change_layout.add_widget(MDLabel(text=f"[size=30]Change to return: [b]${change:.2f}[/b][/size]", halign="center"))
+        change_layout.add_widget(MDLabel(text=f"[size=30]Change to return:\n [b]${change:.2f}[/b][/size]", halign="center"))
 
         done_button = self.app.utilities.create_md_raised_button(
             f"[size=20][b]Done[/b][/size]", self.app.utilities.on_change_done, (1, 0.4)
@@ -1762,9 +1762,16 @@ class PopupManager:
         change_layout.add_widget(done_button)
 
         self.change_popup = Popup(
-            title="Change Calculation", content=change_layout, size_hint=(0.4, 0.4)
+            title="", content=change_layout, size_hint=(0.4, 0.4), separator_height=0, auto_dismiss=False
         )
         self.change_popup.open()
+        Clock.schedule_once(self.make_change_popup_timeout, 60)
+
+    def make_change_popup_timeout(self, *args):
+        try:
+            self.app.utilities.on_change_done(None)
+        except Exception as e:
+            print(f"Exception in popup_manager make_change_popup_timeout\n{e}")
 
     def handle_split_payment(self):
         self.dismiss_popups(
@@ -2374,7 +2381,7 @@ class PopupManager:
 
     def add_dupe_choice_to_order(self, barcode, choice):
 
-        item_details = self.app.db_manager.get_item_details(barcode, dupe=True, name=choice)
+        item_details = self.app.db_manager.get_item_details(barcode, name=choice)
         if item_details:
             print("found item details", item_details)
             item_name, item_price = item_details[:2]
