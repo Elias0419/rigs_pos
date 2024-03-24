@@ -207,7 +207,7 @@ class DatabaseManager:
     def handle_duplicate_barcodes(self, barcode):
 
         query = """
-                SELECT barcode, name, price, cost, sku, category, parent_barcode
+                SELECT barcode, name, price, cost, sku, category, item_id, parent_barcode
                 FROM items
                 WHERE barcode = ?
                """
