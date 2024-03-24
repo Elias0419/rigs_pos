@@ -221,6 +221,7 @@ class DatabaseManager:
 
 
             for row in rows:
+                print(row)
                 item_details = {
                     'barcode': row[0],
                     'name': row[1],
