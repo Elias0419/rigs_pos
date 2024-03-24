@@ -713,7 +713,7 @@ class OrderDetailsPopup(Popup):
         self.dismiss()
 
     def format_items(self, items_str):
-
+        print(f"items_str {items_str}")
         try:
             parsed_data = json.loads(items_str)
 
@@ -721,11 +721,11 @@ class OrderDetailsPopup(Popup):
                 items_list = [parsed_data]
             else:
                 items_list = parsed_data
-            print(items_list) #######################################################################################################
+            print(f"items_list {items_list}")
             all_item_names = ", ".join(
                 item.get("name", "Unknown") for item in items_list
             )
-
+            print(f"all_item_names {all_item_names}")
             return all_item_names
         except json.JSONDecodeError as e:
             print(f"JSON parsing error in format_items: {e}")
