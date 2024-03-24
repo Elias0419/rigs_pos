@@ -237,6 +237,7 @@ class Utilities:
 
     def update_display(self):
         self.app.order_layout.clear_widgets()
+
         for item_id, item_info in self.app.order_manager.items.items():
             item_name = item_info["name"]
             price = item_info["price"]
@@ -319,6 +320,7 @@ class Utilities:
         self.app.financial_summary_widget.update_summary(
             subtotal, tax, total_with_tax, discount
         )
+        Clock.schedule_once(self.app.financial_summary.update_mirror_image, 0.1)
 
     def manual_override(self, instance):
 
@@ -376,7 +378,7 @@ class Utilities:
         self.clock_layout = self.create_clock_layout()
         self.top_area_layout.add_widget(self.clock_layout)
 
-        center_container = GridLayout(
+        self.center_container = GridLayout(
             rows=2, orientation="tb-lr", size_hint_y=0.01, size_hint_x=0.4
         )
         trash_icon_container = MDBoxLayout(size_hint_y=None, height=100)
@@ -398,8 +400,10 @@ class Utilities:
         save_icon_container.add_widget(self.app.save_icon)
 
         # center_container.add_widget(trash_icon_container)
-        center_container.add_widget(_blank)
-        self.top_area_layout.add_widget(center_container)
+
+        # self.center_container.add_widget(self.mirror_image)
+        self.center_container.add_widget(_blank)
+        self.top_area_layout.add_widget(self.center_container)
 
         right_area_layout.add_widget(self.app.order_layout)
 
@@ -455,6 +459,7 @@ class Utilities:
             #lambda x: self.app.popup_manager.show_guard_screen(),
             # lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
             # lambda x: sys.exit(42),
+            #lambda x: self.app.financial_summary.update_mirror_image(),
             (8, 8),
             "H6",
         )
@@ -496,18 +501,20 @@ class Utilities:
             return self.base_layout
 
     def modify_clock_layout_for_dual_pane_mode(self):
-        self.dual_button.text = "Go Back To Dual Pane Mode"
+        self.dual_button.text = f"[b][size=20]Go Back To Dual Pane Mode[/b][/size]"
 
     def create_clock_layout(self, dual_pane_mode=False):
 
         self.clock_layout = GridLayout(
             orientation="tb-lr",
-            rows=5,
+            rows=6,
             size_hint_x=0.75,
             size_hint_y=1,
             padding=(60, 0, 0, -10),
         )
-
+        mirror_image_container = MDBoxLayout(size_hint=(None,0.1), width=200)
+        self.mirror_image = Image(source="cropped_mirror_snapshot.png")
+        mirror_image_container.add_widget(self.mirror_image)
         top_container = BoxLayout(orientation="vertical", size_hint_y=0.1, padding=10)
         saved_orders_container = MDBoxLayout(
             size_hint_y=1, orientation="vertical", spacing=20, padding=(0, 0, 0, 100)
@@ -620,17 +627,18 @@ class Utilities:
         line_container.add_widget(blank_line)
 
         line_container.add_widget(blank_line2)
+        dual_button_container = MDBoxLayout(padding=10, size_hint_y=None, height=50)
         self.dual_button = MDFlatButton(
             text="",
             # pos_hint={"right": 1},
             on_press=lambda x: self.maximize_dual_popup(),
         )
-
+        dual_button_container.add_widget(self.dual_button)
         top_container.add_widget(register_text)
         top_container.add_widget(line_container)
         self.clock_layout.add_widget(top_container)
-        self.clock_layout.add_widget(self.dual_button)
-
+        self.clock_layout.add_widget(dual_button_container)
+        self.clock_layout.add_widget(mirror_image_container)
         self.clock_layout.add_widget(saved_orders_container)
         self.app.financial_summary.add_saved_orders_to_clock_layout()
         self.clock_layout.add_widget(logo_container)
