@@ -250,11 +250,11 @@ class DatabaseManager:
 
             item_details = None
             if dupe:
-                print("dupe")
+                print(f"TEST dupe\nname {name}\nprice {price}")
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE name = ? AND price = ?"
                 cursor.execute(query, (name, price))
                 if cursor.rowcount == 0:
-
+                    print(f"TEST2 dupe\nname {name}\nprice {price}")
                     query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE name = ?"
                     cursor.execute(query, (name,))
 
