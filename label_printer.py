@@ -429,6 +429,7 @@ class LabelPrinter:
     def __init__(self, ref):
         self.print_queue = []
         self.app = ref
+        self.print_queue_ref = LabelPrintingRow()
         self.queue_file_path = "print_queue.json"
         self.load_queue()
 
@@ -595,7 +596,6 @@ class LabelPrinter:
                     printer_identifier="usb://0x04F9:0x2043",
                     backend_identifier="pyusb",
                 )
-                print("Print job sent successfully")
                 return True
             except Exception as e:
                 self.catch_label_printing_errors(e)
@@ -636,11 +636,15 @@ class LabelPrinter:
         if self.print_success:
             self.print_queue.clear()
             self.save_queue()
-            self.app.label_manager.print_queue_popup.dismiss()
+            self.print_queue_ref.refresh_print_queue_for_embed()
+            try:
+                self.app.label_manager.print_queue_popup.dismiss()
+            except Exception as e:
+                print(f"Expected error dismissing print queue popup\n{e}")
             try:
                 self.app.popup_manager.label_errors_popup.dismiss()
             except Exception as e:
-                print(f"Exception while dismissing error popup: {e}")
+                print(f"Expected error dismissing error popup:\n {e}")
 
 
     def remove_from_queue(self, name):
