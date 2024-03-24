@@ -16,6 +16,7 @@ from database_manager import DatabaseManager
 from receipt_printer import ReceiptPrinter
 from rapidfuzz import process, fuzz
 from kivymd.uix.label import MDLabel
+from kivymd.uix.card import MDCard
 
 
 class NullableStringProperty(StringProperty):
@@ -584,14 +585,22 @@ class OrderDetailsPopup(Popup):
         items_split = items.split(",")
         formatted_items = '\n'.join(items_split)
         if formatted_order_details['Payment Method'] == "Cash":
-            middle_layout = Label(halign="center", text=f"{formatted_items}\n\nSubtotal: {formatted_order_details['Total']}\nDiscount: {formatted_order_details['Discount']}\nTax: {formatted_order_details['Tax']}\nTotal: {formatted_order_details['Total with Tax']}\n\nPaid with {formatted_order_details['Payment Method']}\nAmount Tendered: {formatted_order_details['Amount Tendered']}\nChange Given: {formatted_order_details['Change Given']}")
+            middle_layout = Label(halign="center", text=f"{formatted_items}")
+            bottom_layout = Label(halign="center",text=f"Subtotal: {formatted_order_details['Total']}\nDiscount: {formatted_order_details['Discount']}\nTax: {formatted_order_details['Tax']}\nTotal: {formatted_order_details['Total with Tax']}\n\nPaid with {formatted_order_details['Payment Method']}\nAmount Tendered: {formatted_order_details['Amount Tendered']}\nChange Given: {formatted_order_details['Change Given']}")
+            layout = MDCard()
+            layout.add_widget(middle_layout)
+            layout.add_widget(bottom_layout)
         # elif formatted_order_details['Payment Method'] == "Split":
         #     order_details = self.db_manager.get_order_by_id(order[0])
         #     print(order_details)
         else:
-            middle_layout = Label(halign="center", text=f"{formatted_items}\n\nSubtotal: {formatted_order_details['Total']}\nDiscount: {formatted_order_details['Discount']}\nTax: {formatted_order_details['Tax']}\nTotal: {formatted_order_details['Total with Tax']}\n\nPaid with {formatted_order_details['Payment Method']}")
+            middle_layout = Label(halign="center", text=f"{formatted_items}")
+            bottom_layout = Label(halign="center", text=f"Subtotal: {formatted_order_details['Total']}\nDiscount: {formatted_order_details['Discount']}\nTax: {formatted_order_details['Tax']}\nTotal: {formatted_order_details['Total with Tax']}\n\nPaid with {formatted_order_details['Payment Method']}")
+            layout = MDCard()
+            layout.add_widget(middle_layout)
+            layout.add_widget(bottom_layout)
 
-        button_layout = BoxLayout(size_hint=(1, 0.2), height=dp(50), spacing=5)
+        button_layout = BoxLayout(size_hint=(1, 0.1), height=dp(50), spacing=5)
 
         button_layout.add_widget(
             MDRaisedButton(
@@ -625,7 +634,7 @@ class OrderDetailsPopup(Popup):
                 )
         )
         content_layout.add_widget(top_layout)
-        content_layout.add_widget(middle_layout)
+        content_layout.add_widget(layout)
         content_layout.add_widget(button_layout)
 
         self.content = content_layout
@@ -712,7 +721,7 @@ class OrderDetailsPopup(Popup):
                 items_list = [parsed_data]
             else:
                 items_list = parsed_data
-
+            print(items_list) #######################################################################################################
             all_item_names = ", ".join(
                 item.get("name", "Unknown") for item in items_list
             )
