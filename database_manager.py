@@ -242,7 +242,7 @@ class DatabaseManager:
         return items
 
     def get_item_details(self, item_id="", name="", price=0.0, barcode="", dupe=False):
-        print(f"called get with\nbarcode {barcode}\nname {name}\nitem_id {item_id}")
+        # print(f"called get with\nbarcode {barcode}\nname {name}\nitem_id {item_id}")
         conn = None
         try:
             conn = self._get_connection()
@@ -250,26 +250,26 @@ class DatabaseManager:
 
             item_details = None
             if dupe:
-                print(f"TEST dupe\nname {name}\nprice {price}")
+                # print(f"TEST dupe\nname {name}\nprice {price}")
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE name = ? AND price = ?"
                 cursor.execute(query, (name, price))
                 if cursor.rowcount == 0:
-                    print(f"TEST2 dupe\nname {name}\nprice {price}")
+                    # print(f"TEST2 dupe\nname {name}\nprice {price}")
                     query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE name = ?"
                     cursor.execute(query, (name,))
 
             elif item_id:
-                print("if item_id")
+                # print("if item_id")
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE item_id = ?"
                 cursor.execute(query, (item_id,))
             elif barcode:
-                print("elif barcode:")
+                # print("elif barcode:")
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE barcode = ?"
                 cursor.execute(query, (barcode,))
 
             elif name and price:
-                print("elif name and price:")
-                print("name and price")
+                # print("elif name and price:")
+                # print("name and price")
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE name = ? AND price = ?"
                 cursor.execute(query, (name, price))
                 if cursor.rowcount == 0:
@@ -278,13 +278,13 @@ class DatabaseManager:
                     cursor.execute(query, (name,))
 
             elif name:
-                print("elif name")
+                # print("elif name")
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE name = ?"
                 cursor.execute(query, (name,))
 
             else:
-                print("else")
-                print("[DatabaseManager]: get_item_details requires either item_id, barcode, or both name and price.")
+                # print("else")
+                # print("[DatabaseManager]: get_item_details requires either item_id, barcode, or both name and price.")
                 return None
 
             item = cursor.fetchone()
