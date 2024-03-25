@@ -1319,6 +1319,7 @@ class PopupManager:
             textinput=inventory_view.ids.inventory_search_input,
             size_hint=(0.4, 1),
             pos_hint={"top": 1},
+            overlay_color=(0,0,0,0)
         )
         self.inventory_popup.open()
 
@@ -1370,6 +1371,7 @@ class PopupManager:
             background_color=(0, 0, 0, 0),
             separator_height=0,
             pos_hint={"center_x":0.9, "center_y":0.22},
+            overlay_color=(0,0,0,0)
             #pos_hint={"top":1}
         )
         self.tools_popup.open()
@@ -1441,6 +1443,7 @@ class PopupManager:
             content=self.custom_item_popup_layout,
             size_hint=(0.4, 0.6),
             on_dismiss=lambda x: setattr(self.cash_input, "text", ""),
+            overlay_color=(0, 0, 0, 0),
         )
         self.custom_item_popup.focus_on_textinput(self.cash_input)
         self.custom_item_popup.open()
@@ -1543,6 +1546,7 @@ class PopupManager:
             title=f"Finalize Order - {order_details['order_id']}",
             content=popup_layout,
             size_hint=(0.4, 0.6),
+            overlay_color=(0,0,0,0)
         )
         self.finalize_order_popup.open()
 
@@ -1614,6 +1618,7 @@ class PopupManager:
             title="Amount Tendered",
             content=self.cash_popup_layout,
             size_hint=(0.4, 0.6),
+            overlay_color=(0,0,0,0),
         )
         self.cash_popup.open()
 
@@ -1667,10 +1672,11 @@ class PopupManager:
         keypad_layout.add_widget(cancel_button)
 
         self.custom_cash_popup_layout.add_widget(keypad_layout)
-        self.custom_cash_popup = Popup(
+        self.custom_cash_popup = self.create_focus_popup(
             title="Custom Cash",
             content=self.custom_cash_popup_layout,
-            size_hint=(0.6, 0.6),
+            size_hint=(0.4, 0.6),
+            textinput=self.custom_cash_input
         )
         self.custom_cash_popup.open()
 
@@ -2159,11 +2165,11 @@ class PopupManager:
     def do_nothing(self, instance):
         pass
 
-    def create_focus_popup(self, title, content, textinput, size_hint, pos_hint={}, on_dismiss=None):
+    def create_focus_popup(self, title, content, textinput, size_hint, pos_hint={}, on_dismiss=None, overlay_color=(0,0,0,0)):
         if on_dismiss is None:
             on_dismiss = self.do_nothing
         popup = FocusPopup(
-            title=title, content=content, size_hint=size_hint, pos_hint=pos_hint, on_dismiss=on_dismiss
+            title=title, content=content, size_hint=size_hint, pos_hint=pos_hint, on_dismiss=on_dismiss, overlay_color=overlay_color
         )
         popup.focus_on_textinput(textinput)
         return popup
