@@ -1324,34 +1324,39 @@ class PopupManager:
 
     def show_tools_popup(self):
         # float_layout = FloatLayout()
-        float_layout = GridLayout(orientation="tb-lr", rows=10, spacing=5, padding=5)
+        float_layout = GridLayout(orientation="tb-lr",size_hint=(1,1), rows=10, spacing=10)
         tool_buttons = [
-            "Clear Order",
-            "Calculator",
+            #"Clear Order",
+            #"Calculator",
             "Reporting",
             "Label Printer",
-            "Inventory Management",
+            "Inventory",
             "System",
 
             #"Distrib TEST",
-            "Dual Pane Mode",
+            "Dual Pane",
             "Open Register",
         ]
 
-        btn_height_hint = 0.2
-        spacing_hint = 0.01
-        total_spacing_hint = (len(tool_buttons) - 1) * spacing_hint
-        total_btns_height = len(tool_buttons) * btn_height_hint
-        start_y = 1 - (btn_height_hint / 2)
-        total_height_needed = total_btns_height + total_spacing_hint
+        # btn_height_hint = 0.2
+        # spacing_hint = 0.01
+        # total_spacing_hint = (len(tool_buttons) - 1) * spacing_hint
+        # total_btns_height = len(tool_buttons) * btn_height_hint
+        # start_y = 1 - (btn_height_hint / 2)
+        # total_height_needed = total_btns_height + total_spacing_hint
 
         for index, tool in enumerate(tool_buttons):
-            center_y = start_y - (index * (btn_height_hint + spacing_hint)) / (1 if total_height_needed < 1 else total_height_needed)
+            # center_y = start_y - (index * (btn_height_hint + spacing_hint)) / (1 if total_height_needed < 1 else total_height_needed)
             btn = MDRaisedButton(
                 text=f'[b][size=20]{tool}[/b][/size]',
-                size_hint=(1, 1),
-                #size_hint_y=None,
-                height=200,
+                #size_hint=(1, 1),
+                # opacity=0.8,
+                # size_hint_min_x=1,
+                size_hint_y=None,
+                _min_height=75,
+                _min_width=200,
+
+                #height=200,
                 # pos_hint={"center_x": 0.5, "center_y": center_y},
                 on_press=self.app.button_handler.on_tool_button_press,
             )
@@ -1364,6 +1369,7 @@ class PopupManager:
             background="images/transparent.png",
             background_color=(0, 0, 0, 0),
             separator_height=0,
+            pos_hint={"center_x":0.9, "center_y":0.22},
             #pos_hint={"top":1}
         )
         self.tools_popup.open()
