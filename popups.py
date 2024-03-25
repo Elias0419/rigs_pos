@@ -1765,7 +1765,7 @@ class PopupManager:
             title="", content=change_layout, size_hint=(0.4, 0.4), separator_height=0, auto_dismiss=False
         )
         self.change_popup.open()
-        Clock.schedule_once(self.make_change_popup_timeout, 60)
+        self.make_change_dismiss_event = Clock.schedule_once(self.make_change_popup_timeout, 60)
 
     def make_change_popup_timeout(self, *args):
         try:

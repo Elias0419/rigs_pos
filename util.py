@@ -776,7 +776,7 @@ class Utilities:
     def on_change_done(self, instance):
         self.app.popup_manager.change_popup.dismiss()
         self.app.popup_manager.show_payment_confirmation_popup()
-
+        self.app.popup_manager.make_change_dismiss_event.cancel()
     def split_cancel(self):
         self.app.popup_manager.dismiss_popups("split_payment_numeric_popup")
         self.app.popup_manager.finalize_order_popup.open()
