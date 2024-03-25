@@ -8,8 +8,8 @@ from kivy.properties import StringProperty, ObjectProperty
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.uix.textinput import TextInput
-from kivymd.uix.boxlayout import BoxLayout
-from kivymd.uix.button import MDRaisedButton
+from kivymd.uix.boxlayout import BoxLayout, MDBoxLayout
+from kivymd.uix.button import MDRaisedButton, MDFlatButton
 from kivymd.uix.pickers import MDDatePicker
 from kivy.uix.gridlayout import GridLayout
 from database_manager import DatabaseManager
@@ -588,7 +588,7 @@ class OrderDetailsPopup(Popup):
         if formatted_order_details['Payment Method'] == "Cash":
             middle_layout = Label(halign="center", text=f"{formatted_items}")
             bottom_layout = Label(halign="center",text=f"Subtotal: {formatted_order_details['Total']}\nDiscount: {formatted_order_details['Discount']}\nTax: {formatted_order_details['Tax']}\nTotal: {formatted_order_details['Total with Tax']}\n\nPaid with {formatted_order_details['Payment Method']}\nAmount Tendered: {formatted_order_details['Amount Tendered']}\nChange Given: {formatted_order_details['Change Given']}")
-            layout = MDCard()
+            layout = MDCard(orientation="vertical")
             layout.add_widget(middle_layout)
             layout.add_widget(bottom_layout)
         # elif formatted_order_details['Payment Method'] == "Split":
@@ -597,7 +597,7 @@ class OrderDetailsPopup(Popup):
         else:
             middle_layout = Label(halign="center", text=f"{formatted_items}")
             bottom_layout = Label(halign="center", text=f"Subtotal: {formatted_order_details['Total']}\nDiscount: {formatted_order_details['Discount']}\nTax: {formatted_order_details['Tax']}\nTotal: {formatted_order_details['Total with Tax']}\n\nPaid with {formatted_order_details['Payment Method']}")
-            layout = MDCard()
+            layout = MDCard(orientation="vertical")
             layout.add_widget(middle_layout)
             layout.add_widget(bottom_layout)
 
@@ -649,8 +649,8 @@ class OrderDetailsPopup(Popup):
         order_details = self.db_manager.get_order_by_id(order_id)
         items_json = order_details[1]
         items = json.loads(items_json)
-
-        modify_order_layout = GridLayout(rows=10, orientation="tb-lr")
+        modify_order_container = MDBoxLayout(orientation="vertical", size_hint=(1,1), padding=5, spacing=5)
+        modify_order_layout = GridLayout(rows=10, orientation="tb-lr", padding=5, spacing=5)
         item_name_inputs = []
 
         for item in items:
@@ -668,23 +668,58 @@ class OrderDetailsPopup(Popup):
 
             self.db_manager.modify_order(order_id, items=updated_items_json)
             self.dismiss()
-            modify_order_popup.dismiss()
+            self.modify_order_popup.dismiss()
             print(self.history_view.current_filter)
             self.history_popup.dismiss_popup()
             Clock.schedule_once(self.history_popup.show_hist_reporting_popup, 0.2)
 
 
-        modify_order_popup = Popup(size_hint=(0.8, 0.8), content=modify_order_layout)
-        buttons_layout=BoxLayout(orientation="horizontal", size_hint_y=None, height=50)
-        confirm_button = MDRaisedButton(text="Confirm", on_release=on_confirm,  size_hint=(1,1))
 
-        cancel_button = MDRaisedButton(text="Cancel", on_press=lambda instance: modify_order_popup.dismiss(), size_hint=(1,1))
+        buttons_layout=BoxLayout(orientation="horizontal", size_hint_y=None, height=75, padding=5, spacing=5)
+        confirm_button = MDRaisedButton(text="[b][size=20]Confirm Changes[/b][/size]", on_release=on_confirm,  size_hint=(1,1))
+
+        cancel_button = MDRaisedButton(text="[b][size=20]Cancel[/b][/size]", on_press=lambda instance: self.modify_order_popup.dismiss(), size_hint=(1,1))
+        delete_button = MDFlatButton(md_bg_color="grey", text="Delete Order", on_press=lambda x: self.open_delete_order_confirmation_popup(order_id, admin=True), size_hint=(0.5,1))
+        _blank = MDBoxLayout(size_hint=(1,1))
         buttons_layout.add_widget(confirm_button)
         buttons_layout.add_widget(cancel_button)
+        buttons_layout.add_widget(_blank)
+        buttons_layout.add_widget(delete_button)
+        modify_order_container.add_widget(modify_order_layout)
+        modify_order_container.add_widget(buttons_layout)
 
-        modify_order_layout.add_widget(buttons_layout)
+        self.modify_order_popup = Popup(size_hint=(0.8, 0.8), content=modify_order_container, title="", separator_height=0)
+        self.modify_order_popup.open()
 
-        modify_order_popup.open()
+    def open_delete_order_confirmation_popup(self, order_id, admin=False): #TODO
+        if admin:
+            container = MDBoxLayout(orientation="vertical")
+            layout = MDCard(orientation="vertical")
+            message = MDLabel(text=f"Warning!\nOrder ID {order_id}\nWill Be Permanently Deleted!\nAre you sure?", halign="center")
+            layout.add_widget(message)
+            btn_layout = MDBoxLayout(orientation="horizontal")
+            confirm_button = MDFlatButton(text="Yes", on_press=lambda x: self.delete_order(order_id), size_hint=(1, 1))
+            _blank = MDBoxLayout(size_hint=(1,0.4))
+            cancel_button = MDFlatButton(text="No!", on_press=lambda x: self.delete_order_confirmation_popup.dismiss(), size_hint=(1, 1))
+            btn_layout.add_widget(confirm_button)
+            btn_layout.add_widget(_blank)
+            btn_layout.add_widget(cancel_button)
+            container.add_widget(layout)
+            container.add_widget(btn_layout)
+            self.delete_order_confirmation_popup = Popup(size_hint=(0.2,0.2), content=container, title="", separator_height=0)
+            self.delete_order_confirmation_popup.open()
+
+        else:
+            self.do_nothing()
+
+    def delete_order(self, order_id):
+        self.db_manager.delete_order(order_id)
+        self.delete_order_confirmation_popup.dismiss()
+        self.history_popup.dismiss_popup()
+        Clock.schedule_once(self.history_popup.show_hist_reporting_popup, 0.2)
+
+    def do_nothing(self, *args, **kwargs):
+        pass
 
     def format_order_details(self, order):
 
