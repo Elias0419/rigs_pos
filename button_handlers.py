@@ -43,11 +43,11 @@ class ButtonHandler:
             "Open Register": open_cash_drawer,
             "Reporting": self.show_reporting,
             "Label Printer": self.show_label_printer_view,
-            "Inventory Management": self.show_inventory_management_view,
+            "Inventory": self.show_inventory_management_view,
             "System": self.show_system_popup,
             "Calculator": self.show_calcultor_popup,
             "Distrib TEST": self.show_distrib,
-            "Dual Pane Mode": self.show_dual_pane_mode,
+            "Dual Pane": self.show_dual_pane_mode,
         }
         for action_text, action in tool_actions.items():
             if action_text in instance.text:
