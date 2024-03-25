@@ -74,6 +74,7 @@ class HistoryRow(BoxLayout):
         self.order_history = None
 
 
+
 class HistoryView(BoxLayout):
     _instance = None
 
@@ -121,12 +122,12 @@ class HistoryView(BoxLayout):
         self.button_layout = BoxLayout(orientation="horizontal", spacing=5, size_hint=(1, 0.1))
         self.button_layout.add_widget(
             MDRaisedButton(
-                text="Today", size_hint=(1, 1), on_press=lambda x: self.filter_today()
+                text="[b][size=20]Today[/size][/b]", size_hint=(1, 1), on_press=lambda x: self.filter_today()
             )
         )
         self.button_layout.add_widget(
             MDRaisedButton(
-                text="Yesterday", size_hint=(1, 1), on_press=lambda x: self.filter_yesterday()
+                text="[b][size=20]Yesterday[/size][/b]", size_hint=(1, 1), on_press=lambda x: self.filter_yesterday()
             )
         )
 
@@ -142,21 +143,21 @@ class HistoryView(BoxLayout):
         # )
         self.button_layout.add_widget(
             MDRaisedButton(
-                text="Specific Day",
+                text="[b][size=20]Specific Day[/size][/b]",
                 size_hint=(1, 1),
                 on_press=self.show_specific_day_popup,
             )
         )
         self.button_layout.add_widget(
             MDRaisedButton(
-                text="Custom Range",
+                text="[b][size=20]Custom Range[/size][/b]",
                 size_hint=(1, 1),
                 on_press=self.show_custom_range_popup,
             )
         )
         self.button_layout.add_widget(
             MDRaisedButton(
-                text="Export CSV", size_hint=(1, 1), on_press=self.export_history
+                text="[b][size=20]Export CSV[/size][/b]", size_hint=(1, 1), on_press=self.export_history
             )
         )
         return self.button_layout
@@ -604,13 +605,13 @@ class OrderDetailsPopup(Popup):
 
         button_layout.add_widget(
             MDRaisedButton(
-                text="Print Receipt",
+                text="[b][size=20]Print Receipt[/size][/b]",
                 on_press=lambda instance: self.print_receipt(instance, order=order),
                 size_hint=(1, 1)
             )
         )
         button_layout.add_widget(MDRaisedButton(
-                                text="Refund",
+                                text="[b][size=20]Refund[/size][/b]",
                                 on_press=self.refund,
                                 size_hint=(1,1)
 
@@ -618,7 +619,7 @@ class OrderDetailsPopup(Popup):
                             )
         button_layout.add_widget(
             MDRaisedButton(
-                text="Edit",
+                text="[b][size=20]Edit[/size][/b]",
                 on_press= lambda x: self.open_modify_order_popup(order[0]),
                  size_hint=(1,1)
 
@@ -627,7 +628,7 @@ class OrderDetailsPopup(Popup):
 
         button_layout.add_widget(
             MDRaisedButton(
-                text="Close",
+                text="[b][size=20]Close[/size][/b]",
                 on_press=self.dismiss_popup,
                  size_hint=(1,1)
 
@@ -713,7 +714,7 @@ class OrderDetailsPopup(Popup):
         self.dismiss()
 
     def format_items(self, items_str):
-        print(f"items_str {items_str}")
+
         try:
             parsed_data = json.loads(items_str)
 
@@ -721,11 +722,11 @@ class OrderDetailsPopup(Popup):
                 items_list = [parsed_data]
             else:
                 items_list = parsed_data
-            print(f"items_list {items_list}")
+
             all_item_names = ", ".join(
-                item.get("name", "Unknown") for item in items_list
+                f"{item.get('quantity', 'N/A')} {item.get('name', 'Unknown')}" for item in items_list
             )
-            print(f"all_item_names {all_item_names}")
+
             return all_item_names
         except json.JSONDecodeError as e:
             print(f"JSON parsing error in format_items: {e}")
