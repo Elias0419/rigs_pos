@@ -715,6 +715,8 @@ class OrderDetailsPopup(Popup):
     def delete_order(self, order_id):
         self.db_manager.delete_order(order_id)
         self.delete_order_confirmation_popup.dismiss()
+        self.modify_order_popup.dismiss()
+        self.dismiss()
         self.history_popup.dismiss_popup()
         Clock.schedule_once(self.history_popup.show_hist_reporting_popup, 0.2)
 
