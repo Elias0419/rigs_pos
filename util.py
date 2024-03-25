@@ -423,8 +423,8 @@ class Utilities:
         # main_layout.add_widget(sidebar)
         button_layout = GridLayout(
             cols=4,
-            spacing=10,
-            padding=10,
+            spacing=20,
+            padding=20,
             size_hint_y=0.05,
             size_hint_x=1,
             orientation="lr-tb",
