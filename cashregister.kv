@@ -203,6 +203,7 @@
 
 
 <HistoryRow>:
+
     canvas.after:
         Color:
             rgba: 0.5, 0.5, 0.5, 1
@@ -241,12 +242,16 @@
     RecycleView:
         id: history_rv
         viewclass: 'HistoryRow'
-        size_hint_x: 1
+        default_size_hint: 1, 1
+        #size_hint_x: 1
         RecycleBoxLayout:
-            default_size: None, dp(32)
-            default_size_hint: 1, None
+            default_size: None, 1
+
+            default_size_hint: 1, 1
             size_hint_y: None
-            height: len(history_rv.data) * dp(32)
+            spacing: 5
+            padding: 5
+            height: len(history_rv.data) * dp(48) # row height
             #height: self.minimum_height
             orientation: 'vertical'
 
