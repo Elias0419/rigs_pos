@@ -1439,11 +1439,12 @@ class PopupManager:
 
         self.custom_item_popup_layout.add_widget(keypad_layout)
         self.custom_item_popup = FocusPopup(
-            title="Custom Item",
+            title="",
             content=self.custom_item_popup_layout,
             size_hint=(0.4, 0.6),
             on_dismiss=lambda x: setattr(self.cash_input, "text", ""),
             overlay_color=(0, 0, 0, 0),
+            separator_height=0,
         )
         self.custom_item_popup.focus_on_textinput(self.cash_input)
         self.custom_item_popup.open()
