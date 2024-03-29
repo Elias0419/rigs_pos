@@ -171,7 +171,7 @@ class DatabaseManager:
         return True
 
     def update_item(self, item_id, barcode, name, price, cost=None, sku=None, category=None):
-        print("db update_item", "item_id", item_id, "name", name, "price", price, "cost", cost, "sku", sku, "category", category)
+        print("db update_item", "barcode", barcode, "item_id", item_id, "name", name, "price", price, "cost", cost, "sku", sku, "category", category)
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
@@ -187,7 +187,7 @@ class DatabaseManager:
 
             conn.commit()
             item_details = {
-                'item_id': item_id,  # Include item_id in the item_details for completeness
+                'item_id': item_id,
                 'name': name,
                 'price': price,
                 'cost': cost,
