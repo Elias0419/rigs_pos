@@ -402,15 +402,25 @@ class LabelPrintingView(BoxLayout):
         self.print_queue_popup.dismiss()
 
     def generate_data_for_rv(self, items):
-        return [
-            {
-                "barcode": str(item[0]),
-                "name": item[1],
-                "price": f"{float(item[2]):.2f}" if item[2] else "Not Found",
-                "label_printer": self.label_printer,
-            }
-            for item in items
-        ]
+        data = []
+        for item in items:
+            if len(str(item[1])) > 18:
+
+                data.append({
+                    "barcode": str(item[0]),
+                    "name": f"{item[1][:15]}...",
+                    "price": f"{float(item[2]):.2f}" if item[2] else "Not Found",
+                    "label_printer": self.label_printer,
+                })
+            else:
+
+                data.append({
+                    "barcode": str(item[0]),
+                    "name": item[1],
+                    "price": f"{float(item[2]):.2f}" if item[2] else "Not Found",
+                    "label_printer": self.label_printer,
+                })
+        return data
 
     def filter_inventory(self, query):
         if query:
