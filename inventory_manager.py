@@ -229,6 +229,7 @@ class InventoryManagementRow(BoxLayout):
                     category_input,
                 )
                 self.app.utilities.update_inventory_cache()
+                self.inventory_management_view.refresh_label_inventory_for_dual_pane_mode()
             except Exception as e:
                 print(e)
 
