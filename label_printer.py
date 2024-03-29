@@ -406,7 +406,7 @@ class LabelPrintingView(BoxLayout):
             {
                 "barcode": str(item[0]),
                 "name": item[1],
-                "price": f"{item[2]:.2f}",
+                "price": f"{float(item[2]):.2f}" if item[2] else "Not Found",
                 "label_printer": self.label_printer,
             }
             for item in items
