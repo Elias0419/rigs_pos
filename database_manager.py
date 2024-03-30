@@ -242,7 +242,7 @@ class DatabaseManager:
         return items
 
     def get_item_details(self, item_id="", name="", price=0.0, barcode="", dupe=False):
-        # print(f"called get with\nbarcode {barcode}\nname {name}\nitem_id {item_id}")
+        print(f"called get with\nbarcode {barcode}\nname {name}\nitem_id {item_id}")
         conn = None
         try:
             conn = self._get_connection()
@@ -297,13 +297,14 @@ class DatabaseManager:
                     'cost': item[3],
                     'sku': item[4],
                     'category': item[5],
+                    'item_id': item[6],
                 }
 
-                if item_id or barcode:
-                    item_details['parent_barcode'] = item[6]
-                else:
-                    item_details['item_id'] = item[6]
-                    item_details['parent_barcode'] = item[7]
+                # if item_id or barcode: # TODO
+                #     item_details['parent_barcode'] = item[6]
+                # else:
+                #     item_details['item_id'] = item[6]
+                #     item_details['parent_barcode'] = item[7]
 
         except Exception as e:
             print(f"[DatabaseManager]: get_item_details\n {e}")
@@ -312,6 +313,27 @@ class DatabaseManager:
                 conn.close()
 
         return item_details
+
+    def delete_item(self, item_id):
+        print(f"delete\n{item_id}")
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            delete_query = "DELETE FROM items WHERE item_id = ?"
+            cursor.execute(delete_query, (item_id,))
+
+            # If no rows were affected, the item_id does not exist
+            if cursor.rowcount == 0:
+                print(f"No item found with item_id: {item_id}")
+                return False
+
+            conn.commit()
+            return True
+        except sqlite3.Error as e:
+            print(f"Database error during item deletion: {e}")
+            return False
+        finally:
+            conn.close()
 
 
 
@@ -526,11 +548,6 @@ class DatabaseManager:
         return distributors
 
 
-
-
-
-    def delete_item(self, barcode):
-        pass
 
     def close_connection(self):
         conn = self._get_connection()

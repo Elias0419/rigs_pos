@@ -27,6 +27,7 @@ from kivymd.uix.dialog import MDDialog
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.image import Image
 import os
+import time
 from datetime import datetime
 from functools import partial
 from kivymd.uix.gridlayout import MDGridLayout
@@ -204,37 +205,37 @@ class PopupManager:
 
     def inventory_item_popup_row(self, instance):
 
-        content = BoxLayout(orientation="vertical", padding=10)
-        name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        name_input = TextInput(text=instance.name)
+        content = BoxLayout(orientation="vertical",size_hint_y=1, padding=10)
+        name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2)
+        name_input = TextInput(text=instance.name, font_size=20)
         name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
         name_layout.add_widget(name_input)
-        barcode_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        barcode_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2)
 
         self.item_barcode_input = TextInput(
-            input_filter="int", text=instance.barcode if instance.barcode else ""
+            input_filter="int", text=instance.barcode if instance.barcode else "", font_size=20,
         )
         barcode_layout.add_widget(Label(text="Barcode", size_hint_x=0.2))
         barcode_layout.add_widget(self.item_barcode_input)
 
-        price_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        price_input = TextInput(input_filter="float", text=instance.price)
+        price_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2)
+        price_input = TextInput(input_filter="float", text=instance.price, font_size=20)
         price_layout.add_widget(Label(text="Price", size_hint_x=0.2))
         price_layout.add_widget(price_input)
 
-        cost_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        cost_input = TextInput(text=instance.cost, input_filter="float")
+        cost_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2)
+        cost_input = TextInput(text=instance.cost, input_filter="float", font_size=20)
         cost_layout.add_widget(Label(text="Cost", size_hint_x=0.2))
         cost_layout.add_widget(cost_input)
 
-        sku_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        sku_input = TextInput(text=instance.sku)
+        sku_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2)
+        sku_input = TextInput(text=instance.sku, font_size=20)
         sku_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
         sku_layout.add_widget(sku_input)
 
-        category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2)
         self.add_to_db_category_input_row = TextInput(
-            text=instance.category, disabled=True
+            text=instance.category, disabled=True,  font_size=20
         )
         category_layout.add_widget(Label(text="Categories", size_hint_x=0.2))
         category_layout.add_widget(self.add_to_db_category_input_row)
@@ -247,47 +248,94 @@ class PopupManager:
         content.add_widget(category_layout)
 
         button_layout = BoxLayout(
-            orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
+            orientation="horizontal", size_hint_y=None,size_hint_x=1, height=100, spacing=10, padding=10
         )
 
-        button_layout.add_widget(
-            MDRaisedButton(
-                text="Update Details",
-                on_press=lambda x: self.app.utilities.update_confirm_and_close(
-                    self.item_barcode_input.text,
-                    name_input.text,
-                    price_input.text,
-                    cost_input.text,
-                    sku_input.text,
-                    self.add_to_db_category_input_row.text,
-                    self.inventory_item_update_popup,
+        update_details_button = MDRaisedButton(
+            text="[b][size=20]Update Details[/b][/size]",
+            size_hint=(0.2,1),
+            on_press=lambda x: self.app.utilities.update_confirm_and_close(
+                self.item_barcode_input.text,
+                name_input.text,
+                price_input.text,
+                cost_input.text,
+                sku_input.text,
+                self.add_to_db_category_input_row.text,
+                self.inventory_item_update_popup,
+            )
+        )
+
+        categories_button = MDRaisedButton(
+            text="[b][size=20]Categories[/b][/size]",
+            size_hint=(0.2,1),
+            on_press=lambda x: self.open_update_category_button_popup(),
+        )
+
+        close_button = MDRaisedButton(
+            text="[b][size=20]Close[/b][/size]",
+            size_hint=(0.2,1),
+            on_press=lambda x: self.inventory_item_update_popup.dismiss(),
+        )
+        delete_button = MDFlatButton(
+            text="Delete Item",
+            md_bg_color="grey",
+            on_press=lambda x : self.open_delete_item_popup(
+                barcode=self.item_barcode_input.text,
+                name=name_input.text,
+                price=price_input.text,
+                admin=True,
                 ),
-            )
-        )
-        button_layout.add_widget(
-            MDRaisedButton(
-                text="Categories",
-                on_press=lambda x: self.open_update_category_button_popup(),
-            )
-        )
 
-        button_layout.add_widget(
-            MDRaisedButton(
-                text="Close",
-                on_press=lambda x: self.inventory_item_update_popup.dismiss(),
             )
-        )
+        _blank = MDBoxLayout(size_hint=(1,1))
+        button_layout.add_widget(update_details_button)
+        button_layout.add_widget(categories_button)
+        button_layout.add_widget(close_button)
+        button_layout.add_widget(_blank)
+        button_layout.add_widget(delete_button)
 
         content.add_widget(button_layout)
 
         self.inventory_item_update_popup = Popup(
             title="Item details",
-            pos_hint={"top": 1},
+            #pos_hint={"top": 1},
             content=content,
-            size_hint=(0.8, 0.4),
+            size_hint=(0.8, 0.6),
             on_dismiss=lambda x: self.app.inventory_manager.reset_inventory_context(),
         )
         self.inventory_item_update_popup.open()
+
+    def open_delete_item_popup(self, barcode="", name="", price=0, admin=False):
+        if admin:
+            layout = MDBoxLayout(orientation="vertical")
+            label = MDLabel(text=f"Permanently Delete\n{name}\nfrom the inventory?")
+            container = MDCard()
+            container.add_widget(label)
+            layout.add_widget(container)
+            btn_layout = MDBoxLayout(orientation="horizontal", size_hint_y=0.2)
+            confirm_button = MDFlatButton(text="Confirm", on_press=lambda x:self.delete_item(barcode, name, price), size_hint=(1,1))
+            _blank = MDBoxLayout(size_hint=(1,1))
+            cancel_button = MDFlatButton(text="Cancel", on_press=lambda x:self.delete_item_popup.dismiss(),size_hint=(1,1))
+            btn_layout.add_widget(confirm_button)
+            btn_layout.add_widget(_blank)
+            btn_layout.add_widget(cancel_button)
+            layout.add_widget(btn_layout)
+            self.delete_item_popup = Popup(content=layout,size_hint=(0.4,0.4))
+            self.delete_item_popup.open()
+        else:
+            self.do_nothing()
+
+
+    def delete_item(self, barcode="", name="", price=0):
+
+        item_details = self.app.db_manager.get_item_details(barcode=barcode, name=name, price=price)
+        item_id = item_details["item_id"]
+
+        self.app.db_manager.delete_item(item_id)
+        self.delete_item_popup.dismiss()
+        self.inventory_item_update_popup.dismiss()
+        self.app.inventory_manager.refresh_inventory()
+
 
     def show_add_to_database_popup(self, barcode, categories=None):
         content = BoxLayout(orientation="vertical", padding=10)
@@ -2266,40 +2314,40 @@ class PopupManager:
 
         content = BoxLayout(orientation="vertical", padding=10)
         name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        name_input = TextInput(text=self.app.inventory_manager.name)
+        name_input = TextInput(text=self.app.inventory_manager.name, font_size=20)
         name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
         name_layout.add_widget(name_input)
 
         barcode_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         self.barcode_input = TextInput(
-            input_filter="int", text=barcode if barcode else ""
+            input_filter="int", text=barcode if barcode else "", font_size=20
         )
         barcode_layout.add_widget(Label(text="Barcode", size_hint_x=0.2))
         barcode_layout.add_widget(self.barcode_input)
 
         price_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         price_input = TextInput(
-            text=self.app.inventory_manager.price, input_filter="float"
+            text=self.app.inventory_manager.price, input_filter="float", font_size=20
         )
         price_layout.add_widget(Label(text="Price", size_hint_x=0.2))
         price_layout.add_widget(price_input)
 
         cost_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         cost_input = TextInput(
-            text=self.app.inventory_manager.cost, input_filter="float"
+            text=self.app.inventory_manager.cost, input_filter="float", font_size=20
         )
         cost_layout.add_widget(Label(text="Cost", size_hint_x=0.2))
         cost_layout.add_widget(cost_input)
 
         sku_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        sku_input = TextInput(text=self.app.inventory_manager.sku)
+        sku_input = TextInput(text=self.app.inventory_manager.sku, font_size=20)
         sku_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
 
         sku_layout.add_widget(sku_input)
 
         category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         self.add_to_db_category_input_inv = TextInput(
-            text=self.app.inventory_manager.category, disabled=True
+            text=self.app.inventory_manager.category, disabled=True, font_size=20
         )
         category_layout.add_widget(Label(text="Category", size_hint_x=0.2))
 
@@ -2313,12 +2361,13 @@ class PopupManager:
         content.add_widget(category_layout)
 
         button_layout = BoxLayout(
-            orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
+            orientation="horizontal", size_hint_y=None, height=100, spacing=10, padding=10
         )
 
         button_layout.add_widget(
             MDRaisedButton(
-                text="Confirm",
+                text="[b][size=20]Confirm[/size][/b]",
+                size_hint=(1,1),
                 on_press=lambda x: self.app.utilities.inventory_item_confirm_and_close(
                     self.barcode_input,
                     name_input,
@@ -2333,32 +2382,37 @@ class PopupManager:
         )
         button_layout.add_widget(
             MDRaisedButton(
-                text="Generate Barcode",
+                text="[b][size=20]Generate Barcode[/size][/b]",
+                size_hint=(1,1),
                 on_press=lambda *args: self.app.utilities.set_generated_barcode(
-                    self.barcode_input
+                    self.barcode_input,
+
                 ),
             )
         )
         button_layout.add_widget(
             MDRaisedButton(
-                text="Categories",
+                text="[b][size=20]Categories[/size][/b]",
                 on_press=lambda *args: self.open_category_button_popup_inv(),
+                size_hint=(1,1)
             )
         )
         button_layout.add_widget(
             MDRaisedButton(
-                text="Cancel",
+                text="[b][size=20]Cancel[/size][/b]",
                 on_press=lambda *args: self.inventory_item_popup.dismiss(),
+                size_hint=(1,1)
             )
         )
+        button_layout.add_widget(MDBoxLayout(size_hint=(1,1)))
 
         content.add_widget(button_layout)
 
         self.inventory_item_popup = Popup(
             title="Item details",
-            pos_hint={"top": 1},
+            #pos_hint={"top": 1},
             content=content,
-            size_hint=(0.8, 0.4),
+            size_hint=(0.8, 0.6),
         )
 
         self.inventory_item_popup.bind(
