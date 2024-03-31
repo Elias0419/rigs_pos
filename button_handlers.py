@@ -187,7 +187,16 @@ class ButtonHandler:
             self.app.pin_reset_timer.reset()
 
         if len(self.app.entered_pin) == 4:
-            if self.app.entered_pin == self.app.correct_pin:
+            correct_pin = self.app.utilities.validate_pin(self.app.entered_pin)
+            if correct_pin:
+                info_dict = correct_pin[0]
+                admin = info_dict["admin"]
+                # if correct_pin[2] == True:
+                if admin:
+                    print(self.app.admin)
+                    self.app.admin = True
+                print(self.app.admin)
+            # if self.app.entered_pin == self.app.correct_pin:
                 self.app.popup_manager.lock_popup.dismiss()
                 self.app.is_guard_screen_displayed = False
                 self.app.is_lock_screen_displayed = False

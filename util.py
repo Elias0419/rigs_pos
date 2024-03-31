@@ -41,6 +41,8 @@ class Utilities:
         self.app = ref
 
     def initialize_global_variables(self):
+        self.app.admin = False
+        self.app.pin_store = "pin_store.json"
         self.app.correct_pin = "1234"
         self.app.entered_pin = ""
         self.app.is_guard_screen_displayed = False
@@ -155,6 +157,33 @@ class Utilities:
             "Mods Batteries Kits",
         ]
         return categories
+
+    def store_user_details(self, name, pin, admin):
+        user_details = {
+            'name': name,
+            'pin': pin,
+            'admin': admin
+        }
+        if not os.path.exists(self.app.pin_store):
+            with open(self.app.pin_store, 'w') as file:
+                json.dump([user_details], file, indent=4)
+        else:
+            with open(self.app.pin_store, 'r+') as file:
+                data = json.load(file)
+                data.append(user_details)
+                file.seek(0)
+                json.dump(data, file, indent=4)
+
+
+    def validate_pin(self, entered_pin):
+        if not os.path.exists(self.app.pin_store):
+            self.store_user_details("default","1234",False)
+        with open(self.app.pin_store, 'r') as file:
+            users = json.load(file)
+            for user in users:
+                if user['pin'] == entered_pin:
+                    return {'name': user['name'], 'admin': user['admin']}, True
+        return False
 
     def reset_pin_timer(self):
         print("reset_pin_timer", self.app.pin_reset_timer)
@@ -446,7 +475,8 @@ class Utilities:
         btn_inventory = self.create_md_raised_button(
             f"[b][size=40]Search[/b][/size]",
             # lambda x: self.app.popup_manager.maximize_dual_popup(),
-            self.app.button_handler.on_button_press,
+            # self.app.button_handler.on_button_press,
+            lambda x: self.app.popup_manager.show_lock_screen(),
             (8, 8),
             "H6",
         )
@@ -456,7 +486,8 @@ class Utilities:
             # lambda x: self.app.popup_manager.show_dual_inventory_and_label_managers(),
             # lambda x: self.enable_dual_pane_mode(),
             self.app.button_handler.on_button_press,
-            #lambda x: self.app.popup_manager.show_guard_screen(),
+            #lambda x: self.store_user_details("noob","1111",False),
+            #lambda x: self.app.popup_manager.show_lock_screen(),
             # lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
             # lambda x: sys.exit(42),
             #lambda x: self.app.financial_summary.update_mirror_image(),

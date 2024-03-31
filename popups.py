@@ -276,6 +276,7 @@ class PopupManager:
             size_hint=(0.2,1),
             on_press=lambda x: self.inventory_item_update_popup.dismiss(),
         )
+        #if self.app.admin:
         delete_button = MDFlatButton(
             text="Delete Item",
             md_bg_color="grey",
@@ -292,7 +293,8 @@ class PopupManager:
         button_layout.add_widget(categories_button)
         button_layout.add_widget(close_button)
         button_layout.add_widget(_blank)
-        button_layout.add_widget(delete_button)
+        if self.app.admin:
+            button_layout.add_widget(delete_button)
 
         content.add_widget(button_layout)
 
