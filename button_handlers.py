@@ -193,10 +193,10 @@ class ButtonHandler:
                 admin = info_dict["admin"]
                 # if correct_pin[2] == True:
                 if admin:
-                    print(self.app.admin)
+
                     self.app.admin = True
-                print(self.app.admin)
-            # if self.app.entered_pin == self.app.correct_pin:
+                self.app.utilities.clock_in(self.app.entered_pin)
+
                 self.app.popup_manager.lock_popup.dismiss()
                 self.app.is_guard_screen_displayed = False
                 self.app.is_lock_screen_displayed = False

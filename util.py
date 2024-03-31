@@ -5,7 +5,7 @@ import threading
 import sys
 import random
 import os
-
+from datetime import datetime
 import dbus
 from kivy.clock import Clock
 from kivymd.uix.button import MDRaisedButton, MDFlatButton, MDIconButton
@@ -42,8 +42,9 @@ class Utilities:
 
     def initialize_global_variables(self):
         self.app.admin = False
+        self.app.logged_in_user = None
         self.app.pin_store = "pin_store.json"
-        self.app.correct_pin = "1234"
+        #self.app.correct_pin = "1234"
         self.app.entered_pin = ""
         self.app.is_guard_screen_displayed = False
         self.app.is_lock_screen_displayed = False
@@ -177,13 +178,54 @@ class Utilities:
 
     def validate_pin(self, entered_pin):
         if not os.path.exists(self.app.pin_store):
-            self.store_user_details("default","1234",False)
+            self.store_user_details("default", entered_pin, False)
+            return {'name': "default", 'admin': False}, True
         with open(self.app.pin_store, 'r') as file:
             users = json.load(file)
             for user in users:
                 if user['pin'] == entered_pin:
                     return {'name': user['name'], 'admin': user['admin']}, True
         return False
+
+
+    def clock_in(self, entered_pin):
+        user_details, authenticated = self.validate_pin(entered_pin)
+        if not authenticated:
+            return False
+
+        self.app.logged_in_user = user_details
+        today_str = datetime.now().strftime("%Y-%m-%d")
+        self.clock_in_file = f"{user_details['name']}-{today_str}.json"
+        self.attendance_log = "attendance_log.json"
+
+
+        if not os.path.exists(self.clock_in_file):
+            print("clock in")
+            with open(self.clock_in_file, 'w') as file:
+                json.dump({"clock_in": datetime.now().isoformat()}, file)
+            self.update_attendance_log(self.attendance_log, user_details['name'], "clock_in")
+
+    def clock_out(self):
+        print("clock out")
+        os.remove(self.clock_in_file)
+        self.update_attendance_log(self.attendance_log, self.app.logged_in_user["name"], "clock_out")
+
+
+    def update_attendance_log(self, log_file, user_name, action):
+        entry = {
+            "name": user_name,
+            "timestamp": datetime.now().isoformat(),
+            "action": action
+        }
+        if not os.path.exists(log_file):
+            with open(log_file, 'w') as file:
+                json.dump([entry], file, indent=4)
+        else:
+            with open(log_file, 'r+') as file:
+                log = json.load(file)
+                log.append(entry)
+                file.seek(0)
+                json.dump(log, file, indent=4)
 
     def reset_pin_timer(self):
         print("reset_pin_timer", self.app.pin_reset_timer)
@@ -482,10 +524,12 @@ class Utilities:
         )
         btn_tools = self.create_md_raised_button(
             f"[b][size=40]Tools[/b][/size]",
+            # self.app.button_handler.on_button_press,
+            lambda x: self.clock_out(),
             # lambda x: self.modify_clock_layout_for_dual_pane_mode(),
             # lambda x: self.app.popup_manager.show_dual_inventory_and_label_managers(),
             # lambda x: self.enable_dual_pane_mode(),
-            self.app.button_handler.on_button_press,
+
             #lambda x: self.store_user_details("noob","1111",False),
             #lambda x: self.app.popup_manager.show_lock_screen(),
             # lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
