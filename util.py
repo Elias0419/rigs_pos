@@ -44,7 +44,7 @@ class Utilities:
         self.app.admin = False
         self.app.logged_in_user = None
         self.app.pin_store = "pin_store.json"
-        #self.app.correct_pin = "1234"
+
         self.app.entered_pin = ""
         self.app.is_guard_screen_displayed = False
         self.app.is_lock_screen_displayed = False
@@ -517,15 +517,15 @@ class Utilities:
         btn_inventory = self.create_md_raised_button(
             f"[b][size=40]Search[/b][/size]",
             # lambda x: self.app.popup_manager.maximize_dual_popup(),
-            # self.app.button_handler.on_button_press,
-            lambda x: self.app.popup_manager.show_lock_screen(),
+            self.app.button_handler.on_button_press,
+            #lambda x: self.app.popup_manager.show_lock_screen(),
             (8, 8),
             "H6",
         )
         btn_tools = self.create_md_raised_button(
             f"[b][size=40]Tools[/b][/size]",
-            # self.app.button_handler.on_button_press,
-            lambda x: self.clock_out(),
+            self.app.button_handler.on_button_press,
+            #lambda x: self.clock_out(),
             # lambda x: self.modify_clock_layout_for_dual_pane_mode(),
             # lambda x: self.app.popup_manager.show_dual_inventory_and_label_managers(),
             # lambda x: self.enable_dual_pane_mode(),
@@ -577,7 +577,7 @@ class Utilities:
 
 
 
-    def create_clock_layout(self, dual_pane_mode=False):
+    def create_clock_layout(self):
 
         self.clock_layout = GridLayout(
             orientation="tb-lr",

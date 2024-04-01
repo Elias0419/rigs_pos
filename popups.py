@@ -276,7 +276,7 @@ class PopupManager:
             size_hint=(0.2,1),
             on_press=lambda x: self.inventory_item_update_popup.dismiss(),
         )
-        #if self.app.admin:
+
         delete_button = MDFlatButton(
             text="Delete Item",
             md_bg_color="grey",
@@ -2386,7 +2386,7 @@ class PopupManager:
             MDRaisedButton(
                 text="[b][size=20]Generate Barcode[/size][/b]",
                 size_hint=(1,1),
-                on_press=lambda *args: self.app.utilities.set_generated_barcode(
+                on_press=lambda x: self.app.utilities.set_generated_barcode(
                     self.barcode_input,
 
                 ),
@@ -2395,14 +2395,14 @@ class PopupManager:
         button_layout.add_widget(
             MDRaisedButton(
                 text="[b][size=20]Categories[/size][/b]",
-                on_press=lambda *args: self.open_category_button_popup_inv(),
+                on_press=lambda x: self.open_category_button_popup_inv(),
                 size_hint=(1,1)
             )
         )
         button_layout.add_widget(
             MDRaisedButton(
                 text="[b][size=20]Cancel[/size][/b]",
-                on_press=lambda *args: self.inventory_item_popup.dismiss(),
+                on_press=lambda x: self.inventory_item_popup.dismiss(),
                 size_hint=(1,1)
             )
         )
@@ -2438,7 +2438,6 @@ class PopupManager:
                 on_press=lambda x, barcode=barcode, choice=item['name'], price=item['price']: self.add_dupe_choice_to_order(barcode=barcode, choice=choice, price=price)
                 )
             layout.add_widget(button)
-            print(f"Button size: {button.size}, size_hint: {button.size_hint}, pos: {button.pos}")
 
         self.handle_duplicate_barcodes_popup = Popup(
             title="Duplicate Barcode Detected!",
@@ -2449,11 +2448,11 @@ class PopupManager:
         self.handle_duplicate_barcodes_popup.open()
 
     def add_dupe_choice_to_order(self, barcode, choice, price):
-        print(f"barcode {barcode}\nchoice {choice}")
+
         item_details = self.app.db_manager.get_item_details(barcode=barcode, name=choice, dupe=True, price=price)
-        print(f"item_details {item_details}")
+
         if item_details:
-            print("found item details", item_details)
+
             item_name = item_details['name']
             item_price = item_details['price']
             self.app.order_manager.add_item(item_name, item_price)
