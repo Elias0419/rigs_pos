@@ -36,6 +36,7 @@ class CashRegisterApp(MDApp):
         self.utilities.initialize_global_variables()
         self.utilities.load_settings()
 
+
     def build(self):
         self.utilities.instantiate_modules()
         layout = self.utilities.create_main_layout()
