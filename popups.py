@@ -938,9 +938,11 @@ class PopupManager:
         inventory = self.app.inventory_cache
         self.label_printing_view = self.app.label_manager
 
-        self.label_printing_view.show_inventory_for_label_printing(inventory)
+
         if dual_pane_mode:
+                self.app.label_manager.dual_pane_mode = True
             # try:
+                self.label_printing_view.show_inventory_for_label_printing(inventory, dual_pane_mode=True)
                 container = MDGridLayout(orientation="tb-lr", rows=4)
                 button_container = MDBoxLayout(size_hint_y=0.05, orientation="horizontal", spacing=10, padding=5)
                 self.view_container = MDBoxLayout(size_hint_y=0.42)
@@ -963,6 +965,8 @@ class PopupManager:
             # except Exception as e:
             #     print(f"expected error in popup manager show_label_printing_view\n{e}")
         else:
+            self.app.label_manager.dual_pane_mode = False
+            self.label_printing_view.show_inventory_for_label_printing(inventory, dual_pane_mode=False)
             self.app.current_context = "label"
 
             self.label_printing_popup = Popup(
