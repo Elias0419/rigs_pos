@@ -28,6 +28,9 @@ from kivy.uix.image import Image as KivyImage
 import queue
 from kivy.clock import Clock
 from kivy.app import App
+from kivy.uix.recycleview import RecycleView
+from kivy.uix.recycleboxlayout import RecycleBoxLayout
+
 
 class LabelPrintingRow(BoxLayout):
     barcode = StringProperty()
@@ -138,6 +141,38 @@ class LabelPrintingView(BoxLayout):
             self.app = ref
             self.label_printer = self.app.label_printer
             self.print_queue_ref = LabelPrintingRow()
+            self.dual_pane_mode = False
+            #
+            # self.orientation = 'vertical'
+            #
+            # # Create the search bar and buttons container
+            # search_container = BoxLayout(size_hint_y=None, height=dp(48), orientation='horizontal', spacing=5)
+            # self.add_widget(search_container)
+            #
+            # # Add TextInput for search
+            # self.label_search_input = TextInput(size_hint_x=0.8, hint_text='Search')
+            # self.label_search_input.bind(text=self.filter_inventory)
+            # search_container.add_widget(self.label_search_input)
+            #
+            # # Add Clear button
+            # clear_button = Button(text="Clear", size_hint=(0.2, 1))
+            # clear_button.bind(on_press=self.clear_search)
+            # search_container.add_widget(clear_button)
+            #
+            # # Add Show Print Queue button
+            # show_queue_button = Button(text="Show Print Queue", size_hint=(0.2, 1))
+            # show_queue_button.bind(on_press=self.show_print_queue)
+            # search_container.add_widget(show_queue_button)
+            #
+            # # Create and configure the RecycleView
+            # self.label_rv = RecycleView(viewclass='LabelPrintingRow')
+            # self.add_widget(self.label_rv)
+            #
+            # # Configure RecycleBoxLayout for RecycleView
+            # layout = RecycleBoxLayout(default_size=(None, dp(56)), default_size_hint=(1, None), size_hint_y=None, orientation='vertical')
+            # layout.bind(minimum_height=layout.setter('height'))
+            # self.label_rv.add_widget(layout)
+
             self._init = True
 
     def detach_from_parent(self):
@@ -166,9 +201,10 @@ class LabelPrintingView(BoxLayout):
     def clear_search(self):
         self.ids.label_search_input.text = ""
 
-    def show_inventory_for_label_printing(self, inventory_items):
+    def show_inventory_for_label_printing(self, inventory_items,dual_pane_mode=False):
+        print(inventory_items)
         self.full_inventory = inventory_items
-        self.ids.label_rv.data = self.generate_data_for_rv(inventory_items)
+        self.ids.label_rv.data = self.generate_data_for_rv(inventory_items, self.dual_pane_mode)
 
     def remove_from_queue(self, item_name, embed=False):
         removed, is_empty = self.label_printer.remove_from_queue(item_name)
@@ -401,40 +437,46 @@ class LabelPrintingView(BoxLayout):
     def cancel_print(self, instance):
         self.print_queue_popup.dismiss()
 
-    def generate_data_for_rv(self, items):
+    def generate_data_for_rv(self, items, dual_pane_mode=False):
         data = []
-        for item in items:
-            if len(str(item[1])) > 18:
+        if self.dual_pane_mode:
+            for item in items:
+                if len(str(item[1])) > 21:
 
-                data.append({
-                    "barcode": str(item[0]),
-                    "name": f"{item[1][:15]}...",
-                    "price": f"{float(item[2]):.2f}" if item[2] else "Not Found",
-                    "label_printer": self.label_printer,
-                })
-            else:
+                    data.append({
+                        "barcode": str(item[0]),
+                        "name": f"{item[1][:17]}...",
+                        "price": f"{float(item[2]):.2f}" if item[2] else "Not Found",
+                        "label_printer": self.label_printer,
+                    })
+                else:
 
-                data.append({
-                    "barcode": str(item[0]),
-                    "name": item[1],
-                    "price": f"{float(item[2]):.2f}" if item[2] else "Not Found",
-                    "label_printer": self.label_printer,
-                })
-        return data
-
-    def filter_inventory(self, query):
-        if query:
-            query = query.lower()
-            filtered_items = []
-            for item in self.full_inventory:
-                barcode_match = query in str(item[0]).lower()
-                name_match = query in item[1].lower()
-                if barcode_match or name_match:
-                    filtered_items.append(item)
+                    data.append({
+                        "barcode": str(item[0]),
+                        "name": item[1],
+                        "price": f"{float(item[2]):.2f}" if item[2] else "Not Found",
+                        "label_printer": self.label_printer,
+                    })
+            return data
         else:
-            filtered_items = self.full_inventory
+            for item in items:
+                data.append({
+                            "barcode": str(item[0]),
+                            "name": item[1],
+                            "price": f"{float(item[2]):.2f}" if item[2] else "Not Found",
+                            "label_printer": self.label_printer,
+                        })
+            return data
 
-        self.ids.label_rv.data = self.generate_data_for_rv(filtered_items)
+
+    def filter_inventory(self, query="", dual_pane_mode=False):
+        filtered_items = self.full_inventory if not query else [
+        item for item in self.full_inventory if query.lower() in str(item[0]).lower() or query.lower() in item[1].lower()
+        ]
+        # Generate display data with dual pane mode consideration
+        display_data = self.generate_data_for_rv(filtered_items, dual_pane_mode=dual_pane_mode)
+        # Update the RecycleView data
+        self.ids.label_rv.data = display_data
 
     def create_focus_popup(self, title, content, textinput, size_hint, pos_hint={}, separator_height=1):
         popup = FocusPopup(

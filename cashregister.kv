@@ -73,19 +73,25 @@
         orientation: 'horizontal'
         size_hint_y: None
         height: '48dp'
+        padding: 1,1,1,1
 
-        Label:
-            id: barcode
-            text: root.barcode
-        Label:
+      #  Label:
+       #     id: barcode
+        #    text: root.barcode
+        MDLabel:
             id: name
             text: root.name
+            size_hint_x: 0.7
+            halign: 'left'
+            padding: 50,1,1,1
         Label:
             id: price
             text: root.price
+            size_hint_x: 0.2
         Button:
             text: "Add to Queue"
             on_press: root.add_to_print_queue()
+            size_hint_x: 0.1
 
 <LabelPrintingView>:
     orientation: 'vertical'
@@ -99,7 +105,7 @@
             id: label_search_input
             size_hint_x: 0.8
             hint_text: 'Search'
-            on_text: root.filter_inventory(self.text)
+            on_text: root.filter_inventory(self.text, root.dual_pane_mode)
         MDRaisedButton:
             text: "Clear"
             size_hint: (0.2,1)
