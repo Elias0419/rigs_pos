@@ -1125,14 +1125,14 @@ class PopupManager:
                 btn = MDFlatButton(size_hint=(0.8, 0.8), md_bg_color=(0, 0, 0, 0))
             elif button == "<-":
                 btn = MDFlatButton(
-                    text=button,
+                    text=f"[b][size=20]{button}[/size][/b]",
                     size_hint=(0.8, 0.8),
                     md_bg_color=[0.7, 0.7, 0.7, 1],
                     on_press=lambda x: self.handle_backspace(self.adjust_price_cash_input)
                 )
             else:
                 btn = MDFlatButton(
-                    text=button,
+                    text=f"[b][size=20]{button}[/size][/b]",
                     size_hint=(0.8, 0.8),
                     md_bg_color=[0.7, 0.7, 0.7, 1],
                     on_press=self.app.button_handler.on_adjust_price_numeric_button_press
