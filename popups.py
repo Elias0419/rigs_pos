@@ -1094,13 +1094,10 @@ class PopupManager:
         self.inventory_management_view.ids.inv_search_input.text = ""
 
     def show_adjust_price_popup(self):
-
         self.adjust_price_popup_layout = BoxLayout(orientation="vertical", spacing=5, padding=5)
-
 
         self.adjust_price_cash_input = TextInput(
             text="",
-            #disabled=True,
             hint_text="Enter Target Amount",
             multiline=False,
             input_filter="float",
@@ -1108,6 +1105,8 @@ class PopupManager:
             size_hint_y=None,
             height=50,
         )
+
+
         self.adjust_price_popup = self.create_focus_popup(
             title="Adjust Payment",
             content=self.adjust_price_popup_layout,
@@ -1115,42 +1114,33 @@ class PopupManager:
             on_dismiss=lambda x: setattr(self.adjust_price_cash_input, "text", ""),
             textinput=self.adjust_price_cash_input
         )
+
         self.adjust_price_popup_layout.add_widget(self.adjust_price_cash_input)
 
         keypad_layout = GridLayout(cols=3, spacing=10)
+        numeric_buttons = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "<-"]
 
-        numeric_buttons = [
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            "",
-            "0",
-        ]
         for button in numeric_buttons:
             if button == "":
+                btn = MDFlatButton(size_hint=(0.8, 0.8), md_bg_color=(0, 0, 0, 0))
+            elif button == "<-":
                 btn = MDFlatButton(
-
+                    text=button,
                     size_hint=(0.8, 0.8),
-                    md_bg_color=(0,0,0,0)
+                    md_bg_color=[0.7, 0.7, 0.7, 1],
+                    on_press=lambda x: self.handle_backspace(self.adjust_price_cash_input)
                 )
-                keypad_layout.add_widget(btn)
-
             else:
                 btn = MDFlatButton(
                     text=button,
-                    on_press=self.app.button_handler.on_adjust_price_numeric_button_press,
                     size_hint=(0.8, 0.8),
-                    md_bg_color="grey"
+                    md_bg_color=[0.7, 0.7, 0.7, 1],
+                    on_press=self.app.button_handler.on_adjust_price_numeric_button_press
                 )
-                keypad_layout.add_widget(btn)
 
-        buttons_layout = GridLayout(cols=4, size_hint_y=1 / 7, spacing=5)
+            keypad_layout.add_widget(btn)
+
+        buttons_layout = GridLayout(cols=2, size_hint_y=1 / 7, spacing=5)
         confirm_button = self.app.utilities.create_md_raised_button(
             "Confirm",
             lambda x: self.app.order_manager.add_adjusted_price_item(),
@@ -1171,6 +1161,26 @@ class PopupManager:
 
         self.adjust_price_popup.open()
         # return self.adjust_price_popup
+
+    def handle_backspace(self, input_field):
+        # Remove the last digit from the current input, treating the input as cents
+        current_input = input_field.text.replace(".", "").lstrip("0")
+
+        # If the input is not empty, proceed to adjust it. Otherwise, ensure it remains at "0.00"
+        if current_input:
+            # Convert the current input to an integer, divide by 10 to simulate backspacing, then convert back to string
+            new_input = str(int(current_input) // 10).zfill(2)
+        else:
+            new_input = "00"
+
+        # Convert the adjusted string back into cents
+        cents = int(new_input)
+        dollars = cents // 100
+        remaining_cents = cents % 100
+
+        # Update the text field with the new dollars and cents value
+        input_field.text = f"{dollars}.{remaining_cents:02d}"
+
 
     def show_guard_screen(self):
         if not self.app.is_guard_screen_displayed:
