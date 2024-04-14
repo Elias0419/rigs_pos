@@ -1163,22 +1163,17 @@ class PopupManager:
         # return self.adjust_price_popup
 
     def handle_backspace(self, input_field):
-        # Remove the last digit from the current input, treating the input as cents
         current_input = input_field.text.replace(".", "").lstrip("0")
 
-        # If the input is not empty, proceed to adjust it. Otherwise, ensure it remains at "0.00"
         if current_input:
-            # Convert the current input to an integer, divide by 10 to simulate backspacing, then convert back to string
             new_input = str(int(current_input) // 10).zfill(2)
         else:
             new_input = "00"
 
-        # Convert the adjusted string back into cents
         cents = int(new_input)
         dollars = cents // 100
         remaining_cents = cents % 100
 
-        # Update the text field with the new dollars and cents value
         input_field.text = f"{dollars}.{remaining_cents:02d}"
 
 
