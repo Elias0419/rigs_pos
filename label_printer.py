@@ -201,7 +201,7 @@ class LabelPrintingView(BoxLayout):
 
     def handle_scanned_barcode(self, barcode):
         barcode = barcode.strip()
-        items = self.database_manager.get_all_items()
+        items = self.app.db_manager.get_all_items()
 
         if any(item[0] == barcode for item in items):
             Clock.schedule_once(lambda dt: self.update_search_input(barcode), 0.1)
