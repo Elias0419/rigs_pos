@@ -172,8 +172,8 @@ class BarcodeScanner:
             print(message)
 
     def handle_scanned_barcode(self, barcode):
-        self.debug_print_grep("12345678", self.app.barcode_cache)
-        self.debug_print_grep("upc e", self.app.barcode_cache)
+        self.debug_print_grep("12345678", str(self.app.barcode_cache))
+        self.debug_print_grep("upc e", str(self.app.barcode_cache))
 
         #print(f"{barcode[:8]}/n{barcode[8:]}\n{barcode[-4:]}\n{barcode[0:-4]}")
         try:
