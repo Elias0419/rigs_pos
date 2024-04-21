@@ -640,7 +640,10 @@ class LabelPrinter:
 
 
     def handle_upc_e(self, barcode_data):
-        upc = self.app.utilities.generate_unique_barcode()
+        #upc = self.app.utilities.generate_unique_barcode()
+        padding = 12 - len(barcode_data)
+        upc = barcode_data + "0" * padding
+        print(upc)
         return upc
 
     def process_queue(self):
