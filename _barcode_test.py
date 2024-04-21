@@ -165,59 +165,30 @@ class BarcodeScanner:
         else:
             self.handle_scanned_barcode(barcode)
 
-
-    def debug_print_grep(self, pattern, message, context=40):
-
-        for match in re.finditer(pattern, message):
-            start = max(match.start() - context, 0)
-            end = match.end() + context
-            context_snippet = message[start:end]
-            print(f"...{context_snippet}...")
-
     def handle_scanned_barcode(self, barcode):
-        self.debug_print_grep("12345678", str(self.app.barcode_cache))
-        self.debug_print_grep("upc e", str(self.app.barcode_cache))
-
-        #print(f"{barcode[:8]}/n{barcode[8:]}\n{barcode[-4:]}\n{barcode[0:-4]}")
         try:
             if "-" in barcode and any(c.isalpha() for c in barcode):
-                self.app.history_manager.display_order_details_from_barcode_scan(
-                    barcode
-                )
+                self.app.history_manager.display_order_details_from_barcode_scan(barcode)
                 return
 
             known_barcodes = self.app.barcode_cache.keys()
-            #print(f"{known_barcodes}\n{len(known_barcodes)}")
-
-            found = False
 
             if barcode in known_barcodes:
-
                 self.handle_known_barcode(barcode)
                 return
 
-            if not found:
-                for known_barcode in known_barcodes:
-                    if known_barcode[1:] == barcode:
-                        self.handle_known_barcode(known_barcode)
-                        return
+            for known_barcode in known_barcodes:
+                if known_barcode[1:] == barcode or \
+                known_barcode == barcode[:-4] or \
+                known_barcode[1:] == barcode[:-4]:
+                    self.handle_known_barcode(known_barcode)
+                    return
 
-
-                    if known_barcode == barcode[:-4]:
-                        self.handle_known_barcode(known_barcode)
-                        return
-
-                    if known_barcode[1:] == barcode[:-4]:
-                        self.handle_known_barcode(known_barcode)
-                        return
-
-
-
-            if not found:
-                self.app.popup_manager.show_add_or_bypass_popup(barcode)
+            self.app.popup_manager.show_add_or_bypass_popup(barcode)
 
         except Exception as e:
             print(f"Exception in handle_scanned_barcode\n{e}")
+
 
     def handle_known_barcode(self, known_barcode):
         barcode_data = self.app.barcode_cache.get(known_barcode)
@@ -230,13 +201,12 @@ class BarcodeScanner:
                 self.process_item_details(item_details)
 
     def process_item_details(self, item_details):
-        item_name = item_details.get('name', 'Error!')
-        item_price = item_details.get('price', 0.0)
+        item_name = item_details.get("name", "Error!")
+        item_price = item_details.get("price", 0.0)
 
         self.app.order_manager.add_item(item_name, item_price)
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
-
 
     def close(self):
         self.stop_thread.set()
