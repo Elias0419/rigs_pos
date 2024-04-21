@@ -213,7 +213,7 @@ class BarcodeScanner:
                                 found = True
                                 break
 
-                    elif known_barcode[8:] == barcode:
+                    elif known_barcode[:-4] == barcode:
 
                         barcode_data = self.app.barcode_cache.get(known_barcode)
 
