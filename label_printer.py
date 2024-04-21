@@ -172,7 +172,7 @@ class LabelPrintingView(BoxLayout):
         self.ids.label_search_input.text = ""
 
     def show_inventory_for_label_printing(self, inventory_items,dual_pane_mode=False):
-        print(inventory_items)
+
         self.full_inventory = inventory_items
         self.ids.label_rv.data = self.generate_data_for_rv(inventory_items, self.dual_pane_mode)
 
@@ -573,31 +573,25 @@ class LabelPrinter:
     ):
         label_width, label_height = 202, 202
         barcode_y_position = 35
-        try:
-            UPC = barcode.get_barcode_class("upc")
-        except:
-            print("1")
-        try:
-            writer = ImageWriter()
-        except:
-            print("2")
+
+        UPC = barcode.get_barcode_class("upc")
+
+
+        writer = ImageWriter()
         try:
             upc = UPC(barcode_data, writer=writer)
-        except:
-            print("3")
+        except barcode.errors.NumberOfDigitsError as e:
+            print(e)
+        barcode_image = upc.render(
+            {
+                "module_width": 0.17,
+                "module_height": 10 if not include_text else 8,
+                "font_size": 4,
+                "dpi": 300,
+                "write_text": False,
+            }
+        )
 
-        try:
-            barcode_image = upc.render(
-                {
-                    "module_width": 0.17,
-                    "module_height": 10 if not include_text else 8,
-                    "font_size": 4,
-                    "dpi": 300,
-                    "write_text": False,
-                }
-            )
-        except:
-            print("4")
         label_image = Image.new("RGB", (label_width, label_height), "white")
         draw = ImageDraw.Draw(label_image)
 
@@ -720,8 +714,7 @@ class PrintQueueRow(BoxLayout):
     def preview_barcode_label(self):
         if self.preview_barcode_label_callback:
             self.preview_barcode_label_callback(self.name)
-        for name in self.label_printer.print_queue:
-            print(" poo",name)
+
 
 
 class LabelQueueLayout(BoxLayout):
