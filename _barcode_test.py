@@ -168,8 +168,11 @@ class BarcodeScanner:
 
     def debug_print_grep(self, pattern, message):
 
-        if re.search(pattern, message):
-            print(message)
+        for match in re.finditer(pattern, message):
+            start = max(match.start() - context, 0)
+            end = match.end() + context
+            context_snippet = message[start:end]
+            print(f"...{context_snippet}...")
 
     def handle_scanned_barcode(self, barcode):
         self.debug_print_grep("12345678", str(self.app.barcode_cache))
