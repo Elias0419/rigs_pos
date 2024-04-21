@@ -1,6 +1,7 @@
 import threading
 import usb.core
 import usb.util
+import re
 
 import time
 
@@ -164,7 +165,6 @@ class BarcodeScanner:
         else:
             self.handle_scanned_barcode(barcode)
 
-    import re
 
     def debug_print_grep(self, pattern, message):
 
