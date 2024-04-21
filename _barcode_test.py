@@ -164,8 +164,18 @@ class BarcodeScanner:
         else:
             self.handle_scanned_barcode(barcode)
 
+    import re
+
+    def debug_print_grep(self, pattern, message):
+
+        if re.search(pattern, message):
+            print(message)
+
     def handle_scanned_barcode(self, barcode):
-        print(f"{barcode[:8]}/n{barcode[8:]}\n{barcode[-4:]}\n{barcode[0:-4]}")
+        self.debug_print_grep("12345678", self.app.barcode_cache)
+        self.debug_print_grep("upc e", self.app.barcode_cache)
+
+        #print(f"{barcode[:8]}/n{barcode[8:]}\n{barcode[-4:]}\n{barcode[0:-4]}")
         try:
             if "-" in barcode and any(c.isalpha() for c in barcode):
                 self.app.history_manager.display_order_details_from_barcode_scan(
