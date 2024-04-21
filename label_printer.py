@@ -581,7 +581,7 @@ class LabelPrinter:
         try:
             upc = UPC(barcode_data, writer=writer)
         except barcode.errors.NumberOfDigitsError as e:
-            upc = UPC(self.handle_upc_e(barcode_data))
+            upc = UPC(self.handle_upc_e(barcode_data), writer=writer)
 
         barcode_image = upc.render(
             {
