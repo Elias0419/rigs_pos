@@ -213,8 +213,8 @@ class BarcodeScanner:
                                 found = True
                                 break
 
-                    if known_barcode[:8] == barcode:
-                        print("tacos")
+                    if known_barcode[8:] == barcode:
+
                         barcode_data = self.app.barcode_cache.get(known_barcode)
 
                         if barcode_data["is_dupe"]:
