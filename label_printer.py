@@ -573,22 +573,31 @@ class LabelPrinter:
     ):
         label_width, label_height = 202, 202
         barcode_y_position = 35
+        try:
+            UPC = barcode.get_barcode_class("upc")
+        except:
+            print("1")
+        try:
+            writer = ImageWriter()
+        except:
+            print("2")
+        try:
+            upc = UPC(barcode_data, writer=writer)
+        except:
+            print("3")
 
-        UPC = barcode.get_barcode_class("upc")
-        writer = ImageWriter()
-
-        upc = UPC(barcode_data, writer=writer)
-
-        barcode_image = upc.render(
-            {
-                "module_width": 0.17,
-                "module_height": 10 if not include_text else 8,
-                "font_size": 4,
-                "dpi": 300,
-                "write_text": False,
-            }
-        )
-
+        try:
+            barcode_image = upc.render(
+                {
+                    "module_width": 0.17,
+                    "module_height": 10 if not include_text else 8,
+                    "font_size": 4,
+                    "dpi": 300,
+                    "write_text": False,
+                }
+            )
+        except:
+            print("4")
         label_image = Image.new("RGB", (label_width, label_height), "white")
         draw = ImageDraw.Draw(label_image)
 
