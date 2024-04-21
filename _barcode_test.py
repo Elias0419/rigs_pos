@@ -166,7 +166,7 @@ class BarcodeScanner:
             self.handle_scanned_barcode(barcode)
 
 
-    def debug_print_grep(self, pattern, message):
+    def debug_print_grep(self, pattern, message, context=40):
 
         for match in re.finditer(pattern, message):
             start = max(match.start() - context, 0)
