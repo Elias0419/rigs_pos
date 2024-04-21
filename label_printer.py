@@ -581,7 +581,8 @@ class LabelPrinter:
         try:
             upc = UPC(barcode_data, writer=writer)
         except barcode.errors.NumberOfDigitsError as e:
-            print(f"poopies\n\n\n{e}\n\n\n\n")
+            upc = self.handle_upc_e(barcode_data)
+
         barcode_image = upc.render(
             {
                 "module_width": 0.17,
@@ -638,8 +639,9 @@ class LabelPrinter:
         Clock.schedule_once(lambda dt: self.app.popup_manager.catch_label_printing_errors(e), 0)
 
 
-
-
+    def handle_upc_e(self, barcode_data):
+        upc = self.app.utilities.generate_unique_barcode()
+        return upc
 
     def process_queue(self):
         print_thread = threading.Thread(target=self._process_print_queue_thread, daemon=True)
