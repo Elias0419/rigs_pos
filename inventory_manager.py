@@ -10,7 +10,6 @@ from database_manager import DatabaseManager
 from order_manager import OrderManager
 
 
-
 class InventoryManagementView(BoxLayout):
     barcode = StringProperty()
     name = StringProperty()
@@ -53,14 +52,15 @@ class InventoryManagementView(BoxLayout):
             return
 
         for item in items:
-            if item[0][1:] == barcode or \
-            item[0] == barcode[:-4] or \
-            item[0][1:] == barcode[:-4]:
+            if (
+                item[0][1:] == barcode
+                or item[0] == barcode[:-4]
+                or item[0][1:] == barcode[:-4]
+            ):
                 Clock.schedule_once(lambda dt: self.update_search_input(item[0]), 0.1)
                 return
 
         self.app.popup_manager.open_inventory_item_popup(barcode)
-
 
     def handle_scanned_barcode_item(self, barcode):
         barcode = barcode.strip()
@@ -78,7 +78,9 @@ class InventoryManagementView(BoxLayout):
         if len(query) > 0:
             Clock.schedule_once(lambda dt: self.filter_inventory(query), 0.1)
         else:
-            Clock.schedule_once(lambda dt: self.filter_inventory(None), 0.1) # current filter?
+            Clock.schedule_once(
+                lambda dt: self.filter_inventory(None), 0.1
+            )  # current filter?
 
     def add_item_to_database(
         self,
@@ -102,20 +104,26 @@ class InventoryManagementView(BoxLayout):
                 self.app.utilities.update_inventory_cache()
                 self.refresh_label_inventory_for_dual_pane_mode()
 
-
             except Exception as e:
                 print(e)
 
     def refresh_label_inventory_for_dual_pane_mode(self):
         try:
-            self.app.popup_manager.view_container.remove_widget(self.app.popup_manager.label_printing_view)
+            self.app.popup_manager.view_container.remove_widget(
+                self.app.popup_manager.label_printing_view
+            )
             inventory = self.app.inventory_cache
 
-
-            self.app.popup_manager.label_printing_view.show_inventory_for_label_printing(inventory)
-            self.app.popup_manager.view_container.add_widget(self.app.popup_manager.label_printing_view)
+            self.app.popup_manager.label_printing_view.show_inventory_for_label_printing(
+                inventory
+            )
+            self.app.popup_manager.view_container.add_widget(
+                self.app.popup_manager.label_printing_view
+            )
         except Exception as e:
-            print(f"[Inventory Manager]\nrefresh_label_inventory_for_dual_pane_mode\n{e}")
+            print(
+                f"[Inventory Manager]\nrefresh_label_inventory_for_dual_pane_mode\n{e}"
+            )
 
     def reset_inventory_context(self):
 
@@ -129,7 +137,7 @@ class InventoryManagementView(BoxLayout):
         self.barcode_input.text = unique_barcode
 
     def open_inventory_manager(self):
-        #self.detach_from_parent()
+        # self.detach_from_parent()
 
         self.app.popup_manager.open_inventory_item_popup()
 
@@ -192,22 +200,24 @@ class InventoryManagementRow(BoxLayout):
 
     def get_item_uuid(self, name_input=None, price_input=None, barcode_input=None):
 
-        item_details = self.database_manager.get_item_details(name=name_input, price=price_input, barcode=barcode_input)
-        #print(item_details)
+        item_details = self.database_manager.get_item_details(
+            name=name_input, price=price_input, barcode=barcode_input
+        )
+        # print(item_details)
         if item_details:
-            return item_details['item_id']
+            return item_details["item_id"]
         else:
             return None
 
     def update_item_in_database(
-            self,
-            barcode_input,
-            name_input,
-            price_input,
-            cost_input,
-            sku_input,
-            category_input,
-        ):
+        self,
+        barcode_input,
+        name_input,
+        price_input,
+        cost_input,
+        sku_input,
+        category_input,
+    ):
 
         item_id = self.get_item_uuid(name_input=name_input)
         if item_id == None:
@@ -215,7 +225,7 @@ class InventoryManagementRow(BoxLayout):
 
         if item_id:
             try:
-               # print(f"{name_input}\n\n\n\n")
+                # print(f"{name_input}\n\n\n\n")
                 self.database_manager.update_item(
                     item_id,
                     barcode_input,
