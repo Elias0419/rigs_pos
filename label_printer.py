@@ -196,11 +196,26 @@ class LabelPrintingView(BoxLayout):
 
 
 
+    def update_search_input(self, barcode):
+        self.ids.label_search_input.text = barcode
 
     def handle_scanned_barcode(self, barcode):
         barcode = barcode.strip()
+        items = self.database_manager.get_all_items()
 
-        self.ids.label_search_input.text = barcode
+        if any(item[0] == barcode for item in items):
+            Clock.schedule_once(lambda dt: self.update_search_input(barcode), 0.1)
+            return
+
+        for item in items:
+            if (
+                item[0][1:] == barcode
+                or item[0] == barcode[:-4]
+                or item[0][1:] == barcode[:-4]
+            ):
+                Clock.schedule_once(lambda dt: self.update_search_input(item[0]), 0.1)
+                return
+
 
     def show_print_queue(self, embed = False):
 
@@ -640,7 +655,7 @@ class LabelPrinter:
 
 
     def handle_upc_e(self, barcode_data):
-        #upc = self.app.utilities.generate_unique_barcode()
+
         padding = 12 - len(barcode_data)
         upc = barcode_data + "0" * padding
         print(upc)
