@@ -581,7 +581,7 @@ class LabelPrinter:
         try:
             upc = UPC(barcode_data, writer=writer)
         except barcode.errors.NumberOfDigitsError as e:
-            print(e)
+            print(f"poopies\n\n\n{e}\n\n\n\n")
         barcode_image = upc.render(
             {
                 "module_width": 0.17,
