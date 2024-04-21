@@ -203,11 +203,11 @@ class BarcodeScanner:
                         return
 
 
-                    if known_barcode[:-4] == barcode:
+                    if known_barcode == barcode[:-4]:
                         self.handle_known_barcode(known_barcode)
                         return
 
-                    if known_barcode[1:-4] == barcode:
+                    if known_barcode == barcode[1:-4]:
                         self.handle_known_barcode(known_barcode)
                         return
 
