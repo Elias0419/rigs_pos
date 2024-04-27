@@ -31,6 +31,7 @@ class CashRegisterApp(MDApp):
     def __init__(self, **kwargs):
         super(CashRegisterApp, self).__init__(**kwargs)
         self.utilities = Utilities(self)
+        self.logged_in_user = "nobody"
 
     def on_start(self):
         self.utilities.initialize_global_variables()
