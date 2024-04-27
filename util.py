@@ -5,7 +5,7 @@ import threading
 import sys
 import random
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import dbus
 from kivy.clock import Clock
 from kivymd.uix.button import MDRaisedButton, MDFlatButton, MDIconButton
@@ -21,7 +21,7 @@ from kivymd.uix.gridlayout import GridLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivymd.toast import toast
 from kivy.uix.image import Image
-
+from kivymd.uix.button import MDIconButton
 from _barcode_test import BarcodeScanner
 
 from button_handlers import ButtonHandler
@@ -42,7 +42,6 @@ class Utilities:
 
     def initialize_global_variables(self):
         self.app.admin = False
-        self.app.logged_in_user = None
         self.app.pin_store = "pin_store.json"
 
         self.app.entered_pin = ""
@@ -187,6 +186,14 @@ class Utilities:
                     return {'name': user['name'], 'admin': user['admin']}, True
         return False
 
+    def time_until_end_of_shift(self):
+        now = datetime.now()
+        end_of_shift = datetime(now.year, now.month, now.day, 23)
+        if now.hour >= 23:
+            end_of_shift += timedelta(days=1)
+        seconds_until_end = (end_of_shift - now).total_seconds()
+        return seconds_until_end
+
 
     def clock_in(self, entered_pin):
         user_details, authenticated = self.validate_pin(entered_pin)
@@ -198,24 +205,35 @@ class Utilities:
         self.clock_in_file = f"{user_details['name']}-{today_str}.json"
         self.attendance_log = "attendance_log.json"
 
-
         if not os.path.exists(self.clock_in_file):
-            print("clock in")
             with open(self.clock_in_file, 'w') as file:
                 json.dump({"clock_in": datetime.now().isoformat()}, file)
             self.update_attendance_log(self.attendance_log, user_details['name'], "clock_in")
 
+            self.clock_out_event = Clock.schedule_once(self.auto_clock_out, self.time_until_end_of_shift())
+
     def clock_out(self):
-        print("clock out")
-        os.remove(self.clock_in_file)
-        self.update_attendance_log(self.attendance_log, self.app.logged_in_user["name"], "clock_out")
+        if hasattr(self, 'clock_out_event'):
+            self.clock_out_event.cancel()
+        if os.path.exists(self.clock_in_file):
+            os.remove(self.clock_in_file)
+            self.update_attendance_log(self.attendance_log, self.app.logged_in_user["name"], "clock_out")
+
+    def auto_clock_out(self, dt):
+        if os.path.exists(self.clock_in_file):
+            os.remove(self.clock_in_file)
+            midnight = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+            self.update_attendance_log(self.attendance_log, self.app.logged_in_user["name"], "auto", timestamp=midnight)
 
 
-    def update_attendance_log(self, log_file, user_name, action):
+    def update_attendance_log(self, log_file, user_name, action, auto=False, timestamp=None):
+        if timestamp is None:
+            timestamp = datetime.now().isoformat()
+
         entry = {
             "name": user_name,
-            "timestamp": datetime.now().isoformat(),
-            "action": action
+            "timestamp": timestamp,
+            "action": action if not auto else "auto"
         }
         if not os.path.exists(log_file):
             with open(log_file, 'w') as file:
@@ -226,6 +244,7 @@ class Utilities:
                 log.append(entry)
                 file.seek(0)
                 json.dump(log, file, indent=4)
+
 
     def reset_pin_timer(self):
         print("reset_pin_timer", self.app.pin_reset_timer)
@@ -469,10 +488,18 @@ class Utilities:
             on_press=lambda x: self.app.financial_summary.save_order(),
         )
         save_icon_container.add_widget(self.app.save_icon)
-
+        top_center_container = MDBoxLayout(orientation="vertical", size_hint_y=0.2)
         # center_container.add_widget(trash_icon_container)
-
+        self.time_clock = MDLabel(text=f"Logged in as {self.app.logged_in_user}\nsince 00:00\nTap the clock to log out", size_hint_y=0.2)
+        time_clock_container = GridLayout(orientation="lr-tb", cols=2)
+        _blank2 = MDBoxLayout(size_hint_y=0.8)
+        clock_icon = MDIconButton(icon="clock")
+        time_clock_container.add_widget(self.time_clock)
+        time_clock_container.add_widget(clock_icon)
+        top_center_container.add_widget(time_clock_container)
+        top_center_container.add_widget(_blank2)
         # self.center_container.add_widget(self.mirror_image)
+        self.center_container.add_widget(top_center_container)
         self.center_container.add_widget(_blank)
         self.top_area_layout.add_widget(self.center_container)
 
