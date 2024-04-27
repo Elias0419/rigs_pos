@@ -194,6 +194,28 @@ class Utilities:
         seconds_until_end = (end_of_shift - now).total_seconds()
         return seconds_until_end
 
+    # def time_until_end_of_shift(self): # testing
+    #
+    #     hour = 8
+    #     minute = 45
+    #
+    #     end_of_shift = datetime(now.year, now.month, now.day, hour, minute)
+    #
+    #     if now >= end_of_shift:
+    #         end_of_shift += timedelta(days=1)
+    #
+    #     seconds_until_end = (end_of_shift - now).total_seconds()
+    #     return seconds_until_end
+
+    def read_formatted_clock_in_time(self, clock_in_file):
+        if os.path.exists(clock_in_file):
+            with open(clock_in_file, 'r') as file:
+                data = json.load(file)
+                clock_in_iso = data.get("clock_in", "")
+                if clock_in_iso:
+                    clock_in_time = datetime.fromisoformat(clock_in_iso)
+                    return clock_in_time.strftime("%I:%M %p")
+        return ""
 
     def clock_in(self, entered_pin):
         user_details, authenticated = self.validate_pin(entered_pin)
@@ -205,11 +227,14 @@ class Utilities:
         self.clock_in_file = f"{user_details['name']}-{today_str}.json"
         self.attendance_log = "attendance_log.json"
 
+
+
         if not os.path.exists(self.clock_in_file):
             with open(self.clock_in_file, 'w') as file:
                 json.dump({"clock_in": datetime.now().isoformat()}, file)
             self.update_attendance_log(self.attendance_log, user_details['name'], "clock_in")
-
+            log_in_time = self.read_formatted_clock_in_time(self.clock_in_file)
+            self.time_clock.text = f"{self.app.logged_in_user['name']} since {log_in_time}\nTap the clock to log out"
             self.clock_out_event = Clock.schedule_once(self.auto_clock_out, self.time_until_end_of_shift())
 
     def clock_out(self):
@@ -222,8 +247,11 @@ class Utilities:
     def auto_clock_out(self, dt):
         if os.path.exists(self.clock_in_file):
             os.remove(self.clock_in_file)
+
             midnight = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-            self.update_attendance_log(self.attendance_log, self.app.logged_in_user["name"], "auto", timestamp=midnight)
+            formatted_midnight = midnight.isoformat()
+            self.update_attendance_log(self.attendance_log, self.app.logged_in_user["name"], "auto", timestamp=formatted_midnight)
+
 
 
     def update_attendance_log(self, log_file, user_name, action, auto=False, timestamp=None):
