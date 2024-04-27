@@ -46,19 +46,69 @@ class PopupManager:
         self.app = ref
 
     def open_clock_out_popup(self):
+        if self.app.logged_in_user == 'nobody':
+            return
+
+
+        data = self.app.utilities.load_attendance_data()
+        open_session = None
+
+        for entry in reversed(data):
+            if entry['name'] == self.app.logged_in_user['name']:
+                if entry['action'] == 'clock_in':
+                    open_session = entry
+                    break
+                elif entry['action'] == 'clock_out':
+                    break
+
+        if open_session:
+            clock_in_time = datetime.fromisoformat(open_session['timestamp'])
+            clock_out_time = datetime.now()
+            duration = clock_out_time - clock_in_time
+            hours, remainder = divmod(duration.total_seconds(), 3600)
+            minutes = remainder // 60
+            session_info = f"{self.app.logged_in_user['name']} {clock_in_time.strftime('%H:%M')} {clock_out_time.strftime('%H:%M')} {int(hours)}h {int(minutes)}m"
+        else:
+            session_info = "No open session found."
+
         layout = MDBoxLayout(orientation="vertical")
         card = MDCard()
-        message = MDLabel(text=f"I'll add the time entry\nPLACEHOLDER\nto the time sheet and log you out.\nIs that what you want to do?\n\n(If you just want to lock the screen there's a lock button over yonder for that -->)")
-        card.add_widget(message)
+        if open_session:
+            self.clock_out_message = MDLabel(text=f"I'll add the time entry\n{session_info}\nto the time sheet and log you out.\nIs that what you want to do?\n\n(If you just want to lock the screen there's a lock button over yonder for that -->)", halign="center")
+        else:
+            self.clock_out_message = MDLabel(text=f"{session_info}")
+        card.add_widget(self.clock_out_message)
         layout.add_widget(card)
 
-        button_layout = MDGridLayout(orientation="lr-tb", cols=2)
-        confirm_button = MDFlatButton(text="conf")
-        cancel_button = MDFlatButton(text="canc")
+        button_layout = MDGridLayout(cols=2)
+        confirm_button = MDFlatButton(text="Confirm", on_press=lambda x: self.app.utilities.clock_out() if open_session else None)
+        cancel_button = MDFlatButton(text="Cancel", on_press=lambda x: self.clock_out_popup.dismiss())
         button_layout.add_widget(confirm_button)
         button_layout.add_widget(cancel_button)
         layout.add_widget(button_layout)
-        popup = Popup(content=layout, size_hint=(0.8,0.8))
+        self.clock_out_popup = Popup(
+            content=layout,
+            title="Clock Out",
+            size_hint=(0.4, 0.8),
+            separator_height=0,
+            overlay_color=(0, 0, 0, 0),
+        )
+        self.clock_out_popup.open()
+
+
+    def show_attendence_log(self):
+        data = self.app.utilities.load_attendance_data()
+        sessions = self.app.utilities.organize_sessions(data)
+        display_data = self.app.utilities.format_sessions_for_display(sessions)
+        layout = MDBoxLayout(orientation="vertical")
+        for line in reversed(display_data):
+            label = MDLabel(text=line)
+            layout.add_widget(label)
+        scroll_view = ScrollView(size_hint=(1, 1))
+        scroll_view.add_widget(layout)
+
+        popup = Popup(title="Attendance Log", content=scroll_view,
+                      size_hint=(0.9, 0.9), auto_dismiss=True)
         popup.open()
 
     def create_category_popup(self):

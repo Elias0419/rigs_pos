@@ -43,7 +43,7 @@ class Utilities:
     def initialize_global_variables(self):
         self.app.admin = False
         self.app.pin_store = "pin_store.json"
-
+        self.app.attendance_log = "attendance_log.json"
         self.app.entered_pin = ""
         self.app.is_guard_screen_displayed = False
         self.app.is_lock_screen_displayed = False
@@ -225,14 +225,14 @@ class Utilities:
         self.app.logged_in_user = user_details
         today_str = datetime.now().strftime("%Y-%m-%d")
         self.clock_in_file = f"{user_details['name']}-{today_str}.json"
-        self.attendance_log = "attendance_log.json"
+
 
 
 
         if not os.path.exists(self.clock_in_file):
             with open(self.clock_in_file, 'w') as file:
                 json.dump({"clock_in": datetime.now().isoformat()}, file)
-            self.update_attendance_log(self.attendance_log, user_details['name'], "clock_in")
+            self.update_attendance_log(self.app.attendance_log, user_details['name'], "clock_in")
             log_in_time = self.read_formatted_clock_in_time(self.clock_in_file)
             self.time_clock.text = f"{self.app.logged_in_user['name']} since {log_in_time}\nTap the clock to log out"
             self.clock_out_event = Clock.schedule_once(self.auto_clock_out, self.time_until_end_of_shift())
@@ -242,7 +242,12 @@ class Utilities:
             self.clock_out_event.cancel()
         if os.path.exists(self.clock_in_file):
             os.remove(self.clock_in_file)
-            self.update_attendance_log(self.attendance_log, self.app.logged_in_user["name"], "clock_out")
+            self.update_attendance_log(self.app.attendance_log, self.app.logged_in_user["name"], "clock_out")
+        try:
+            self.app.popup_manager.clock_out_popup.dismiss()
+        except Exception as e:
+            print(f"[Utilities] Expected error in clock_out\n{e}")
+        self.trigger_guard_and_lock()
 
     def auto_clock_out(self, dt):
         if os.path.exists(self.clock_in_file):
@@ -250,7 +255,7 @@ class Utilities:
 
             midnight = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
             formatted_midnight = midnight.isoformat()
-            self.update_attendance_log(self.attendance_log, self.app.logged_in_user["name"], "auto", timestamp=formatted_midnight)
+            self.update_attendance_log(self.app.attendance_log, self.app.logged_in_user["name"], "auto", timestamp=formatted_midnight)
 
 
 
@@ -273,6 +278,53 @@ class Utilities:
                 file.seek(0)
                 json.dump(log, file, indent=4)
 
+    def load_attendance_data(self):
+        if not os.path.exists(self.app.attendance_log):
+            with open(self.app.attendance_log, 'w') as file:
+                json.dump([], file)
+            return []
+
+        with open(self.app.attendance_log, 'r') as file:
+            data = json.load(file)
+        return data
+
+    def organize_sessions(self, data):
+        sessions = {}
+        for entry in data:
+            user = entry['name']
+            if user not in sessions:
+                sessions[user] = []
+
+            if entry['action'] == 'clock_in':
+                sessions[user].append({'clock_in': entry['timestamp'], 'clock_out': None})
+            elif entry['action'] == 'clock_out' and sessions[user]:
+                for session in reversed(sessions[user]):
+                    if session['clock_out'] is None:
+                        session['clock_out'] = entry['timestamp']
+                        break
+
+        return sessions
+
+    def format_sessions_for_display(self, sessions):
+        formatted_data = []
+        for user, user_sessions in sessions.items():
+            for session in user_sessions:
+                if session['clock_out']:
+                    clock_in_time = datetime.fromisoformat(session['clock_in'])
+                    clock_out_time = datetime.fromisoformat(session['clock_out'])
+                    duration = clock_out_time - clock_in_time
+                    hours, remainder = divmod(duration.total_seconds(), 3600)
+                    minutes = remainder // 60
+                    formatted_session = f"{clock_in_time.strftime('%m/%d/%Y')} {user} {clock_in_time.strftime('%H:%M')} {clock_out_time.strftime('%H:%M')} {int(hours)}h {int(minutes)}m"
+                    formatted_data.append(formatted_session)
+        return formatted_data
+
+    # def display_attendance_log(self): # testing
+    #     data = self.load_attendance_data()
+    #     sessions = self.organize_sessions(data)
+    #     display_data = self.format_sessions_for_display(sessions)
+    #     for line in display_data:
+    #         print(line)
 
     def reset_pin_timer(self):
         print("reset_pin_timer", self.app.pin_reset_timer)
@@ -518,7 +570,7 @@ class Utilities:
         save_icon_container.add_widget(self.app.save_icon)
         top_center_container = MDBoxLayout(orientation="vertical", size_hint_y=0.2)
         # center_container.add_widget(trash_icon_container)
-        self.time_clock = MDLabel(text=f"Logged in as {self.app.logged_in_user}\nsince 00:00\nTap the clock to log out", size_hint_y=0.2)
+        self.time_clock = MDLabel(text="", size_hint_y=0.2)
         time_clock_container = GridLayout(orientation="lr-tb", cols=2)
         _blank2 = MDBoxLayout(size_hint_y=0.8)
         clock_icon = MDIconButton(icon="clock", on_press=lambda x: self.app.popup_manager.open_clock_out_popup())
@@ -580,7 +632,7 @@ class Utilities:
         btn_tools = self.create_md_raised_button(
             f"[b][size=40]Tools[/b][/size]",
             self.app.button_handler.on_button_press,
-            #lambda x: self.clock_out(),
+            # lambda x: self.app.popup_manager.show_attendence_log(),
             # lambda x: self.modify_clock_layout_for_dual_pane_mode(),
             # lambda x: self.app.popup_manager.show_dual_inventory_and_label_managers(),
             # lambda x: self.enable_dual_pane_mode(),
