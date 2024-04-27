@@ -521,7 +521,7 @@ class Utilities:
         self.time_clock = MDLabel(text=f"Logged in as {self.app.logged_in_user}\nsince 00:00\nTap the clock to log out", size_hint_y=0.2)
         time_clock_container = GridLayout(orientation="lr-tb", cols=2)
         _blank2 = MDBoxLayout(size_hint_y=0.8)
-        clock_icon = MDIconButton(icon="clock")
+        clock_icon = MDIconButton(icon="clock", on_press=lambda x: self.app.popup_manager.open_clock_out_popup())
         time_clock_container.add_widget(self.time_clock)
         time_clock_container.add_widget(clock_icon)
         top_center_container.add_widget(time_clock_container)

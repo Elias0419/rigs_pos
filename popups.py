@@ -45,6 +45,22 @@ class PopupManager:
     def __init__(self, ref):
         self.app = ref
 
+    def open_clock_out_popup(self):
+        layout = MDBoxLayout(orientation="vertical")
+        card = MDCard()
+        message = MDLabel(text=f"I'll add the time entry\nPLACEHOLDER\nto the time sheet and log you out.\nIs that what you want to do?\n\n(If you just want to lock the screen there's a lock button over yonder for that -->)")
+        card.add_widget(message)
+        layout.add_widget(card)
+
+        button_layout = MDGridLayout(orientation="lr-tb", cols=2)
+        confirm_button = MDFlatButton(text="conf")
+        cancel_button = MDFlatButton(text="canc")
+        button_layout.add_widget(confirm_button)
+        button_layout.add_widget(cancel_button)
+        layout.add_widget(button_layout)
+        popup = Popup(content=layout, size_hint=(0.8,0.8))
+        popup.open()
+
     def create_category_popup(self):
         self.selected_categories = []
         categories = self.app.utilities.initialize_categories()
