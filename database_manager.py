@@ -42,6 +42,7 @@ class DatabaseManager:
                                 category TEXT,
                                 parent_barcode TEXT,
                                 item_id TEXT,
+                                taxable BOOLEAN DEFAULT TRUE,
                                 PRIMARY KEY (barcode, sku),
                                 FOREIGN KEY(parent_barcode) REFERENCES items(barcode)
                             )"""
@@ -136,19 +137,16 @@ class DatabaseManager:
             sku=None,
             category=None,
             parent_barcode=None,
+            taxable=True
         ):
-        # Generate a new UUID for the item
         item_id = uuid.uuid4()
-
-        print("db add_item", "barcode", barcode, "name", name, "price", price, "cost", cost, "sku", sku, "category", category, "item_id", item_id)
         self.create_items_table()
-
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO items (barcode, name, price, cost, sku, category, item_id, parent_barcode) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (barcode, name, price, cost, sku, category, str(item_id), parent_barcode),
+                "INSERT INTO items (barcode, name, price, cost, sku, category, item_id, parent_barcode, taxable) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (barcode, name, price, cost, sku, category, str(item_id), parent_barcode, taxable),
             )
             conn.commit()
             item_details = {
@@ -159,7 +157,8 @@ class DatabaseManager:
                 'sku': sku,
                 'category': category,
                 'item_id': str(item_id),
-                'parent_barcode': parent_barcode
+                'parent_barcode': parent_barcode,
+                'taxable': taxable
             }
             self.app.utilities.update_barcode_cache(item_details)
         except sqlite3.IntegrityError as e:
@@ -167,24 +166,21 @@ class DatabaseManager:
             conn.close()
             return False
         conn.close()
-
         return True
 
-    def update_item(self, item_id, barcode, name, price, cost=None, sku=None, category=None):
-        print("db update_item", "barcode", barcode, "item_id", item_id, "name", name, "price", price, "cost", cost, "sku", sku, "category", category)
+
+    def update_item(self, item_id, barcode, name, price, cost=None, sku=None, category=None, taxable=True):
+        #print("db update_item", "barcode", barcode, "item_id", item_id, "name", name, "price", price, "cost", cost, "sku", sku, "category", category, "taxable", taxable)
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-
             update_query = """UPDATE items
-                            SET barcode=?, name=?, price=?, cost=?, sku=?, category=?
+                            SET barcode=?, name=?, price=?, cost=?, sku=?, category=?, taxable=?
                             WHERE item_id=?"""
-            cursor.execute(update_query, (barcode, name, price, cost, sku, category, item_id))
-
+            cursor.execute(update_query, (barcode, name, price, cost, sku, category, taxable, item_id))
             if cursor.rowcount == 0:
                 print("No item found with UUID:", item_id)
                 return False
-
             conn.commit()
             item_details = {
                 'item_id': item_id,
@@ -193,6 +189,7 @@ class DatabaseManager:
                 'cost': cost,
                 'sku': sku,
                 'category': category,
+                'taxable': taxable
             }
             self.app.utilities.update_barcode_cache(item_details)
         except Exception as e:
@@ -230,7 +227,8 @@ class DatabaseManager:
                     'sku': row[4],
                     'category': row[5],
                     'item_id': row[6],
-                    'parent_barcode': row[7]
+                    'parent_barcode': row[7],
+                    'taxable': row[8],
                 }
                 items.append(item_details)
 
@@ -251,35 +249,35 @@ class DatabaseManager:
             item_details = None
             if dupe:
                 # print(f"TEST dupe\nname {name}\nprice {price}")
-                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE name = ? AND price = ?"
+                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable FROM items WHERE name = ? AND price = ?"
                 cursor.execute(query, (name, price))
                 if cursor.rowcount == 0:
                     # print(f"TEST2 dupe\nname {name}\nprice {price}")
-                    query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE name = ?"
+                    query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable FROM items WHERE name = ?"
                     cursor.execute(query, (name,))
 
             elif item_id:
                 # print("if item_id")
-                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE item_id = ?"
+                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable FROM items WHERE item_id = ?"
                 cursor.execute(query, (item_id,))
             elif barcode:
                 # print("elif barcode:")
-                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE barcode = ?"
+                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable FROM items WHERE barcode = ?"
                 cursor.execute(query, (barcode,))
 
             elif name and price:
                 # print("elif name and price:")
                 # print("name and price")
-                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE name = ? AND price = ?"
+                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable FROM items WHERE name = ? AND price = ?"
                 cursor.execute(query, (name, price))
                 if cursor.rowcount == 0:
 
-                    query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE name = ?"
+                    query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable FROM items WHERE name = ?"
                     cursor.execute(query, (name,))
 
             elif name:
                 # print("elif name")
-                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode FROM items WHERE name = ?"
+                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable FROM items WHERE name = ?"
                 cursor.execute(query, (name,))
 
             else:
@@ -298,6 +296,8 @@ class DatabaseManager:
                     'sku': item[4],
                     'category': item[5],
                     'item_id': item[6],
+                    'parent_barcode': item[7],
+                    'taxable': item[8],
                 }
 
                 # if item_id or barcode: # TODO
@@ -311,7 +311,7 @@ class DatabaseManager:
         finally:
             if conn:
                 conn.close()
-
+        print(item_details)
         return item_details
 
     def delete_item(self, item_id):
@@ -496,6 +496,7 @@ class DatabaseManager:
     def add_item_to_database(
         self, barcode, name, price, cost=0.0, sku=None, categories=None
     ):
+        print("add to db")
         if barcode and name and price:
             try:
                 self.add_item(barcode, name, price, cost, sku, categories)
@@ -512,7 +513,7 @@ class DatabaseManager:
         cursor = conn.cursor()
         try:
             cursor.execute(
-                "SELECT barcode, name, price, cost, sku, category, item_id, parent_barcode FROM items"
+                "SELECT barcode, name, price, cost, sku, category, item_id, parent_barcode, taxable FROM items"
             )
             items = cursor.fetchall()
           #  print(len(items))
