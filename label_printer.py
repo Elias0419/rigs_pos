@@ -223,8 +223,8 @@ class LabelPrintingView(BoxLayout):
         item_layout = BoxLayout(orientation="vertical", spacing=5, padding=5)
         for item in self.label_printer.print_queue:
             if embed:
-                if len(item['name']) > 22:
-                    name_label = Label(text=f"{item['name'][:19]}...", size_hint_x=0.2)
+                if len(item['name']) > 30:
+                    name_label = Label(text=f"{item['name'][:27]}...", size_hint_x=0.2)
                 else:
                     name_label = Label(text=f"{item['name']}", size_hint_x=0.2)
             else:
