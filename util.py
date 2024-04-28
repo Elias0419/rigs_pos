@@ -234,7 +234,8 @@ class Utilities:
                 json.dump({"clock_in": datetime.now().isoformat()}, file)
             self.update_attendance_log(self.app.attendance_log, user_details['name'], "clock_in")
             log_in_time = self.read_formatted_clock_in_time(self.clock_in_file)
-            self.time_clock.text = f"{self.app.logged_in_user['name']} since {log_in_time}\nTap the clock to log out"
+            # self.time_clock.text = f"{self.app.logged_in_user['name']} since {log_in_time}\nTap the clock to log out"
+            self.time_clock.text = f"User: {self.app.logged_in_user['name']}\nTap the clock to log out"
             self.clock_out_event = Clock.schedule_once(self.auto_clock_out, self.time_until_end_of_shift())
 
     def clock_out(self):
@@ -573,7 +574,7 @@ class Utilities:
         self.time_clock = MDLabel(text="", size_hint_y=0.2)
         time_clock_container = GridLayout(orientation="lr-tb", cols=2)
         _blank2 = MDBoxLayout(size_hint_y=0.8)
-        clock_icon = MDIconButton(icon="clock", on_press=lambda x: self.app.popup_manager.open_clock_out_popup())
+        clock_icon = MDIconButton(icon="clock", pos_hint={"top": 1}, on_press=lambda x: self.app.popup_manager.open_clock_out_popup())
         time_clock_container.add_widget(self.time_clock)
         time_clock_container.add_widget(clock_icon)
         top_center_container.add_widget(time_clock_container)

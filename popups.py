@@ -67,31 +67,32 @@ class PopupManager:
             duration = clock_out_time - clock_in_time
             hours, remainder = divmod(duration.total_seconds(), 3600)
             minutes = remainder // 60
-            session_info = f"{self.app.logged_in_user['name']} {clock_in_time.strftime('%H:%M')} {clock_out_time.strftime('%H:%M')} {int(hours)}h {int(minutes)}m"
+            session_info = f"{self.app.logged_in_user['name']}: {clock_in_time.strftime('%H:%M')} - {clock_out_time.strftime('%H:%M')}; {int(hours)}h {int(minutes)}m"
         else:
             session_info = "No open session found."
 
         layout = MDBoxLayout(orientation="vertical")
         card = MDCard()
         if open_session:
-            self.clock_out_message = MDLabel(text=f"I'll add the time entry\n{session_info}\nto the time sheet and log you out.\nIs that what you want to do?\n\n(If you just want to lock the screen there's a lock button over yonder for that -->)", halign="center")
+            self.clock_out_message = MDLabel(text=f"I'll add the time entry\n\n[b][size=20]{session_info}[/size][/b]\n\nto the time sheet and log you out.\n\nIs that what you want to do?\n\n", halign="center")
         else:
             self.clock_out_message = MDLabel(text=f"{session_info}")
         card.add_widget(self.clock_out_message)
         layout.add_widget(card)
 
-        button_layout = MDGridLayout(cols=2)
-        confirm_button = MDFlatButton(text="Confirm", on_press=lambda x: self.app.utilities.clock_out() if open_session else None)
-        cancel_button = MDFlatButton(text="Cancel", on_press=lambda x: self.clock_out_popup.dismiss())
+        button_layout = MDGridLayout(cols=2, size_hint_y=0.2)
+        confirm_button = MDFlatButton(text="Confirm", size_hint=(1,1), on_press=lambda x: self.app.utilities.clock_out() if open_session else None)
+        cancel_button = MDFlatButton(text="Cancel", size_hint=(1,1), on_press=lambda x: self.clock_out_popup.dismiss())
         button_layout.add_widget(confirm_button)
         button_layout.add_widget(cancel_button)
         layout.add_widget(button_layout)
         self.clock_out_popup = Popup(
             content=layout,
             title="Clock Out",
-            size_hint=(0.4, 0.8),
+            size_hint=(0.4, 0.4),
             separator_height=0,
             overlay_color=(0, 0, 0, 0),
+            pos_hint={"top":1}
         )
         self.clock_out_popup.open()
 
