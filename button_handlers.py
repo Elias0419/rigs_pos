@@ -56,8 +56,8 @@ class ButtonHandler:
         self.app.popup_manager.tools_popup.dismiss()
 
     def handle_numeric_input(self, input_field, instance_text):
-        current_input = input_field.text.replace(".", "").replace("[b]", "").replace("[/b]", "").replace("[size=20]", "").replace("[/size]", "").lstrip("0")
-        new_input = current_input + instance_text.replace(".", "").replace("[b]", "").replace("[/b]", "").replace("[size=20]", "").replace("[/size]", "").lstrip("0")
+        current_input = input_field.text.replace(".", "").replace("[b]", "").replace("[/b]", "").replace("[size=20]", "").replace("[/size]", "")#.lstrip("0")
+        new_input = current_input + instance_text.replace(".", "").replace("[b]", "").replace("[/b]", "").replace("[size=20]", "").replace("[/size]", "")#.lstrip("0")
         new_input = new_input.zfill(2)
         cents = int(new_input)
         dollars = cents // 100
