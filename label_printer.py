@@ -171,7 +171,7 @@ class LabelPrintingView(BoxLayout):
     def clear_search(self):
         self.ids.label_search_input.text = ""
 
-    def show_inventory_for_label_printing(self, inventory_items,dual_pane_mode=False):
+    def show_inventory_for_label_printing(self, inventory_items, dual_pane_mode=False):
 
         self.full_inventory = inventory_items
         self.ids.label_rv.data = self.generate_data_for_rv(inventory_items, self.dual_pane_mode)
@@ -217,12 +217,19 @@ class LabelPrintingView(BoxLayout):
                 return
 
 
-    def show_print_queue(self, embed = False):
+    def show_print_queue(self, embed=False):
 
         queue_layout = BoxLayout(orientation="vertical", spacing=5, padding=5)
         item_layout = BoxLayout(orientation="vertical", spacing=5, padding=5)
         for item in self.label_printer.print_queue:
-            name_label = Label(text=f"{item['name']}", size_hint_x=0.2)
+            if embed:
+                if len(item['name']) > 22:
+                    name_label = Label(text=f"{item['name'][:19]}...", size_hint_x=0.2)
+                else:
+                    name_label = Label(text=f"{item['name']}", size_hint_x=0.2)
+            else:
+                name_label = Label(text=f"{item['name']}", size_hint_x=0.2)
+            print(name_label)
             qty_label = Label(text=f"Qty: {item['quantity']}", size_hint_x=0.05)
             text_label = Label(text=f"Text: {item['optional_text']}", size_hint_x=0.2, halign="left")
             if embed:
@@ -426,11 +433,11 @@ class LabelPrintingView(BoxLayout):
         data = []
         if self.dual_pane_mode:
             for item in items:
-                if len(str(item[1])) > 21:
+                if len(str(item[1])) > 80:
 
                     data.append({
                         "barcode": str(item[0]),
-                        "name": f"{item[1][:17]}...",
+                        "name": f"{item[1][:77]}...",
                         "price": f"{float(item[2]):.2f}" if item[2] else "Not Found",
                         "label_printer": self.label_printer,
                     })
