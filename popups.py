@@ -1010,7 +1010,7 @@ class PopupManager:
                 self.app.label_manager.dual_pane_mode = True
             # try:
                 self.label_printing_view.show_inventory_for_label_printing(inventory, dual_pane_mode=True)
-                container = MDGridLayout(orientation="tb-lr", rows=4)
+                container = MDGridLayout(orientation="tb-lr", rows=4, size_hint_x=0.6)
                 button_container = MDBoxLayout(size_hint_y=0.05, orientation="horizontal", spacing=10, padding=5)
                 self.view_container = MDBoxLayout(size_hint_y=0.42)
                 self.queue_container = MDBoxLayout(size_hint_y=0.48)
@@ -1050,8 +1050,8 @@ class PopupManager:
             self.dual_popup.dismiss()
             self.app.utilities.dual_button.text = ""
             self.app.current_context = "main"
-        except:
-            pass
+        except Exception as e:
+            print(f"[PopupManager: Expected error in exit_dual_pane_mode\n{e}]")
 
     def toggle_active_pane(self):
         if self.overlay_popup.pos_hint == {"right":1}:
@@ -1071,7 +1071,7 @@ class PopupManager:
 
             self.overlay_popup  = NonModalPopup(content=layout,
                         title="",
-                        size_hint_x=0.505,
+                        size_hint_x=0.605,
                         pos_hint={"right":1},
                         background="images/transparent.png",
                         background_color=(0, 0, 0, 0),
@@ -1083,7 +1083,7 @@ class PopupManager:
         else:
             self.overlay_popup  = NonModalPopup(content=layout,
                         title="",
-                        size_hint_x=0.505,
+                        size_hint_x=0.405,
                         pos_hint= {'x': 0.0, 'y': 0},
                         background="images/transparent.png",
                         background_color=(0, 0, 0, 0),
@@ -1142,6 +1142,7 @@ class PopupManager:
         self.inventory_management_view.show_inventory_for_manager(inventory)
 
         if dual_pane_mode:
+            self.inventory_management_view.size_hint_x = 0.4
             return self.inventory_management_view
         else:
             self.app.current_context = "inventory"
