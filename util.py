@@ -355,10 +355,15 @@ class Utilities:
         return amounts
 
     def update_clock(self, *args):
-        self.app.clock_label.text = (
-            f"[size=26][b]{time.strftime('%I:%M %p %A %B %d, %Y')}[/b][/size]"
-        )
-        self.app.clock_label.color = self.get_text_color()
+        current_time = time.strftime('%l:%M %p')
+        current_date = time.strftime('%A, %B %d, %Y')
+
+        formatted_time = f"[size=36][b]{current_time}[/b][/size]"
+        formatted_date = f"[size=26]{current_date}[/size]"
+
+        self.app.clock_label.text = f"{formatted_time}\n{formatted_date}\n"
+
+        #self.app.clock_label.color = self.get_text_color()
 
     def update_lockscreen_clock(self, *args):
 
@@ -781,17 +786,18 @@ class Utilities:
         blank_space = MDLabel(
             text="", size_hint_y=1, height=450, valign="top", halign="center"
         )
-        clock_container = BoxLayout(size_hint_y=0.15)
+        clock_container = BoxLayout(size_hint_y=0.2)
         self.app.clock_label = MDLabel(
-            text="Loading...",
+            text="",
             size_hint_y=None,
             # font_style="H6",
             height=150,
             size_hint_x=1,
             color=self.get_text_color(),
-            markup=True,
-            valign="bottom",
-            # halign="center",
+            #markup=True,
+            #valign="bottom",
+            halign="left",
+           # pos_hint={"left": 0.1}
         )
         clock_container.add_widget(self.app.clock_label)
         line_container = MDBoxLayout(
@@ -823,10 +829,11 @@ class Utilities:
         self.clock_layout.add_widget(mirror_image_container)
         self.clock_layout.add_widget(saved_orders_container)
         self.app.financial_summary.add_saved_orders_to_clock_layout()
+        self.clock_layout.add_widget(clock_container)
         self.clock_layout.add_widget(logo_container)
 
         Clock.schedule_interval(self.update_clock, 1)
-        self.clock_layout.add_widget(clock_container)
+
         return self.clock_layout
 
 
