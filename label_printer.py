@@ -602,7 +602,7 @@ class LabelPrinter:
         UPC = barcode.get_barcode_class("upc")
 
 
-        writer = SVGWriter()
+        writer = ImageWriter()
         try:
             print(f"we have upc a:\n'{barcode_data}")
             upc = UPC(barcode_data, writer=writer)
@@ -612,7 +612,7 @@ class LabelPrinter:
 
         barcode_image = upc.render(
             {
-                "module_width": 0.17,
+                "module_width": 0.15,
                 "module_height": 10 if not include_text else 8,
                 "font_size": 2,
                 "dpi": 300,
