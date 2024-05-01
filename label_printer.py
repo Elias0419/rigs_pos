@@ -601,8 +601,10 @@ class LabelPrinter:
 
         writer = ImageWriter()
         try:
+            print(f"we have upc a:\n'{barcode_data}")
             upc = UPC(barcode_data, writer=writer)
         except barcode.errors.NumberOfDigitsError as e:
+            print(f"we have upc e:\n'{barcode_data}")
             upc = UPC(self.handle_upc_e(barcode_data), writer=writer)
 
         barcode_image = upc.render(
@@ -662,7 +664,7 @@ class LabelPrinter:
 
 
     def handle_upc_e(self, barcode_data):
-
+        print(f"inside handle_upc_e:\n'{barcode_data}")
         padding = 12 - len(barcode_data)
         upc = barcode_data + "0" * padding
         print(upc)
