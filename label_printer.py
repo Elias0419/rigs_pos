@@ -587,90 +587,156 @@ class LabelPrinter:
         print("Label size: (202, 202)")
         print("Barcode position on label:", ((202 - barcode_image.size[0]) // 2, 35))
 
-    def print_barcode_label(
-        self,
-        barcode_data,
-        item_price,
-        save_path=None,
-        include_text=False,
-        optional_text="",
-        preview=False
-    ):
-        label_width, label_height = 202, 202
-        barcode_y_position = 35
+#     def print_barcode_label(
+#         self,
+#         barcode_data,
+#         item_price,
+#         save_path=None,
+#         include_text=False,
+#         optional_text="",
+#         preview=False
+#     ):
+#         label_width, label_height = 202, 202
+#         barcode_y_position = 35
+#
+#         UPC = barcode.get_barcode_class("upc")
+#
+#
+#         writer = ImageWriter()
+#         try:
+#             print(f"we have upc a:\n'{barcode_data}")
+#             upc = UPC(barcode_data, writer=writer)
+#         except barcode.errors.NumberOfDigitsError as e:
+#             print(f"we have upc e:\n'{barcode_data}")
+#             upc = UPC(self.handle_upc_e(barcode_data), writer=writer)
+#
+#         barcode_image = upc.render(
+#             {
+#                 "module_width": 0.17,
+#                 "module_height": 10 if not include_text else 8,
+#                 # "font_size": 2,
+#                 # "dpi": 300,
+#                 # "write_text": False,
+#             }
+#         )
+#         self.debug_dimensions(barcode_image)
+#
+#         label_image = Image.new("RGB", (label_width, label_height), "white")
+#         draw = ImageDraw.Draw(label_image)
+#
+#         font_size = 33
+#         font = ImageFont.truetype("/usr/share/fonts/TTF/Arialbd.TTF", font_size)
+#         text = f"${item_price}"
+#         text_bbox = draw.textbbox((0, 0), text, font=font)
+#         text_width = text_bbox[2] - text_bbox[0]
+#         x_text = (label_width - text_width) / 2
+#         draw.text((x_text, 0), text, fill="black", font=font)
+#
+#         barcode_width, barcode_height = barcode_image.size
+#         barcode_position = ((label_width - barcode_width) // 2, barcode_y_position)
+#         if barcode_position[0] < 0 or barcode_position[1] < 0:
+#             print("Barcode is being clipped! Position:", barcode_position)
+#
+#         label_image.paste(barcode_image, barcode_position)
+#         ##DEBUG
+#         include_text = True
+#         optional_text = barcode_data
+#         ##
+#
+#         if include_text and optional_text:
+#             max_optional_text_width = label_width
+#             additional_text_font_size = self.calculate_dynamic_font_size(draw, optional_text, max_optional_text_width)
+#             additional_font = ImageFont.truetype("/usr/share/fonts/TTF/Arial.TTF", additional_text_font_size)
+#
+#             additional_text_bbox = draw.textbbox((0, 0), optional_text, font=additional_font)
+#             additional_text_width = additional_text_bbox[2] - additional_text_bbox[0]
+#             x_additional_text = (label_width - additional_text_width) / 2
+#             additional_text_y_position = barcode_y_position + barcode_height #+ 10
+#             draw.text((x_additional_text, additional_text_y_position), optional_text, fill="black", font=additional_font)
+#         if preview:
+#             return label_image
+#         else:
+#             qlr = brother_ql.BrotherQLRaster("QL-710W")
+#             qlr.exception_on_warning = True
+#             convert(qlr=qlr, images=[label_image], label="23x23", cut=False)
+#             # try:
+#             send(
+#                 instructions=qlr.data,
+#                 printer_identifier="usb://0x04F9:0x2043",
+#                 backend_identifier="pyusb",
+#             )
+#             return True
+#             # except Exception as e:
+#             #     self.catch_label_printing_errors(e)
+#             #     return False
+        def print_barcode_label(
+            self,
+            barcode_data,
+            item_price,
+            save_path=None,
+            include_text=False,
+            optional_text="",
+            preview=False
+        ):
+            label_width, label_height = 202, 202
+            barcode_y_position = 35
 
-        UPC = barcode.get_barcode_class("upc")
+            UPC = barcode.get_barcode_class("upc")
+            writer = ImageWriter()
 
-
-        writer = ImageWriter()
-        try:
-            print(f"we have upc a:\n'{barcode_data}")
             upc = UPC(barcode_data, writer=writer)
-        except barcode.errors.NumberOfDigitsError as e:
-            print(f"we have upc e:\n'{barcode_data}")
-            upc = UPC(self.handle_upc_e(barcode_data), writer=writer)
 
-        barcode_image = upc.render(
-            {
-                "module_width": 0.17,
-                "module_height": 10 if not include_text else 8,
-                # "font_size": 2,
-                # "dpi": 300,
-                # "write_text": False,
-            }
-        )
-        self.debug_dimensions(barcode_image)
-
-        label_image = Image.new("RGB", (label_width, label_height), "white")
-        draw = ImageDraw.Draw(label_image)
-
-        font_size = 33
-        font = ImageFont.truetype("/usr/share/fonts/TTF/Arialbd.TTF", font_size)
-        text = f"${item_price}"
-        text_bbox = draw.textbbox((0, 0), text, font=font)
-        text_width = text_bbox[2] - text_bbox[0]
-        x_text = (label_width - text_width) / 2
-        draw.text((x_text, 0), text, fill="black", font=font)
-
-        barcode_width, barcode_height = barcode_image.size
-        barcode_position = ((label_width - barcode_width) // 2, barcode_y_position)
-        if barcode_position[0] < 0 or barcode_position[1] < 0:
-            print("Barcode is being clipped! Position:", barcode_position)
-        if barcode_position[0] < 0:
-            barcode_position = (0, barcode_y_position)
-        label_image.paste(barcode_image, barcode_position)
-        ##DEBUG
-        include_text = True
-        optional_text = barcode_data
-        ##
-
-        if include_text and optional_text:
-            max_optional_text_width = label_width
-            additional_text_font_size = self.calculate_dynamic_font_size(draw, optional_text, max_optional_text_width)
-            additional_font = ImageFont.truetype("/usr/share/fonts/TTF/Arial.TTF", additional_text_font_size)
-
-            additional_text_bbox = draw.textbbox((0, 0), optional_text, font=additional_font)
-            additional_text_width = additional_text_bbox[2] - additional_text_bbox[0]
-            x_additional_text = (label_width - additional_text_width) / 2
-            additional_text_y_position = barcode_y_position + barcode_height #+ 10
-            draw.text((x_additional_text, additional_text_y_position), optional_text, fill="black", font=additional_font)
-        if preview:
-            return label_image
-        else:
-            qlr = brother_ql.BrotherQLRaster("QL-710W")
-            qlr.exception_on_warning = True
-            convert(qlr=qlr, images=[label_image], label="23x23", cut=False)
-            # try:
-            send(
-                instructions=qlr.data,
-                printer_identifier="usb://0x04F9:0x2043",
-                backend_identifier="pyusb",
+            barcode_image = upc.render(
+                {
+                    "module_width": 0.17,
+                    "module_height": 10 if not include_text else 8,
+                    "font_size": 4,
+                    "dpi": 300,
+                    "write_text": False,
+                }
             )
-            return True
-            # except Exception as e:
-            #     self.catch_label_printing_errors(e)
-            #     return False
 
+            label_image = Image.new("RGB", (label_width, label_height), "white")
+            draw = ImageDraw.Draw(label_image)
+
+            font_size = 33
+            font = ImageFont.truetype("/usr/share/fonts/TTF/Arialbd.TTF", font_size)
+            text = f"${item_price}"
+            text_bbox = draw.textbbox((0, 0), text, font=font)
+            text_width = text_bbox[2] - text_bbox[0]
+            x_text = (label_width - text_width) / 2
+            draw.text((x_text, 0), text, fill="black", font=font)
+
+            barcode_width, barcode_height = barcode_image.size
+            barcode_position = ((label_width - barcode_width) // 2, barcode_y_position)
+            label_image.paste(barcode_image, barcode_position)
+
+            if include_text and optional_text:
+                max_optional_text_width = label_width
+                additional_text_font_size = self.calculate_dynamic_font_size(draw, optional_text, max_optional_text_width)
+                additional_font = ImageFont.truetype("/usr/share/fonts/TTF/Arial.TTF", additional_text_font_size)
+
+                additional_text_bbox = draw.textbbox((0, 0), optional_text, font=additional_font)
+                additional_text_width = additional_text_bbox[2] - additional_text_bbox[0]
+                x_additional_text = (label_width - additional_text_width) / 2
+                additional_text_y_position = barcode_y_position + barcode_height #+ 10
+                draw.text((x_additional_text, additional_text_y_position), optional_text, fill="black", font=additional_font)
+            if preview:
+                return label_image
+            else:
+                qlr = brother_ql.BrotherQLRaster("QL-710W")
+                convert(qlr=qlr, images=[label_image], label="23x23", cut=False)
+                try:
+                    send(
+                        instructions=qlr.data,
+                        printer_identifier="usb://0x04F9:0x2043",
+                        backend_identifier="pyusb",
+                    )
+                    print("Print job sent successfully")
+                    return True
+                except Exception as e:
+                    self.catch_label_printing_errors(e)
+                    return False
 
     def catch_label_printing_errors(self, e):
         Clock.schedule_once(lambda dt: self.app.popup_manager.catch_label_printing_errors(e), 0)
