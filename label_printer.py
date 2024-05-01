@@ -620,7 +620,7 @@ class LabelPrinter:
             }
         )
         self.debug_dimensions(barcode_image)
-        barcode_image = barcode_image.resize((200, 200), Image.Resampling.LANCZOS)
+        barcode_image = barcode_image.resize((300, 200), Image.Resampling.LANCZOS)
         self.debug_dimensions(barcode_image)
 
         label_image = Image.new("RGB", (label_width, label_height), "white")
