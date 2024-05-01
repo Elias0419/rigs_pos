@@ -636,6 +636,8 @@ class LabelPrinter:
         barcode_position = ((label_width - barcode_width) // 2, barcode_y_position)
         if barcode_position[0] < 0 or barcode_position[1] < 0:
             print("Barcode is being clipped! Position:", barcode_position)
+        if barcode_position[0] < 0:
+            barcode_position = (0, barcode_y_position)
         label_image.paste(barcode_image, barcode_position)
         ##DEBUG
         include_text = True
