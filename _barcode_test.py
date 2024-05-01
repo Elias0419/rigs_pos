@@ -125,10 +125,11 @@ class BarcodeScanner:
                     self.endpoint.wMaxPacketSize,
                     timeout=5000,
                 )
+                print(f"Raw USB data: {data}")
                 if data[2] != 0:
                     character = conversion_table.get(data[2], [""])[0]
                     if character == "\n":
-
+                        print(f"Barcode detected: {self.current_barcode}")
                         self.barcode_ready.set()
 
                     else:
