@@ -650,17 +650,18 @@ class LabelPrinter:
             return label_image
         else:
             qlr = brother_ql.BrotherQLRaster("QL-710W")
+            qlr.exception_on_warning = True
             convert(qlr=qlr, images=[label_image], label="23x23", cut=False)
-            try:
-                send(
-                    instructions=qlr.data,
-                    printer_identifier="usb://0x04F9:0x2043",
-                    backend_identifier="pyusb",
-                )
-                return True
-            except Exception as e:
-                self.catch_label_printing_errors(e)
-                return False
+            # try:
+            send(
+                instructions=qlr.data,
+                printer_identifier="usb://0x04F9:0x2043",
+                backend_identifier="pyusb",
+            )
+            return True
+            # except Exception as e:
+            #     self.catch_label_printing_errors(e)
+            #     return False
 
 
     def catch_label_printing_errors(self, e):
