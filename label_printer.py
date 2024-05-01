@@ -619,9 +619,9 @@ class LabelPrinter:
                 # "write_text": False,
             }
         )
-        self.debug_dimensions("1\n",barcode_image)
+        self.debug_dimensions(barcode_image)
         barcode_image.resize((190, 190), Image.Resampling.LANCZOS)
-        self.debug_dimensions("2\n",barcode_image)
+        self.debug_dimensions(barcode_image)
 
         label_image = Image.new("RGB", (label_width, label_height), "white")
         draw = ImageDraw.Draw(label_image)
