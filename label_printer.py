@@ -582,7 +582,10 @@ class LabelPrinter:
 
 
         self.preview_popup.open()
-
+    def debug_dimensions(self, barcode_image):
+        print("Barcode size:", barcode_image.size)
+        print("Label size: (202, 202)")
+        print("Barcode position on label:", ((202 - barcode_image.size[0]) // 2, 35))
 
     def print_barcode_label(
         self,
@@ -616,6 +619,7 @@ class LabelPrinter:
                 "write_text": False,
             }
         )
+        self.debug_dimensions(barcode_image)
 
         label_image = Image.new("RGB", (label_width, label_height), "white")
         draw = ImageDraw.Draw(label_image)
@@ -630,6 +634,8 @@ class LabelPrinter:
 
         barcode_width, barcode_height = barcode_image.size
         barcode_position = ((label_width - barcode_width) // 2, barcode_y_position)
+        if barcode_position[0] < 0 or barcode_position[1] < 0:
+            print("Barcode is being clipped! Position:", barcode_position)
         label_image.paste(barcode_image, barcode_position)
         ##DEBUG
         include_text = True
