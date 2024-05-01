@@ -611,7 +611,7 @@ class LabelPrinter:
             {
                 "module_width": 0.17,
                 "module_height": 10 if not include_text else 8,
-                "font_size": 4,
+                "font_size": 2,
                 "dpi": 300,
                 "write_text": False,
             }
