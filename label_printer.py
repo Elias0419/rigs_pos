@@ -587,15 +587,15 @@ class LabelPrinter:
         print("Label size: (202, 202)")
         print("Barcode position on label:", ((202 - barcode_image.size[0]) // 2, 35))
 
-#     def print_barcode_label(
-#         self,
-#         barcode_data,
-#         item_price,
-#         save_path=None,
-#         include_text=False,
-#         optional_text="",
-#         preview=False
-#     ):
+    # def print_barcode_label(
+    #     self,
+    #     barcode_data,
+    #     item_price,
+    #     save_path=None,
+    #     include_text=False,
+    #     optional_text="",
+    #     preview=False
+    # ):
 #         label_width, label_height = 202, 202
 #         barcode_y_position = 35
 #
@@ -670,7 +670,15 @@ class LabelPrinter:
 #             #     self.catch_label_printing_errors(e)
 #             #     return False
 
-    def print_barcode_label(self, barcode_data, preview=False):
+    def print_barcode_label(
+        self,
+        barcode_data,
+        item_price,
+        save_path=None,
+        include_text=False,
+        optional_text="",
+        preview=False
+    ):
         label_width, label_height = 202, 202
         barcode_y_position = 35
 
