@@ -669,7 +669,7 @@ class LabelPrinter:
 #             # except Exception as e:
 #             #     self.catch_label_printing_errors(e)
 #             #     return False
-        def print_barcode_label(
+    def print_barcode_label(
             self,
             barcode_data,
             item_price,
