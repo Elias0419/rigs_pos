@@ -609,11 +609,11 @@ class LabelPrinter:
 
         barcode_image = upc.render(
             {
-                "module_width": 0.2,
+                "module_width": 0.19,
                 "module_height": 10 if not include_text else 8,
                 "font_size": 4,
                 "dpi": 300,
-                "write_text": True,
+                "write_text": False,
             }
         )
 
