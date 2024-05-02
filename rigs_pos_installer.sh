@@ -94,7 +94,7 @@ install_python_package () {
             sudo pacman -Sy python
             ;;
         "Gentoo")
-            sudo emerge -Sy python
+            sudo emerge python
             ;;
         *)
             echo "I haven't added support for $OS. Please install Python manually."
@@ -116,7 +116,7 @@ install_git_package () {
             sudo pacman -Sy git
             ;;
         "Gentoo")
-            sudo emerge -Sy git
+            sudo emerge git
             ;;
         *)
             echo "I haven't added support for $OS. Please install Git manually."
