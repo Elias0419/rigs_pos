@@ -75,6 +75,17 @@ zope.event==5.0
 zope.interface==6.3
 zope.schema==7.0.1
 "
+
+echo "Press 'd' to enter demo mode or Enter to continue:"
+read -r -n 1 input
+
+if [[ $input == "d" ]]; then
+    demo_mode=1
+else
+    demo_mode=0
+fi
+
+
 echo "
 
 
@@ -89,8 +100,13 @@ echo "
 
 
 
-Point of Sale Installation Program v0.1
 "
+if [[ $demo_mode -eq 1 ]]; then
+    echo "Point of Sale Installation Program v0.1 (Demo)"
+else
+    echo "Point of Sale Installation Program v0.1"
+endif
+sleep 1
 echo "Creating directories..."
 sleep 3
 if [ ! -d "$VENV_PATH" ]; then
@@ -118,11 +134,24 @@ echo "Launching in 1..."
 sleep 1
 python main.py > /dev/null 2>&1 &
 PYTHON_PID=$!
-echo "That's it!"
-read -p "Press Enter to terminate the program and delete the installation files"
-echo "Cleaning up installation files..."
-kill $PYTHON_PID
-wait $PYTHON_PID 2>/dev/null
-rm -rf "$VENV_PATH"
-rm -rf "rigs_pos"
-echo "Bye!"
+
+if [[ $demo_mode -eq 1 ]]; then
+    echo "That's it!"
+    read -p "Press Enter to terminate the program and delete the installation files"
+    echo "Cleaning up installation files..."
+    kill $PYTHON_PID
+    wait $PYTHON_PID 2>/dev/null
+    rm -rf "$VENV_PATH"
+    rm -rf "rigs_pos"
+    echo "Bye!"
+else
+    echo "Other setup for the real installation goes here"
+    echo "But for now we're just going to delete the installation files and quit"
+    read -p "Press Enter to continue"
+    kill $PYTHON_PID
+    wait $PYTHON_PID 2>/dev/null
+    rm -rf "$VENV_PATH"
+    rm -rf "rigs_pos"
+    echo "Bye!"
+endif
+
