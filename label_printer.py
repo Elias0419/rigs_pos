@@ -620,9 +620,7 @@ class LabelPrinter:
                 "quiet_zone": 0,
             }
         )
-        self.debug_dimensions(barcode_image)
-        #barcode_image = barcode_image.resize((300, 200), Image.Resampling.LANCZOS)
-        self.debug_dimensions(barcode_image)
+
 
         label_image = Image.new("RGB", (label_width, label_height), "white")
         draw = ImageDraw.Draw(label_image)
@@ -638,14 +636,9 @@ class LabelPrinter:
         barcode_width, barcode_height = barcode_image.size
 
         barcode_position = ((label_width - barcode_width) // 2, barcode_y_position)
-        # if barcode_position[0] < 0 or barcode_position[1] < 0:
-        #     print("Barcode is being clipped! Position:", barcode_position)
+
 
         label_image.paste(barcode_image, barcode_position)
-        ##DEBUG
-        include_text = True
-        optional_text = barcode_data
-        ##
 
         if include_text and optional_text:
             max_optional_text_width = label_width
@@ -663,16 +656,16 @@ class LabelPrinter:
             qlr = brother_ql.BrotherQLRaster("QL-710W")
             qlr.exception_on_warning = True
             convert(qlr=qlr, images=[label_image], label="23x23", cut=False)
-            # try:
-            send(
-                instructions=qlr.data,
-                printer_identifier="usb://0x04F9:0x2043",
-                backend_identifier="pyusb",
-            )
-            return True
-            # except Exception as e:
-            #     self.catch_label_printing_errors(e)
-            #     return False
+            try:
+                send(
+                    instructions=qlr.data,
+                    printer_identifier="usb://0x04F9:0x2043",
+                    backend_identifier="pyusb",
+                )
+                return True
+            except Exception as e:
+                self.catch_label_printing_errors(e)
+                return False
 
 
     def catch_label_printing_errors(self, e):
