@@ -174,6 +174,7 @@ fi
 if [[ $OS == "Ubuntu" ]]; then
     echo ""
     echo "On Ubuntu we need to install some build dependencies"
+    echo ""
     echo "Press enter to continue or 'q' to quit"
     read -r -n 1 input
      if [[ $input == "q" ]]; then
@@ -186,6 +187,7 @@ fi
 if [[ "$OS" == "Fedora Linux" ]]; then
     echo ""
     echo "On Fedora we need to install some build dependencies"
+    echo ""
     echo "Press enter to continue or 'q' to quit"
     read -r -n 1 input
      if [[ $input == "q" ]]; then
@@ -198,6 +200,7 @@ fi
 echo ""
 echo ""
 echo "Press 'd' to enter demo mode or Enter to continue:"
+echo ""
 read -r -n 1 input
 
 if [[ $input == "d" ]]; then
@@ -224,11 +227,15 @@ echo "
 "
 if [[ $demo_mode -eq 1 ]]; then
     echo "Point of Sale Installation Program v0.1 (Demo)"
+    echo ""
 else
     echo "Point of Sale Installation Program v0.1"
+    echo ""
 fi
 sleep 1
+
 echo "Creating directories..."
+echo ""
 sleep 3
 
 
@@ -238,16 +245,19 @@ fi
 
 source "$VENV_PATH/bin/activate"
 echo "Installing dependencies..."
+echo ""
 sleep 1
 echo "$DEPENDENCIES" | xargs pip install > /dev/null 2>&1
 
 
 echo "Getting the application files..."
+echo ""
 sleep 1
 git clone https://github.com/Elias0419/rigs_pos > /dev/null 2>&1
 cd rigs_pos
 mkdir saved_orders
 echo "Application Installed Successfully!"
+echo ""
 sleep 1
 echo "Launching in 3..."
 sleep 1
@@ -260,6 +270,7 @@ PYTHON_PID=$!
 
 if [[ $demo_mode -eq 1 ]]; then
     echo "That's it!"
+    echo ""
     read -p "Press Enter to terminate the program and delete the installation files"
     echo "Cleaning up installation files..."
     kill $PYTHON_PID
@@ -270,6 +281,7 @@ if [[ $demo_mode -eq 1 ]]; then
 else
     echo "Other setup for the real installation goes here"
     echo "But for now we're just going to delete the installation files and quit"
+    echo ""
     read -p "Press Enter to continue"
     kill $PYTHON_PID
     wait $PYTHON_PID 2>/dev/null
