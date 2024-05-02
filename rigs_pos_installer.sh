@@ -183,6 +183,18 @@ if [[ $OS == "Ubuntu" ]]; then
         sudo apt-get install -y python3.12-venv python3-dev build-essential cmake libdbus-1-dev
     fi
 fi
+if [[ $OS == "Ubuntu" ]]; then
+    echo ""
+    echo "On Fedora we need to install some build dependencies"
+    echo "Press enter to continue or 'q' to quit"
+    read -r -n 1 input
+     if [[ $input == "q" ]]; then
+        echo "Bye!"
+        exit 1
+    else
+        sudo dnf install -y gcc python3-devel cmake dbus-devel glib2-devel
+    fi
+fi
 echo ""
 echo ""
 echo "Press 'd' to enter demo mode or Enter to continue:"
