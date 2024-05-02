@@ -138,7 +138,9 @@ else
 fi
 if [[ $install_git == "1" ]] && [[ $install_python == "1" ]]; then
     echo "Python and Git are not installed."
-    read -p "Press enter to install them or q to quit"
+    echo "Press enter to install them or q to quit"
+    read -r -n 1 input
+
     if [[ $input == "q" ]]; then
         echo "Bye!"
         exit 1
@@ -148,7 +150,9 @@ if [[ $install_git == "1" ]] && [[ $install_python == "1" ]]; then
     fi
 elif [[ $install_git == "1" ]] && [[ $install_python == "0" ]]; then
     echo "Git is not installed."
-    read -p "Press enter to install it or q to quit"
+    echo "Press enter to install it or q to quit"
+    read -r -n 1 input
+
     if [[ $input == "q" ]]; then
         echo "Bye!"
         exit 1
@@ -157,12 +161,25 @@ elif [[ $install_git == "1" ]] && [[ $install_python == "0" ]]; then
     fi
 elif [[ $install_git == "0" ]] && [[ $install_python == "1" ]]; then
     echo "Python is not installed."
-    read -p "Press enter to install it or q to quit"
+    echo "Press enter to install it or q to quit"
+    read -r -n 1 input
+
     if [[ $input == "q" ]]; then
         echo "Bye!"
         exit 1
     else
         install_python_package "$OS"
+    fi
+fi
+if [[$OS == "Ubuntu"]]; then
+    echo "On Ubuntu we need to install python3.12-venv"
+    echo "Press enter to continue or 'q' to quit"
+    read -r -n 1 input
+     if [[ $input == "q" ]]; then
+        echo "Bye!"
+        exit 1
+    else
+        sudo apt-get install python3.12-venv
     fi
 fi
 echo ""
@@ -200,6 +217,8 @@ fi
 sleep 1
 echo "Creating directories..."
 sleep 3
+
+
 if [ ! -d "$VENV_PATH" ]; then
     python3 -m venv "$VENV_PATH"
 fi
