@@ -94,7 +94,7 @@ install_python_package () {
             sudo pacman -Sy python
             ;;
         "Gentoo")
-            sudo pacman -Sy python
+            sudo emerge -Sy python
             ;;
         *)
             echo "I haven't added support for $OS. Please install Python manually."
@@ -130,12 +130,12 @@ if ! command_exists python3 ; then
     install_python=1
 else
     install_python=0
-
+fi
 if ! command_exists git ; then
     install_git=1
 else
     install_git=0
-
+fi
 if [[ $install_git == "1" ]] && [[ $install_python == "1" ]]; then
     echo "Python and Git are not installed."
     read -p "Press enter to install them or q to quit"
@@ -143,8 +143,8 @@ if [[ $install_git == "1" ]] && [[ $install_python == "1" ]]; then
         echo "Bye!"
         exit 1
     else
-        install_git
-        install_python
+        install_git_package "$OS"
+        install_python_package "$OS"
     fi
 elif [[ $install_git == "1" ]] && [[ $install_python == "0" ]]; then
     echo "Git is not installed."
@@ -153,7 +153,7 @@ elif [[ $install_git == "1" ]] && [[ $install_python == "0" ]]; then
         echo "Bye!"
         exit 1
     else
-        install_git
+        install_git_package "$OS"
     fi
 elif [[ $install_git == "0" ]] && [[ $install_python == "1" ]]; then
     echo "Python is not installed."
@@ -162,7 +162,7 @@ elif [[ $install_git == "0" ]] && [[ $install_python == "1" ]]; then
         echo "Bye!"
         exit 1
     else
-        install_python
+        install_python_package "$OS"
     fi
 fi
 echo ""
