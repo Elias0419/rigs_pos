@@ -183,7 +183,7 @@ if [[ $OS == "Ubuntu" ]]; then
         sudo apt-get install -y python3.12-venv python3-dev build-essential cmake libdbus-1-dev
     fi
 fi
-if [[ $OS == "Fedora Linux" ]]; then
+if [[ "$OS" == "Fedora Linux" ]]; then
     echo ""
     echo "On Fedora we need to install some build dependencies"
     echo "Press enter to continue or 'q' to quit"
