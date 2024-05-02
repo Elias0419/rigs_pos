@@ -1,11 +1,5 @@
 #!/bin/bash
 
-if ! command -v python3 &> /dev/null
-then
-    echo "Python is not installed. Please install Python 3 to continue with the setup."
-    exit 1
-fi
-
 VENV_PATH="$HOME/postestvenv"
 PROJECT_PATH="$HOME/postestdir"
 DEPENDENCIES="
@@ -75,7 +69,104 @@ zope.event==5.0
 zope.interface==6.3
 zope.schema==7.0.1
 "
+if [ -f /etc/os-release ]; then
+    . /etc/os-release
+    OS=$NAME
+else
+    echo "Unable to determine operating system."
+    exit 1
+fi
 
+command_exists () {
+    type "$1" &> /dev/null ;
+}
+
+install_python_package () {
+
+    case "$1" in
+        "Ubuntu"|"Debian")
+            sudo apt-get install -y python3
+            ;;
+        "Fedora"|"CentOS")
+            sudo dnf install -y python3
+            ;;
+        "Arch Linux")
+            sudo pacman -Sy python
+            ;;
+        "Gentoo")
+            sudo pacman -Sy python
+            ;;
+        *)
+            echo "I haven't added support for $OS. Please install Python manually."
+            exit 1
+            ;;
+    esac
+}
+
+install_git_package () {
+
+    case "$1" in
+        "Ubuntu"|"Debian")
+            sudo apt-get install -y git
+            ;;
+        "Fedora"|"CentOS")
+            sudo dnf install -y git
+            ;;
+        "Arch Linux")
+            sudo pacman -Sy git
+            ;;
+        "Gentoo")
+            sudo emerge -Sy git
+            ;;
+        *)
+            echo "I haven't added support for $OS. Please install Git manually."
+            exit 1
+            ;;
+    esac
+}
+
+
+if ! command_exists python3 ; then
+    install_python=1
+else
+    install_python=0
+
+if ! command_exists git ; then
+    install_git=1
+else
+    install_git=0
+
+if [[ $install_git == "1" ]] && [[ $install_python == "1" ]]; then
+    echo "Python and Git are not installed."
+    read -p "Press enter to install them or q to quit"
+    if [[ $input == "q" ]]; then
+        echo "Bye!"
+        exit 1
+    else
+        install_git
+        install_python
+    fi
+elif [[ $install_git == "1" ]] && [[ $install_python == "0" ]]; then
+    echo "Git is not installed."
+    read -p "Press enter to install it or q to quit"
+    if [[ $input == "q" ]]; then
+        echo "Bye!"
+        exit 1
+    else
+        install_git
+    fi
+elif [[ $install_git == "0" ]] && [[ $install_python == "1" ]]; then
+    echo "Python is not installed."
+    read -p "Press enter to install it or q to quit"
+    if [[ $input == "q" ]]; then
+        echo "Bye!"
+        exit 1
+    else
+        install_python
+    fi
+fi
+echo ""
+echo ""
 echo "Press 'd' to enter demo mode or Enter to continue:"
 read -r -n 1 input
 
