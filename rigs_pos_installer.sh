@@ -172,14 +172,14 @@ elif [[ $install_git == "0" ]] && [[ $install_python == "1" ]]; then
     fi
 fi
 if [[ $OS == "Ubuntu" ]]; then
-    echo "On Ubuntu we need to install python3.12-venv and build-essential"
+    echo "On Ubuntu we need to install some build dependencies"
     echo "Press enter to continue or 'q' to quit"
     read -r -n 1 input
      if [[ $input == "q" ]]; then
         echo "Bye!"
         exit 1
     else
-        sudo apt-get install python3.12-venv build-essential
+        sudo apt-get install python3.12-venv build-essential cmake
     fi
 fi
 echo ""
