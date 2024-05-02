@@ -171,7 +171,7 @@ elif [[ $install_git == "0" ]] && [[ $install_python == "1" ]]; then
         install_python_package "$OS"
     fi
 fi
-if [[$OS == "Ubuntu"]]; then
+if [[ $OS == "Ubuntu" ]]; then
     echo "On Ubuntu we need to install python3.12-venv"
     echo "Press enter to continue or 'q' to quit"
     read -r -n 1 input
