@@ -172,6 +172,7 @@ elif [[ $install_git == "0" ]] && [[ $install_python == "1" ]]; then
     fi
 fi
 if [[ $OS == "Ubuntu" ]]; then
+    echo ""
     echo "On Ubuntu we need to install some build dependencies"
     echo "Press enter to continue or 'q' to quit"
     read -r -n 1 input
@@ -179,7 +180,7 @@ if [[ $OS == "Ubuntu" ]]; then
         echo "Bye!"
         exit 1
     else
-        sudo apt-get install python3.12-venv build-essential cmake libdbus-1-dev
+        sudo apt-get install -y python3.12-venv python3-dev build-essential cmake libdbus-1-dev
     fi
 fi
 echo ""
