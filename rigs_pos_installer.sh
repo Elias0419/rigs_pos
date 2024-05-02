@@ -105,7 +105,7 @@ if [[ $demo_mode -eq 1 ]]; then
     echo "Point of Sale Installation Program v0.1 (Demo)"
 else
     echo "Point of Sale Installation Program v0.1"
-endif
+fi
 sleep 1
 echo "Creating directories..."
 sleep 3
