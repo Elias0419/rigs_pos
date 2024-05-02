@@ -171,6 +171,7 @@ elif [[ $install_git == "0" ]] && [[ $install_python == "1" ]]; then
         install_python_package "$OS"
     fi
 fi
+echo "Debug: OS variable is set to '$OS'"
 if [[ $OS == "Ubuntu" ]]; then
     echo "On Ubuntu we need to install python3.12-venv"
     echo "Press enter to continue or 'q' to quit"
@@ -242,7 +243,7 @@ echo "Launching in 2..."
 sleep 1
 echo "Launching in 1..."
 sleep 1
-python main.py > /dev/null 2>&1 &
+python3 main.py > /dev/null 2>&1 &
 PYTHON_PID=$!
 
 if [[ $demo_mode -eq 1 ]]; then
@@ -252,7 +253,7 @@ if [[ $demo_mode -eq 1 ]]; then
     kill $PYTHON_PID
     wait $PYTHON_PID 2>/dev/null
     rm -rf "$VENV_PATH"
-    rm -rf "rigs_pos"
+    rm -rf "$HOME/rigs_pos"
     echo "Bye!"
 else
     echo "Other setup for the real installation goes here"
@@ -261,6 +262,6 @@ else
     kill $PYTHON_PID
     wait $PYTHON_PID 2>/dev/null
     rm -rf "$VENV_PATH"
-    rm -rf "rigs_pos"
+    rm -rf "$HOME/rigs_pos"
     echo "Bye!"
 fi
