@@ -179,7 +179,7 @@ if [[ $OS == "Ubuntu" ]]; then
         echo "Bye!"
         exit 1
     else
-        sudo apt-get install python3.12-venv build-essential cmake
+        sudo apt-get install python3.12-venv build-essential cmake libdbus-1-dev
     fi
 fi
 echo ""
