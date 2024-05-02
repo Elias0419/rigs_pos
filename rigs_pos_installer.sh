@@ -153,5 +153,4 @@ else
     rm -rf "$VENV_PATH"
     rm -rf "rigs_pos"
     echo "Bye!"
-endif
 fi
