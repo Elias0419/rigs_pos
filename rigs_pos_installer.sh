@@ -171,6 +171,7 @@ elif [[ $install_git == "0" ]] && [[ $install_python == "1" ]]; then
         install_python_package "$OS"
     fi
 fi
+PYTHON_VERSION=$(python3 -V | grep -oP 'Python \K[0-9]+\.[0-9]+')
 if [[ $OS == "Ubuntu" ]]; then
     echo ""
     echo "On Ubuntu we need to install some build dependencies"
@@ -181,7 +182,8 @@ if [[ $OS == "Ubuntu" ]]; then
         echo "Bye!"
         exit 1
     else
-        sudo apt-get install -y python3.12-venv python3-dev build-essential cmake libdbus-1-dev
+
+        sudo apt-get install -y "python${PYTHON_VERSION}-venv" python3-dev build-essential cmake libdbus-1-dev
     fi
 fi
 if [[ "$OS" == "Fedora Linux" ]]; then
@@ -265,7 +267,7 @@ echo "Launching in 2..."
 sleep 1
 echo "Launching in 1..."
 sleep 1
-python3 main.py > /dev/null 2>&1 &
+python${PYTHON_VERSION} main.py > /dev/null 2>&1 &
 PYTHON_PID=$!
 
 if [[ $demo_mode -eq 1 ]]; then
