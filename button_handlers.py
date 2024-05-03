@@ -43,6 +43,9 @@ class ButtonHandler:
     def show_time_sheets(self):
         self.app.popup_manager.show_attendence_log()
 
+    def show_add_user(self):
+        self.app.popup_manager.show_add_user_popup()
+
     def on_tool_button_press(self, instance):
         tool_actions = {
             "Clear Order": self.clear_order,
@@ -64,17 +67,10 @@ class ButtonHandler:
 
     def on_admin_button_press(self, instance):
         admin_actions = {
-            # "Clear Order": self.clear_order,
-            # "Open Register": open_cash_drawer,
             "Reporting": self.show_reporting,
             "Time Sheets": self.show_time_sheets,
-            # "Label Printer": self.show_label_printer_view,
-            # "Inventory": self.show_inventory_management_view,
-            # "System": self.show_system_popup,
-            # "Calculator": self.show_calcultor_popup,
-            # "Distrib TEST": self.show_distrib,
-            # "Dual Pane": self.show_dual_pane_mode,
-            # "Admin": self.show_admin_popup,
+            "Users": self.show_add_user,
+
         }
         for action_text, action in admin_actions.items():
             if action_text in instance.text:

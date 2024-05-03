@@ -164,15 +164,30 @@ class Utilities:
             'pin': pin,
             'admin': admin
         }
-        if not os.path.exists(self.app.pin_store):
-            with open(self.app.pin_store, 'w') as file:
-                json.dump([user_details], file, indent=4)
-        else:
-            with open(self.app.pin_store, 'r+') as file:
-                data = json.load(file)
-                data.append(user_details)
-                file.seek(0)
+        temp_file_path = self.app.pin_store + ".tmp"
+        final_file_path = self.app.pin_store
+
+        try:
+            if os.path.exists(final_file_path):
+                with open(final_file_path, 'r') as file:
+                    try:
+                        data = json.load(file)
+                    except json.JSONDecodeError:
+                        data = []
+            else:
+                data = []
+
+            data.append(user_details)
+
+            with open(temp_file_path, 'w') as file:
                 json.dump(data, file, indent=4)
+
+            os.replace(temp_file_path, final_file_path)
+
+        except Exception as e:
+            print(f"[Utilities]: store_user_details\n {e}")
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
 
 
     def validate_pin(self, entered_pin):
