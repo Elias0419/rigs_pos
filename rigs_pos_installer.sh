@@ -275,19 +275,20 @@ sleep 1
 git clone https://github.com/Elias0419/rigs_pos > /dev/null 2>&1
 cd rigs_pos
 mkdir saved_orders
-echo "Application Installed Successfully!"
-echo ""
-sleep 1
-echo "Launching in 3..."
-sleep 1
-echo "Launching in 2..."
-sleep 1
-echo "Launching in 1..."
-sleep 1
-python${PYTHON_VERSION} main.py > /dev/null 2>&1 &
-PYTHON_PID=$!
+
 
 if [[ $demo_mode -eq 1 ]]; then
+    echo "Application Installed Successfully!"
+    echo ""
+    sleep 1
+    echo "Launching in 3..."
+    sleep 1
+    echo "Launching in 2..."
+    sleep 1
+    echo "Launching in 1..."
+    sleep 1
+    python${PYTHON_VERSION} main.py > /dev/null 2>&1 &
+    PYTHON_PID=$!
     echo "That's it!"
     echo ""
     read -p "Press Enter to terminate the program and delete the installation files"
@@ -303,21 +304,24 @@ if [[ $demo_mode -eq 1 ]]; then
 else
     read -p "We're gonna test setting up a systemd service. Press Enter"
     cat <<EOF > $SERVICE_FILE
-    [Unit]
-    Description=RIGS Point of Sale Service
-    After=graphical.target
-    Requires=graphical.target
+[Unit]
+Description=RIGS Point of Sale Service
+After=graphical.target
+Requires=graphical.target
 
-    [Service]
-    WorkingDirectory=/home/rigs/rigs_pos
-    ExecStart=/bin/bash -c 'sleep 10; /home/rigs/0/bin/python3 /home/rigs/rigs_pos/wrapper.py'
-    Restart=on-failure
-    User=rigs
+[Service]
+Environment=/run/user/1000/gdm/Xauthority
+WorkingDirectory=/home/rigs/rigs_pos
+ExecStart=/bin/bash -c 'sleep 10; /home/rigs/0/bin/python3 /home/rigs/rigs_pos/wrapper.py'
+Restart=on-failure
+User=rigs
 
-    [Install]
-    WantedBy=graphical.target
+[Install]
+WantedBy=graphical.target
 EOF
     sudo systemctl enable rigs_pos
+    sudo sed -i 's/^#WaylandEnable=False/WaylandEnable=False/' /etc/gdm3/custom.conf
+
     reboot
 #     echo "Other setup for the real installation goes here"
 #     echo "But for now we're just going to delete the installation files and quit"
