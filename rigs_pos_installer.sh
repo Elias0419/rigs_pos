@@ -296,6 +296,7 @@ if [[ $demo_mode -eq 1 ]]; then
     rm -rf "$HOME/rigs_pos"
     if [ -f "$BACKUP_SOURCES_LIST" ]; then
         mv -f "$BACKUP_SOURCES_LIST" "$SOURCES_LIST"
+    fi
     echo "Bye!"
 else
     echo "Other setup for the real installation goes here"
@@ -308,5 +309,6 @@ else
     rm -rf "$HOME/rigs_pos"
     if [ -f "$BACKUP_SOURCES_LIST" ]; then
         mv -f "$BACKUP_SOURCES_LIST" "$SOURCES_LIST"
+    fi
     echo "Bye!"
 fi
