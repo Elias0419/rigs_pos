@@ -2,6 +2,8 @@
 
 VENV_PATH="$HOME/postestvenv"
 PROJECT_PATH="$HOME/postestdir"
+SOURCES_LIST="/etc/apt/sources.list"
+BACKUP_SOURCES_LIST="${SOURCES_LIST}.backup"
 DEPENDENCIES="
 appdirs==1.4.4
 argcomplete==3.2.2
@@ -188,7 +190,8 @@ if [[ $OS == "Ubuntu" ]]; then
         echo "Bye!"
         exit 1
     else
-        SOURCES_LIST="/etc/apt/sources.list"
+
+        cp ${SOURCES_LIST} ${BACKUP_SOURCES_LIST}
         if grep -q "^deb.*security.ubuntu.com.* universe" "$SOURCES_LIST"; then
             echo ""
         else
@@ -291,6 +294,8 @@ if [[ $demo_mode -eq 1 ]]; then
     wait $PYTHON_PID 2>/dev/null
     rm -rf "$VENV_PATH"
     rm -rf "$HOME/rigs_pos"
+    if [ -f "$BACKUP_SOURCES_LIST" ]; then
+        mv -f "$BACKUP_SOURCES_LIST" "$SOURCES_LIST"
     echo "Bye!"
 else
     echo "Other setup for the real installation goes here"
@@ -301,5 +306,7 @@ else
     wait $PYTHON_PID 2>/dev/null
     rm -rf "$VENV_PATH"
     rm -rf "$HOME/rigs_pos"
+    if [ -f "$BACKUP_SOURCES_LIST" ]; then
+        mv -f "$BACKUP_SOURCES_LIST" "$SOURCES_LIST"
     echo "Bye!"
 fi
