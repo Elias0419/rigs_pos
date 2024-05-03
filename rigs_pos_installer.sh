@@ -322,6 +322,7 @@ EOF
     sudo systemctl enable rigs_pos
     if [[ $OS == "Ubuntu" ]]; then
         sudo sed -i 's/^#WaylandEnable=false/WaylandEnable=false/' /etc/gdm3/custom.conf
+        rm /usr/share/gnome-shell/extensions/ubuntu-appindicators@ubuntu.com/appIndicator.js
     fi
     reboot
 #     echo "Other setup for the real installation goes here"
