@@ -4,6 +4,7 @@ VENV_PATH="$HOME/0"
 PROJECT_PATH="$HOME/postestdir"
 SOURCES_LIST="/etc/apt/sources.list"
 BACKUP_SOURCES_LIST="${SOURCES_LIST}.backup"
+SERVICE_FILE="/etc/systemd/system/rigs_pos.service"
 DEPENDENCIES="
 appdirs==1.4.4
 argcomplete==3.2.2
@@ -299,16 +300,33 @@ if [[ $demo_mode -eq 1 ]]; then
     fi
     echo "Bye!"
 else
-    echo "Other setup for the real installation goes here"
-    echo "But for now we're just going to delete the installation files and quit"
-    echo ""
-    read -p "Press Enter to continue"
-    kill $PYTHON_PID
-    wait $PYTHON_PID 2>/dev/null
-    rm -rf "$VENV_PATH"
-    rm -rf "$HOME/rigs_pos"
-    if [ -f "$BACKUP_SOURCES_LIST" ]; then
-        mv -f "$BACKUP_SOURCES_LIST" "$SOURCES_LIST"
-    fi
-    echo "Bye!"
+    read -p "We're gonna test setting up a systemd service. Press Enter"
+    cat <<EOF > $SERVICE_FILE
+    [Unit]
+    Description=RIGS Point of Sale Service
+    After=graphical.target
+    Requires=graphical.target
+
+    [Service]
+    ExecStart=/bin/sleep 10; /home/rigs/0/bin/python3 /home/rigs/rigs_pos/wrapper.py
+    Restart=on-failure
+    User=rigs
+
+    [Install]
+    WantedBy=graphical.target
+    EOF
+    sudo systemctl enable rigs_pos
+    reboot
+#     echo "Other setup for the real installation goes here"
+#     echo "But for now we're just going to delete the installation files and quit"
+#     echo ""
+#     read -p "Press Enter to continue"
+#     kill $PYTHON_PID
+#     wait $PYTHON_PID 2>/dev/null
+#     rm -rf "$VENV_PATH"
+#     rm -rf "$HOME/rigs_pos"
+#     if [ -f "$BACKUP_SOURCES_LIST" ]; then
+#         mv -f "$BACKUP_SOURCES_LIST" "$SOURCES_LIST"
+#     fi
+#     echo "Bye!"
 fi
