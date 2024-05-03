@@ -72,6 +72,10 @@ zope.event==5.0
 zope.interface==6.3
 zope.schema==7.0.1
 "
+if [ "$USER" != "rigs" ]; then
+  echo "Who are you? Only rigs can run this script."
+  exit 1
+fi
 if [ -f /etc/os-release ]; then
     . /etc/os-release
     OS=$NAME
