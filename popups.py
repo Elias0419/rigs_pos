@@ -101,15 +101,32 @@ class PopupManager:
         data = self.app.utilities.load_attendance_data()
         sessions = self.app.utilities.organize_sessions(data)
         display_data = self.app.utilities.format_sessions_for_display(sessions)
-        layout = MDBoxLayout(orientation="vertical")
+        layout = MDBoxLayout(orientation="vertical", size_hint_y=None)
+        layout.bind(minimum_height=layout.setter('height'))
+
+        def on_checkbox_active(checkbox, value):
+            if value:
+                print(f"Checkbox for {checkbox.line_data} is active.")
+            else:
+                print(f"Checkbox for {checkbox.line_data} is inactive.")
+
         for line in reversed(display_data):
-            label = MDLabel(text=line)
-            layout.add_widget(label)
-        scroll_view = ScrollView(size_hint=(1, 1))
+            h_layout = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=40)
+
+            label = MDLabel(text=line, size_hint=(0.8, None), height=40)
+            checkbox = MDCheckbox(size_hint=(0.2, None), height=40)
+            checkbox.line_data = line  # Bind the data to the checkbox
+            checkbox.bind(active=on_checkbox_active)  # Bind the event
+
+            h_layout.add_widget(label)
+            h_layout.add_widget(checkbox)
+            layout.add_widget(h_layout)
+
+        scroll_view = ScrollView(size_hint=(1, 1), do_scroll_x=False)
         scroll_view.add_widget(layout)
 
         popup = Popup(title="Attendance Log", content=scroll_view,
-                      size_hint=(0.9, 0.9), auto_dismiss=True)
+                    size_hint=(0.9, 0.9), auto_dismiss=True)
         popup.open()
 
     def create_category_popup(self):
@@ -1456,12 +1473,12 @@ class PopupManager:
         tool_buttons = [
             #"Clear Order",
             #"Calculator",
-            "Reporting",
+            #"Reporting",
+            #"Distrib TEST",
+            "Admin",
+            "System",
             "Label Printer",
             "Inventory",
-            "System",
-
-            #"Distrib TEST",
             "Dual Pane",
             "Open Register",
         ]
@@ -1502,6 +1519,53 @@ class PopupManager:
             #pos_hint={"top":1}
         )
         self.tools_popup.open()
+
+    def show_admin_popup(self):
+        # float_layout = FloatLayout()
+        float_layout = GridLayout(orientation="tb-lr",size_hint=(1,1), rows=10, spacing=10)
+        admin_buttons = [
+            #"Clear Order",
+            #"Calculator",
+            "Reporting",
+            "Time Sheets",
+        ]
+
+        # btn_height_hint = 0.2
+        # spacing_hint = 0.01
+        # total_spacing_hint = (len(tool_buttons) - 1) * spacing_hint
+        # total_btns_height = len(tool_buttons) * btn_height_hint
+        # start_y = 1 - (btn_height_hint / 2)
+        # total_height_needed = total_btns_height + total_spacing_hint
+
+        for index, entry in enumerate(admin_buttons):
+            # center_y = start_y - (index * (btn_height_hint + spacing_hint)) / (1 if total_height_needed < 1 else total_height_needed)
+            btn = MDRaisedButton(
+                text=f'[b][size=20]{entry}[/b][/size]',
+                #size_hint=(1, 1),
+                # opacity=0.8,
+                # size_hint_min_x=1,
+                size_hint_y=None,
+                _min_height=75,
+                _min_width=200,
+
+                #height=200,
+                # pos_hint={"center_x": 0.5, "center_y": center_y},
+                on_press=self.app.button_handler.on_admin_button_press,
+            )
+            float_layout.add_widget(btn)
+
+        self.admin_popup = Popup(
+            content=float_layout,
+            size_hint=(0.2, 0.8),
+            title="",
+            background="images/transparent.png",
+            background_color=(0, 0, 0, 0),
+            separator_height=0,
+            pos_hint={"center_x":0.9, "center_y":0.22},
+            overlay_color=(0,0,0,0)
+            #pos_hint={"top":1}
+        )
+        self.admin_popup.open()
 
     def show_custom_item_popup(self, barcode="01234567890"):
 
