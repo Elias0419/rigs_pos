@@ -39,6 +39,8 @@ from kivymd.toast import toast
 from kivy.uix.anchorlayout import AnchorLayout
 from kivymd.uix.floatlayout import MDFloatLayout
 from kivy.graphics import Color, Rectangle
+from kivy.properties import ColorProperty
+
 from kivymd.uix.card import MDCard
 from PIL import Image as PILImage
 class PopupManager:
@@ -128,6 +130,38 @@ class PopupManager:
         popup = Popup(title="Attendance Log", content=scroll_view,
                     size_hint=(0.9, 0.9), auto_dismiss=True)
         popup.open()
+
+    def show_add_user_popup(self):
+        layout = MDBoxLayout(orientation="vertical")
+        name_input = TextInput(hint_text="Name")
+        pin_input = TextInput(hint_text="PIN (4 Digits)")
+        button_layout = GridLayout(orientation="lr-tb", cols=2)
+        buttons_container = MDBoxLayout(orientation="horizontal", size_hint_x=0.7)
+        checkbox_container = MDBoxLayout(orientation="horizontal", size_hint_x=0.3)
+        confirm_button = MDFlatButton(text="Confirm", size_hint_x=0.3)
+        cancel_button = MDFlatButton(text="Cancel", size_hint_x=0.3)
+        buttons_container.add_widget(confirm_button)
+        buttons_container.add_widget(cancel_button)
+        admin_label = MDLabel(text="Admin?", size_hint_x=0.1)
+        admin_checkbox = CustomCheckbox(_no_ripple_effect=True, size_hint_x=0.1)
+        checkbox_container.add_widget(admin_label)
+        checkbox_container.add_widget(admin_checkbox)
+        button_layout.add_widget(buttons_container)
+        button_layout.add_widget(checkbox_container)
+        # button_layout.add_widget(admin_label)
+        # button_layout.add_widget(admin_checkbox)
+        layout.add_widget(name_input)
+        layout.add_widget(pin_input)
+        layout.add_widget(button_layout)
+        self.add_user_popup = Popup(
+            content=layout,
+            title="Add User",
+            overlay_color=(0,0,0,0),
+            separator_height=0,
+            size_hint=(0.2,0.2)
+
+            )
+        self.add_user_popup.open()
 
     def create_category_popup(self):
         self.selected_categories = []
@@ -1528,6 +1562,7 @@ class PopupManager:
             #"Calculator",
             "Reporting",
             "Time Sheets",
+            "Users"
         ]
 
         # btn_height_hint = 0.2
@@ -3053,3 +3088,12 @@ class TouchableMDBoxLayout(BoxLayout):
             self.checkbox.active = not self.checkbox.active
             return True
         return super(TouchableMDBoxLayout, self).on_touch_down(touch)
+
+class CustomCheckbox(MDCheckbox):
+    active_color = ColorProperty([0, 0.5, 0.5, 1])
+
+    def on_active(self, instance, value):
+        if value:
+            self.md_bg_color = self.active_color
+        else:
+            self.md_bg_color = self.theme_cls.primary_light
