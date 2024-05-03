@@ -331,7 +331,14 @@ class Utilities:
                     duration = clock_out_time - clock_in_time
                     hours, remainder = divmod(duration.total_seconds(), 3600)
                     minutes = remainder // 60
-                    formatted_session = f"{clock_in_time.strftime('%m/%d/%Y')} {user} {clock_in_time.strftime('%H:%M')} {clock_out_time.strftime('%H:%M')} {int(hours)}h {int(minutes)}m"
+                    formatted_session = {
+                        'date': clock_in_time.strftime('%m/%d/%Y'),
+                        'name': user,
+                        'clock_in': clock_in_time.strftime('%H:%M'),
+                        'clock_out': clock_out_time.strftime('%H:%M'),
+                        'hours': int(hours),
+                        'minutes': int(minutes)
+                    }
                     formatted_data.append(formatted_session)
         return formatted_data
 
