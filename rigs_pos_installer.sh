@@ -308,13 +308,13 @@ else
     Requires=graphical.target
 
     [Service]
-    ExecStart=/bin/sleep 10; /home/rigs/0/bin/python3 /home/rigs/rigs_pos/wrapper.py
+    ExecStart=/bin/bash -c 'sleep 10; /home/rigs/0/bin/python3 /home/rigs/rigs_pos/wrapper.py'
     Restart=on-failure
     User=rigs
 
     [Install]
     WantedBy=graphical.target
-    EOF
+EOF
     sudo systemctl enable rigs_pos
     reboot
 #     echo "Other setup for the real installation goes here"
