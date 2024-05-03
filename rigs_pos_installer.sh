@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VENV_PATH="$HOME/postestvenv"
+VENV_PATH="$HOME/0"
 PROJECT_PATH="$HOME/postestdir"
 SOURCES_LIST="/etc/apt/sources.list"
 BACKUP_SOURCES_LIST="${SOURCES_LIST}.backup"
