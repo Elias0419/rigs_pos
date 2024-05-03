@@ -76,6 +76,12 @@ else
     echo "Unable to determine operating system."
     exit 1
 fi
+if [ "$(id -u)" != "0" ]; then
+    echo "This script requires superuser access."
+    echo "Please re-run this script with 'sudo'."
+    exit 1
+fi
+
 
 command_exists () {
     type "$1" &> /dev/null ;
@@ -182,7 +188,13 @@ if [[ $OS == "Ubuntu" ]]; then
         echo "Bye!"
         exit 1
     else
-
+        SOURCES_LIST="/etc/apt/sources.list"
+        if grep -q "^deb.*security.ubuntu.com.* universe" "$SOURCES_LIST"; then
+            echo ""
+        else
+            sed -i '/^deb.*security.ubuntu.com.* main restricted$/s/main restricted/main restricted universe/' "$SOURCES_LIST"
+        fi
+        sudo apt-get update
         sudo apt-get install -y "python${PYTHON_VERSION}-venv" python3-dev build-essential cmake libdbus-1-dev libglib2.0-dev
     fi
 fi
