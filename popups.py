@@ -138,14 +138,14 @@ class PopupManager:
         button_layout = GridLayout(orientation="lr-tb", cols=2)
         buttons_container = MDBoxLayout(orientation="horizontal", size_hint_x=0.7)
         checkbox_container = MDBoxLayout(orientation="horizontal", size_hint_x=0.3)
-        confirm_button = MDFlatButton(text="Confirm", size_hint_x=0.3)
-        cancel_button = MDFlatButton(text="Cancel", size_hint_x=0.3)
+        confirm_button = MDFlatButton(text="Confirm", on_press=lambda x: self.on_add_user_confirm(name_input.text, pin_input.text, self.admin_checkbox.active), size_hint_x=1)
+        cancel_button = MDFlatButton(text="Cancel", size_hint_x=1)
         buttons_container.add_widget(confirm_button)
         buttons_container.add_widget(cancel_button)
         admin_label = MDLabel(text="Admin?", size_hint_x=0.1)
-        admin_checkbox = CustomCheckbox(_no_ripple_effect=True, size_hint_x=0.1)
+        self.admin_checkbox = CustomCheckbox(_no_ripple_effect=True, size_hint_x=0.1)
         checkbox_container.add_widget(admin_label)
-        checkbox_container.add_widget(admin_checkbox)
+        checkbox_container.add_widget(self.admin_checkbox)
         button_layout.add_widget(buttons_container)
         button_layout.add_widget(checkbox_container)
         # button_layout.add_widget(admin_label)
@@ -162,6 +162,12 @@ class PopupManager:
 
             )
         self.add_user_popup.open()
+
+    def on_add_user_confirm(self, name, pin, admin):
+        self.app.utilities.store_user_details(name, pin, admin)
+        self.add_user_popup.dismiss()
+        toast(f"Added {name}")
+
 
     def create_category_popup(self):
         self.selected_categories = []
