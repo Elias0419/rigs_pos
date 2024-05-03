@@ -101,35 +101,69 @@ class PopupManager:
 
     def show_attendence_log(self):
         data = self.app.utilities.load_attendance_data()
+        # print(data)
         sessions = self.app.utilities.organize_sessions(data)
         display_data = self.app.utilities.format_sessions_for_display(sessions)
+        container = GridLayout(orientation="tb-lr", rows=3)
+        header = GridLayout(orientation="lr-tb", cols=8, size_hint_y=None, height=20)
+        label1 = MDLabel(text="test1")
+        label2 = MDLabel(text="test2")
+        label3 = MDLabel(text="test3")
+        header.add_widget(label1)
+        header.add_widget(label2)
+        header.add_widget(label3)
+        footer = GridLayout(orientation="lr-tb", cols=8,  size_hint_y=None, height=20)
+        button1 = MDRaisedButton(text="test1")
+        button2 = MDRaisedButton(text="test2")
+        button3 = MDRaisedButton(text="test3")
+        footer.add_widget(button1)
+        footer.add_widget(button2)
+        footer.add_widget(button3)
         layout = MDBoxLayout(orientation="vertical", size_hint_y=None)
         layout.bind(minimum_height=layout.setter('height'))
 
         def on_checkbox_active(checkbox, value):
             if value:
-                print(f"Checkbox for {checkbox.line_data} is active.")
+                print("Checkbox for", checkbox.line_data['name'], "is active")
             else:
-                print(f"Checkbox for {checkbox.line_data} is inactive.")
+                print("Checkbox for", checkbox.line_data['name'], "is inactive")
 
-        for line in reversed(display_data):
-            h_layout = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=40)
+        for session in reversed(display_data):
+            h_layout = GridLayout(orientation="lr-tb", cols=8, size_hint_y=None, height=40)
 
-            label = MDLabel(text=line, size_hint=(0.8, None), height=40)
-            checkbox = MDCheckbox(size_hint=(0.2, None), height=40)
-            checkbox.line_data = line  # Bind the data to the checkbox
-            checkbox.bind(active=on_checkbox_active)  # Bind the event
+            name_label = MDLabel(text=session['name'])
+            date_label = MDLabel(text=session['date'])
+            time_label = MDLabel(text=f"{session['clock_in']} - {session['clock_out']}")
+            hours_label = MDLabel(text=f"{session['hours']}h {session['minutes']}m")
 
-            h_layout.add_widget(label)
-            h_layout.add_widget(checkbox)
+            for _ in range(3):
+                checkbox = MDCheckbox()
+                checkbox.line_data = session
+                checkbox.bind(active=on_checkbox_active)
+                h_layout.add_widget(checkbox)
+
+            action_button = Button(text='Edit/Delete')
+            action_button.bind(on_press=lambda instance: self.edit_session(session))
+
+            h_layout.add_widget(name_label)
+            h_layout.add_widget(date_label)
+            h_layout.add_widget(time_label)
+            h_layout.add_widget(hours_label)
+            h_layout.add_widget(action_button)
+
             layout.add_widget(h_layout)
 
         scroll_view = ScrollView(size_hint=(1, 1), do_scroll_x=False)
         scroll_view.add_widget(layout)
-
-        popup = Popup(title="Attendance Log", content=scroll_view,
+        container.add_widget(header)
+        container.add_widget(scroll_view)
+        container.add_widget(footer)
+        popup = Popup(title="Attendance Log", content=container,
                     size_hint=(0.9, 0.9), auto_dismiss=True)
         popup.open()
+
+    def edit_session(self, session):
+        print("Edit/Delete session for", session['name'])
 
     def show_add_user_popup(self):
         layout = MDBoxLayout(orientation="vertical")
