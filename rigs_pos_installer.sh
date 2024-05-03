@@ -321,7 +321,7 @@ WantedBy=graphical.target
 EOF
     sudo systemctl enable rigs_pos
     if [[ $OS == "Ubuntu" ]]; then
-        sudo sed -i 's/^#WaylandEnable=False/WaylandEnable=False/' /etc/gdm3/custom.conf
+        sudo sed -i 's/^#WaylandEnable=false/WaylandEnable=false/' /etc/gdm3/custom.conf
     fi
     reboot
 #     echo "Other setup for the real installation goes here"
