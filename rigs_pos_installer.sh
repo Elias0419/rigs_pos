@@ -183,7 +183,7 @@ if [[ $OS == "Ubuntu" ]]; then
         exit 1
     else
 
-        sudo apt-get install -y "python${PYTHON_VERSION}-venv" python3-dev build-essential cmake libdbus-1-dev
+        sudo apt-get install -y "python${PYTHON_VERSION}-venv" python3-dev build-essential cmake libdbus-1-dev libglib2.0-dev
     fi
 fi
 if [[ "$OS" == "Fedora Linux" ]]; then
