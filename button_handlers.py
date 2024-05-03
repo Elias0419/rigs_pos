@@ -37,6 +37,12 @@ class ButtonHandler:
     def show_dual_pane_mode(self):
         self.app.popup_manager.show_dual_inventory_and_label_managers()
 
+    def show_admin_popup(self):
+        self.app.popup_manager.show_admin_popup()
+
+    def show_time_sheets(self):
+        self.app.popup_manager.show_attendence_log()
+
     def on_tool_button_press(self, instance):
         tool_actions = {
             "Clear Order": self.clear_order,
@@ -48,12 +54,34 @@ class ButtonHandler:
             "Calculator": self.show_calcultor_popup,
             "Distrib TEST": self.show_distrib,
             "Dual Pane": self.show_dual_pane_mode,
+            "Admin": self.show_admin_popup,
         }
         for action_text, action in tool_actions.items():
             if action_text in instance.text:
                 action()
                 break
         self.app.popup_manager.tools_popup.dismiss()
+
+    def on_admin_button_press(self, instance):
+        admin_actions = {
+            # "Clear Order": self.clear_order,
+            # "Open Register": open_cash_drawer,
+            "Reporting": self.show_reporting,
+            "Time Sheets": self.show_time_sheets,
+            # "Label Printer": self.show_label_printer_view,
+            # "Inventory": self.show_inventory_management_view,
+            # "System": self.show_system_popup,
+            # "Calculator": self.show_calcultor_popup,
+            # "Distrib TEST": self.show_distrib,
+            # "Dual Pane": self.show_dual_pane_mode,
+            # "Admin": self.show_admin_popup,
+        }
+        for action_text, action in admin_actions.items():
+            if action_text in instance.text:
+                action()
+                break
+        self.app.popup_manager.admin_popup.dismiss()
+
 
     def handle_numeric_input(self, input_field, instance_text):
         current_input = input_field.text.replace(".", "").replace("[b]", "").replace("[/b]", "").replace("[size=20]", "").replace("[/size]", "")#.lstrip("0")
