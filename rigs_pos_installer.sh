@@ -320,8 +320,9 @@ User=rigs
 WantedBy=graphical.target
 EOF
     sudo systemctl enable rigs_pos
-    sudo sed -i 's/^#WaylandEnable=False/WaylandEnable=False/' /etc/gdm3/custom.conf
-
+    if [[ $OS == "Ubuntu" ]]; then
+        sudo sed -i 's/^#WaylandEnable=False/WaylandEnable=False/' /etc/gdm3/custom.conf
+    fi
     reboot
 #     echo "Other setup for the real installation goes here"
 #     echo "But for now we're just going to delete the installation files and quit"
