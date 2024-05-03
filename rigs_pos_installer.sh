@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VENV_PATH="$HOME/0"
+VENV_PATH="/home/rigs/0"
 PROJECT_PATH="$HOME/postestdir"
 SOURCES_LIST="/etc/apt/sources.list"
 BACKUP_SOURCES_LIST="${SOURCES_LIST}.backup"
@@ -309,6 +309,7 @@ else
     Requires=graphical.target
 
     [Service]
+    WorkingDirectory=/home/rigs/rigs_pos
     ExecStart=/bin/bash -c 'sleep 10; /home/rigs/0/bin/python3 /home/rigs/rigs_pos/wrapper.py'
     Restart=on-failure
     User=rigs
