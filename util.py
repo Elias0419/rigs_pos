@@ -34,7 +34,8 @@ from popups import PopupManager, FinancialSummaryWidget, Calculator
 from receipt_printer import ReceiptPrinter
 from wrapper import Wrapper
 from distributor_manager import DistPopup, DistView
-
+import sqlite3
+from sqlite3 import Error
 
 class Utilities:
     def __init__(self, ref):
@@ -58,7 +59,11 @@ class Utilities:
     def instantiate_modules(self):
         self.initialize_receipt_printer()
         self.app.barcode_scanner = BarcodeScanner(self.app)
-        self.app.db_manager = DatabaseManager("inventory.db", self.app)
+        try:
+            self.app.db_manager = DatabaseManager("inventory.db", self.app)
+        except:
+            self.create_inventory_db()
+            self.app.db_manager = DatabaseManager("inventory.db", self.app)
         self.app.financial_summary = FinancialSummaryWidget(self.app)
         self.app.order_manager = OrderManager(self.app)
         self.app.history_manager = HistoryView(self.app)
@@ -78,6 +83,13 @@ class Utilities:
         self.app.categories = self.initialize_categories()
         self.app.barcode_cache = self.initialize_barcode_cache()
         self.app.inventory_cache = self.initialize_inventory_cache()
+
+    def create_inventory_db(self, db_file='inventory.db'):
+        try:
+            conn = sqlite3.connect(db_file)
+            conn.close()
+        except Error as e:
+            print(f"Error while connecting to SQLite: {e}")
 
     def initialize_receipt_printer(self):
         self.app.receipt_printer = ReceiptPrinter(
