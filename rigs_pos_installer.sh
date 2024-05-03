@@ -216,7 +216,8 @@ if [[ "$OS" == "Fedora Linux" ]]; then
     fi
 fi
 echo ""
-echo ""
+echo "WARNING: IF YOU ARE HERE TESTING THIS PLEASE CHOOSE DEMO MODE BELOW"
+echo "Press ctrl-c to quit now or:"
 echo "Press 'd' to enter demo mode or Enter to continue:"
 echo ""
 read -r -n 1 input
