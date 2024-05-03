@@ -139,7 +139,7 @@ class PopupManager:
         buttons_container = MDBoxLayout(orientation="horizontal", size_hint_x=0.7)
         checkbox_container = MDBoxLayout(orientation="horizontal", size_hint_x=0.3)
         confirm_button = MDFlatButton(text="Confirm", on_press=lambda x: self.on_add_user_confirm(name_input.text, pin_input.text, self.admin_checkbox.active), size_hint_x=1)
-        cancel_button = MDFlatButton(text="Cancel", size_hint_x=1)
+        cancel_button = MDFlatButton(text="Cancel", size_hint_x=1, on_press=lambda x: self.add_user_popup.dismiss())
         buttons_container.add_widget(confirm_button)
         buttons_container.add_widget(cancel_button)
         admin_label = MDLabel(text="Admin?", size_hint_x=0.1)
