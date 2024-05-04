@@ -28,6 +28,7 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.image import Image
 import os
 import time
+import json
 from datetime import datetime
 from functools import partial
 from kivymd.uix.gridlayout import MDGridLayout
@@ -101,69 +102,112 @@ class PopupManager:
 
     def show_attendence_log(self):
         data = self.app.utilities.load_attendance_data()
+        users = self.read_names_from_json()
         # print(data)
         sessions = self.app.utilities.organize_sessions(data)
         display_data = self.app.utilities.format_sessions_for_display(sessions)
         container = GridLayout(orientation="tb-lr", rows=3)
-        header = GridLayout(orientation="lr-tb", cols=8, size_hint_y=None, height=20)
-        label1 = MDLabel(text="test1")
-        label2 = MDLabel(text="test2")
-        label3 = MDLabel(text="test3")
+        header = GridLayout(orientation="lr-tb", cols=9, size_hint_y=None, height=40, padding=10, spacing=10)
+        label1 = MDLabel(text="Cash", halign="center",size_hint_x=None, width=100)
+        label2 = MDLabel(text="DD", halign="center", size_hint_x=None, width=100)
+        label3 = MDLabel(text="Delete", halign="center", size_hint_x=None, width=100)
+        for i in range(4):
+            globals()[f'_blank{i}'] = MDLabel()
+            header.add_widget(globals()[f'_blank{i}'])
         header.add_widget(label1)
         header.add_widget(label2)
         header.add_widget(label3)
-        footer = GridLayout(orientation="lr-tb", cols=8,  size_hint_y=None, height=20)
-        button1 = MDRaisedButton(text="test1")
-        button2 = MDRaisedButton(text="test2")
-        button3 = MDRaisedButton(text="test3")
-        footer.add_widget(button1)
-        footer.add_widget(button2)
-        footer.add_widget(button3)
-        layout = MDBoxLayout(orientation="vertical", size_hint_y=None)
+        _2blank = MDLabel(size_hint_x=None, width=60)
+        _2blank2 = MDLabel(size_hint_x=None, width=100)
+        header.add_widget(_2blank)
+        header.add_widget(_2blank2)
+        footer = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=60, spacing=10, padding=10)
+        # button1 = MDRaisedButton(text="test1")
+        # button2 = MDRaisedButton(text="test2")
+        # button3 = MDRaisedButton(text="test3")
+        # footer.add_widget(button1)
+        # footer.add_widget(button2)
+        # footer.add_widget(button3)
+
+        layout = MDBoxLayout(orientation="vertical", size_hint_y=None, spacing=10, padding=10)
         layout.bind(minimum_height=layout.setter('height'))
 
-        def on_checkbox_active(checkbox, value):
-            if value:
-                print("Checkbox for", checkbox.line_data['name'], "is active")
-            else:
-                print("Checkbox for", checkbox.line_data['name'], "is inactive")
+        def update_display(user):
+            layout.clear_widgets()
+            filtered_data = [session for session in display_data if session['name'] == user]
+            for session in reversed(filtered_data):
+                h_layout = GridLayout(orientation="lr-tb", cols=10, size_hint_y=None, height=40)
 
-        for session in reversed(display_data):
-            h_layout = GridLayout(orientation="lr-tb", cols=8, size_hint_y=None, height=40)
+                name_label = MDLabel(text=session['name'])
+                date_label = MDLabel(text=session['date'])
+                time_label = MDLabel(text=f"{session['clock_in']} - {session['clock_out']}")
+                hours_label = MDLabel(text=f"{session['hours']}h {session['minutes']}m")
 
-            name_label = MDLabel(text=session['name'])
-            date_label = MDLabel(text=session['date'])
-            time_label = MDLabel(text=f"{session['clock_in']} - {session['clock_out']}")
-            hours_label = MDLabel(text=f"{session['hours']}h {session['minutes']}m")
+                # Create unique checkbox instances for each session
+                cash_checkbox = CustomCheckbox(size_hint_x=None, width=100, _no_ripple_effect=True)
+                dd_checkbox = CustomCheckbox(size_hint_x=None, width=100, _no_ripple_effect=True)
+                delete_checkbox = CustomCheckbox(size_hint_x=None, width=100, _no_ripple_effect=True)
 
-            for _ in range(3):
-                checkbox = MDCheckbox()
-                checkbox.line_data = session
-                checkbox.bind(active=on_checkbox_active)
-                h_layout.add_widget(checkbox)
+                notes_button = Button(text='Notes', size_hint_x=None, width=60)
+                complete_button = Button(
+                    text='Complete',
+                    on_press=lambda x, session=session, cash_checkbox=cash_checkbox, dd_checkbox=dd_checkbox, delete_checkbox=delete_checkbox: self.handle_time_sheet_complete(
+                        session_id=session['session_id'],
+                        date=session['date'],
+                        name=session['name'],
+                        clock_in=session['clock_in'],
+                        clock_out=session['clock_out'],
+                        hours=session['hours'],
+                        minutes=session['minutes'],
+                        cash=cash_checkbox.active,
+                        dd=dd_checkbox.active,
+                        delete=delete_checkbox.active,
+                    ),
+                    size_hint_x=None,
+                    width=100
+                )
 
-            action_button = Button(text='Edit/Delete')
-            action_button.bind(on_press=lambda instance: self.edit_session(session))
+                h_layout.add_widget(name_label)
+                h_layout.add_widget(date_label)
+                h_layout.add_widget(time_label)
+                h_layout.add_widget(hours_label)
+                h_layout.add_widget(cash_checkbox)
+                h_layout.add_widget(dd_checkbox)
+                h_layout.add_widget(delete_checkbox)
+                h_layout.add_widget(notes_button)
+                h_layout.add_widget(MDLabel(size_hint_x=None, width=20))
+                h_layout.add_widget(complete_button)
+                layout.add_widget(h_layout)
 
-            h_layout.add_widget(name_label)
-            h_layout.add_widget(date_label)
-            h_layout.add_widget(time_label)
-            h_layout.add_widget(hours_label)
-            h_layout.add_widget(action_button)
-
-            layout.add_widget(h_layout)
+        for user in users:
+            button = MDRaisedButton(text=str(user), size_hint_x=None, width=200, size_hint_y=1)
+            button.bind(on_press=lambda x, user=user: update_display(user))
+            footer.add_widget(button)
 
         scroll_view = ScrollView(size_hint=(1, 1), do_scroll_x=False)
         scroll_view.add_widget(layout)
         container.add_widget(header)
         container.add_widget(scroll_view)
         container.add_widget(footer)
-        popup = Popup(title="Attendance Log", content=container,
-                    size_hint=(0.9, 0.9), auto_dismiss=True)
+        popup = Popup(title="Attendance Log",
+                    content=container,
+                    size_hint=(0.9, 0.9),
+                    overlay_color=(0,0,0,0),
+                    separator_height=0.5,
+                    )
         popup.open()
 
-    def edit_session(self, session):
-        print("Edit/Delete session for", session['name'])
+    def read_names_from_json(self):
+        try:
+            with open(self.app.pin_store, 'r') as file:
+                data = json.load(file)
+            return [item['name'] for item in data]
+        except:
+            return []
+
+    def handle_time_sheet_complete(self, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, delete):
+        print(session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, delete)
+
 
     def show_add_user_popup(self):
         layout = MDBoxLayout(orientation="vertical")
