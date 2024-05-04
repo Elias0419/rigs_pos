@@ -26,7 +26,32 @@ class DatabaseManager:
         self.create_order_history_table()
         self.create_modified_orders_table()
         self.create_dist_table()
+        self.create_payment_history_table()
 
+
+    def create_payment_history_table(self):
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """CREATE TABLE IF NOT EXISTS payments (
+                                timestamp TEXT,
+                                session_id TEXT,
+                                date TEXT,
+                                name TEXT,
+                                clock_in TEXT,
+                                clock_out TEXT,
+                                hours TEXT,
+                                minutes TEXT,
+                                cash BOOLEAN,
+                                dd BOOLEAN
+                            )"""
+            )
+            conn.commit()
+        except sqlite3.Error as e:
+            print(e)
+        finally:
+            conn.close()
 
     def create_items_table(self):
         conn = self._get_connection()
@@ -554,6 +579,52 @@ class DatabaseManager:
         conn = self._get_connection()
         if conn:
             conn.close()
+
+    def add_session_to_payment_history(self, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd):
+        conn = self._get_connection()
+        timestamp = datetime.now()
+        try:
+            cursor = conn.cursor()
+
+            cursor.execute(
+                "INSERT INTO payments (timestamp, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (timestamp, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd),
+            )
+            conn.commit()
+        except sqlite3.Error as e:
+            print(e)
+            return False
+        finally:
+            conn.close()
+        return True
+
+    def get_sessions(self, session_id=None, name=None):
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            if session_id:
+                cursor.execute(
+                    "SELECT * FROM payments WHERE session_id = ?",
+                    (session_id,)
+                )
+            elif name:
+                cursor.execute(
+                    "SELECT * FROM payments WHERE name = ?",
+                    (name,)
+                )
+            else:
+                cursor.execute("SELECT * FROM payments")
+
+            sessions = cursor.fetchall()
+            return sessions
+        except sqlite3.Error as e:
+            print(e)
+            return None
+        finally:
+            conn.close()
+
+
+
 if __name__=="__main__":
     db=DatabaseManager("inventory.db", None)
     res=db.get_all_items()
