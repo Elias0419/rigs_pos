@@ -44,7 +44,8 @@ class DatabaseManager:
                                 hours TEXT,
                                 minutes TEXT,
                                 cash BOOLEAN,
-                                dd BOOLEAN
+                                dd BOOLEAN,
+                                notes TEXT
                             )"""
             )
             conn.commit()
@@ -580,15 +581,15 @@ class DatabaseManager:
         if conn:
             conn.close()
 
-    def add_session_to_payment_history(self, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd):
+    def add_session_to_payment_history(self, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, notes):
         conn = self._get_connection()
         timestamp = datetime.now()
         try:
             cursor = conn.cursor()
 
             cursor.execute(
-                "INSERT INTO payments (timestamp, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (timestamp, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd),
+                "INSERT INTO payments (timestamp, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, >)",
+            (timestamp, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, notes),
             )
             conn.commit()
         except sqlite3.Error as e:
