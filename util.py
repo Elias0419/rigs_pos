@@ -288,6 +288,19 @@ class Utilities:
                 file.seek(0)
                 json.dump(log, file, indent=4)
 
+    def delete_session_from_log(self, session_id):
+        try:
+            with open(self.app.attendance_log, 'r+') as file:
+                log = json.load(file)
+
+                updated_log = [entry for entry in log if entry['session_id'] != session_id]
+
+                file.seek(0)
+                file.truncate()
+                json.dump(updated_log, file, indent=4)
+        except Exception as e:
+            print(f"Utilities: delete_session_from_log\n{e}")
+
     def extract_session_id(self, filename):
         with open(filename, 'r') as file:
             data = json.load(file)
