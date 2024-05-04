@@ -258,6 +258,8 @@ class Utilities:
             session_id = self.extract_session_id(self.clock_in_file)
             os.remove(self.clock_in_file)
             self.update_attendance_log(self.app.attendance_log, self.app.logged_in_user["name"], "clock_out", session_id=session_id)
+        self.app.popup_manager.clock_out_popup.dismiss()
+        self.app.utilities.trigger_guard_and_lock()
 
     def auto_clock_out(self, dt):
         if os.path.exists(self.clock_in_file):
