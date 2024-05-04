@@ -100,10 +100,9 @@ class PopupManager:
         self.clock_out_popup.open()
 
 
-    def show_attendence_log(self):
+    def show_attendence_log(self, filter=False, filter_name=None):
         data = self.app.utilities.load_attendance_data()
         users = self.read_names_from_json()
-        # print(data)
         sessions = self.app.utilities.organize_sessions(data)
         display_data = self.app.utilities.format_sessions_for_display(sessions)
         container = GridLayout(orientation="tb-lr", rows=3)
@@ -122,12 +121,7 @@ class PopupManager:
         header.add_widget(_2blank)
         header.add_widget(_2blank2)
         footer = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=60, spacing=10, padding=10)
-        # button1 = MDRaisedButton(text="test1")
-        # button2 = MDRaisedButton(text="test2")
-        # button3 = MDRaisedButton(text="test3")
-        # footer.add_widget(button1)
-        # footer.add_widget(button2)
-        # footer.add_widget(button3)
+
 
         layout = MDBoxLayout(orientation="vertical", size_hint_y=None, spacing=10, padding=10)
         layout.bind(minimum_height=layout.setter('height'))
@@ -143,7 +137,6 @@ class PopupManager:
                 time_label = MDLabel(text=f"{session['clock_in']} - {session['clock_out']}")
                 hours_label = MDLabel(text=f"{session['hours']}h {session['minutes']}m")
 
-                # Create unique checkbox instances for each session
                 cash_checkbox = CustomCheckbox(size_hint_x=None, width=100, _no_ripple_effect=True)
                 dd_checkbox = CustomCheckbox(size_hint_x=None, width=100, _no_ripple_effect=True)
                 delete_checkbox = CustomCheckbox(size_hint_x=None, width=100, _no_ripple_effect=True)
@@ -189,13 +182,15 @@ class PopupManager:
         container.add_widget(header)
         container.add_widget(scroll_view)
         container.add_widget(footer)
-        popup = Popup(title="Attendance Log",
+        self.attendence_log_popup = Popup(title="Attendance Log",
                     content=container,
                     size_hint=(0.9, 0.9),
                     overlay_color=(0,0,0,0),
                     separator_height=0.5,
                     )
-        popup.open()
+        self.attendence_log_popup.open()
+        if filter:
+            update_display(filter_name)
 
     def read_names_from_json(self):
         try:
@@ -206,8 +201,68 @@ class PopupManager:
             return []
 
     def handle_time_sheet_complete(self, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, delete):
-        print(session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, delete)
+        if delete:
+            self.open_delete_session_popup(session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd)
+        else:
+            self.open_submit_session_popup(session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd)
 
+    def open_submit_session_popup(self, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd):
+        layout = MDBoxLayout(orientation="vertical")
+        card = MDCard()
+        text = MDLabel(text=f"{name}\n{date}\n{clock_in}-{clock_out}\n\nAdded to the Payment History Database!", halign="center")
+        button_layout = GridLayout(orientation="lr-tb", cols=1, size_hint_y=None, height=60)
+        dismiss_button = MDFlatButton(text="Dismiss", size_hint=(1,1), on_press=lambda x: self.submit_session_popup.dismiss())
+
+        button_layout.add_widget(dismiss_button)
+        # button_layout.add_widget(spacer)
+        # button_layout.add_widget(cancel_button)
+        card.add_widget(text)
+        layout.add_widget(card)
+        layout.add_widget(button_layout)
+        self.submit_session_popup = Popup(
+            title="",
+            overlay_color=(0,0,0,0),
+            separator_height=0,
+            content=layout,
+            size_hint=(0.4,0.25)
+            )
+        self.submit_session_popup.open()
+
+    def open_delete_session_popup(self, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd):
+        layout = MDBoxLayout(orientation="vertical")
+        card = MDCard()
+        text = MDLabel(text=f"I'm going to delete the user session\n{session_id}\n{name}\n{date}\n{clock_in}-{clock_out}\n\nIf you want to save it to the payment history database instead, go back and uncheck 'delete'", halign="center")
+        button_layout = GridLayout(orientation="lr-tb", cols=3, size_hint_y=None, height=60)
+        delete_button = MDFlatButton(text="Confirm Deletion", size_hint=(1,1), on_press=lambda x: self.delete_session(session_id, name, delete=True))
+        spacer = MDLabel(size_hint_x=None,width=500, size_hint_y=1)
+        cancel_button = MDFlatButton(text="Go Back", size_hint=(1,1), on_press=lambda x: self.delete_session_popup.dismiss())
+        button_layout.add_widget(delete_button)
+        button_layout.add_widget(spacer)
+        button_layout.add_widget(cancel_button)
+        card.add_widget(text)
+        layout.add_widget(card)
+        layout.add_widget(button_layout)
+        self.delete_session_popup = Popup(
+            title="",
+            overlay_color=(0,0,0,0),
+            separator_height=0,
+            content=layout,
+            size_hint=(0.4,0.25)
+            )
+        self.delete_session_popup.open()
+
+    def on_time_sheet_confirm(self, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, delete):
+        self.app.db_manager.add_session_to_payment_history(session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd)
+        self.delete_session(session_id, name)
+        self.attendence_log_popup.dismiss()
+        self.show_attendence_log(filter=True, filter_name=name)
+
+    def delete_session(self, session_id, name, delete=False):
+        self.app.utilities.delete_session_from_log(session_id)
+        if delete:
+            self.delete_session_popup.dismiss()
+        self.attendence_log_popup.dismiss()
+        self.show_attendence_log(filter=True, filter_name=name)
 
     def show_add_user_popup(self):
         layout = MDBoxLayout(orientation="vertical")
