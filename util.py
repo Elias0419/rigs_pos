@@ -5,6 +5,7 @@ import threading
 import sys
 import random
 import os
+import uuid
 from datetime import datetime, timedelta
 import dbus
 from kivy.clock import Clock
@@ -237,19 +238,16 @@ class Utilities:
         if not authenticated:
             return False
 
+        session_id = str(uuid.uuid4())
         self.app.logged_in_user = user_details
         today_str = datetime.now().strftime("%Y-%m-%d")
-        self.clock_in_file = f"{user_details['name']}-{today_str}.json"
-
-
-
+        self.clock_in_file = f"{user_details['name']}-{today_str}-{session_id}.json"
 
         if not os.path.exists(self.clock_in_file):
             with open(self.clock_in_file, 'w') as file:
-                json.dump({"clock_in": datetime.now().isoformat()}, file)
-            self.update_attendance_log(self.app.attendance_log, user_details['name'], "clock_in")
+                json.dump({"clock_in": datetime.now().isoformat(), "session_id": session_id}, file)
+            self.update_attendance_log(self.app.attendance_log, user_details['name'], "clock_in", session_id=session_id)
             log_in_time = self.read_formatted_clock_in_time(self.clock_in_file)
-            # self.time_clock.text = f"{self.app.logged_in_user['name']} since {log_in_time}\nTap the clock to log out"
             self.time_clock.text = f"User: {self.app.logged_in_user['name']}\nTap the clock to log out"
             self.clock_out_event = Clock.schedule_once(self.auto_clock_out, self.time_until_end_of_shift())
 
@@ -257,32 +255,28 @@ class Utilities:
         if hasattr(self, 'clock_out_event'):
             self.clock_out_event.cancel()
         if os.path.exists(self.clock_in_file):
+            session_id = self.extract_session_id(self.clock_in_file)
             os.remove(self.clock_in_file)
-            self.update_attendance_log(self.app.attendance_log, self.app.logged_in_user["name"], "clock_out")
-        try:
-            self.app.popup_manager.clock_out_popup.dismiss()
-        except Exception as e:
-            print(f"[Utilities] Expected error in clock_out\n{e}")
-        self.trigger_guard_and_lock()
+            self.update_attendance_log(self.app.attendance_log, self.app.logged_in_user["name"], "clock_out", session_id=session_id)
 
     def auto_clock_out(self, dt):
         if os.path.exists(self.clock_in_file):
+            session_id = self.extract_session_id(self.clock_in_file)
             os.remove(self.clock_in_file)
 
             midnight = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
             formatted_midnight = midnight.isoformat()
-            self.update_attendance_log(self.app.attendance_log, self.app.logged_in_user["name"], "auto", timestamp=formatted_midnight)
+            self.update_attendance_log(self.app.attendance_log, self.app.logged_in_user["name"], "auto", timestamp=formatted_midnight, session_id=session_id)
 
-
-
-    def update_attendance_log(self, log_file, user_name, action, auto=False, timestamp=None):
+    def update_attendance_log(self, log_file, user_name, action, session_id, auto=False, timestamp=None):
         if timestamp is None:
             timestamp = datetime.now().isoformat()
 
         entry = {
             "name": user_name,
             "timestamp": timestamp,
-            "action": action if not auto else "auto"
+            "action": action if not auto else "auto",
+            "session_id": session_id
         }
         if not os.path.exists(log_file):
             with open(log_file, 'w') as file:
@@ -293,6 +287,12 @@ class Utilities:
                 log.append(entry)
                 file.seek(0)
                 json.dump(log, file, indent=4)
+
+    def extract_session_id(self, filename):
+        with open(filename, 'r') as file:
+            data = json.load(file)
+        return data["session_id"]
+
 
     def load_attendance_data(self):
         if not os.path.exists(self.app.attendance_log):
@@ -312,10 +312,14 @@ class Utilities:
                 sessions[user] = []
 
             if entry['action'] == 'clock_in':
-                sessions[user].append({'clock_in': entry['timestamp'], 'clock_out': None})
+                sessions[user].append({
+                    'clock_in': entry['timestamp'],
+                    'clock_out': None,
+                    'session_id': entry['session_id']
+                })
             elif entry['action'] == 'clock_out' and sessions[user]:
                 for session in reversed(sessions[user]):
-                    if session['clock_out'] is None:
+                    if session['clock_out'] is None and session['session_id'] == entry['session_id']:
                         session['clock_out'] = entry['timestamp']
                         break
 
@@ -337,7 +341,8 @@ class Utilities:
                         'clock_in': clock_in_time.strftime('%H:%M'),
                         'clock_out': clock_out_time.strftime('%H:%M'),
                         'hours': int(hours),
-                        'minutes': int(minutes)
+                        'minutes': int(minutes),
+                        'session_id': session['session_id']
                     }
                     formatted_data.append(formatted_session)
         return formatted_data
