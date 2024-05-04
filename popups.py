@@ -142,6 +142,7 @@ class PopupManager:
                 delete_checkbox = CustomCheckbox(size_hint_x=None, width=100, _no_ripple_effect=True)
 
                 notes_button = Button(text='Notes', size_hint_x=None, width=60)
+                notes = "" #TODO
                 complete_button = Button(
                     text='Complete',
                     on_press=lambda x, session=session, cash_checkbox=cash_checkbox, dd_checkbox=dd_checkbox, delete_checkbox=delete_checkbox: self.handle_time_sheet_complete(
@@ -155,6 +156,7 @@ class PopupManager:
                         cash=cash_checkbox.active,
                         dd=dd_checkbox.active,
                         delete=delete_checkbox.active,
+                        notes=notes,
                     ),
                     size_hint_x=None,
                     width=100
@@ -200,13 +202,13 @@ class PopupManager:
         except:
             return []
 
-    def handle_time_sheet_complete(self, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, delete):
+    def handle_time_sheet_complete(self, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, delete, notes):
         if delete:
             self.open_delete_session_popup(session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd)
         else:
-            self.open_submit_session_popup(session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd)
+            self.open_submit_session_popup(session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, notes)
 
-    def open_submit_session_popup(self, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd):
+    def open_submit_session_popup(self, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, notes):
         layout = MDBoxLayout(orientation="vertical")
         card = MDCard()
         text = MDLabel(text=f"{name}\n{date}\n{clock_in}-{clock_out}\n\nAdded to the Payment History Database!", halign="center")
@@ -224,9 +226,11 @@ class PopupManager:
             overlay_color=(0,0,0,0),
             separator_height=0,
             content=layout,
-            size_hint=(0.4,0.25)
+            size_hint=(0.4,0.25),
+            on_dismiss=lambda x: self.on_time_sheet_confirm(session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, notes)
             )
         self.submit_session_popup.open()
+
 
     def open_delete_session_popup(self, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd):
         layout = MDBoxLayout(orientation="vertical")
@@ -251,11 +255,11 @@ class PopupManager:
             )
         self.delete_session_popup.open()
 
-    def on_time_sheet_confirm(self, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, delete):
-        self.app.db_manager.add_session_to_payment_history(session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd)
+    def on_time_sheet_confirm(self, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, notes):
+        self.app.db_manager.add_session_to_payment_history(session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, notes)
         self.delete_session(session_id, name)
-        self.attendence_log_popup.dismiss()
-        self.show_attendence_log(filter=True, filter_name=name)
+        # self.attendence_log_popup.dismiss()
+        # self.show_attendence_log(filter=True, filter_name=name)
 
     def delete_session(self, session_id, name, delete=False):
         self.app.utilities.delete_session_from_log(session_id)
