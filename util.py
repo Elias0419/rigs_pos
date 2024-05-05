@@ -1430,7 +1430,7 @@ class ImageButton(ButtonBehavior, Image):
         super(ImageButton, self).__init__(**kwargs)
         self.register_event_type('on_double_tap')
         self.last_tap_time = None
-        self.double_tap_time = 0.25  # seconds
+        self.double_tap_time = 0.25
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
@@ -1441,7 +1441,7 @@ class ImageButton(ButtonBehavior, Image):
             else:
                 self.last_tap_time = current_time
             return True
-        return super(TapImageButton, self).on_touch_down(touch)
+        return super(ImageButton, self).on_touch_down(touch)
 
     def on_double_tap(self, *args):
         self.launch_tetris()
