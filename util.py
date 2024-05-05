@@ -6,10 +6,14 @@ import sys
 import random
 import os
 import uuid
+import pygame
+import random
 from datetime import datetime, timedelta
 import dbus
 from kivy.clock import Clock
 from kivymd.uix.button import MDRaisedButton, MDFlatButton, MDIconButton
+from kivy.uix.behaviors import ButtonBehavior
+
 from kivy.uix.textinput import TextInput
 from open_cash_drawer import open_cash_drawer
 from barcode.upc import UniversalProductCodeA as upc_a
@@ -680,7 +684,7 @@ class Utilities:
         btn_tools = self.create_md_raised_button(
             f"[b][size=40]Tools[/b][/size]",
             self.app.button_handler.on_button_press,
-            # lambda x: self.app.popup_manager.show_attendence_log(),
+            # lambda x: self.launch_tetris(),
             # lambda x: self.modify_clock_layout_for_dual_pane_mode(),
             # lambda x: self.app.popup_manager.show_dual_inventory_and_label_managers(),
             # lambda x: self.enable_dual_pane_mode(),
@@ -815,8 +819,12 @@ class Utilities:
         saved_orders_container.add_widget(self.saved_order_button4)
         saved_orders_container.add_widget(self.saved_order_button5)
         logo_container = BoxLayout(size_hint_y=0.2, padding=(-200, 0, 0, 0))
-        logo = Image(source="images/rigs_logo_scaled.png")
+        logo = ImageButton(source="images/rigs_logo_scaled.png")
         logo_container.add_widget(logo)
+
+
+
+
         register_text = MDLabel(
             text="Cash Register",
             size_hint_y=None,
@@ -1387,6 +1395,8 @@ class Utilities:
             self.update_selected_categories.append(category)
             instance.text = f"{category}\n (Selected)"
 
+    def launch_tetris(self):
+        subprocess.Popen(['python', 'games/tetris.py'])
 
 class ReusableTimer:
     def __init__(self, interval, function, *args, **kwargs):
@@ -1413,3 +1423,28 @@ class ReusableTimer:
 
     def reset(self):
         self.start()
+
+
+class ImageButton(ButtonBehavior, Image):
+    def __init__(self, **kwargs):
+        super(ImageButton, self).__init__(**kwargs)
+        self.register_event_type('on_double_tap')
+        self.last_tap_time = None
+        self.double_tap_time = 0.25  # seconds
+
+    def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos):
+            current_time = Clock.get_time()
+            if self.last_tap_time and current_time - self.last_tap_time < self.double_tap_time:
+                self.dispatch('on_double_tap')
+                self.last_tap_time = None
+            else:
+                self.last_tap_time = current_time
+            return True
+        return super(TapImageButton, self).on_touch_down(touch)
+
+    def on_double_tap(self, *args):
+        self.launch_tetris()
+
+    def launch_tetris(self):
+        subprocess.Popen(['python', 'games/tetris.py'])
