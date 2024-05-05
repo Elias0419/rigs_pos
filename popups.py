@@ -175,7 +175,7 @@ class PopupManager:
                 layout.add_widget(h_layout)
 
         for user in users:
-            button = MDRaisedButton(text=str(user), size_hint_x=None, width=200, size_hint_y=1)
+            button = MDRaisedButton(text=str(user), _min_width=150, _min_height=50, size_hint_y=1)
             button.bind(on_press=lambda x, user=user: update_display(user))
             footer.add_widget(button)
 
