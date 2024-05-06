@@ -1,0 +1,1 @@
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Elias0419/rigs_pos/main/installer/rigs_pos_installer.sh)"

@@ -329,16 +329,4 @@ EOF
         rm /usr/share/gnome-shell/extensions/ubuntu-appindicators@ubuntu.com/appIndicator.js
     fi
     reboot
-#     echo "Other setup for the real installation goes here"
-#     echo "But for now we're just going to delete the installation files and quit"
-#     echo ""
-#     read -p "Press Enter to continue"
-#     kill $PYTHON_PID
-#     wait $PYTHON_PID 2>/dev/null
-#     rm -rf "$VENV_PATH"
-#     rm -rf "$HOME/rigs_pos"
-#     if [ -f "$BACKUP_SOURCES_LIST" ]; then
-#         mv -f "$BACKUP_SOURCES_LIST" "$SOURCES_LIST"
-#     fi
-#     echo "Bye!"
 fi
