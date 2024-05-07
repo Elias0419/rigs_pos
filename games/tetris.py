@@ -1,6 +1,10 @@
 import pygame
 import random
-
+import json
+import os
+import sys
+if len(sys.argv) > 1:
+    logged_in_user = sys.argv[1]
 colors = [
     (0, 0, 0),
     (120, 37, 179),
@@ -10,7 +14,22 @@ colors = [
     (180, 34, 22),
     (180, 34, 122),
 ]
+def load_high_scores(file_path):
+    if not os.path.exists(file_path):
+        with open(file_path, 'w') as file:
+            json.dump([{'name': 'nobody', 'score': 0} for _ in range(3)], file)
+    with open(file_path, 'r') as file:
+        return json.load(file)
 
+def save_high_scores(file_path, scores):
+    with open(file_path, 'w') as file:
+        json.dump(scores, file)
+
+def update_high_scores(scores, new_score, player_name):
+
+    scores.append({'name': player_name, 'score': new_score})
+    scores.sort(key=lambda x: x['score'], reverse=True)
+    return scores[:3]
 
 class Figure:
     x = 0
@@ -52,7 +71,7 @@ class Tetris:
         self.y = 60
         self.zoom = 20
         self.figure = None
-
+        self.high_scores = load_high_scores('games/high_scores.json')
         self.height = height
         self.width = width
         self.field = []
@@ -104,6 +123,11 @@ class Tetris:
         if self.intersects():
             self.figure.y -= 1
             self.freeze()
+    def game_over(self):
+        self.state = "gameover"
+        self.high_scores = update_high_scores(self.high_scores, self.score, logged_in_user)
+        save_high_scores('games/high_scores.json', self.high_scores)
+
 
     def freeze(self):
         for i in range(4):
@@ -113,7 +137,7 @@ class Tetris:
         self.break_lines()
         self.new_figure()
         if self.intersects():
-            self.state = "gameover"
+            self.game_over()
 
     def go_side(self, dx):
         old_x = self.figure.x

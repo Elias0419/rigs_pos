@@ -13,7 +13,7 @@ import dbus
 from kivy.clock import Clock
 from kivymd.uix.button import MDRaisedButton, MDFlatButton, MDIconButton
 from kivy.uix.behaviors import ButtonBehavior
-
+from kivymd.app import MDApp
 from kivy.uix.textinput import TextInput
 from open_cash_drawer import open_cash_drawer
 from barcode.upc import UniversalProductCodeA as upc_a
@@ -1395,8 +1395,8 @@ class Utilities:
             self.update_selected_categories.append(category)
             instance.text = f"{category}\n (Selected)"
 
-    def launch_tetris(self):
-        subprocess.Popen(['/home/rigs/0/bin/python', 'games/tetris.py'])
+    # def launch_tetris(self):
+    #     subprocess.Popen(['/home/rigs/0/bin/python', 'games/tetris.py'])
 
 class ReusableTimer:
     def __init__(self, interval, function, *args, **kwargs):
@@ -1431,6 +1431,7 @@ class ImageButton(ButtonBehavior, Image):
         self.register_event_type('on_double_tap')
         self.last_tap_time = None
         self.double_tap_time = 0.25
+        self.app = MDApp.get_running_app()
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
@@ -1447,4 +1448,5 @@ class ImageButton(ButtonBehavior, Image):
         self.launch_tetris()
 
     def launch_tetris(self):
-        subprocess.Popen(['python', 'games/tetris.py'])
+        subprocess.Popen(['/home/rigs/0/bin/python', 'games/tetris.py', self.app.logged_in_user])
+        #subprocess.Popen(['python', 'games/tetris.py', self.app.logged_in_user])
