@@ -1396,7 +1396,7 @@ class Utilities:
             instance.text = f"{category}\n (Selected)"
 
     def launch_tetris(self):
-        subprocess.Popen(['python', 'games/tetris.py'])
+        subprocess.Popen(['/home/rigs/0/bin/python', 'games/tetris.py'])
 
 class ReusableTimer:
     def __init__(self, interval, function, *args, **kwargs):
