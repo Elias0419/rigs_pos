@@ -123,6 +123,7 @@ class Tetris:
         if self.intersects():
             self.figure.y -= 1
             self.freeze()
+
     def game_over(self):
         self.state = "gameover"
         self.high_scores = update_high_scores(self.high_scores, self.score, logged_in_user)
@@ -155,25 +156,22 @@ class Tetris:
     def play_game(self):
         pygame.init()
 
-        # Define some colors
         BLACK = (0, 0, 0)
         WHITE = (255, 255, 255)
         GRAY = (128, 128, 128)
 
-        size = (400, 500)
-        screen = pygame.display.set_mode(size)
-
+        screen = pygame.display.set_mode((400, 500), pygame.NOFRAME)
         pygame.display.set_caption("Tetris")
 
-        # Loop until the user clicks the close button.
         done = False
         clock = pygame.time.Clock()
         fps = 25
         game = Tetris(20, 10)
         counter = 0
-
         pressing_down = False
 
+        quit_button = pygame.Rect(300, 450, 80, 40)
+        reset_button = pygame.Rect(-20, 450, 80, 40)
         while not done:
             if game.figure is None:
                 game.new_figure()
@@ -188,23 +186,31 @@ class Tetris:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     done = True
-                if event.type == pygame.KEYDOWN:
+                elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_UP:
                         game.rotate()
-                    if event.key == pygame.K_DOWN:
+                    elif event.key == pygame.K_DOWN:
                         pressing_down = True
-                    if event.key == pygame.K_LEFT:
+                    elif event.key == pygame.K_LEFT:
                         game.go_side(-1)
-                    if event.key == pygame.K_RIGHT:
+                    elif event.key == pygame.K_RIGHT:
                         game.go_side(1)
-                    if event.key == pygame.K_SPACE:
+                    elif event.key == pygame.K_SPACE:
                         game.go_space()
-                    if event.key == pygame.K_ESCAPE:
+                    elif event.key == pygame.K_ESCAPE:
                         game.__init__(20, 10)
-
-            if event.type == pygame.KEYUP:
+                elif event.type == pygame.KEYUP:
                     if event.key == pygame.K_DOWN:
                         pressing_down = False
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    if reset_button.collidepoint(event.pos):
+                        game.__init__(20, 10)
+                    elif quit_button.collidepoint(event.pos):
+                        pygame.quit()
+                        sys.exit()
+                # elif event.type == pygame.MOUSEBUTTONDOWN:
+                #     if reset_button.collidepoint(event.pos):
+                #         game.__init__(20, 10)
 
             screen.fill(WHITE)
 
@@ -226,19 +232,23 @@ class Tetris:
                                             game.zoom - 2, game.zoom - 2])
 
             font = pygame.font.SysFont('Calibri', 25, True, False)
-            font1 = pygame.font.SysFont('Calibri', 65, True, False)
             text = font.render("Score: " + str(game.score), True, BLACK)
-            text_game_over = font1.render("Game Over", True, (255, 125, 0))
-            text_game_over1 = font1.render("Press ESC", True, (255, 215, 0))
-
+            high_score = self.high_scores[0]['score'] if self.high_scores else 0
+            high_score_text = font.render(f"High Score: {high_score}", True, BLACK)
             screen.blit(text, [0, 0])
-            if game.state == "gameover":
-                screen.blit(text_game_over, [20, 200])
-                screen.blit(text_game_over1, [25, 265])
+            screen.blit(high_score_text, [200, 0])
 
+            # Draw and check quit button
+            pygame.draw.rect(screen, WHITE, quit_button)
+            pygame.draw.rect(screen, WHITE, reset_button)
+            quit_text = font.render("Quit", True, BLACK)
+            reset_text = font.render("Reset", True, BLACK)
+            screen.blit(quit_text, quit_button.center)
+            screen.blit(reset_text, reset_button.center)
             pygame.display.flip()
             clock.tick(fps)
 
         pygame.quit()
+
 game = Tetris(20, 10)
 game.play_game()
