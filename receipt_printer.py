@@ -57,7 +57,7 @@ class ReceiptPrinter:
 
                 self.printer.textln(item_line)
                 if float(item['discount']['amount']) > 0:
-                    discount_amount = item['discount']['amount']
+                    discount_amount = float(item['discount']['amount'])
                     discount_text = f"Discount: -${discount_amount:.2f}"
                     spaces = " " * (max_line_width - len(discount_text))
                     self.printer.textln(spaces + discount_text)
