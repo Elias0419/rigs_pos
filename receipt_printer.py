@@ -17,7 +17,6 @@ class ReceiptPrinter:
             self.printer = self.config_handler.printer()
         except Exception as e:
             print(e)
-            pass
 
     def re_initialize_after_error(self, order_details):
         self.app.utilities.initialize_receipt_printer()
@@ -25,7 +24,7 @@ class ReceiptPrinter:
         if success:
             self.app.popup_manager.receipt_errors_popup.dismiss()
 
-    def print_receipt(self, order_details, reprint=False):
+    def print_receipt(self, order_details, reprint=False, draft=False):
         print(order_details)
         try:
             logo = Image.open("images/rigs_logo_scaled.png")
@@ -68,16 +67,19 @@ class ReceiptPrinter:
             self.printer.textln(f"Tax: ${order_details['tax_amount']:.2f}")
 
             self.printer.textln(f"Total: ${order_details['total_with_tax']:.2f}")
-            if order_details["payment_method"] == "Cash":
-                self.printer.textln(f"Cash: ${order_details['amount_tendered']:.2f}")
-                self.printer.textln(f"Change: ${order_details['change_given']:.2f}")
+            if not draft:
+                if order_details["payment_method"] == "Cash":
+                    self.printer.textln(
+                        f"Cash: ${order_details['amount_tendered']:.2f}"
+                    )
+                    self.printer.textln(f"Change: ${order_details['change_given']:.2f}")
 
-            elif order_details["payment_method"] == "Split":
-                self.printer.textln("Split Payment")
-            elif order_details["payment_method"] == "Debit":
-                self.printer.textln("Debit Payment")
-            else:
-                self.printer.textln("Credit Payment")
+                elif order_details["payment_method"] == "Split":
+                    self.printer.textln("Split Payment")
+                elif order_details["payment_method"] == "Debit":
+                    self.printer.textln("Debit Payment")
+                else:
+                    self.printer.textln("Credit Payment")
 
             # if "split_payments" in locals():
             #     for payment in split_payments:
@@ -98,6 +100,10 @@ class ReceiptPrinter:
                 self.printer.set(align="center", font="a", bold=True)
                 self.printer.textln()
                 self.printer.textln("Copy")
+            if draft:
+                self.printer.set(align="center", font="a", bold=True)
+                self.printer.textln()
+                self.printer.textln("UNPAID")
 
             self.printer.cut()
             return True
@@ -110,10 +116,3 @@ class ReceiptPrinter:
             self.printer.close()
         except:
             pass
-
-
-if __name__ == "__main__":
-    printer = ReceiptPrinter("receipt_printer_config.yaml")
-
-    printer.print_png_image("barcodes.png")
-    printer.close()
