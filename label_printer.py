@@ -43,8 +43,6 @@ class LabelPrintingRow(BoxLayout):
         self.app = App.get_running_app()
 
 
-
-
     def add_to_print_queue(self):
         self.show_label_popup()
 
@@ -582,6 +580,7 @@ class LabelPrinter:
 
 
         self.preview_popup.open()
+
     def debug_dimensions(self, barcode_image):
         print("Barcode size:", barcode_image.size)
         print("Label size: (202, 202)")

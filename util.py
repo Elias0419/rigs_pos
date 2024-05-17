@@ -1017,6 +1017,7 @@ class Utilities:
         self.app.popup_manager.change_popup.dismiss()
         self.app.popup_manager.show_payment_confirmation_popup()
         self.app.popup_manager.make_change_dismiss_event.cancel()
+
     def split_cancel(self):
         self.app.popup_manager.dismiss_popups("split_payment_numeric_popup")
         self.app.popup_manager.finalize_order_popup.open()
@@ -1448,5 +1449,5 @@ class ImageButton(ButtonBehavior, Image):
         self.launch_tetris()
 
     def launch_tetris(self):
-        subprocess.Popen(['/home/rigs/0/bin/python', 'games/tetris.py', self.app.logged_in_user])
-        #subprocess.Popen(['python', 'games/tetris.py', self.app.logged_in_user])
+        #subprocess.Popen(['/home/rigs/0/bin/python', 'games/tetris.py', self.app.logged_in_user])
+        subprocess.Popen(['python', 'games/tetris.py', self.app.logged_in_user])
