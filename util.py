@@ -27,7 +27,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivymd.toast import toast
 from kivy.uix.image import Image
 from kivymd.uix.button import MDIconButton
-from _barcode_test import BarcodeScanner
+from barcode_scanner import BarcodeScanner
 
 from button_handlers import ButtonHandler
 from database_manager import DatabaseManager
