@@ -3,7 +3,6 @@ import json
 import os
 from open_cash_drawer import open_cash_drawer
 
-
 class OrderManager:
     _instance = None
 
@@ -28,6 +27,10 @@ class OrderManager:
             self.order_id = str(uuid.uuid4())
             self.saved_orders_dir = "saved_orders"
             self.app = ref
+
+            if not os.path.exists(self.saved_orders_dir):
+                os.makedirs(self.saved_orders_dir)
+
             self._init = True
 
     def _update_total_with_tax(self):
