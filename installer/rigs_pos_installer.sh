@@ -76,6 +76,10 @@ if [ "$USER" != "rigs" ]; then
   echo "Who are you? Only rigs can run this script."
   exit 1
 fi
+if [ "$(ps -p 1 -o comm=)" != "systemd" ]; then
+  echo "This system is not running systemd init."
+  exit 1
+fi
 if [ -f /etc/os-release ]; then
     . /etc/os-release
     OS=$NAME
@@ -281,7 +285,7 @@ cd rigs_pos
 mkdir saved_orders
 
 
-if [[ $demo_mode -eq 1 ]]; then
+if [ "$demo_mode" -eq 1 ]; then
     echo "Application Installed Successfully!"
     echo ""
     sleep 1
@@ -306,7 +310,6 @@ if [[ $demo_mode -eq 1 ]]; then
     fi
     echo "Bye!"
 else
-    read -p "We're gonna test setting up a systemd service. Press Enter"
     cat <<EOF > $SERVICE_FILE
 [Unit]
 Description=RIGS Point of Sale Service
@@ -323,10 +326,15 @@ User=rigs
 [Install]
 WantedBy=graphical.target
 EOF
+
+    if [ "$OS" != "Ubuntu" ]; then
+        sed -i 's|^Environment=.*|Environment=/home/x/.Xauthority|' $SERVICE_FILE
+    fi
     sudo systemctl enable rigs_pos
-    if [[ $OS == "Ubuntu" ]]; then
+    if [ "$OS" == "Ubuntu" ]; then
         sudo sed -i 's/^#WaylandEnable=false/WaylandEnable=false/' /etc/gdm3/custom.conf
         rm /usr/share/gnome-shell/extensions/ubuntu-appindicators@ubuntu.com/appIndicator.js
     fi
     reboot
 fi
+
