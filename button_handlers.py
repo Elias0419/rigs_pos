@@ -4,6 +4,7 @@ from open_cash_drawer import open_cash_drawer
 from kivy.clock import Clock
 from datetime import datetime, timedelta
 
+
 class ButtonHandler:
     def __init__(self, ref):
         self.app = ref
@@ -70,7 +71,6 @@ class ButtonHandler:
             "Reporting": self.show_reporting,
             "Time Sheets": self.show_time_sheets,
             "Users": self.show_add_user,
-
         }
         for action_text, action in admin_actions.items():
             if action_text in instance.text:
@@ -78,10 +78,19 @@ class ButtonHandler:
                 break
         self.app.popup_manager.admin_popup.dismiss()
 
-
     def handle_numeric_input(self, input_field, instance_text):
-        current_input = input_field.text.replace(".", "").replace("[b]", "").replace("[/b]", "").replace("[size=20]", "").replace("[/size]", "")#.lstrip("0")
-        new_input = current_input + instance_text.replace(".", "").replace("[b]", "").replace("[/b]", "").replace("[size=20]", "").replace("[/size]", "")#.lstrip("0")
+        current_input = (
+            input_field.text.replace(".", "")
+            .replace("[b]", "")
+            .replace("[/b]", "")
+            .replace("[size=20]", "")
+            .replace("[/size]", "")
+        )  # .lstrip("0")
+        new_input = current_input + instance_text.replace(".", "").replace(
+            "[b]", ""
+        ).replace("[/b]", "").replace("[size=20]", "").replace(
+            "[/size]", ""
+        )  # .lstrip("0")
         new_input = new_input.zfill(2)
         cents = int(new_input)
         dollars = cents // 100
@@ -180,8 +189,6 @@ class ButtonHandler:
 
         self.app.popup_manager.show_inventory()
 
-
-
     def on_done_button_press(self, instance):
         Clock.unschedule(self.app.popup_manager.timeout_event)
         order_details = self.app.order_manager.get_order_details()
@@ -228,10 +235,12 @@ class ButtonHandler:
                 if self.app.popup_manager.disable_lock_screen_checkbox.active:
                     self.app.disable_lock_screen = True
                     reset_time = self.calculate_reset_time()
-                    if hasattr(self, 'reset_event'):
+                    if hasattr(self, "reset_event"):
                         self.reset_event.cancel()
 
-                    self.reset_event = Clock.schedule_once(self.lock_screen_reset, reset_time)
+                    self.reset_event = Clock.schedule_once(
+                        self.lock_screen_reset, reset_time
+                    )
             else:
                 self.app.utilities.indicate_incorrect_pin(
                     self.app.popup_manager.lock_popup
@@ -249,7 +258,6 @@ class ButtonHandler:
             target_time += timedelta(days=1)
         delay = (target_time - now).total_seconds()
         return delay
-
 
     def lock_screen_reset(self, *args):
         self.app.disable_lock_screen = False

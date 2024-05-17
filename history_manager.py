@@ -35,7 +35,7 @@ class HistoryPopup(Popup):
         return cls._instance
 
     def __init__(self, **kwargs):
-        if not hasattr(self, '_init'):
+        if not hasattr(self, "_init"):
             self._init = True
             super(HistoryPopup, self).__init__(**kwargs)
             self.db_manager = DatabaseManager("inventory.db", self)
@@ -56,6 +56,7 @@ class HistoryPopup(Popup):
     def dismiss_popup(self):
         self.dismiss()
 
+
 class HistoryRow(BoxLayout):
     order_id = NullableStringProperty()
     items = NullableStringProperty()
@@ -72,7 +73,6 @@ class HistoryRow(BoxLayout):
 
         super(HistoryRow, self).__init__(**kwargs)
         self.order_history = None
-
 
 
 class HistoryView(BoxLayout):
@@ -115,19 +115,24 @@ class HistoryView(BoxLayout):
         self.totals_layout.add_widget(self.total_cash_label)
         self.totals_layout.add_widget(self.total_amount_label)
 
-
         self.button_layout = BoxLayout(orientation="horizontal", size_hint=(1, 0.4))
 
     def initialize_buttons(self):
-        self.button_layout = BoxLayout(orientation="horizontal", spacing=5, size_hint=(1, 0.1))
+        self.button_layout = BoxLayout(
+            orientation="horizontal", spacing=5, size_hint=(1, 0.1)
+        )
         self.button_layout.add_widget(
             MDRaisedButton(
-                text="[b][size=20]Today[/size][/b]", size_hint=(1, 1), on_press=lambda x: self.filter_today()
+                text="[b][size=20]Today[/size][/b]",
+                size_hint=(1, 1),
+                on_press=lambda x: self.filter_today(),
             )
         )
         self.button_layout.add_widget(
             MDRaisedButton(
-                text="[b][size=20]Yesterday[/size][/b]", size_hint=(1, 1), on_press=lambda x: self.filter_yesterday()
+                text="[b][size=20]Yesterday[/size][/b]",
+                size_hint=(1, 1),
+                on_press=lambda x: self.filter_yesterday(),
             )
         )
 
@@ -157,7 +162,9 @@ class HistoryView(BoxLayout):
         )
         self.button_layout.add_widget(
             MDRaisedButton(
-                text="[b][size=20]Export CSV[/size][/b]", size_hint=(1, 1), on_press=self.export_history
+                text="[b][size=20]Export CSV[/size][/b]",
+                size_hint=(1, 1),
+                on_press=self.export_history,
             )
         )
         return self.button_layout
@@ -171,13 +178,14 @@ class HistoryView(BoxLayout):
         total_amount = sum(float(order["total"]) for order in self.rv_data)
         total_tax = sum(float(order["tax"]) for order in self.rv_data)
         total_with_tax = sum(float(order["total_with_tax"]) for order in self.rv_data)
-        total_tendered = sum(float(order["amount_tendered"])for order in self.rv_data)
-        total_change =  sum(float(order["change_given"])for order in self.rv_data)
-        total_cash = sum(float(order["amount_tendered"]) - float(order["change_given"]) for order in self.rv_data)
-
-        self.total_amount_label.text = (
-            f"[size=20]Total: {total_amount:.2f} + {total_tax:.2f} tax = [b]${total_with_tax:.2f}[/b][/size]"
+        total_tendered = sum(float(order["amount_tendered"]) for order in self.rv_data)
+        total_change = sum(float(order["change_given"]) for order in self.rv_data)
+        total_cash = sum(
+            float(order["amount_tendered"]) - float(order["change_given"])
+            for order in self.rv_data
         )
+
+        self.total_amount_label.text = f"[size=20]Total: {total_amount:.2f} + {total_tax:.2f} tax = [b]${total_with_tax:.2f}[/b][/size]"
 
         self.total_cash_label.text = f"[size=20]Cash: {total_tendered:.2f} - {total_change:.2f} change = [b]${total_cash:.2f}[/b][/size]"
         self.current_filter_label.text = f"Current Filter: {self.current_filter}"
@@ -287,7 +295,7 @@ class HistoryView(BoxLayout):
         return date_obj.date() == datetime.today().date()
 
     def filter_today(self):
-        #print("filtered today")
+        # print("filtered today")
         self.current_filter = "today"
         filtered_history = [
             order
@@ -345,7 +353,6 @@ class HistoryView(BoxLayout):
     def set_order_history(self, order_history):
         self.order_history = order_history
 
-
     def on_search_text_changed(self, instance, value):
         if len(value) >= 1:
             self.current_filter = "search"
@@ -365,7 +372,7 @@ class HistoryView(BoxLayout):
             try:
                 items = json.loads(items_str)
                 for item in items:
-                    if search_term in item['name'].lower():
+                    if search_term in item["name"].lower():
                         filtered_history.append(order)
                         break
             except json.JSONDecodeError as e:
@@ -430,7 +437,9 @@ class HistoryView(BoxLayout):
 
             order_barcodes = [str(order[0]) for order in order_history]
 
-            best_match, score, *_ = process.extractOne(barcode_str, order_barcodes, scorer=fuzz.partial_ratio, score_cutoff=80)
+            best_match, score, *_ = process.extractOne(
+                barcode_str, order_barcodes, scorer=fuzz.partial_ratio, score_cutoff=80
+            )
 
             if best_match:
                 specific_order = next(
@@ -563,7 +572,6 @@ class HistoryView(BoxLayout):
         ]
 
 
-
 class OrderDetailsPopup(Popup):
     def __init__(self, order, receipt_printer, **kwargs):
         super(OrderDetailsPopup, self).__init__(**kwargs)
@@ -576,18 +584,25 @@ class OrderDetailsPopup(Popup):
 
         content_layout = GridLayout(orientation="tb-lr", spacing=5, cols=1, rows=3)
         formatted_order_details = self.format_order_details(order)
-        #print(formatted_order_details)
+        # print(formatted_order_details)
 
         # content_layout.add_widget(
         #     Label(text=self.format_order_details(order), valign="top", halign="left")
         # )
-        top_layout=Label(halign="center", size_hint_y=0.1, text=f"\n{formatted_order_details['Timestamp']}")
-        items = formatted_order_details['Items']
+        top_layout = Label(
+            halign="center",
+            size_hint_y=0.1,
+            text=f"\n{formatted_order_details['Timestamp']}",
+        )
+        items = formatted_order_details["Items"]
         items_split = items.split(",")
-        formatted_items = '\n'.join(items_split)
-        if formatted_order_details['Payment Method'] == "Cash":
+        formatted_items = "\n".join(items_split)
+        if formatted_order_details["Payment Method"] == "Cash":
             middle_layout = Label(halign="center", text=f"{formatted_items}")
-            bottom_layout = Label(halign="center",text=f"Subtotal: {formatted_order_details['Total']}\nDiscount: {formatted_order_details['Discount']}\nTax: {formatted_order_details['Tax']}\nTotal: {formatted_order_details['Total with Tax']}\n\nPaid with {formatted_order_details['Payment Method']}\nAmount Tendered: {formatted_order_details['Amount Tendered']}\nChange Given: {formatted_order_details['Change Given']}")
+            bottom_layout = Label(
+                halign="center",
+                text=f"Subtotal: {formatted_order_details['Total']}\nDiscount: {formatted_order_details['Discount']}\nTax: {formatted_order_details['Tax']}\nTotal: {formatted_order_details['Total with Tax']}\n\nPaid with {formatted_order_details['Payment Method']}\nAmount Tendered: {formatted_order_details['Amount Tendered']}\nChange Given: {formatted_order_details['Change Given']}",
+            )
             layout = MDCard(orientation="vertical")
             layout.add_widget(middle_layout)
             layout.add_widget(bottom_layout)
@@ -596,7 +611,10 @@ class OrderDetailsPopup(Popup):
         #     print(order_details)
         else:
             middle_layout = Label(halign="center", text=f"{formatted_items}")
-            bottom_layout = Label(halign="center", text=f"Subtotal: {formatted_order_details['Total']}\nDiscount: {formatted_order_details['Discount']}\nTax: {formatted_order_details['Tax']}\nTotal: {formatted_order_details['Total with Tax']}\n\nPaid with {formatted_order_details['Payment Method']}")
+            bottom_layout = Label(
+                halign="center",
+                text=f"Subtotal: {formatted_order_details['Total']}\nDiscount: {formatted_order_details['Discount']}\nTax: {formatted_order_details['Tax']}\nTotal: {formatted_order_details['Total with Tax']}\n\nPaid with {formatted_order_details['Payment Method']}",
+            )
             layout = MDCard(orientation="vertical")
             layout.add_widget(middle_layout)
             layout.add_widget(bottom_layout)
@@ -607,32 +625,30 @@ class OrderDetailsPopup(Popup):
             MDRaisedButton(
                 text="[b][size=20]Print Receipt[/size][/b]",
                 on_press=lambda instance: self.print_receipt(instance, order=order),
-                size_hint=(1, 1)
+                size_hint=(1, 1),
             )
         )
-        button_layout.add_widget(MDRaisedButton(
-                                text="[b][size=20]Refund[/size][/b]",
-                                on_press=self.refund,
-                                size_hint=(1,1)
-
-                                )
-                            )
+        button_layout.add_widget(
+            MDRaisedButton(
+                text="[b][size=20]Refund[/size][/b]",
+                on_press=self.refund,
+                size_hint=(1, 1),
+            )
+        )
         button_layout.add_widget(
             MDRaisedButton(
                 text="[b][size=20]Edit[/size][/b]",
-                on_press= lambda x: self.open_modify_order_popup(order[0]),
-                 size_hint=(1,1)
-
-                )
+                on_press=lambda x: self.open_modify_order_popup(order[0]),
+                size_hint=(1, 1),
+            )
         )
 
         button_layout.add_widget(
             MDRaisedButton(
                 text="[b][size=20]Close[/size][/b]",
                 on_press=self.dismiss_popup,
-                 size_hint=(1,1)
-
-                )
+                size_hint=(1, 1),
+            )
         )
         content_layout.add_widget(top_layout)
         content_layout.add_widget(layout)
@@ -640,29 +656,29 @@ class OrderDetailsPopup(Popup):
 
         self.content = content_layout
 
-
-
-
-
-
     def open_modify_order_popup(self, order_id):
         order_details = self.db_manager.get_order_by_id(order_id)
         items_json = order_details[1]
         items = json.loads(items_json)
-        modify_order_container = MDBoxLayout(orientation="vertical", size_hint=(1,1), padding=5, spacing=5)
-        modify_order_layout = GridLayout(rows=10, orientation="tb-lr", padding=5, spacing=5)
+        modify_order_container = MDBoxLayout(
+            orientation="vertical", size_hint=(1, 1), padding=5, spacing=5
+        )
+        modify_order_layout = GridLayout(
+            rows=10, orientation="tb-lr", padding=5, spacing=5
+        )
         item_name_inputs = []
 
         for item in items:
-            text_input = TextInput(text=item['name'], multiline=False, size_hint_y=None, height=50)
+            text_input = TextInput(
+                text=item["name"], multiline=False, size_hint_y=None, height=50
+            )
             item_name_inputs.append(text_input)
             modify_order_layout.add_widget(text_input)
 
         def on_confirm(instance):
 
             for item, name_input in zip(items, item_name_inputs):
-                item['name'] = name_input.text
-
+                item["name"] = name_input.text
 
             updated_items_json = json.dumps(items)
 
@@ -673,14 +689,29 @@ class OrderDetailsPopup(Popup):
             self.history_popup.dismiss_popup()
             Clock.schedule_once(self.history_popup.show_hist_reporting_popup, 0.2)
 
+        buttons_layout = BoxLayout(
+            orientation="horizontal", size_hint_y=None, height=75, padding=5, spacing=5
+        )
+        confirm_button = MDRaisedButton(
+            text="[b][size=20]Confirm Changes[/b][/size]",
+            on_release=on_confirm,
+            size_hint=(1, 1),
+        )
 
-
-        buttons_layout=BoxLayout(orientation="horizontal", size_hint_y=None, height=75, padding=5, spacing=5)
-        confirm_button = MDRaisedButton(text="[b][size=20]Confirm Changes[/b][/size]", on_release=on_confirm,  size_hint=(1,1))
-
-        cancel_button = MDRaisedButton(text="[b][size=20]Cancel[/b][/size]", on_press=lambda instance: self.modify_order_popup.dismiss(), size_hint=(1,1))
-        delete_button = MDFlatButton(md_bg_color="grey", text="Delete Order", on_press=lambda x: self.open_delete_order_confirmation_popup(order_id, admin=True), size_hint=(0.5,1))
-        _blank = MDBoxLayout(size_hint=(1,1))
+        cancel_button = MDRaisedButton(
+            text="[b][size=20]Cancel[/b][/size]",
+            on_press=lambda instance: self.modify_order_popup.dismiss(),
+            size_hint=(1, 1),
+        )
+        delete_button = MDFlatButton(
+            md_bg_color="grey",
+            text="Delete Order",
+            on_press=lambda x: self.open_delete_order_confirmation_popup(
+                order_id, admin=True
+            ),
+            size_hint=(0.5, 1),
+        )
+        _blank = MDBoxLayout(size_hint=(1, 1))
         buttons_layout.add_widget(confirm_button)
         buttons_layout.add_widget(cancel_button)
         buttons_layout.add_widget(_blank)
@@ -688,25 +719,43 @@ class OrderDetailsPopup(Popup):
         modify_order_container.add_widget(modify_order_layout)
         modify_order_container.add_widget(buttons_layout)
 
-        self.modify_order_popup = Popup(size_hint=(0.8, 0.8), content=modify_order_container, title="", separator_height=0)
+        self.modify_order_popup = Popup(
+            size_hint=(0.8, 0.8),
+            content=modify_order_container,
+            title="",
+            separator_height=0,
+        )
         self.modify_order_popup.open()
 
-    def open_delete_order_confirmation_popup(self, order_id, admin=False): #TODO
+    def open_delete_order_confirmation_popup(self, order_id, admin=False):  # TODO
         if admin:
             container = MDBoxLayout(orientation="vertical")
             layout = MDCard(orientation="vertical")
-            message = MDLabel(text=f"Warning!\nOrder ID {order_id}\nWill Be Permanently Deleted!\nAre you sure?", halign="center")
+            message = MDLabel(
+                text=f"Warning!\nOrder ID {order_id}\nWill Be Permanently Deleted!\nAre you sure?",
+                halign="center",
+            )
             layout.add_widget(message)
             btn_layout = MDBoxLayout(orientation="horizontal")
-            confirm_button = MDFlatButton(text="Yes", on_press=lambda x: self.delete_order(order_id), size_hint=(1, 1))
-            _blank = MDBoxLayout(size_hint=(1,0.4))
-            cancel_button = MDFlatButton(text="No!", on_press=lambda x: self.delete_order_confirmation_popup.dismiss(), size_hint=(1, 1))
+            confirm_button = MDFlatButton(
+                text="Yes",
+                on_press=lambda x: self.delete_order(order_id),
+                size_hint=(1, 1),
+            )
+            _blank = MDBoxLayout(size_hint=(1, 0.4))
+            cancel_button = MDFlatButton(
+                text="No!",
+                on_press=lambda x: self.delete_order_confirmation_popup.dismiss(),
+                size_hint=(1, 1),
+            )
             btn_layout.add_widget(confirm_button)
             btn_layout.add_widget(_blank)
             btn_layout.add_widget(cancel_button)
             container.add_widget(layout)
             container.add_widget(btn_layout)
-            self.delete_order_confirmation_popup = Popup(size_hint=(0.2,0.2), content=container, title="", separator_height=0)
+            self.delete_order_confirmation_popup = Popup(
+                size_hint=(0.2, 0.2), content=container, title="", separator_height=0
+            )
             self.delete_order_confirmation_popup.open()
 
         else:
@@ -761,7 +810,8 @@ class OrderDetailsPopup(Popup):
                 items_list = parsed_data
 
             all_item_names = ", ".join(
-                f"{item.get('quantity', 'N/A')} {item.get('name', 'Unknown')}" for item in items_list
+                f"{item.get('quantity', 'N/A')} {item.get('name', 'Unknown')}"
+                for item in items_list
             )
 
             return all_item_names
@@ -770,7 +820,7 @@ class OrderDetailsPopup(Popup):
             return "Error parsing items"
 
     def convert_order_to_dict(self, order):
-        #print(order)
+        # print(order)
 
         (
             order_id,
@@ -809,7 +859,3 @@ class OrderDetailsPopup(Popup):
         }
 
         return order_dict
-
-
-
-
