@@ -3,6 +3,7 @@ import json
 import os
 from open_cash_drawer import open_cash_drawer
 
+
 class OrderManager:
     _instance = None
 
@@ -10,7 +11,6 @@ class OrderManager:
         if not cls._instance:
             cls._instance = super(OrderManager, cls).__new__(cls)
         return cls._instance
-
 
     def __init__(self, ref, tax_rate=0.07):
         if not hasattr(self, "_init"):
@@ -43,13 +43,16 @@ class OrderManager:
         print(self.tax_amount)
         return self.tax_amount
 
-    def recalculate_order_totals(self, remove = False):
+    def recalculate_order_totals(self, remove=False):
         if remove:
-            self.subtotal = sum(float(item['total_price']) for item in self.items.values())
+            self.subtotal = sum(
+                float(item["total_price"]) for item in self.items.values()
+            )
 
-
-        self.order_discount = sum(float(item.get('discount', {}).get('amount', "0")) for item in self.items.values())
-
+        self.order_discount = sum(
+            float(item.get("discount", {}).get("amount", "0"))
+            for item in self.items.values()
+        )
 
         self.total = max(self.subtotal - self.order_discount, 0)
 
@@ -66,7 +69,6 @@ class OrderManager:
     #         item_id = item_details["item_id"]
     #
     #         return item_id
-
 
     def add_item(self, item_name, item_price, custom_item=False, item_id=None):
         # if custom_item:
@@ -92,7 +94,7 @@ class OrderManager:
                 "price": item_price,
                 "quantity": 1,
                 "total_price": item_price,
-                'discount': {'amount': 0, 'percent': False},
+                "discount": {"amount": 0, "percent": False},
             }
 
         self.total += item_price
@@ -108,8 +110,12 @@ class OrderManager:
         )
         if item_to_remove:
 
-            item_discount_amount = float(self.items[item_to_remove].get('discount', {}).get('amount', '0'))
-            removed_item_total = self.items[item_to_remove]["total_price"] - item_discount_amount
+            item_discount_amount = float(
+                self.items[item_to_remove].get("discount", {}).get("amount", "0")
+            )
+            removed_item_total = (
+                self.items[item_to_remove]["total_price"] - item_discount_amount
+            )
             self.subtotal -= removed_item_total
             del self.items[item_to_remove]
             self.recalculate_order_discount()
@@ -117,7 +123,10 @@ class OrderManager:
 
     def recalculate_order_discount(self):
 
-        self.order_discount = sum(float(item.get('discount', {}).get('amount', '0')) for item in self.items.values())
+        self.order_discount = sum(
+            float(item.get("discount", {}).get("amount", "0"))
+            for item in self.items.values()
+        )
 
     def get_order_details(self):
         return {
@@ -146,7 +155,6 @@ class OrderManager:
         self.amount_tendered = 0.0
         self.change_given = 0.0
 
-
     def save_order_to_disk(self):
         if not os.path.exists(self.saved_orders_dir):
             os.makedirs(self.saved_orders_dir)
@@ -156,7 +164,7 @@ class OrderManager:
 
         filepath = os.path.join(self.saved_orders_dir, order_filename)
 
-        with open(filepath, 'w') as file:
+        with open(filepath, "w") as file:
             json.dump(order_details, file)
 
     def delete_order_from_disk(self, order):
@@ -174,7 +182,7 @@ class OrderManager:
         full_path = os.path.join(self.saved_orders_dir, order_filename)
 
         try:
-            with open(full_path, 'r') as file:
+            with open(full_path, "r") as file:
                 order_data = json.load(file)
         except Exception as e:
             print(f"[Order Manager] load_order_from_disk\n{e}")
@@ -196,17 +204,18 @@ class OrderManager:
         except Exception as e:
             print(e)
 
-
     def list_all_saved_orders(self):
         all_order_details = []
         for file_name in os.listdir(self.saved_orders_dir):
-            if file_name.startswith('order_') and file_name.endswith('.json'):
+            if file_name.startswith("order_") and file_name.endswith(".json"):
                 full_path = os.path.join(self.saved_orders_dir, file_name)
 
                 try:
-                    with open(full_path, 'r') as file:
+                    with open(full_path, "r") as file:
                         order_data = json.load(file)
-                        item_names = [item['name'] for item in order_data['items'].values()]
+                        item_names = [
+                            item["name"] for item in order_data["items"].values()
+                        ]
                         order_dict = {
                             "order_id": order_data["order_id"],
                             "items": item_names,
@@ -217,25 +226,29 @@ class OrderManager:
 
         return all_order_details
 
-
     def adjust_item_quantity(self, item_id, adjustment):
         if item_id in self.items:
             item = self.items[item_id]
             original_quantity = item["quantity"]
             new_quantity = max(original_quantity + adjustment, 1)
-            discount_data = item.get('discount', {'amount': 0, 'percent': False})
-            discount_amount = float(discount_data['amount'])
-            if discount_data['percent']:
+            discount_data = item.get("discount", {"amount": 0, "percent": False})
+            discount_amount = float(discount_data["amount"])
+            if discount_data["percent"]:
                 per_item_discount = item["price"] * discount_amount / 100
             else:
                 per_item_discount = discount_amount / original_quantity
 
             total_discount_for_new_quantity = per_item_discount * new_quantity
-            item["discount"] = {'amount': total_discount_for_new_quantity, 'percent': discount_data['percent']}
+            item["discount"] = {
+                "amount": total_discount_for_new_quantity,
+                "percent": discount_data["percent"],
+            }
 
             single_item_price = float(item["price"])
             item["quantity"] = new_quantity
-            item["total_price"] = single_item_price * new_quantity - total_discount_for_new_quantity
+            item["total_price"] = (
+                single_item_price * new_quantity - total_discount_for_new_quantity
+            )
 
             # Recalculate order totals
             self.recalculate_order_totals(remove=True)
@@ -268,8 +281,6 @@ class OrderManager:
         self.update_tax_amount()
         self._update_total_with_tax()
 
-
-
     def set_payment_method(self, method):
         self.payment_method = method
 
@@ -279,7 +290,7 @@ class OrderManager:
 
     def add_custom_item(self, instance, name="Custom Item", price=0.00):
 
-        #price = self.app.popup_manager.cash_input.text
+        # price = self.app.popup_manager.cash_input.text
         item_id = str(uuid.uuid4())
         try:
             price = float(price)
@@ -331,8 +342,6 @@ class OrderManager:
 
         self.app.popup_manager.show_order_popup(order_summary)
 
-
-
     def create_order_summary_item(self, item_name, quantity, total_price):
         return f"[b]{item_name}[/b] x{quantity} ${total_price:.2f}\n"
 
@@ -343,14 +352,13 @@ class OrderManager:
             self.app.utilities.update_display()
             self.app.utilities.update_financial_summary()
 
-
     def remove_single_item_discount(self, item_id):
         if item_id in self.items:
             item = self.items[item_id]
-            item_price = float(item['price'])
-            item_quantity = int(item['quantity'])
-            item['discount'] = {'amount': 0, 'percent': False}
-            item['total_price'] = max(item_price * item_quantity, 0)
+            item_price = float(item["price"])
+            item_quantity = int(item["quantity"])
+            item["discount"] = {"amount": 0, "percent": False}
+            item["total_price"] = max(item_price * item_quantity, 0)
             self.recalculate_order_totals()
             self.app.utilities.update_display()
             self.app.utilities.update_financial_summary()
@@ -362,10 +370,9 @@ class OrderManager:
             if item_id in self.items:
                 item = self.items[item_id]
 
-
-                item_price = float(item['price'])
+                item_price = float(item["price"])
                 discount_amount = float(discount_amount)
-                item_quantity = int(item['quantity'])
+                item_quantity = int(item["quantity"])
 
                 if percent:
 
@@ -374,11 +381,12 @@ class OrderManager:
 
                     discount_value = discount_amount
 
-
                 discount_value = float(discount_value)
 
-                item['discount'] = {'amount': str(discount_value), 'percent': percent}
-                item['total_price'] = max(item_price * item_quantity - discount_value, 0)
+                item["discount"] = {"amount": str(discount_value), "percent": percent}
+                item["total_price"] = max(
+                    item_price * item_quantity - discount_value, 0
+                )
 
                 self.recalculate_order_totals()
 
@@ -396,7 +404,6 @@ class OrderManager:
             self.app.popup_manager.item_popup.dismiss()
         except:
             pass
-
 
     def discount_entire_order(self, discount_amount, percent=False):
         if discount_amount != "":
@@ -458,7 +465,6 @@ class OrderManager:
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
 
-
     def handle_credit_payment(self):
         open_cash_drawer()
         self.set_payment_method("Credit")
@@ -494,7 +500,3 @@ class OrderManager:
         self.set_payment_method("Cash")
         self.set_payment_details(amount_tendered, change)
         self.app.popup_manager.show_make_change_popup(change)
-
-
-
-

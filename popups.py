@@ -10,7 +10,7 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.button import MDRaisedButton, MDFlatButton, MDIconButton
 
-from  kivymd.uix.selectioncontrol import MDCheckbox
+from kivymd.uix.selectioncontrol import MDCheckbox
 
 
 from kivy.uix.textinput import TextInput
@@ -44,28 +44,29 @@ from kivy.properties import ColorProperty
 
 from kivymd.uix.card import MDCard
 from PIL import Image as PILImage
+
+
 class PopupManager:
     def __init__(self, ref):
         self.app = ref
 
     def open_clock_out_popup(self):
-        if self.app.logged_in_user == 'nobody':
+        if self.app.logged_in_user == "nobody":
             return
-
 
         data = self.app.utilities.load_attendance_data()
         open_session = None
 
         for entry in reversed(data):
-            if entry['name'] == self.app.logged_in_user['name']:
-                if entry['action'] == 'clock_in':
+            if entry["name"] == self.app.logged_in_user["name"]:
+                if entry["action"] == "clock_in":
                     open_session = entry
                     break
-                elif entry['action'] == 'clock_out':
+                elif entry["action"] == "clock_out":
                     break
 
         if open_session:
-            clock_in_time = datetime.fromisoformat(open_session['timestamp'])
+            clock_in_time = datetime.fromisoformat(open_session["timestamp"])
             clock_out_time = datetime.now()
             duration = clock_out_time - clock_in_time
             hours, remainder = divmod(duration.total_seconds(), 3600)
@@ -77,15 +78,26 @@ class PopupManager:
         layout = MDBoxLayout(orientation="vertical")
         card = MDCard()
         if open_session:
-            self.clock_out_message = MDLabel(text=f"I'll add the time entry\n\n[b][size=20]{session_info}[/size][/b]\n\nto the time sheet and log you out.\n\nIs that what you want to do?\n\n", halign="center")
+            self.clock_out_message = MDLabel(
+                text=f"I'll add the time entry\n\n[b][size=20]{session_info}[/size][/b]\n\nto the time sheet and log you out.\n\nIs that what you want to do?\n\n",
+                halign="center",
+            )
         else:
             self.clock_out_message = MDLabel(text=f"{session_info}")
         card.add_widget(self.clock_out_message)
         layout.add_widget(card)
 
         button_layout = MDGridLayout(cols=2, size_hint_y=0.2)
-        confirm_button = MDFlatButton(text="Confirm", size_hint=(1,1), on_press=lambda x: self.app.utilities.clock_out() if open_session else None)
-        cancel_button = MDFlatButton(text="Cancel", size_hint=(1,1), on_press=lambda x: self.clock_out_popup.dismiss())
+        confirm_button = MDFlatButton(
+            text="Confirm",
+            size_hint=(1, 1),
+            on_press=lambda x: self.app.utilities.clock_out() if open_session else None,
+        )
+        cancel_button = MDFlatButton(
+            text="Cancel",
+            size_hint=(1, 1),
+            on_press=lambda x: self.clock_out_popup.dismiss(),
+        )
         button_layout.add_widget(confirm_button)
         button_layout.add_widget(cancel_button)
         layout.add_widget(button_layout)
@@ -95,10 +107,9 @@ class PopupManager:
             size_hint=(0.4, 0.4),
             separator_height=0,
             overlay_color=(0, 0, 0, 0),
-            pos_hint={"top":1}
+            pos_hint={"top": 1},
         )
         self.clock_out_popup.open()
-
 
     def show_attendence_log(self, filter=False, filter_name=None):
         data = self.app.utilities.load_attendance_data()
@@ -106,13 +117,20 @@ class PopupManager:
         sessions = self.app.utilities.organize_sessions(data)
         display_data = self.app.utilities.format_sessions_for_display(sessions)
         container = GridLayout(orientation="tb-lr", rows=3)
-        header = GridLayout(orientation="lr-tb", cols=9, size_hint_y=None, height=40, padding=10, spacing=10)
-        label1 = MDLabel(text="Cash", halign="center",size_hint_x=None, width=100)
+        header = GridLayout(
+            orientation="lr-tb",
+            cols=9,
+            size_hint_y=None,
+            height=40,
+            padding=10,
+            spacing=10,
+        )
+        label1 = MDLabel(text="Cash", halign="center", size_hint_x=None, width=100)
         label2 = MDLabel(text="DD", halign="center", size_hint_x=None, width=100)
         label3 = MDLabel(text="Delete", halign="center", size_hint_x=None, width=100)
         for i in range(4):
-            globals()[f'_blank{i}'] = MDLabel()
-            header.add_widget(globals()[f'_blank{i}'])
+            globals()[f"_blank{i}"] = MDLabel()
+            header.add_widget(globals()[f"_blank{i}"])
         header.add_widget(label1)
         header.add_widget(label2)
         header.add_widget(label3)
@@ -120,46 +138,65 @@ class PopupManager:
         _2blank2 = MDLabel(size_hint_x=None, width=100)
         header.add_widget(_2blank)
         header.add_widget(_2blank2)
-        footer = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=60, spacing=10, padding=10)
+        footer = MDBoxLayout(
+            orientation="horizontal",
+            size_hint_y=None,
+            height=60,
+            spacing=10,
+            padding=10,
+        )
 
-
-        layout = MDBoxLayout(orientation="vertical", size_hint_y=None, spacing=10, padding=10)
-        layout.bind(minimum_height=layout.setter('height'))
+        layout = MDBoxLayout(
+            orientation="vertical", size_hint_y=None, spacing=10, padding=10
+        )
+        layout.bind(minimum_height=layout.setter("height"))
 
         def update_display(user):
             layout.clear_widgets()
-            filtered_data = [session for session in display_data if session['name'] == user]
+            filtered_data = [
+                session for session in display_data if session["name"] == user
+            ]
             for session in reversed(filtered_data):
-                h_layout = GridLayout(orientation="lr-tb", cols=10, size_hint_y=None, height=40)
+                h_layout = GridLayout(
+                    orientation="lr-tb", cols=10, size_hint_y=None, height=40
+                )
 
-                name_label = MDLabel(text=session['name'])
-                date_label = MDLabel(text=session['date'])
-                time_label = MDLabel(text=f"{session['clock_in']} - {session['clock_out']}")
+                name_label = MDLabel(text=session["name"])
+                date_label = MDLabel(text=session["date"])
+                time_label = MDLabel(
+                    text=f"{session['clock_in']} - {session['clock_out']}"
+                )
                 hours_label = MDLabel(text=f"{session['hours']}h {session['minutes']}m")
 
-                cash_checkbox = CustomCheckbox(size_hint_x=None, width=100, _no_ripple_effect=True)
-                dd_checkbox = CustomCheckbox(size_hint_x=None, width=100, _no_ripple_effect=True)
-                delete_checkbox = CustomCheckbox(size_hint_x=None, width=100, _no_ripple_effect=True)
+                cash_checkbox = CustomCheckbox(
+                    size_hint_x=None, width=100, _no_ripple_effect=True
+                )
+                dd_checkbox = CustomCheckbox(
+                    size_hint_x=None, width=100, _no_ripple_effect=True
+                )
+                delete_checkbox = CustomCheckbox(
+                    size_hint_x=None, width=100, _no_ripple_effect=True
+                )
 
-                notes_button = Button(text='Notes', size_hint_x=None, width=60)
-                notes = "" #TODO
+                notes_button = Button(text="Notes", size_hint_x=None, width=60)
+                notes = ""  # TODO
                 complete_button = Button(
-                    text='Complete',
+                    text="Complete",
                     on_press=lambda x, session=session, cash_checkbox=cash_checkbox, dd_checkbox=dd_checkbox, delete_checkbox=delete_checkbox: self.handle_time_sheet_complete(
-                        session_id=session['session_id'],
-                        date=session['date'],
-                        name=session['name'],
-                        clock_in=session['clock_in'],
-                        clock_out=session['clock_out'],
-                        hours=session['hours'],
-                        minutes=session['minutes'],
+                        session_id=session["session_id"],
+                        date=session["date"],
+                        name=session["name"],
+                        clock_in=session["clock_in"],
+                        clock_out=session["clock_out"],
+                        hours=session["hours"],
+                        minutes=session["minutes"],
                         cash=cash_checkbox.active,
                         dd=dd_checkbox.active,
                         delete=delete_checkbox.active,
                         notes=notes,
                     ),
                     size_hint_x=None,
-                    width=100
+                    width=100,
                 )
 
                 h_layout.add_widget(name_label)
@@ -175,7 +212,9 @@ class PopupManager:
                 layout.add_widget(h_layout)
 
         for user in users:
-            button = MDRaisedButton(text=str(user), _min_width=150, _min_height=50, size_hint_y=1)
+            button = MDRaisedButton(
+                text=str(user), _min_width=150, _min_height=50, size_hint_y=1
+            )
             button.bind(on_press=lambda x, user=user: update_display(user))
             footer.add_widget(button)
 
@@ -184,36 +223,84 @@ class PopupManager:
         container.add_widget(header)
         container.add_widget(scroll_view)
         container.add_widget(footer)
-        self.attendence_log_popup = Popup(title="Attendance Log",
-                    content=container,
-                    size_hint=(0.9, 0.9),
-                    overlay_color=(0,0,0,0),
-                    separator_height=0.5,
-                    )
+        self.attendence_log_popup = Popup(
+            title="Attendance Log",
+            content=container,
+            size_hint=(0.9, 0.9),
+            overlay_color=(0, 0, 0, 0),
+            separator_height=0.5,
+        )
         self.attendence_log_popup.open()
         if filter:
             update_display(filter_name)
 
     def read_names_from_json(self):
         try:
-            with open(self.app.pin_store, 'r') as file:
+            with open(self.app.pin_store, "r") as file:
                 data = json.load(file)
-            return [item['name'] for item in data]
+            return [item["name"] for item in data]
         except:
             return []
 
-    def handle_time_sheet_complete(self, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, delete, notes):
+    def handle_time_sheet_complete(
+        self,
+        session_id,
+        date,
+        name,
+        clock_in,
+        clock_out,
+        hours,
+        minutes,
+        cash,
+        dd,
+        delete,
+        notes,
+    ):
         if delete:
-            self.open_delete_session_popup(session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd)
+            self.open_delete_session_popup(
+                session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd
+            )
         else:
-            self.open_submit_session_popup(session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, notes)
+            self.open_submit_session_popup(
+                session_id,
+                date,
+                name,
+                clock_in,
+                clock_out,
+                hours,
+                minutes,
+                cash,
+                dd,
+                notes,
+            )
 
-    def open_submit_session_popup(self, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, notes):
+    def open_submit_session_popup(
+        self,
+        session_id,
+        date,
+        name,
+        clock_in,
+        clock_out,
+        hours,
+        minutes,
+        cash,
+        dd,
+        notes,
+    ):
         layout = MDBoxLayout(orientation="vertical")
         card = MDCard()
-        text = MDLabel(text=f"{name}\n{date}\n{clock_in}-{clock_out}\n\nAdded to the Payment History Database!", halign="center")
-        button_layout = GridLayout(orientation="lr-tb", cols=1, size_hint_y=None, height=60)
-        dismiss_button = MDFlatButton(text="Dismiss", size_hint=(1,1), on_press=lambda x: self.submit_session_popup.dismiss())
+        text = MDLabel(
+            text=f"{name}\n{date}\n{clock_in}-{clock_out}\n\nAdded to the Payment History Database!",
+            halign="center",
+        )
+        button_layout = GridLayout(
+            orientation="lr-tb", cols=1, size_hint_y=None, height=60
+        )
+        dismiss_button = MDFlatButton(
+            text="Dismiss",
+            size_hint=(1, 1),
+            on_press=lambda x: self.submit_session_popup.dismiss(),
+        )
 
         button_layout.add_widget(dismiss_button)
         # button_layout.add_widget(spacer)
@@ -223,23 +310,48 @@ class PopupManager:
         layout.add_widget(button_layout)
         self.submit_session_popup = Popup(
             title="",
-            overlay_color=(0,0,0,0),
+            overlay_color=(0, 0, 0, 0),
             separator_height=0,
             content=layout,
-            size_hint=(0.4,0.25),
-            on_dismiss=lambda x: self.on_time_sheet_confirm(session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, notes)
-            )
+            size_hint=(0.4, 0.25),
+            on_dismiss=lambda x: self.on_time_sheet_confirm(
+                session_id,
+                date,
+                name,
+                clock_in,
+                clock_out,
+                hours,
+                minutes,
+                cash,
+                dd,
+                notes,
+            ),
+        )
         self.submit_session_popup.open()
 
-
-    def open_delete_session_popup(self, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd):
+    def open_delete_session_popup(
+        self, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd
+    ):
         layout = MDBoxLayout(orientation="vertical")
         card = MDCard()
-        text = MDLabel(text=f"I'm going to delete the user session\n{session_id}\n{name}\n{date}\n{clock_in}-{clock_out}\n\nIf you want to save it to the payment history database instead, go back and uncheck 'delete'", halign="center")
-        button_layout = GridLayout(orientation="lr-tb", cols=3, size_hint_y=None, height=60)
-        delete_button = MDFlatButton(text="Confirm Deletion", size_hint=(1,1), on_press=lambda x: self.delete_session(session_id, name, delete=True))
-        spacer = MDLabel(size_hint_x=None,width=500, size_hint_y=1)
-        cancel_button = MDFlatButton(text="Go Back", size_hint=(1,1), on_press=lambda x: self.delete_session_popup.dismiss())
+        text = MDLabel(
+            text=f"I'm going to delete the user session\n{session_id}\n{name}\n{date}\n{clock_in}-{clock_out}\n\nIf you want to save it to the payment history database instead, go back and uncheck 'delete'",
+            halign="center",
+        )
+        button_layout = GridLayout(
+            orientation="lr-tb", cols=3, size_hint_y=None, height=60
+        )
+        delete_button = MDFlatButton(
+            text="Confirm Deletion",
+            size_hint=(1, 1),
+            on_press=lambda x: self.delete_session(session_id, name, delete=True),
+        )
+        spacer = MDLabel(size_hint_x=None, width=500, size_hint_y=1)
+        cancel_button = MDFlatButton(
+            text="Go Back",
+            size_hint=(1, 1),
+            on_press=lambda x: self.delete_session_popup.dismiss(),
+        )
         button_layout.add_widget(delete_button)
         button_layout.add_widget(spacer)
         button_layout.add_widget(cancel_button)
@@ -248,15 +360,29 @@ class PopupManager:
         layout.add_widget(button_layout)
         self.delete_session_popup = Popup(
             title="",
-            overlay_color=(0,0,0,0),
+            overlay_color=(0, 0, 0, 0),
             separator_height=0,
             content=layout,
-            size_hint=(0.4,0.25)
-            )
+            size_hint=(0.4, 0.25),
+        )
         self.delete_session_popup.open()
 
-    def on_time_sheet_confirm(self, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, notes):
-        self.app.db_manager.add_session_to_payment_history(session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, notes)
+    def on_time_sheet_confirm(
+        self,
+        session_id,
+        date,
+        name,
+        clock_in,
+        clock_out,
+        hours,
+        minutes,
+        cash,
+        dd,
+        notes,
+    ):
+        self.app.db_manager.add_session_to_payment_history(
+            session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, notes
+        )
         self.delete_session(session_id, name)
         # self.attendence_log_popup.dismiss()
         # self.show_attendence_log(filter=True, filter_name=name)
@@ -275,8 +401,18 @@ class PopupManager:
         button_layout = GridLayout(orientation="lr-tb", cols=2)
         buttons_container = MDBoxLayout(orientation="horizontal", size_hint_x=0.7)
         checkbox_container = MDBoxLayout(orientation="horizontal", size_hint_x=0.3)
-        confirm_button = MDFlatButton(text="Confirm", on_press=lambda x: self.on_add_user_confirm(name_input.text, pin_input.text, self.admin_checkbox.active), size_hint_x=1)
-        cancel_button = MDFlatButton(text="Cancel", size_hint_x=1, on_press=lambda x: self.add_user_popup.dismiss())
+        confirm_button = MDFlatButton(
+            text="Confirm",
+            on_press=lambda x: self.on_add_user_confirm(
+                name_input.text, pin_input.text, self.admin_checkbox.active
+            ),
+            size_hint_x=1,
+        )
+        cancel_button = MDFlatButton(
+            text="Cancel",
+            size_hint_x=1,
+            on_press=lambda x: self.add_user_popup.dismiss(),
+        )
         buttons_container.add_widget(confirm_button)
         buttons_container.add_widget(cancel_button)
         admin_label = MDLabel(text="Admin?", size_hint_x=0.1)
@@ -293,18 +429,16 @@ class PopupManager:
         self.add_user_popup = Popup(
             content=layout,
             title="Add User",
-            overlay_color=(0,0,0,0),
+            overlay_color=(0, 0, 0, 0),
             separator_height=0,
-            size_hint=(0.2,0.2)
-
-            )
+            size_hint=(0.2, 0.2),
+        )
         self.add_user_popup.open()
 
     def on_add_user_confirm(self, name, pin, admin):
         self.app.utilities.store_user_details(name, pin, admin)
         self.add_user_popup.dismiss()
         toast(f"Added {name}")
-
 
     def create_category_popup(self):
         self.selected_categories = []
@@ -463,10 +597,9 @@ class PopupManager:
         category_button_popup = self.create_category_popup()
         category_button_popup.open()
 
-
     def inventory_item_popup_row(self, instance):
 
-        content = BoxLayout(orientation="vertical",size_hint_y=1, padding=10)
+        content = BoxLayout(orientation="vertical", size_hint_y=1, padding=10)
         name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2)
         name_input = TextInput(text=instance.name, font_size=20)
         name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
@@ -474,7 +607,9 @@ class PopupManager:
         barcode_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2)
 
         self.item_barcode_input = TextInput(
-            input_filter="int", text=instance.barcode if instance.barcode else "", font_size=20,
+            input_filter="int",
+            text=instance.barcode if instance.barcode else "",
+            font_size=20,
         )
         barcode_layout.add_widget(Label(text="Barcode", size_hint_x=0.2))
         barcode_layout.add_widget(self.item_barcode_input)
@@ -496,7 +631,7 @@ class PopupManager:
 
         category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2)
         self.add_to_db_category_input_row = TextInput(
-            text=instance.category, disabled=True,  font_size=20
+            text=instance.category, disabled=True, font_size=20
         )
         category_layout.add_widget(Label(text="Categories", size_hint_x=0.2))
         category_layout.add_widget(self.add_to_db_category_input_row)
@@ -509,12 +644,17 @@ class PopupManager:
         content.add_widget(category_layout)
 
         button_layout = BoxLayout(
-            orientation="horizontal", size_hint_y=None,size_hint_x=1, height=100, spacing=10, padding=10
+            orientation="horizontal",
+            size_hint_y=None,
+            size_hint_x=1,
+            height=100,
+            spacing=10,
+            padding=10,
         )
 
         update_details_button = MDRaisedButton(
             text="[b][size=20]Update Details[/b][/size]",
-            size_hint=(0.2,1),
+            size_hint=(0.2, 1),
             on_press=lambda x: self.app.utilities.update_confirm_and_close(
                 self.item_barcode_input.text,
                 name_input.text,
@@ -523,33 +663,32 @@ class PopupManager:
                 sku_input.text,
                 self.add_to_db_category_input_row.text,
                 self.inventory_item_update_popup,
-            )
+            ),
         )
 
         categories_button = MDRaisedButton(
             text="[b][size=20]Categories[/b][/size]",
-            size_hint=(0.2,1),
+            size_hint=(0.2, 1),
             on_press=lambda x: self.open_update_category_button_popup(),
         )
 
         close_button = MDRaisedButton(
             text="[b][size=20]Close[/b][/size]",
-            size_hint=(0.2,1),
+            size_hint=(0.2, 1),
             on_press=lambda x: self.inventory_item_update_popup.dismiss(),
         )
 
         delete_button = MDFlatButton(
             text="Delete Item",
             md_bg_color="grey",
-            on_press=lambda x : self.open_delete_item_popup(
+            on_press=lambda x: self.open_delete_item_popup(
                 barcode=self.item_barcode_input.text,
                 name=name_input.text,
                 price=price_input.text,
                 admin=True,
-                ),
-
-            )
-        _blank = MDBoxLayout(size_hint=(1,1))
+            ),
+        )
+        _blank = MDBoxLayout(size_hint=(1, 1))
         button_layout.add_widget(update_details_button)
         button_layout.add_widget(categories_button)
         button_layout.add_widget(close_button)
@@ -561,7 +700,7 @@ class PopupManager:
 
         self.inventory_item_update_popup = Popup(
             title="Item details",
-            #pos_hint={"top": 1},
+            # pos_hint={"top": 1},
             content=content,
             size_hint=(0.8, 0.6),
             on_dismiss=lambda x: self.app.inventory_manager.reset_inventory_context(),
@@ -576,29 +715,37 @@ class PopupManager:
             container.add_widget(label)
             layout.add_widget(container)
             btn_layout = MDBoxLayout(orientation="horizontal", size_hint_y=0.2)
-            confirm_button = MDFlatButton(text="Confirm", on_press=lambda x:self.delete_item(barcode, name, price), size_hint=(1,1))
-            _blank = MDBoxLayout(size_hint=(1,1))
-            cancel_button = MDFlatButton(text="Cancel", on_press=lambda x:self.delete_item_popup.dismiss(),size_hint=(1,1))
+            confirm_button = MDFlatButton(
+                text="Confirm",
+                on_press=lambda x: self.delete_item(barcode, name, price),
+                size_hint=(1, 1),
+            )
+            _blank = MDBoxLayout(size_hint=(1, 1))
+            cancel_button = MDFlatButton(
+                text="Cancel",
+                on_press=lambda x: self.delete_item_popup.dismiss(),
+                size_hint=(1, 1),
+            )
             btn_layout.add_widget(confirm_button)
             btn_layout.add_widget(_blank)
             btn_layout.add_widget(cancel_button)
             layout.add_widget(btn_layout)
-            self.delete_item_popup = Popup(content=layout,size_hint=(0.4,0.4))
+            self.delete_item_popup = Popup(content=layout, size_hint=(0.4, 0.4))
             self.delete_item_popup.open()
         else:
             self.do_nothing()
 
-
     def delete_item(self, barcode="", name="", price=0):
 
-        item_details = self.app.db_manager.get_item_details(barcode=barcode, name=name, price=price)
+        item_details = self.app.db_manager.get_item_details(
+            barcode=barcode, name=name, price=price
+        )
         item_id = item_details["item_id"]
 
         self.app.db_manager.delete_item(item_id)
         self.delete_item_popup.dismiss()
         self.inventory_item_update_popup.dismiss()
         self.app.inventory_manager.refresh_inventory()
-
 
     def show_add_to_database_popup(self, barcode, categories=None):
         content = BoxLayout(orientation="vertical", padding=10)
@@ -705,7 +852,7 @@ class PopupManager:
 
     def show_item_details_popup(self, item_id):
 
-        print("show_item_details_popup",item_id)
+        print("show_item_details_popup", item_id)
         item_info = self.app.order_manager.items.get(item_id)
         if item_info:
             item_name = item_info["name"]
@@ -713,54 +860,72 @@ class PopupManager:
             item_price = item_info["total_price"]
             original_price = item_price / item_quantity
             item_discount = item_info.get("discount", {"amount": 0, "percent": False})
-        item_popup_layout = GridLayout(rows=3, cols=3, orientation="lr-tb", size_hint=(1, 1), spacing=5, padding=10)
-        details_layout = BoxLayout(orientation="vertical",size_hint=(1,1))
-        _blank = BoxLayout(size_hint=(1,1),)
-        _blank2 = BoxLayout(size_hint=(1,1),)
+        item_popup_layout = GridLayout(
+            rows=3, cols=3, orientation="lr-tb", size_hint=(1, 1), spacing=5, padding=10
+        )
+        details_layout = BoxLayout(orientation="vertical", size_hint=(1, 1))
+        _blank = BoxLayout(
+            size_hint=(1, 1),
+        )
+        _blank2 = BoxLayout(
+            size_hint=(1, 1),
+        )
 
-        details_text = MDLabel(text=f"[size=20]{item_name}\n\n${original_price} x {item_quantity} = ${item_price:.2f}[/size]",size_hint=(1,1), halign="center")
-        details_button = MDFlatButton(text="",size_hint=(1,1), md_bg_color="grey", on_press=lambda x: self.inventory_item_short_details(item_id))
+        details_text = MDLabel(
+            text=f"[size=20]{item_name}\n\n${original_price} x {item_quantity} = ${item_price:.2f}[/size]",
+            size_hint=(1, 1),
+            halign="center",
+        )
+        details_button = MDFlatButton(
+            text="",
+            size_hint=(1, 1),
+            md_bg_color="grey",
+            on_press=lambda x: self.inventory_item_short_details(item_id),
+        )
         details_button.add_widget(details_text)
         details_layout.add_widget(details_button)
 
-
-        minus_container = AnchorLayout(anchor_x='center', anchor_y='center')
+        minus_container = AnchorLayout(anchor_x="center", anchor_y="center")
         minus_button = MDFlatButton(
-                text=f"[size=100]-[/size]",
-                on_press=lambda x: self.app.order_manager.adjust_item_quantity_in(item_id, -1),
-            )
-        minus_container.add_widget(
-            minus_button
+            text=f"[size=100]-[/size]",
+            on_press=lambda x: self.app.order_manager.adjust_item_quantity_in(
+                item_id, -1
+            ),
         )
+        minus_container.add_widget(minus_button)
 
-        quantity_container = AnchorLayout(anchor_x='center', anchor_y='center')
-        quantity_label = MDLabel(text=f"[size=30]{str(item_quantity)}[/size]", halign="center", valign="center")
+        quantity_container = AnchorLayout(anchor_x="center", anchor_y="center")
+        quantity_label = MDLabel(
+            text=f"[size=30]{str(item_quantity)}[/size]",
+            halign="center",
+            valign="center",
+        )
         quantity_container.add_widget(quantity_label)
 
-
-        plus_container = AnchorLayout(anchor_x='center', anchor_y='center')
-        plus_button =  MDFlatButton(
-                #icon = "plus",
-                text=f"[size=75]+[/size]",
-                on_press = lambda x: self.app.order_manager.adjust_item_quantity_in(item_id, 1),
-                #pos_hint={}
-                # center_x=0.5,
-                # center_y=0.5,
-            )
-        plus_container.add_widget(
-           plus_button
+        plus_container = AnchorLayout(anchor_x="center", anchor_y="center")
+        plus_button = MDFlatButton(
+            # icon = "plus",
+            text=f"[size=75]+[/size]",
+            on_press=lambda x: self.app.order_manager.adjust_item_quantity_in(
+                item_id, 1
+            ),
+            # pos_hint={}
+            # center_x=0.5,
+            # center_y=0.5,
         )
-
+        plus_container.add_widget(plus_button)
 
         dicount_button_layout = BoxLayout(
             orientation="horizontal",
-            size_hint=(1,1),
+            size_hint=(1, 1),
         )
         if float(item_discount["amount"]) > 0:
             dicount_button_layout.add_widget(
                 self.app.utilities.create_md_raised_button(
                     f"[b][size=20]Remove Discount[/size][/b]",
-                    lambda x, item_id=item_id: self.app.order_manager.remove_single_item_discount(item_id),
+                    lambda x, item_id=item_id: self.app.order_manager.remove_single_item_discount(
+                        item_id
+                    ),
                     # self.add_discount_popup,
                     (1, 0.4),
                 )
@@ -777,7 +942,8 @@ class PopupManager:
             )
 
         remove_button_layout = BoxLayout(
-            orientation="horizontal", size_hint=(1,1),
+            orientation="horizontal",
+            size_hint=(1, 1),
         )
 
         remove_button_layout.add_widget(
@@ -789,7 +955,8 @@ class PopupManager:
         )
 
         cancel_button_layout = BoxLayout(
-            orientation="horizontal", size_hint=(1,1),
+            orientation="horizontal",
+            size_hint=(1, 1),
         )
         cancel_button_layout.add_widget(
             Button(
@@ -819,19 +986,18 @@ class PopupManager:
         )
         self.item_popup.open()
 
-
-
     def inventory_item_short_details(self, item_id):
 
         item_details = self.app.db_manager.get_item_details(item_id=item_id)
         layout = BoxLayout(orientation="vertical")
-        content = MDLabel(text=f"{item_details['name']}\nPrice: {item_details['price']}\nCost: {item_details['cost']}\n{item_details['sku']}")
-        popup = Popup(content=layout, size_hint=(0.2,0.4))
+        content = MDLabel(
+            text=f"{item_details['name']}\nPrice: {item_details['price']}\nCost: {item_details['cost']}\n{item_details['sku']}"
+        )
+        popup = Popup(content=layout, size_hint=(0.2, 0.4))
         button = Button(text="Dismiss", on_press=lambda x: popup.dismiss())
         layout.add_widget(content)
         layout.add_widget(button)
         popup.open()
-
 
     def close_item_popup(self):
         if self.item_popup:
@@ -911,7 +1077,7 @@ class PopupManager:
 
         self.discount_amount_input = TextInput(
             text="",
-            #disabled=True,
+            # disabled=True,
             multiline=False,
             input_filter="float",
             font_size=30,
@@ -922,7 +1088,7 @@ class PopupManager:
             title="Add Discount",
             content=discount_popup_layout,
             size_hint=(0.2, 0.4),
-            textinput=self.discount_amount_input
+            textinput=self.discount_amount_input,
         )
         discount_popup_layout.add_widget(self.discount_amount_input)
 
@@ -1193,45 +1359,64 @@ class PopupManager:
         self.system_popup.open()
 
     def show_label_printing_view(self, dual_pane_mode=False):
-        if hasattr(self, 'label_printing_view') and self.label_printing_view.parent:
+        if hasattr(self, "label_printing_view") and self.label_printing_view.parent:
             self.label_printing_view.parent.remove_widget(self.label_printing_view)
 
         inventory = self.app.inventory_cache
         self.label_printing_view = self.app.label_manager
 
-
         if dual_pane_mode:
-                self.app.label_manager.dual_pane_mode = True
+            self.app.label_manager.dual_pane_mode = True
             # try:
-                self.label_printing_view.show_inventory_for_label_printing(inventory, dual_pane_mode=True)
-                container = MDGridLayout(orientation="tb-lr", rows=4, size_hint_x=0.6)
-                button_container = MDBoxLayout(size_hint_y=0.05, orientation="horizontal", spacing=10, padding=5)
-                self.view_container = MDBoxLayout(size_hint_y=0.42)
-                self.queue_container = MDBoxLayout(size_hint_y=0.48)
-                self.print_queue_embed = self.app.label_manager.show_print_queue(embed=True)
-                self.queue_container.add_widget(self.print_queue_embed)
-                button = MDFlatButton(text="Go Back to Cash Register", md_bg_color="grey", size_hint=(1,1), _no_ripple_effect=True, on_press=lambda x: self.minimize_dual_popup())
-                button2 = MDFlatButton(text="Exit Dual Pane Mode", md_bg_color="grey", size_hint=(1,1), _no_ripple_effect=True, on_press=lambda x: self.exit_dual_pane_mode())
-                button_container.add_widget(button)
-                button_container.add_widget(button2)
-                if self.label_printing_view.parent:
-                    self.label_printing_view.parent.remove_widget(self.label_printing_view)
-                self.view_container.add_widget(self.label_printing_view)
-                divider = MDBoxLayout(size_hint_y=None, height=1, md_bg_color="blue")
-                container.add_widget(self.view_container)
-                container.add_widget(divider)
-                container.add_widget(self.queue_container)
-                container.add_widget(button_container)
-                return container
-            # except Exception as e:
-            #     print(f"expected error in popup manager show_label_printing_view\n{e}")
+            self.label_printing_view.show_inventory_for_label_printing(
+                inventory, dual_pane_mode=True
+            )
+            container = MDGridLayout(orientation="tb-lr", rows=4, size_hint_x=0.6)
+            button_container = MDBoxLayout(
+                size_hint_y=0.05, orientation="horizontal", spacing=10, padding=5
+            )
+            self.view_container = MDBoxLayout(size_hint_y=0.42)
+            self.queue_container = MDBoxLayout(size_hint_y=0.48)
+            self.print_queue_embed = self.app.label_manager.show_print_queue(embed=True)
+            self.queue_container.add_widget(self.print_queue_embed)
+            button = MDFlatButton(
+                text="Go Back to Cash Register",
+                md_bg_color="grey",
+                size_hint=(1, 1),
+                _no_ripple_effect=True,
+                on_press=lambda x: self.minimize_dual_popup(),
+            )
+            button2 = MDFlatButton(
+                text="Exit Dual Pane Mode",
+                md_bg_color="grey",
+                size_hint=(1, 1),
+                _no_ripple_effect=True,
+                on_press=lambda x: self.exit_dual_pane_mode(),
+            )
+            button_container.add_widget(button)
+            button_container.add_widget(button2)
+            if self.label_printing_view.parent:
+                self.label_printing_view.parent.remove_widget(self.label_printing_view)
+            self.view_container.add_widget(self.label_printing_view)
+            divider = MDBoxLayout(size_hint_y=None, height=1, md_bg_color="blue")
+            container.add_widget(self.view_container)
+            container.add_widget(divider)
+            container.add_widget(self.queue_container)
+            container.add_widget(button_container)
+            return container
+        # except Exception as e:
+        #     print(f"expected error in popup manager show_label_printing_view\n{e}")
         else:
             self.app.label_manager.dual_pane_mode = False
-            self.label_printing_view.show_inventory_for_label_printing(inventory, dual_pane_mode=False)
+            self.label_printing_view.show_inventory_for_label_printing(
+                inventory, dual_pane_mode=False
+            )
             self.app.current_context = "label"
 
             self.label_printing_popup = Popup(
-                title="Label Printing", content=self.label_printing_view, size_hint=(0.9, 0.9)
+                title="Label Printing",
+                content=self.label_printing_view,
+                size_hint=(0.9, 0.9),
             )
             self.label_printing_popup.bind(
                 on_dismiss=self.app.utilities.reset_to_main_context
@@ -1248,7 +1433,7 @@ class PopupManager:
             print(f"[PopupManager: Expected error in exit_dual_pane_mode\n{e}]")
 
     def toggle_active_pane(self):
-        if self.overlay_popup.pos_hint == {"right":1}:
+        if self.overlay_popup.pos_hint == {"right": 1}:
             self.overlay_popup.dismiss()
             self.toggle_overlay_popup(pane="left")
             self.app.current_context = "label"
@@ -1258,33 +1443,41 @@ class PopupManager:
             self.app.current_context = "inventory"
 
     def toggle_overlay_popup(self, pane="right"):
-        #container = MDBoxLayout()
-        layout = MDFlatButton(size_hint=(1,1), md_bg_color="grey",_no_ripple_effect=True, opacity=0.75, on_press=lambda x: self.toggle_active_pane())
-        #container.add_widget(layout)
+        # container = MDBoxLayout()
+        layout = MDFlatButton(
+            size_hint=(1, 1),
+            md_bg_color="grey",
+            _no_ripple_effect=True,
+            opacity=0.75,
+            on_press=lambda x: self.toggle_active_pane(),
+        )
+        # container.add_widget(layout)
         if pane == "right":
 
-            self.overlay_popup  = NonModalPopup(content=layout,
-                        title="",
-                        size_hint_x=0.605,
-                        pos_hint={"right":1},
-                        background="images/transparent.png",
-                        background_color=(0, 0, 0, 0),
-                        separator_height=0,
-                        overlay_color=(0, 0, 0, 0),
-                        auto_dismiss=False
-                        )
+            self.overlay_popup = NonModalPopup(
+                content=layout,
+                title="",
+                size_hint_x=0.605,
+                pos_hint={"right": 1},
+                background="images/transparent.png",
+                background_color=(0, 0, 0, 0),
+                separator_height=0,
+                overlay_color=(0, 0, 0, 0),
+                auto_dismiss=False,
+            )
             self.overlay_popup.open()
         else:
-            self.overlay_popup  = NonModalPopup(content=layout,
-                        title="",
-                        size_hint_x=0.405,
-                        pos_hint= {'x': 0.0, 'y': 0},
-                        background="images/transparent.png",
-                        background_color=(0, 0, 0, 0),
-                        separator_height=0,
-                        overlay_color=(0, 0, 0, 0),
-                        auto_dismiss=False
-                        )
+            self.overlay_popup = NonModalPopup(
+                content=layout,
+                title="",
+                size_hint_x=0.405,
+                pos_hint={"x": 0.0, "y": 0},
+                background="images/transparent.png",
+                background_color=(0, 0, 0, 0),
+                separator_height=0,
+                overlay_color=(0, 0, 0, 0),
+                auto_dismiss=False,
+            )
             self.overlay_popup.open()
 
     def minimize_dual_popup(self):
@@ -1300,36 +1493,55 @@ class PopupManager:
         self.toggle_overlay_popup()
         self.app.current_context = "inventory"
 
-
     def show_dual_inventory_and_label_managers(self, toggle="inventory"):
         self.app.current_context = "inventory"
 
-        if hasattr(self, 'label_printing_view') and self.label_printing_view.parent:
+        if hasattr(self, "label_printing_view") and self.label_printing_view.parent:
             self.label_printing_view.parent.remove_widget(self.label_printing_view)
 
-        if hasattr(self, 'inventory_management_view') and self.inventory_management_view.parent:
-            self.inventory_management_view.parent.remove_widget(self.inventory_management_view)
-        self.dual_layout = GridLayout(orientation="lr-tb", cols=3, size_hint=(1,1))
+        if (
+            hasattr(self, "inventory_management_view")
+            and self.inventory_management_view.parent
+        ):
+            self.inventory_management_view.parent.remove_widget(
+                self.inventory_management_view
+            )
+        self.dual_layout = GridLayout(orientation="lr-tb", cols=3, size_hint=(1, 1))
         if toggle == "inventory":
             # try:
             inv_layout = self.show_inventory_management_view(dual_pane_mode=True)
 
             self.dual_label_layout = self.show_label_printing_view(dual_pane_mode=True)
 
-
-            divider = MDBoxLayout(orientation="vertical", size_hint_x=None, width=1, size_hint_y=1, md_bg_color="blue")
+            divider = MDBoxLayout(
+                orientation="vertical",
+                size_hint_x=None,
+                width=1,
+                size_hint_y=1,
+                md_bg_color="blue",
+            )
             self.dual_layout.add_widget(inv_layout)
             self.dual_layout.add_widget(divider)
             self.dual_layout.add_widget(self.dual_label_layout)
-            self.dual_popup = ConditionalModalPopup(content=self.dual_layout,overlay_color=(0, 0, 0, 0), auto_dismiss=False, title="Inventory Manager" + " " * 275 + "Label Printer")
+            self.dual_popup = ConditionalModalPopup(
+                content=self.dual_layout,
+                overlay_color=(0, 0, 0, 0),
+                auto_dismiss=False,
+                title="Inventory Manager" + " " * 275 + "Label Printer",
+            )
             self.dual_popup.open()
             self.toggle_overlay_popup()
             # except Exception as e:
             #     print(f"[popups]\nshow_dual_inventory_and_label_managers\n{e}")
 
     def show_inventory_management_view(self, dual_pane_mode=False):
-        if hasattr(self, 'inventory_management_view') and self.inventory_management_view.parent:
-            self.inventory_management_view.parent.remove_widget(self.inventory_management_view)
+        if (
+            hasattr(self, "inventory_management_view")
+            and self.inventory_management_view.parent
+        ):
+            self.inventory_management_view.parent.remove_widget(
+                self.inventory_management_view
+            )
 
         self.inventory_management_view = InventoryManagementView()
         inventory = self.app.db_manager.get_all_items()
@@ -1356,7 +1568,9 @@ class PopupManager:
         self.inventory_management_view.ids.inv_search_input.text = ""
 
     def show_adjust_price_popup(self):
-        self.adjust_price_popup_layout = BoxLayout(orientation="vertical", spacing=5, padding=5)
+        self.adjust_price_popup_layout = BoxLayout(
+            orientation="vertical", spacing=5, padding=5
+        )
 
         self.adjust_price_cash_input = TextInput(
             text="",
@@ -1368,13 +1582,12 @@ class PopupManager:
             height=50,
         )
 
-
         self.adjust_price_popup = self.create_focus_popup(
             title="Adjust Payment",
             content=self.adjust_price_popup_layout,
             size_hint=(0.2, 0.4),
             on_dismiss=lambda x: setattr(self.adjust_price_cash_input, "text", ""),
-            textinput=self.adjust_price_cash_input
+            textinput=self.adjust_price_cash_input,
         )
 
         self.adjust_price_popup_layout.add_widget(self.adjust_price_cash_input)
@@ -1390,14 +1603,16 @@ class PopupManager:
                     text=f"[b][size=20]{button}[/size][/b]",
                     size_hint=(0.8, 0.8),
                     md_bg_color=[0.7, 0.7, 0.7, 1],
-                    on_press=lambda x: self.handle_backspace(self.adjust_price_cash_input)
+                    on_press=lambda x: self.handle_backspace(
+                        self.adjust_price_cash_input
+                    ),
                 )
             else:
                 btn = MDFlatButton(
                     text=f"[b][size=20]{button}[/size][/b]",
                     size_hint=(0.8, 0.8),
                     md_bg_color=[0.7, 0.7, 0.7, 1],
-                    on_press=self.app.button_handler.on_adjust_price_numeric_button_press
+                    on_press=self.app.button_handler.on_adjust_price_numeric_button_press,
                 )
 
             keypad_layout.add_widget(btn)
@@ -1438,7 +1653,6 @@ class PopupManager:
 
         input_field.text = f"{dollars}.{remaining_cents:02d}"
 
-
     def show_guard_screen(self):
         if not self.app.is_guard_screen_displayed:
             guard_layout = BoxLayout(orientation="vertical")
@@ -1452,7 +1666,6 @@ class PopupManager:
 
             guard_image = Image(source="images/rigs_logo_scaled.png")
 
-
             guard_layout.add_widget(guard_image)
             guard_layout.add_widget(clock_label)
 
@@ -1463,7 +1676,7 @@ class PopupManager:
                 auto_dismiss=False,
                 background_color=(0, 0, 0, 0),
                 separator_height=0,
-                overlay_color=(0.1, 0.1, 0.1,1)
+                overlay_color=(0.1, 0.1, 0.1, 1),
             )
             self.guard_popup.bind(
                 on_touch_down=lambda x, touch: self.app.utilities.dismiss_guard_popup()
@@ -1484,11 +1697,15 @@ class PopupManager:
         else:
             if not self.app.is_lock_screen_displayed:
 
-                lock_layout = MDGridLayout(orientation="lr-tb", cols=2, size_hint=(1, 1))
-                left_side_layout=MDGridLayout(orientation="lr-tb", cols=2, rows=2)
+                lock_layout = MDGridLayout(
+                    orientation="lr-tb", cols=2, size_hint=(1, 1)
+                )
+                left_side_layout = MDGridLayout(orientation="lr-tb", cols=2, rows=2)
                 lock_button_layout_container = MDBoxLayout(spacing=5, padding=10)
-                #lock_button_layout = MDGridLayout(orientation="lr-tb",cols=3, rows=4, size_hint=(0.5, 1))
-                self.lockscreen_keypad_layout = GridLayout(cols=3, rows=4, spacing=10, padding=10, size_hint=(0.1,1))
+                # lock_button_layout = MDGridLayout(orientation="lr-tb",cols=3, rows=4, size_hint=(0.5, 1))
+                self.lockscreen_keypad_layout = GridLayout(
+                    cols=3, rows=4, spacing=10, padding=10, size_hint=(0.1, 1)
+                )
 
                 numeric_buttons = [
                     "1",
@@ -1509,12 +1726,12 @@ class PopupManager:
                     if button != " ":
                         btn = MDFlatButton(
                             text=f"[b][size=20]{button}[/size][/b]",
-                            #color=(1, 1, 1, 1),
+                            # color=(1, 1, 1, 1),
                             size_hint=(0.8, 0.8),
                             _no_ripple_effect=True,
-                            on_press=lambda x, button=button:
-                                self.app.button_handler.on_lock_screen_button_press(instance=x, button_text=button),
-
+                            on_press=lambda x, button=button: self.app.button_handler.on_lock_screen_button_press(
+                                instance=x, button_text=button
+                            ),
                         )
                         self.lockscreen_keypad_layout.add_widget(btn)
 
@@ -1528,10 +1745,7 @@ class PopupManager:
                         self.lockscreen_keypad_layout.add_widget(btn_2)
                 right_side_layout = self.create_right_side_layout()
 
-
-
-
-                #lock_button_layout.add_widget(self.lockscreen_keypad_layout)
+                # lock_button_layout.add_widget(self.lockscreen_keypad_layout)
                 lock_button_layout_container.add_widget(self.lockscreen_keypad_layout)
                 clock_layout = self.create_clock_layout()
                 _blank = MDBoxLayout()
@@ -1543,15 +1757,15 @@ class PopupManager:
                 left_side_layout.add_widget(lock_button_layout_container)
                 lock_layout.add_widget(left_side_layout)
                 # lock_layout.add_widget(self.pin_input)
-                #lock_layout.add_widget(checkbox_layout)
+                # lock_layout.add_widget(checkbox_layout)
                 lock_layout.add_widget(right_side_layout)
                 self.lock_popup = Popup(
                     title="",
                     content=lock_layout,
                     size_hint=(1, 1),
                     auto_dismiss=False,
-                    #background_color=(0.78, 0.78, 0.78, 0),
-                    overlay_color=(0.25, 0.25, 0.25,1),
+                    # background_color=(0.78, 0.78, 0.78, 0),
+                    overlay_color=(0.25, 0.25, 0.25, 1),
                     separator_height=0,
                 )
 
@@ -1580,7 +1794,7 @@ class PopupManager:
         clock_layout = MDBoxLayout(orientation="vertical")
         image = Image(source="images/rigs_logo_scaled.png")
         container = MDBoxLayout()
-        clock_container = MDBoxLayout(orientation="vertical",padding = 100)
+        clock_container = MDBoxLayout(orientation="vertical", padding=100)
         self.clock_label = MDLabel(
             text="",
             size_hint_y=None,
@@ -1588,7 +1802,6 @@ class PopupManager:
             height=80,
             color=self.app.utilities.get_text_color(),
             halign="center",
-
         )
 
         Clock.schedule_interval(self.app.utilities.update_lockscreen_clock, 1)
@@ -1610,10 +1823,16 @@ class PopupManager:
             halign="center",
         )
         right_side_layout = BoxLayout(orientation="vertical", size_hint_x=0.5)
-        self.disable_lock_screen_checkbox = MDCheckbox(size_hint=(None, None), size=("48dp", "48dp"))
-        disable_lock_screen_label = Label(text="Disable Lock Screen", size_hint=(None, None), size=("200dp", "48dp"))
+        self.disable_lock_screen_checkbox = MDCheckbox(
+            size_hint=(None, None), size=("48dp", "48dp")
+        )
+        disable_lock_screen_label = Label(
+            text="Disable Lock Screen", size_hint=(None, None), size=("200dp", "48dp")
+        )
 
-        checkbox_layout = BoxLayout(orientation="horizontal", size_hint=(1, None), height="48dp")
+        checkbox_layout = BoxLayout(
+            orientation="horizontal", size_hint=(1, None), height="48dp"
+        )
         checkbox_layout.add_widget(self.disable_lock_screen_checkbox)
         checkbox_layout.add_widget(disable_lock_screen_label)
         image_path = "images/rigs_logo_scaled.png"
@@ -1623,9 +1842,9 @@ class PopupManager:
 
             img = Label(text="", size_hint=(1, 0.75), halign="center")
 
-        #right_side_layout.add_widget(img)
+        # right_side_layout.add_widget(img)
         right_side_layout.add_widget(self.pin_input)
-        #right_side_layout.add_widget(self.clock_label)
+        # right_side_layout.add_widget(self.clock_label)
         right_side_layout.add_widget(checkbox_layout)
         return right_side_layout
 
@@ -1640,18 +1859,20 @@ class PopupManager:
             textinput=inventory_view.ids.inventory_search_input,
             size_hint=(0.6, 1),
             pos_hint={"top": 1},
-            overlay_color=(0,0,0,0)
+            overlay_color=(0, 0, 0, 0),
         )
         self.inventory_popup.open()
 
     def show_tools_popup(self):
         # float_layout = FloatLayout()
-        float_layout = GridLayout(orientation="tb-lr",size_hint=(1,1), rows=10, spacing=10)
+        float_layout = GridLayout(
+            orientation="tb-lr", size_hint=(1, 1), rows=10, spacing=10
+        )
         tool_buttons = [
-            #"Clear Order",
-            #"Calculator",
-            #"Reporting",
-            #"Distrib TEST",
+            # "Clear Order",
+            # "Calculator",
+            # "Reporting",
+            # "Distrib TEST",
             "Admin",
             "System",
             "Label Printer",
@@ -1670,15 +1891,14 @@ class PopupManager:
         for index, tool in enumerate(tool_buttons):
             # center_y = start_y - (index * (btn_height_hint + spacing_hint)) / (1 if total_height_needed < 1 else total_height_needed)
             btn = MDRaisedButton(
-                text=f'[b][size=20]{tool}[/b][/size]',
-                #size_hint=(1, 1),
+                text=f"[b][size=20]{tool}[/b][/size]",
+                # size_hint=(1, 1),
                 # opacity=0.8,
                 # size_hint_min_x=1,
                 size_hint_y=None,
                 _min_height=75,
                 _min_width=200,
-
-                #height=200,
+                # height=200,
                 # pos_hint={"center_x": 0.5, "center_y": center_y},
                 on_press=self.app.button_handler.on_tool_button_press,
             )
@@ -1691,21 +1911,23 @@ class PopupManager:
             background="images/transparent.png",
             background_color=(0, 0, 0, 0),
             separator_height=0,
-            pos_hint={"center_x":0.9, "center_y":0.22},
-            overlay_color=(0,0,0,0)
-            #pos_hint={"top":1}
+            pos_hint={"center_x": 0.9, "center_y": 0.22},
+            overlay_color=(0, 0, 0, 0),
+            # pos_hint={"top":1}
         )
         self.tools_popup.open()
 
     def show_admin_popup(self):
         # float_layout = FloatLayout()
-        float_layout = GridLayout(orientation="tb-lr",size_hint=(1,1), rows=10, spacing=10)
+        float_layout = GridLayout(
+            orientation="tb-lr", size_hint=(1, 1), rows=10, spacing=10
+        )
         admin_buttons = [
-            #"Clear Order",
-            #"Calculator",
+            # "Clear Order",
+            # "Calculator",
             "Reporting",
             "Time Sheets",
-            "Users"
+            "Users",
         ]
 
         # btn_height_hint = 0.2
@@ -1718,15 +1940,14 @@ class PopupManager:
         for index, entry in enumerate(admin_buttons):
             # center_y = start_y - (index * (btn_height_hint + spacing_hint)) / (1 if total_height_needed < 1 else total_height_needed)
             btn = MDRaisedButton(
-                text=f'[b][size=20]{entry}[/b][/size]',
-                #size_hint=(1, 1),
+                text=f"[b][size=20]{entry}[/b][/size]",
+                # size_hint=(1, 1),
                 # opacity=0.8,
                 # size_hint_min_x=1,
                 size_hint_y=None,
                 _min_height=75,
                 _min_width=200,
-
-                #height=200,
+                # height=200,
                 # pos_hint={"center_x": 0.5, "center_y": center_y},
                 on_press=self.app.button_handler.on_admin_button_press,
             )
@@ -1739,15 +1960,17 @@ class PopupManager:
             background="images/transparent.png",
             background_color=(0, 0, 0, 0),
             separator_height=0,
-            pos_hint={"center_x":0.9, "center_y":0.22},
-            overlay_color=(0,0,0,0)
-            #pos_hint={"top":1}
+            pos_hint={"center_x": 0.9, "center_y": 0.22},
+            overlay_color=(0, 0, 0, 0),
+            # pos_hint={"top":1}
         )
         self.admin_popup.open()
 
     def show_custom_item_popup(self, barcode="01234567890"):
 
-        self.custom_item_popup_layout = BoxLayout(orientation="vertical", spacing=5, padding=5)
+        self.custom_item_popup_layout = BoxLayout(
+            orientation="vertical", spacing=5, padding=5
+        )
         self.cash_input = TextInput(
             text="",
             hint_text="Enter Price",
@@ -1793,7 +2016,9 @@ class PopupManager:
 
         confirm_button = self.app.utilities.create_md_raised_button(
             "[size=20][b]Confirm[/b][/size]",
-            lambda x: self.app.order_manager.add_custom_item(x, name=self.custom_item_name_input.text, price=self.cash_input.text),
+            lambda x: self.app.order_manager.add_custom_item(
+                x, name=self.custom_item_name_input.text, price=self.cash_input.text
+            ),
             (0.8, 0.8),
         )
 
@@ -1821,29 +2046,31 @@ class PopupManager:
     def show_order_popup(self, order_summary):
 
         order_details = self.app.order_manager.get_order_details()
-        popup_layout = GridLayout(orientation="tb-lr", spacing=5, padding=5, cols=2, rows=2)
-
-        items_layout = GridLayout(
-            orientation="lr-tb",
-            size_hint_y=1,
-            rows=20,
-            cols=2
+        popup_layout = GridLayout(
+            orientation="tb-lr", spacing=5, padding=5, cols=2, rows=2
         )
 
-
+        items_layout = GridLayout(orientation="lr-tb", size_hint_y=1, rows=20, cols=2)
 
         for item_id, item_details in order_details["items"].items():
             item_text = f"{item_details['quantity']}x {item_details['name']}"
             item_price = f"${item_details['total_price']:.2f}"
             item_label = MDLabel(
-                text=item_text, halign="left", size_hint_x = 7 / 8, size_hint_y = None, height = 40
+                text=item_text,
+                halign="left",
+                size_hint_x=7 / 8,
+                size_hint_y=None,
+                height=40,
             )
             price_label = MDLabel(
-                text=item_price, halign="right", size_hint_x = 1 / 8, size_hint_y = None, height = 40
-                )
+                text=item_price,
+                halign="right",
+                size_hint_x=1 / 8,
+                size_hint_y=None,
+                height=40,
+            )
             items_layout.add_widget(item_label)
             items_layout.add_widget(price_label)
-
 
         totals_container = AnchorLayout(anchor_x="right", size_hint_y=0.1)
         totals_layout = GridLayout(orientation="tb-lr", rows=4)
@@ -1865,7 +2092,7 @@ class PopupManager:
             )
             totals_layout.add_widget(discount_label)
         else:
-            _blank = MDLabel(text="",size_hint_y=None, height=1)
+            _blank = MDLabel(text="", size_hint_y=None, height=1)
             totals_layout.add_widget(_blank)
 
         totals_layout.add_widget(tax_label)
@@ -1874,8 +2101,24 @@ class PopupManager:
         # items_and_totals_layout.add_widget(totals_layout)
         popup_layout.add_widget(items_layout)
         popup_layout.add_widget(totals_container)
-        buttons_layout_top = GridLayout(orientation="tb-lr", spacing=5, padding=5, cols=1, rows=3, size_hint_x=1 / 3, size_hint_y = 3 / 5)
-        buttons_layout_bottom = GridLayout(orientation="tb-lr", spacing=5, padding=5, cols=1, rows=3, size_hint_x=1 / 3, size_hint_y = 2 / 5)
+        buttons_layout_top = GridLayout(
+            orientation="tb-lr",
+            spacing=5,
+            padding=5,
+            cols=1,
+            rows=3,
+            size_hint_x=1 / 3,
+            size_hint_y=3 / 5,
+        )
+        buttons_layout_bottom = GridLayout(
+            orientation="tb-lr",
+            spacing=5,
+            padding=5,
+            cols=1,
+            rows=3,
+            size_hint_x=1 / 3,
+            size_hint_y=2 / 5,
+        )
         btn_pay_cash = self.app.utilities.create_md_raised_button(
             f"[b][size=20]Pay Cash[/b][/size]",
             self.app.button_handler.on_payment_button_press,
@@ -1916,7 +2159,7 @@ class PopupManager:
             title=f"Finalize Order - {order_details['order_id']}",
             content=popup_layout,
             size_hint=(0.4, 0.6),
-            overlay_color=(0,0,0,0)
+            overlay_color=(0, 0, 0, 0),
         )
         self.finalize_order_popup.open()
 
@@ -1962,7 +2205,7 @@ class PopupManager:
             text=f"[b][size=20]Custom[/size][/b]",
             on_press=self.open_custom_cash_popup,
             size_hint=(0.4, 0.8),
-            md_bg_color="grey"
+            md_bg_color="grey",
         )
 
         confirm_button = self.app.utilities.create_md_raised_button(
@@ -1975,7 +2218,7 @@ class PopupManager:
             text=f"[b][size=20]Cancel[/size][/b]",
             on_press=self.app.utilities.on_cash_cancel,
             size_hint=(0.4, 0.8),
-            md_bg_color="grey"
+            md_bg_color="grey",
         )
 
         other_buttons.add_widget(confirm_button)
@@ -1988,7 +2231,7 @@ class PopupManager:
             title="Amount Tendered",
             content=self.cash_popup_layout,
             size_hint=(0.4, 0.6),
-            overlay_color=(0,0,0,0),
+            overlay_color=(0, 0, 0, 0),
         )
         self.cash_popup.open()
 
@@ -2046,7 +2289,7 @@ class PopupManager:
             title="Custom Cash",
             content=self.custom_cash_popup_layout,
             size_hint=(0.4, 0.6),
-            textinput=self.custom_cash_input
+            textinput=self.custom_cash_input,
         )
         self.custom_cash_popup.open()
 
@@ -2054,17 +2297,14 @@ class PopupManager:
 
         confirmation_layout = MDFloatLayout(size_hint=(1, 1))
 
-
         total_with_tax = self.app.order_manager.calculate_total_with_tax()
         order_details = self.app.order_manager.get_order_details()
-
 
         order_summary = "Order Complete:\n\n"
         for item_id, item_details in self.app.order_manager.items.items():
             item_name = item_details["name"]
             quantity = item_details["quantity"]
             order_summary += f"{item_name} x{quantity}\n"
-
 
         card = MDCard(
             orientation="vertical",
@@ -2074,20 +2314,18 @@ class PopupManager:
             # padding=10xxx
         )
 
+        card.add_widget(
+            MDLabel(text=order_summary, halign="center", theme_text_color="Secondary")
+        )
 
-        card.add_widget(MDLabel(
-            text=order_summary,
-            halign="center",
-            theme_text_color="Secondary"
-        ))
-
-        card.add_widget(MDLabel(
-            text=f"[b]${total_with_tax:.2f} Paid With {order_details['payment_method']}[/b]",
-            halign="center",
-            theme_text_color="Primary",
-            markup=True
-        ))
-
+        card.add_widget(
+            MDLabel(
+                text=f"[b]${total_with_tax:.2f} Paid With {order_details['payment_method']}[/b]",
+                halign="center",
+                theme_text_color="Primary",
+                markup=True,
+            )
+        )
 
         button_layout = MDFloatLayout(size_hint_y=0.3)
         done_button = MDRaisedButton(
@@ -2095,7 +2333,7 @@ class PopupManager:
             on_release=self.app.button_handler.on_done_button_press,
             pos_hint={"center_x": 0.25, "center_y": 0.5},
             size_hint=(0.45, 1),
-            markup=True
+            markup=True,
         )
 
         receipt_button = MDRaisedButton(
@@ -2103,16 +2341,14 @@ class PopupManager:
             on_release=self.app.button_handler.on_receipt_button_press,
             pos_hint={"center_x": 0.75, "center_y": 0.5},
             size_hint=(0.45, 1),
-            markup=True
+            markup=True,
         )
 
         card.add_widget(button_layout)
         button_layout.add_widget(done_button)
         button_layout.add_widget(receipt_button)
 
-
         confirmation_layout.add_widget(card)
-
 
         self.payment_popup = Popup(
             title="Payment Confirmation",
@@ -2122,12 +2358,16 @@ class PopupManager:
             auto_dismiss=False,
         )
         self.finalize_order_popup.dismiss()
-        self.timeout_event = Clock.schedule_once(lambda dt: self.automatic_done_actions(), 60)
+        self.timeout_event = Clock.schedule_once(
+            lambda dt: self.automatic_done_actions(), 60
+        )
         self.payment_popup.open()
 
     def automatic_done_actions(self):
         order_details = self.app.order_manager.get_order_details()
-        self.app.db_manager.send_order_to_history_database(order_details, self.app.order_manager, self.app.db_manager)
+        self.app.db_manager.send_order_to_history_database(
+            order_details, self.app.order_manager, self.app.db_manager
+        )
         self.app.order_manager.clear_order()
         self.payment_popup.dismiss()
         self.app.utilities.update_financial_summary()
@@ -2136,7 +2376,12 @@ class PopupManager:
 
     def show_make_change_popup(self, change):
         change_layout = BoxLayout(orientation="vertical", spacing=10)
-        change_layout.add_widget(MDLabel(text=f"[size=30]Change to return:\n [b]${change:.2f}[/b][/size]", halign="center"))
+        change_layout.add_widget(
+            MDLabel(
+                text=f"[size=30]Change to return:\n [b]${change:.2f}[/b][/size]",
+                halign="center",
+            )
+        )
 
         done_button = self.app.utilities.create_md_raised_button(
             f"[size=20][b]Done[/b][/size]", self.app.utilities.on_change_done, (1, 0.4)
@@ -2144,10 +2389,16 @@ class PopupManager:
         change_layout.add_widget(done_button)
 
         self.change_popup = Popup(
-            title="", content=change_layout, size_hint=(0.4, 0.4), separator_height=0, auto_dismiss=False
+            title="",
+            content=change_layout,
+            size_hint=(0.4, 0.4),
+            separator_height=0,
+            auto_dismiss=False,
         )
         self.change_popup.open()
-        self.make_change_dismiss_event = Clock.schedule_once(self.make_change_popup_timeout, 60)
+        self.make_change_dismiss_event = Clock.schedule_once(
+            self.make_change_popup_timeout, 60
+        )
 
     def make_change_popup_timeout(self, *args):
         try:
@@ -2168,11 +2419,11 @@ class PopupManager:
         }
         self.show_split_payment_numeric_popup()
 
-
-
     def split_cash_make_change(self, change, amount):
         split_change_layout = BoxLayout(orientation="vertical", spacing=10)
-        split_change_layout.add_widget(MDLabel(text=f"[size=30]Change to return: [b]${change:.2f}[/b][/size]"))
+        split_change_layout.add_widget(
+            MDLabel(text=f"[size=30]Change to return: [b]${change:.2f}[/b][/size]")
+        )
 
         split_done_button = self.app.utilities.create_md_raised_button(
             f"[size=20][b]Done[/b][/size]",
@@ -2329,8 +2580,7 @@ class PopupManager:
         if subsequent_payment:
             self.split_payment_numeric_cash_input = TextInput(
                 text=f"{self.split_payment_info['remaining_amount']:.2f}",
-
-                #disabled=True,
+                # disabled=True,
                 multiline=False,
                 input_filter="float",
                 font_size=20,
@@ -2345,7 +2595,7 @@ class PopupManager:
             self.split_payment_numeric_cash_input = TextInput(
                 text="",
                 hint_text="Enter first payment amount and then choose payment type below",
-                #disabled=True,
+                # disabled=True,
                 multiline=False,
                 input_filter="float",
                 font_size=20,
@@ -2360,7 +2610,7 @@ class PopupManager:
             title=f"Split Payment - Remaining Amount: {self.split_payment_info['remaining_amount']:.2f} ",
             content=self.split_payment_numeric_popup_layout,
             size_hint=(0.4, 0.6),
-            textinput=self.split_payment_numeric_cash_input
+            textinput=self.split_payment_numeric_cash_input,
         )
 
         keypad_layout = GridLayout(cols=3, rows=4, spacing=10)
@@ -2535,11 +2785,25 @@ class PopupManager:
     def do_nothing(self, instance):
         pass
 
-    def create_focus_popup(self, title, content, textinput, size_hint, pos_hint={}, on_dismiss=None, overlay_color=(0,0,0,0)):
+    def create_focus_popup(
+        self,
+        title,
+        content,
+        textinput,
+        size_hint,
+        pos_hint={},
+        on_dismiss=None,
+        overlay_color=(0, 0, 0, 0),
+    ):
         if on_dismiss is None:
             on_dismiss = self.do_nothing
         popup = FocusPopup(
-            title=title, content=content, size_hint=size_hint, pos_hint=pos_hint, on_dismiss=on_dismiss, overlay_color=overlay_color
+            title=title,
+            content=content,
+            size_hint=size_hint,
+            pos_hint=pos_hint,
+            on_dismiss=on_dismiss,
+            overlay_color=overlay_color,
         )
         popup.focus_on_textinput(textinput)
         return popup
@@ -2589,7 +2853,9 @@ class PopupManager:
         )
         receipt_errors_icon_button = MDRaisedButton(
             text="Try Again",
-            on_press=lambda x: self.app.receipt_printer.re_initialize_after_error(order_details),
+            on_press=lambda x: self.app.receipt_printer.re_initialize_after_error(
+                order_details
+            ),
             size_hint_x=1,
         )
         receipt_errors_button = MDRaisedButton(
@@ -2610,7 +2876,6 @@ class PopupManager:
             title="Receipt Printer Error",
         )
         self.receipt_errors_popup.open()
-
 
     def unrecoverable_error(self):
         print("unrecoverable")
@@ -2682,13 +2947,17 @@ class PopupManager:
         content.add_widget(category_layout)
 
         button_layout = BoxLayout(
-            orientation="horizontal", size_hint_y=None, height=100, spacing=10, padding=10
+            orientation="horizontal",
+            size_hint_y=None,
+            height=100,
+            spacing=10,
+            padding=10,
         )
 
         button_layout.add_widget(
             MDRaisedButton(
                 text="[b][size=20]Confirm[/size][/b]",
-                size_hint=(1,1),
+                size_hint=(1, 1),
                 on_press=lambda x: self.app.utilities.inventory_item_confirm_and_close(
                     self.barcode_input,
                     name_input,
@@ -2697,17 +2966,16 @@ class PopupManager:
                     sku_input,
                     self.add_to_db_category_input_inv,
                     self.inventory_item_popup,
-                    query=query
+                    query=query,
                 ),
             )
         )
         button_layout.add_widget(
             MDRaisedButton(
                 text="[b][size=20]Generate Barcode[/size][/b]",
-                size_hint=(1,1),
+                size_hint=(1, 1),
                 on_press=lambda x: self.app.utilities.set_generated_barcode(
                     self.barcode_input,
-
                 ),
             )
         )
@@ -2715,23 +2983,23 @@ class PopupManager:
             MDRaisedButton(
                 text="[b][size=20]Categories[/size][/b]",
                 on_press=lambda x: self.open_category_button_popup_inv(),
-                size_hint=(1,1)
+                size_hint=(1, 1),
             )
         )
         button_layout.add_widget(
             MDRaisedButton(
                 text="[b][size=20]Cancel[/size][/b]",
                 on_press=lambda x: self.inventory_item_popup.dismiss(),
-                size_hint=(1,1)
+                size_hint=(1, 1),
             )
         )
-        button_layout.add_widget(MDBoxLayout(size_hint=(1,1)))
+        button_layout.add_widget(MDBoxLayout(size_hint=(1, 1)))
 
         content.add_widget(button_layout)
 
         self.inventory_item_popup = Popup(
             title="Item details",
-            #pos_hint={"top": 1},
+            # pos_hint={"top": 1},
             content=content,
             size_hint=(0.8, 0.6),
         )
@@ -2739,48 +3007,49 @@ class PopupManager:
         self.inventory_item_popup.bind(
             on_dismiss=lambda x: self.on_inventory_item_dismiss(x)
         )
-        #self.app.inventory_manager.refresh_inventory()
+        # self.app.inventory_manager.refresh_inventory()
         self.inventory_item_popup.open()
 
     def on_inventory_item_dismiss(self, instance):
         self.app.inventory_manager.reset_inventory_context()
         # self.app.inventory_manager.detach_from_parent()
 
-
     def handle_duplicate_barcodes(self, barcode):
         items = self.app.db_manager.handle_duplicate_barcodes(barcode)
-        layout = GridLayout(rows=10, cols=1, spacing=5, size_hint=(1,1))
+        layout = GridLayout(rows=10, cols=1, spacing=5, size_hint=(1, 1))
         for item in items:
             button = MDRaisedButton(
-                text=item['name'],
-                size_hint=(1,None),
-                on_press=lambda x, barcode=barcode, choice=item['name'], price=item['price']: self.add_dupe_choice_to_order(barcode=barcode, choice=choice, price=price)
-                )
+                text=item["name"],
+                size_hint=(1, None),
+                on_press=lambda x, barcode=barcode, choice=item["name"], price=item[
+                    "price"
+                ]: self.add_dupe_choice_to_order(
+                    barcode=barcode, choice=choice, price=price
+                ),
+            )
             layout.add_widget(button)
 
         self.handle_duplicate_barcodes_popup = Popup(
             title="Duplicate Barcode Detected!",
             content=layout,
-            size_hint=(0.2,0.6),
-
-            )
+            size_hint=(0.2, 0.6),
+        )
         self.handle_duplicate_barcodes_popup.open()
 
     def add_dupe_choice_to_order(self, barcode, choice, price):
 
-        item_details = self.app.db_manager.get_item_details(barcode=barcode, name=choice, dupe=True, price=price)
+        item_details = self.app.db_manager.get_item_details(
+            barcode=barcode, name=choice, dupe=True, price=price
+        )
 
         if item_details:
 
-            item_name = item_details['name']
-            item_price = item_details['price']
+            item_name = item_details["name"]
+            item_price = item_details["price"]
             self.app.order_manager.add_item(item_name, item_price)
             self.handle_duplicate_barcodes_popup.dismiss()
             self.app.utilities.update_display()
             self.app.utilities.update_financial_summary()
-
-
-
 
 
 class MarkupLabel(Label):
@@ -2836,12 +3105,12 @@ class FinancialSummaryWidget(MDFlatButton):
             self._no_ripple_effect = True
             self.text = ""
 
-            self.layout = BoxLayout(orientation='vertical', size_hint=(1, 1))
+            self.layout = BoxLayout(orientation="vertical", size_hint=(1, 1))
 
             self.subtotal_label = MDLabel(markup=True, halign="right")
             self.discount_label = MDLabel(markup=True, halign="right")
             self.tax_label = MDLabel(markup=True, halign="right")
-            self.total_label = MDLabel(markup=True, font_style='H5', halign="right")
+            self.total_label = MDLabel(markup=True, font_style="H5", halign="right")
             self.blank = BoxLayout(size_hint_y=None, height=20)
             self.layout.add_widget(self.subtotal_label)
             self.layout.add_widget(self.discount_label)
@@ -2866,15 +3135,16 @@ class FinancialSummaryWidget(MDFlatButton):
 
     def update_mirror_image(self, *args):
         try:
-            snapshot_path = 'mirror_snapshot.png'
+            snapshot_path = "mirror_snapshot.png"
             self.export_to_png(snapshot_path)
-            cropped_img = self.crop_bottom_right_corner("mirror_snapshot.png","cropped_mirror_snapshot.png")
+            cropped_img = self.crop_bottom_right_corner(
+                "mirror_snapshot.png", "cropped_mirror_snapshot.png"
+            )
 
             self.app.utilities.mirror_image.source = "cropped_mirror_snapshot.png"
             self.app.utilities.mirror_image.reload()
         except:
             pass
-
 
     def crop_bottom_right_corner(self, source_path, target_path, crop_size=(250, 50)):
         with PILImage.open(source_path) as img:
@@ -2901,45 +3171,45 @@ class FinancialSummaryWidget(MDFlatButton):
         if float(self.app.order_manager.order_discount) > 0:
             discount_order_button = MDFlatButton(
                 text="[b][size=20]Remove Order Discount[/b][/size]",
-                #pos_hint={"center_x": 0.5, "center_y": 1},
+                # pos_hint={"center_x": 0.5, "center_y": 1},
                 size_hint=(1, 0.15),
-                md_bg_color=(0.5,0.5,0.5,0.05),
+                md_bg_color=(0.5, 0.5, 0.5, 0.05),
                 on_press=lambda x: self.remove_order_discount(),
             )
         else:
-             discount_order_button = MDFlatButton(
+            discount_order_button = MDFlatButton(
                 text="[b][size=20]Add Order Discount[/b][/size]",
-                #pos_hint={"center_x": 0.5, "center_y": 1},
+                # pos_hint={"center_x": 0.5, "center_y": 1},
                 size_hint=(1, 0.15),
-                md_bg_color=(0.5,0.5,0.5,0.05),
+                md_bg_color=(0.5, 0.5, 0.5, 0.05),
                 on_press=lambda x: self.app.popup_manager.add_order_discount_popup(),
             )
         clear_order_button = MDFlatButton(
             text="[b][size=20]Clear Order[/b][/size]",
-            #pos_hint={"center_x": 0.5, "center_y": 1 - 0.2},
+            # pos_hint={"center_x": 0.5, "center_y": 1 - 0.2},
             size_hint=(1, 0.15),
-            md_bg_color=(0.5,0.5,0.5,0.05),
+            md_bg_color=(0.5, 0.5, 0.5, 0.05),
             on_press=lambda x: self.clear_order(),
         )
         adjust_price_button = MDFlatButton(
             text="[b][size=20]Adjust Payment[/b][/size]",
-            #pos_hint={"center_x": 0.5, "center_y": 1 - 0.4},
+            # pos_hint={"center_x": 0.5, "center_y": 1 - 0.4},
             size_hint=(1, 0.15),
-            md_bg_color=(0.5,0.5,0.5,0.05),
+            md_bg_color=(0.5, 0.5, 0.5, 0.05),
             on_press=lambda x: self.adjust_price(),
         )
         save_order_button = MDFlatButton(
             text="[b][size=20]Save Order[/b][/size]",
-            #pos_hint={"center_x": 0.5, "center_y": 1 - 0.6},
+            # pos_hint={"center_x": 0.5, "center_y": 1 - 0.6},
             size_hint=(1, 0.15),
-            md_bg_color=(0.5,0.5,0.5,0.05),
+            md_bg_color=(0.5, 0.5, 0.5, 0.05),
             on_press=lambda x: self.save_order(),
         )
         load_order_button = MDFlatButton(
             text="[b][size=20]Load Order[/b][/size]",
-            #pos_hint={"center_x": 0.5, "center_y": 1 - 0.8},
+            # pos_hint={"center_x": 0.5, "center_y": 1 - 0.8},
             size_hint=(1, 0.15),
-            md_bg_color=(0.5,0.5,0.5,0.05),
+            md_bg_color=(0.5, 0.5, 0.5, 0.05),
             on_press=lambda x: self.open_list_saved_orders_popup(),
         )
         order_mod_layout.add_widget(save_order_button)
@@ -2954,9 +3224,9 @@ class FinancialSummaryWidget(MDFlatButton):
             background="images/transparent.png",
             background_color=(0, 0, 0, 0),
             separator_height=0,
-            pos_hint={"center_x":0.72, "center_y":0.4},
-            #padding=(0,250,600,0),
-            overlay_color = [0, 0, 0, 0]
+            pos_hint={"center_x": 0.72, "center_y": 0.4},
+            # padding=(0,250,600,0),
+            overlay_color=[0, 0, 0, 0],
         )
         self.order_mod_popup.open()
 
@@ -2967,7 +3237,7 @@ class FinancialSummaryWidget(MDFlatButton):
     def save_order(self):
         self.app.order_manager.save_order_to_disk()
         self.add_saved_orders_to_clock_layout()
-        #self.open_save_order_popup()
+        # self.open_save_order_popup()
         toast("Saved!")
         self.app.order_manager.clear_order()
         try:
@@ -2980,11 +3250,11 @@ class FinancialSummaryWidget(MDFlatButton):
     def add_saved_orders_to_clock_layout(self):
         orders = self.app.order_manager.list_all_saved_orders()
         if len(orders) > 0:
-            self.app.utilities.saved_order_title.text="Saved Orders"
-            self.app.utilities.saved_order_divider.md_bg_color="blue"
+            self.app.utilities.saved_order_title.text = "Saved Orders"
+            self.app.utilities.saved_order_divider.md_bg_color = "blue"
         else:
-            self.app.utilities.saved_order_title.text=""
-            self.app.utilities.saved_order_divider.md_bg_color=(0,0,0,0)
+            self.app.utilities.saved_order_title.text = ""
+            self.app.utilities.saved_order_divider.md_bg_color = (0, 0, 0, 0)
         labels = [
             self.app.utilities.saved_order_button1_label,
             self.app.utilities.saved_order_button2_label,
@@ -3001,7 +3271,6 @@ class FinancialSummaryWidget(MDFlatButton):
             self.app.utilities.saved_order_button5,
         ]
 
-
         for label in labels:
             label.text = ""
 
@@ -3015,8 +3284,9 @@ class FinancialSummaryWidget(MDFlatButton):
                 items_trunc = items_no_brackets
 
             label.text = items_trunc
-            button.on_press = lambda order=order, button=button: self.load_order(order=order, button=button)
-
+            button.on_press = lambda order=order, button=button: self.load_order(
+                order=order, button=button
+            )
 
     def delete_order(self, order):
         self.app.order_manager.delete_order_from_disk(order)
@@ -3028,12 +3298,12 @@ class FinancialSummaryWidget(MDFlatButton):
 
     def load_order(self, order, button):
         self.app.order_manager.load_order_from_disk(order)
-        button.md_bg_color=(0,0,0,0)
+        button.md_bg_color = (0, 0, 0, 0)
         self.delete_order(order)
         self.add_saved_orders_to_clock_layout()
 
     def open_list_saved_orders_popup(self):
-        content_layout=GridLayout(orientation="lr-tb", cols=3, rows=10)
+        content_layout = GridLayout(orientation="lr-tb", cols=3, rows=10)
         orders = self.app.order_manager.list_all_saved_orders()
         for order in orders:
             order_str = ""
@@ -3042,36 +3312,45 @@ class FinancialSummaryWidget(MDFlatButton):
             items = str(order["items"])
             order_id = str(order["order_id"])
             entry = MDLabel(text=f"{order_id}\n{items}", size_hint_y=0.1)
-            button = Button(text="Open", size_hint_y=0.1, on_press=lambda x, order=order:self.load_order(order=order))
-            del_button = Button(text="Delete", size_hint_y=0.1, on_press=lambda x, order=order:self.delete_order(order=order))
+            button = Button(
+                text="Open",
+                size_hint_y=0.1,
+                on_press=lambda x, order=order: self.load_order(order=order),
+            )
+            del_button = Button(
+                text="Delete",
+                size_hint_y=0.1,
+                on_press=lambda x, order=order: self.delete_order(order=order),
+            )
             content_layout.add_widget(entry)
             content_layout.add_widget(button)
             content_layout.add_widget(del_button)
-        self.list_saved_orders_popup = Popup(content=content_layout, size_hint=(0.8,0.4))
+        self.list_saved_orders_popup = Popup(
+            content=content_layout, size_hint=(0.8, 0.4)
+        )
         self.list_saved_orders_popup.open()
-
 
     def open_save_order_popup(self):
         layout = GridLayout(orientation="tb-lr", rows=1, cols=1)
         label = Label(text="Saved!", size_hint=(1, 0.5))
-        #button = MDRaisedButton(text="Dismiss", size_hint=(1, 0.5), on_press=lambda x: self.save_order_popup.dismiss())
+        # button = MDRaisedButton(text="Dismiss", size_hint=(1, 0.5), on_press=lambda x: self.save_order_popup.dismiss())
         layout.add_widget(label)
-        #layout.add_widget(button)
-        self.save_order_popup = Popup(size_hint=(0.2, 0.2),
-                                      content=layout,
-                                      title="",
-                                        background="images/transparent.png",
-                                        background_color=(0, 0, 0, 0),
-                                        separator_height=0,)
+        # layout.add_widget(button)
+        self.save_order_popup = Popup(
+            size_hint=(0.2, 0.2),
+            content=layout,
+            title="",
+            background="images/transparent.png",
+            background_color=(0, 0, 0, 0),
+            separator_height=0,
+        )
         self.save_order_popup.open()
 
         Clock.schedule_once(lambda dt: self.save_order_popup.dismiss(), 1)
 
-
     def adjust_price(self):
         self.app.popup_manager.show_adjust_price_popup()
         self.order_mod_popup.dismiss()
-
 
 
 class Calculator:
@@ -3191,6 +3470,7 @@ class Calculator:
         )
         calculator_popup.open()
 
+
 class NonModalPopup(Popup):
     def on_touch_down(self, touch):
         super_result = super().on_touch_down(touch)
@@ -3221,6 +3501,7 @@ class ConditionalModalPopup(Popup):
             return False
         return super(ConditionalModalPopup, self).on_touch_up(touch)
 
+
 class TouchableMDBoxLayout(BoxLayout):
     def __init__(self, checkbox, **kwargs):
         super(TouchableMDBoxLayout, self).__init__(**kwargs)
@@ -3231,6 +3512,7 @@ class TouchableMDBoxLayout(BoxLayout):
             self.checkbox.active = not self.checkbox.active
             return True
         return super(TouchableMDBoxLayout, self).on_touch_down(touch)
+
 
 class CustomCheckbox(MDCheckbox):
     active_color = ColorProperty([0, 0.5, 0.5, 1])

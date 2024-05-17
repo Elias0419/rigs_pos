@@ -272,7 +272,7 @@ class InventoryRow(BoxLayout):
 
     def add_to_order(self):
         item_details = self.app.db_manager.get_item_details(barcode=self.barcode)
-        item_id = item_details.get('item_id')
+        item_id = item_details.get("item_id")
         try:
             price_float = float(self.price)
         except ValueError as e:

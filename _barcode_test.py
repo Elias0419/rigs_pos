@@ -169,7 +169,9 @@ class BarcodeScanner:
     def handle_scanned_barcode(self, barcode):
         try:
             if "-" in barcode and any(c.isalpha() for c in barcode):
-                self.app.history_manager.display_order_details_from_barcode_scan(barcode)
+                self.app.history_manager.display_order_details_from_barcode_scan(
+                    barcode
+                )
                 return
 
             known_barcodes = self.app.barcode_cache.keys()
@@ -179,9 +181,11 @@ class BarcodeScanner:
                 return
 
             for known_barcode in known_barcodes:
-                if known_barcode[1:] == barcode or \
-                known_barcode == barcode[:-4] or \
-                known_barcode[1:] == barcode[:-4]:
+                if (
+                    known_barcode[1:] == barcode
+                    or known_barcode == barcode[:-4]
+                    or known_barcode[1:] == barcode[:-4]
+                ):
                     self.handle_known_barcode(known_barcode)
                     return
 
@@ -189,7 +193,6 @@ class BarcodeScanner:
 
         except Exception as e:
             print(f"Exception in handle_scanned_barcode\n{e}")
-
 
     def handle_known_barcode(self, known_barcode):
         barcode_data = self.app.barcode_cache.get(known_barcode)
@@ -203,9 +206,9 @@ class BarcodeScanner:
 
     def process_item_details(self, item_details):
         # print(item_details)
-        item_name = item_details.get('name', 'Error!')
-        item_price = item_details.get('price', 0.0)
-        item_id = item_details.get('item_id')
+        item_name = item_details.get("name", "Error!")
+        item_price = item_details.get("price", 0.0)
+        item_id = item_details.get("item_id")
         self.app.order_manager.add_item(item_name, item_price, item_id=item_id)
         # self.app.order_manager.add_item(item_name, item_price)
         self.app.utilities.update_display()

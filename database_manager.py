@@ -3,6 +3,7 @@ from datetime import datetime
 import json
 import uuid
 
+
 class DatabaseManager:
     _instance = None
 
@@ -27,7 +28,6 @@ class DatabaseManager:
         self.create_modified_orders_table()
         self.create_dist_table()
         self.create_payment_history_table()
-
 
     def create_payment_history_table(self):
         conn = self._get_connection()
@@ -128,14 +128,12 @@ class DatabaseManager:
         finally:
             conn.close()
 
-
-
     def create_dist_table(self):
-            conn = self._get_connection()
-            try:
-                cursor = conn.cursor()
-                cursor.execute(
-                    """CREATE TABLE IF NOT EXISTS distributor_info (
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """CREATE TABLE IF NOT EXISTS distributor_info (
                                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                                     name TEXT NOT NULL,
                                     contact_info TEXT,
@@ -145,26 +143,24 @@ class DatabaseManager:
                                     notes TEXT,
                                     FOREIGN KEY(item_id) REFERENCES items(item_id)
                                 )"""
-                )
-                conn.commit()
-            except sqlite3.Error as e:
-                print(e)
-            finally:
-                conn.close()
-
-
+            )
+            conn.commit()
+        except sqlite3.Error as e:
+            print(e)
+        finally:
+            conn.close()
 
     def add_item(
-            self,
-            barcode,
-            name,
-            price,
-            cost=None,
-            sku=None,
-            category=None,
-            parent_barcode=None,
-            taxable=True
-        ):
+        self,
+        barcode,
+        name,
+        price,
+        cost=None,
+        sku=None,
+        category=None,
+        parent_barcode=None,
+        taxable=True,
+    ):
         item_id = uuid.uuid4()
         self.create_items_table()
         conn = self._get_connection()
@@ -172,19 +168,29 @@ class DatabaseManager:
             cursor = conn.cursor()
             cursor.execute(
                 "INSERT INTO items (barcode, name, price, cost, sku, category, item_id, parent_barcode, taxable) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (barcode, name, price, cost, sku, category, str(item_id), parent_barcode, taxable),
+                (
+                    barcode,
+                    name,
+                    price,
+                    cost,
+                    sku,
+                    category,
+                    str(item_id),
+                    parent_barcode,
+                    taxable,
+                ),
             )
             conn.commit()
             item_details = {
-                'barcode': barcode,
-                'name': name,
-                'price': price,
-                'cost': cost,
-                'sku': sku,
-                'category': category,
-                'item_id': str(item_id),
-                'parent_barcode': parent_barcode,
-                'taxable': taxable
+                "barcode": barcode,
+                "name": name,
+                "price": price,
+                "cost": cost,
+                "sku": sku,
+                "category": category,
+                "item_id": str(item_id),
+                "parent_barcode": parent_barcode,
+                "taxable": taxable,
             }
             self.app.utilities.update_barcode_cache(item_details)
         except sqlite3.IntegrityError as e:
@@ -194,28 +200,40 @@ class DatabaseManager:
         conn.close()
         return True
 
-
-    def update_item(self, item_id, barcode, name, price, cost=None, sku=None, category=None, taxable=True):
-        #print("db update_item", "barcode", barcode, "item_id", item_id, "name", name, "price", price, "cost", cost, "sku", sku, "category", category, "taxable", taxable)
+    def update_item(
+        self,
+        item_id,
+        barcode,
+        name,
+        price,
+        cost=None,
+        sku=None,
+        category=None,
+        taxable=True,
+    ):
+        # print("db update_item", "barcode", barcode, "item_id", item_id, "name", name, "price", price, "cost", cost, "sku", sku, "category", category, "taxable", taxable)
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
             update_query = """UPDATE items
                             SET barcode=?, name=?, price=?, cost=?, sku=?, category=?, taxable=?
                             WHERE item_id=?"""
-            cursor.execute(update_query, (barcode, name, price, cost, sku, category, taxable, item_id))
+            cursor.execute(
+                update_query,
+                (barcode, name, price, cost, sku, category, taxable, item_id),
+            )
             if cursor.rowcount == 0:
                 print("No item found with UUID:", item_id)
                 return False
             conn.commit()
             item_details = {
-                'item_id': item_id,
-                'name': name,
-                'price': price,
-                'cost': cost,
-                'sku': sku,
-                'category': category,
-                'taxable': taxable
+                "item_id": item_id,
+                "name": name,
+                "price": price,
+                "cost": cost,
+                "sku": sku,
+                "category": category,
+                "taxable": taxable,
             }
             self.app.utilities.update_barcode_cache(item_details)
         except Exception as e:
@@ -224,8 +242,6 @@ class DatabaseManager:
         finally:
             conn.close()
         return True
-
-
 
     def handle_duplicate_barcodes(self, barcode):
 
@@ -242,19 +258,18 @@ class DatabaseManager:
             cursor.execute(query, (barcode,))
             rows = cursor.fetchall()
 
-
             for row in rows:
                 print(row)
                 item_details = {
-                    'barcode': row[0],
-                    'name': row[1],
-                    'price': row[2],
-                    'cost': row[3],
-                    'sku': row[4],
-                    'category': row[5],
-                    'item_id': row[6],
-                    'parent_barcode': row[7],
-                    'taxable': row[8],
+                    "barcode": row[0],
+                    "name": row[1],
+                    "price": row[2],
+                    "cost": row[3],
+                    "sku": row[4],
+                    "category": row[5],
+                    "item_id": row[6],
+                    "parent_barcode": row[7],
+                    "taxable": row[8],
                 }
                 items.append(item_details)
 
@@ -315,15 +330,15 @@ class DatabaseManager:
 
             if item:
                 item_details = {
-                    'name': item[0],
-                    'price': item[1],
-                    'barcode': item[2],
-                    'cost': item[3],
-                    'sku': item[4],
-                    'category': item[5],
-                    'item_id': item[6],
-                    'parent_barcode': item[7],
-                    'taxable': item[8],
+                    "name": item[0],
+                    "price": item[1],
+                    "barcode": item[2],
+                    "cost": item[3],
+                    "sku": item[4],
+                    "category": item[5],
+                    "item_id": item[6],
+                    "parent_barcode": item[7],
+                    "taxable": item[8],
                 }
 
                 # if item_id or barcode: # TODO
@@ -361,16 +376,25 @@ class DatabaseManager:
         finally:
             conn.close()
 
-
-
-
     # def debug_print(self, order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given):
     #     variables = locals()  # Captures all the local variables in the function as a dictionary
     #
     #     for var_name, value in variables.items():
     #         print(f"{var_name}: Value = {value}, Type = {type(value)}")
 
-    def add_order_history(self, order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given):
+    def add_order_history(
+        self,
+        order_id,
+        items,
+        total,
+        tax,
+        discount,
+        total_with_tax,
+        timestamp,
+        payment_method,
+        amount_tendered,
+        change_given,
+    ):
         # self.debug_print(order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given)
         self.create_order_history_table()
         conn = self._get_connection()
@@ -380,7 +404,18 @@ class DatabaseManager:
 
             cursor.execute(
                 "INSERT INTO order_history (order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given),
+                (
+                    order_id,
+                    items,
+                    total,
+                    tax,
+                    discount,
+                    total_with_tax,
+                    timestamp,
+                    payment_method,
+                    amount_tendered,
+                    change_given,
+                ),
             )
             conn.commit()
         except sqlite3.Error as e:
@@ -414,7 +449,9 @@ class DatabaseManager:
             conn = self._get_connection()
             try:
                 cursor = conn.cursor()
-                cursor.execute("DELETE FROM order_history WHERE order_id = ?", (order_id,))
+                cursor.execute(
+                    "DELETE FROM order_history WHERE order_id = ?", (order_id,)
+                )
                 conn.commit()
             except sqlite3.Error as e:
                 print(e)
@@ -439,7 +476,9 @@ class DatabaseManager:
                 values = list(kwargs.values())
                 values.append(order_id)
 
-                cursor.execute(f"UPDATE order_history SET {set_clause} WHERE order_id = ?", values)
+                cursor.execute(
+                    f"UPDATE order_history SET {set_clause} WHERE order_id = ?", values
+                )
                 conn.commit()
             except sqlite3.Error as e:
                 print(e)
@@ -454,7 +493,6 @@ class DatabaseManager:
 
         conn = self._get_connection()
         cursor = conn.cursor()
-
 
         query = """
         SELECT
@@ -474,17 +512,13 @@ class DatabaseManager:
             order_id = ?
         """
 
-
         cursor.execute(query, (order_id,))
-
 
         order = cursor.fetchone()
 
         conn.close()
 
-
         return order
-
 
     def get_order_history(self):
         conn = self._get_connection()
@@ -493,7 +527,7 @@ class DatabaseManager:
             "SELECT order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given FROM order_history"
         )
         order_history = cursor.fetchall()
-        #print(order_history)
+        # print(order_history)
         conn.close()
         return order_history
 
@@ -530,19 +564,17 @@ class DatabaseManager:
             except Exception as e:
                 print(e)
 
-
-
     def get_all_items(self):
-       # print(f"db manager get all\n\n\n\n")
+        # print(f"db manager get all\n\n\n\n")
         conn = self._get_connection()
-        #print(f"{conn}\n\n\n\n")
+        # print(f"{conn}\n\n\n\n")
         cursor = conn.cursor()
         try:
             cursor.execute(
                 "SELECT barcode, name, price, cost, sku, category, item_id, parent_barcode, taxable FROM items"
             )
             items = cursor.fetchall()
-          #  print(len(items))
+        #  print(len(items))
         except sqlite3.Error as e:
             print(e)
             items = []
@@ -564,24 +596,43 @@ class DatabaseManager:
         conn = self._get_connection()
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        query = 'SELECT * FROM distributor_info'
+        query = "SELECT * FROM distributor_info"
         cursor.execute(query)
         rows = cursor.fetchall()
 
-
-        distributors = {row['id']: {'name': row['name'], 'contact_info': row['contact_info'], 'item_name': row['item_name'], 'item_id': row['item_id'], 'price': row['price'], 'notes': row['notes']} for row in rows}
+        distributors = {
+            row["id"]: {
+                "name": row["name"],
+                "contact_info": row["contact_info"],
+                "item_name": row["item_name"],
+                "item_id": row["item_id"],
+                "price": row["price"],
+                "notes": row["notes"],
+            }
+            for row in rows
+        }
 
         conn.close()
         return distributors
-
-
 
     def close_connection(self):
         conn = self._get_connection()
         if conn:
             conn.close()
 
-    def add_session_to_payment_history(self, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, notes):
+    def add_session_to_payment_history(
+        self,
+        session_id,
+        date,
+        name,
+        clock_in,
+        clock_out,
+        hours,
+        minutes,
+        cash,
+        dd,
+        notes,
+    ):
         conn = self._get_connection()
         timestamp = datetime.now()
         try:
@@ -589,7 +640,19 @@ class DatabaseManager:
 
             cursor.execute(
                 "INSERT INTO payments (timestamp, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, >)",
-            (timestamp, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, notes),
+                (
+                    timestamp,
+                    session_id,
+                    date,
+                    name,
+                    clock_in,
+                    clock_out,
+                    hours,
+                    minutes,
+                    cash,
+                    dd,
+                    notes,
+                ),
             )
             conn.commit()
         except sqlite3.Error as e:
@@ -605,14 +668,10 @@ class DatabaseManager:
             cursor = conn.cursor()
             if session_id:
                 cursor.execute(
-                    "SELECT * FROM payments WHERE session_id = ?",
-                    (session_id,)
+                    "SELECT * FROM payments WHERE session_id = ?", (session_id,)
                 )
             elif name:
-                cursor.execute(
-                    "SELECT * FROM payments WHERE name = ?",
-                    (name,)
-                )
+                cursor.execute("SELECT * FROM payments WHERE name = ?", (name,))
             else:
                 cursor.execute("SELECT * FROM payments")
 
@@ -625,8 +684,7 @@ class DatabaseManager:
             conn.close()
 
 
-
-if __name__=="__main__":
-    db=DatabaseManager("inventory.db", None)
-    res=db.get_all_items()
+if __name__ == "__main__":
+    db = DatabaseManager("inventory.db", None)
+    res = db.get_all_items()
     print(res)

@@ -164,17 +164,13 @@ class Utilities:
         return categories
 
     def store_user_details(self, name, pin, admin):
-        user_details = {
-            'name': name,
-            'pin': pin,
-            'admin': admin
-        }
+        user_details = {"name": name, "pin": pin, "admin": admin}
         temp_file_path = self.app.pin_store + ".tmp"
         final_file_path = self.app.pin_store
 
         try:
             if os.path.exists(final_file_path):
-                with open(final_file_path, 'r') as file:
+                with open(final_file_path, "r") as file:
                     try:
                         data = json.load(file)
                     except json.JSONDecodeError:
@@ -184,7 +180,7 @@ class Utilities:
 
             data.append(user_details)
 
-            with open(temp_file_path, 'w') as file:
+            with open(temp_file_path, "w") as file:
                 json.dump(data, file, indent=4)
 
             os.replace(temp_file_path, final_file_path)
@@ -194,16 +190,15 @@ class Utilities:
             if os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
 
-
     def validate_pin(self, entered_pin):
         if not os.path.exists(self.app.pin_store):
             self.store_user_details("default", entered_pin, False)
-            return {'name': "default", 'admin': False}, True
-        with open(self.app.pin_store, 'r') as file:
+            return {"name": "default", "admin": False}, True
+        with open(self.app.pin_store, "r") as file:
             users = json.load(file)
             for user in users:
-                if user['pin'] == entered_pin:
-                    return {'name': user['name'], 'admin': user['admin']}, True
+                if user["pin"] == entered_pin:
+                    return {"name": user["name"], "admin": user["admin"]}, True
         return False
 
     def time_until_end_of_shift(self):
@@ -229,7 +224,7 @@ class Utilities:
 
     def read_formatted_clock_in_time(self, clock_in_file):
         if os.path.exists(clock_in_file):
-            with open(clock_in_file, 'r') as file:
+            with open(clock_in_file, "r") as file:
                 data = json.load(file)
                 clock_in_iso = data.get("clock_in", "")
                 if clock_in_iso:
@@ -248,20 +243,37 @@ class Utilities:
         self.clock_in_file = f"{user_details['name']}-{today_str}-{session_id}.json"
 
         if not os.path.exists(self.clock_in_file):
-            with open(self.clock_in_file, 'w') as file:
-                json.dump({"clock_in": datetime.now().isoformat(), "session_id": session_id}, file)
-            self.update_attendance_log(self.app.attendance_log, user_details['name'], "clock_in", session_id=session_id)
+            with open(self.clock_in_file, "w") as file:
+                json.dump(
+                    {"clock_in": datetime.now().isoformat(), "session_id": session_id},
+                    file,
+                )
+            self.update_attendance_log(
+                self.app.attendance_log,
+                user_details["name"],
+                "clock_in",
+                session_id=session_id,
+            )
             log_in_time = self.read_formatted_clock_in_time(self.clock_in_file)
-            self.time_clock.text = f"User: {self.app.logged_in_user['name']}\nTap the clock to log out"
-            self.clock_out_event = Clock.schedule_once(self.auto_clock_out, self.time_until_end_of_shift())
+            self.time_clock.text = (
+                f"User: {self.app.logged_in_user['name']}\nTap the clock to log out"
+            )
+            self.clock_out_event = Clock.schedule_once(
+                self.auto_clock_out, self.time_until_end_of_shift()
+            )
 
     def clock_out(self):
-        if hasattr(self, 'clock_out_event'):
+        if hasattr(self, "clock_out_event"):
             self.clock_out_event.cancel()
         if os.path.exists(self.clock_in_file):
             session_id = self.extract_session_id(self.clock_in_file)
             os.remove(self.clock_in_file)
-            self.update_attendance_log(self.app.attendance_log, self.app.logged_in_user["name"], "clock_out", session_id=session_id)
+            self.update_attendance_log(
+                self.app.attendance_log,
+                self.app.logged_in_user["name"],
+                "clock_out",
+                session_id=session_id,
+            )
         self.app.popup_manager.clock_out_popup.dismiss()
         self.app.utilities.trigger_guard_and_lock()
 
@@ -270,11 +282,21 @@ class Utilities:
             session_id = self.extract_session_id(self.clock_in_file)
             os.remove(self.clock_in_file)
 
-            midnight = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+            midnight = datetime.now().replace(
+                hour=0, minute=0, second=0, microsecond=0
+            ) + timedelta(days=1)
             formatted_midnight = midnight.isoformat()
-            self.update_attendance_log(self.app.attendance_log, self.app.logged_in_user["name"], "auto", timestamp=formatted_midnight, session_id=session_id)
+            self.update_attendance_log(
+                self.app.attendance_log,
+                self.app.logged_in_user["name"],
+                "auto",
+                timestamp=formatted_midnight,
+                session_id=session_id,
+            )
 
-    def update_attendance_log(self, log_file, user_name, action, session_id, auto=False, timestamp=None):
+    def update_attendance_log(
+        self, log_file, user_name, action, session_id, auto=False, timestamp=None
+    ):
         if timestamp is None:
             timestamp = datetime.now().isoformat()
 
@@ -282,13 +304,13 @@ class Utilities:
             "name": user_name,
             "timestamp": timestamp,
             "action": action if not auto else "auto",
-            "session_id": session_id
+            "session_id": session_id,
         }
         if not os.path.exists(log_file):
-            with open(log_file, 'w') as file:
+            with open(log_file, "w") as file:
                 json.dump([entry], file, indent=4)
         else:
-            with open(log_file, 'r+') as file:
+            with open(log_file, "r+") as file:
                 log = json.load(file)
                 log.append(entry)
                 file.seek(0)
@@ -296,10 +318,12 @@ class Utilities:
 
     def delete_session_from_log(self, session_id):
         try:
-            with open(self.app.attendance_log, 'r+') as file:
+            with open(self.app.attendance_log, "r+") as file:
                 log = json.load(file)
 
-                updated_log = [entry for entry in log if entry['session_id'] != session_id]
+                updated_log = [
+                    entry for entry in log if entry["session_id"] != session_id
+                ]
 
                 file.seek(0)
                 file.truncate()
@@ -308,38 +332,42 @@ class Utilities:
             print(f"Utilities: delete_session_from_log\n{e}")
 
     def extract_session_id(self, filename):
-        with open(filename, 'r') as file:
+        with open(filename, "r") as file:
             data = json.load(file)
         return data["session_id"]
 
-
     def load_attendance_data(self):
         if not os.path.exists(self.app.attendance_log):
-            with open(self.app.attendance_log, 'w') as file:
+            with open(self.app.attendance_log, "w") as file:
                 json.dump([], file)
             return []
 
-        with open(self.app.attendance_log, 'r') as file:
+        with open(self.app.attendance_log, "r") as file:
             data = json.load(file)
         return data
 
     def organize_sessions(self, data):
         sessions = {}
         for entry in data:
-            user = entry['name']
+            user = entry["name"]
             if user not in sessions:
                 sessions[user] = []
 
-            if entry['action'] == 'clock_in':
-                sessions[user].append({
-                    'clock_in': entry['timestamp'],
-                    'clock_out': None,
-                    'session_id': entry['session_id']
-                })
-            elif entry['action'] == 'clock_out' and sessions[user]:
+            if entry["action"] == "clock_in":
+                sessions[user].append(
+                    {
+                        "clock_in": entry["timestamp"],
+                        "clock_out": None,
+                        "session_id": entry["session_id"],
+                    }
+                )
+            elif entry["action"] == "clock_out" and sessions[user]:
                 for session in reversed(sessions[user]):
-                    if session['clock_out'] is None and session['session_id'] == entry['session_id']:
-                        session['clock_out'] = entry['timestamp']
+                    if (
+                        session["clock_out"] is None
+                        and session["session_id"] == entry["session_id"]
+                    ):
+                        session["clock_out"] = entry["timestamp"]
                         break
 
         return sessions
@@ -348,20 +376,20 @@ class Utilities:
         formatted_data = []
         for user, user_sessions in sessions.items():
             for session in user_sessions:
-                if session['clock_out']:
-                    clock_in_time = datetime.fromisoformat(session['clock_in'])
-                    clock_out_time = datetime.fromisoformat(session['clock_out'])
+                if session["clock_out"]:
+                    clock_in_time = datetime.fromisoformat(session["clock_in"])
+                    clock_out_time = datetime.fromisoformat(session["clock_out"])
                     duration = clock_out_time - clock_in_time
                     hours, remainder = divmod(duration.total_seconds(), 3600)
                     minutes = remainder // 60
                     formatted_session = {
-                        'date': clock_in_time.strftime('%m/%d/%Y'),
-                        'name': user,
-                        'clock_in': clock_in_time.strftime('%H:%M'),
-                        'clock_out': clock_out_time.strftime('%H:%M'),
-                        'hours': int(hours),
-                        'minutes': int(minutes),
-                        'session_id': session['session_id']
+                        "date": clock_in_time.strftime("%m/%d/%Y"),
+                        "name": user,
+                        "clock_in": clock_in_time.strftime("%H:%M"),
+                        "clock_out": clock_out_time.strftime("%H:%M"),
+                        "hours": int(hours),
+                        "minutes": int(minutes),
+                        "session_id": session["session_id"],
                     }
                     formatted_data.append(formatted_session)
         return formatted_data
@@ -401,15 +429,15 @@ class Utilities:
         return amounts
 
     def update_clock(self, *args):
-        current_time = time.strftime('%l:%M %p')
-        current_date = time.strftime('%A, %B %d, %Y')
+        current_time = time.strftime("%l:%M %p")
+        current_date = time.strftime("%A, %B %d, %Y")
 
         formatted_time = f"[size=36][b]{current_time}[/b][/size]"
         formatted_date = f"[size=26]{current_date}[/size]"
 
         self.app.clock_label.text = f"{formatted_time}\n{formatted_date}\n"
 
-        #self.app.clock_label.color = self.get_text_color()
+        # self.app.clock_label.color = self.get_text_color()
 
     def update_lockscreen_clock(self, *args):
 
@@ -613,7 +641,7 @@ class Utilities:
         trash_icon_container.add_widget(self.app.trash_icon)
 
         save_icon_container = MDBoxLayout(size_hint_y=0.1)
-        #_blank = BoxLayout(size_hint_y=0.9)
+        # _blank = BoxLayout(size_hint_y=0.9)
         self.app.save_icon = MDIconButton(
             icon="content-save",
             pos_hint={"top": 0.90, "right": 0},
@@ -625,7 +653,11 @@ class Utilities:
         self.time_clock = MDLabel(text="", size_hint_y=0.2)
         time_clock_container = GridLayout(orientation="lr-tb", cols=2)
         _blank2 = MDBoxLayout(size_hint_y=0.8)
-        clock_icon = MDIconButton(icon="clock", pos_hint={"top": 1}, on_press=lambda x: self.app.popup_manager.open_clock_out_popup())
+        clock_icon = MDIconButton(
+            icon="clock",
+            pos_hint={"top": 1},
+            on_press=lambda x: self.app.popup_manager.open_clock_out_popup(),
+        )
         time_clock_container.add_widget(self.time_clock)
         time_clock_container.add_widget(clock_icon)
         top_center_container.add_widget(time_clock_container)
@@ -643,7 +675,9 @@ class Utilities:
         right_area_layout.add_widget(financial_layout)
         self.top_area_layout.add_widget(right_area_layout)
         sidebar = BoxLayout(orientation="vertical", size_hint_x=0.07)
-        lock_icon = MDIconButton(icon="lock", on_press=lambda x: self.trigger_guard_and_lock(trigger=True))
+        lock_icon = MDIconButton(
+            icon="lock", on_press=lambda x: self.trigger_guard_and_lock(trigger=True)
+        )
         sidebar.add_widget(trash_icon_container)
         sidebar.add_widget(save_icon_container)
         sidebar.add_widget(lock_icon)
@@ -677,7 +711,7 @@ class Utilities:
             f"[b][size=40]Search[/b][/size]",
             # lambda x: self.app.popup_manager.maximize_dual_popup(),
             self.app.button_handler.on_button_press,
-            #lambda x: self.app.popup_manager.show_lock_screen(),
+            # lambda x: self.app.popup_manager.show_lock_screen(),
             (8, 8),
             "H6",
         )
@@ -688,12 +722,11 @@ class Utilities:
             # lambda x: self.modify_clock_layout_for_dual_pane_mode(),
             # lambda x: self.app.popup_manager.show_dual_inventory_and_label_managers(),
             # lambda x: self.enable_dual_pane_mode(),
-
-            #lambda x: self.store_user_details("noob","1111",False),
-            #lambda x: self.app.popup_manager.show_lock_screen(),
+            # lambda x: self.store_user_details("noob","1111",False),
+            # lambda x: self.app.popup_manager.show_lock_screen(),
             # lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
             # lambda x: sys.exit(42),
-            #lambda x: self.app.financial_summary.update_mirror_image(),
+            # lambda x: self.app.financial_summary.update_mirror_image(),
             (8, 8),
             "H6",
         )
@@ -734,8 +767,6 @@ class Utilities:
         else:
             return self.base_layout
 
-
-
     def create_clock_layout(self):
 
         self.clock_layout = GridLayout(
@@ -745,18 +776,20 @@ class Utilities:
             size_hint_y=1,
             padding=(60, 0, 0, -10),
         )
-        mirror_image_container = MDBoxLayout(size_hint=(None,0.1), width=200)
+        mirror_image_container = MDBoxLayout(size_hint=(None, 0.1), width=200)
         self.mirror_image = Image(source="cropped_mirror_snapshot.png")
         mirror_image_container.add_widget(self.mirror_image)
         top_container = BoxLayout(orientation="vertical", size_hint_y=0.1, padding=10)
         saved_orders_container = MDBoxLayout(
             size_hint_y=1, orientation="vertical", spacing=20, padding=(0, 0, 0, 100)
         )
-        self.saved_order_title_container=MDBoxLayout(orientation="vertical")
+        self.saved_order_title_container = MDBoxLayout(orientation="vertical")
         self.saved_order_title = MDLabel(
             text="", adaptive_height=False, size_hint_y=None, height=50
         )
-        self.saved_order_divider = MDBoxLayout(size_hint_x=0.5, size_hint_y=None, height=1, md_bg_color=(0,0,0,0))
+        self.saved_order_divider = MDBoxLayout(
+            size_hint_x=0.5, size_hint_y=None, height=1, md_bg_color=(0, 0, 0, 0)
+        )
         self.saved_order_title_container.add_widget(self.saved_order_title)
         self.saved_order_title_container.add_widget(self.saved_order_divider)
 
@@ -768,7 +801,7 @@ class Utilities:
             _min_height=50,
             _no_ripple_effect=True,
         )
-        self.saved_order_button1_label=MDLabel(text="", halign="left")
+        self.saved_order_button1_label = MDLabel(text="", halign="left")
         self.saved_order_button1.add_widget(self.saved_order_button1_label)
         self.saved_order_button2 = MDFlatButton(
             text="",
@@ -778,7 +811,7 @@ class Utilities:
             _min_height=50,
             _no_ripple_effect=True,
         )
-        self.saved_order_button2_label=MDLabel(text="", halign="left")
+        self.saved_order_button2_label = MDLabel(text="", halign="left")
         self.saved_order_button2.add_widget(self.saved_order_button2_label)
 
         self.saved_order_button3 = MDFlatButton(
@@ -789,7 +822,7 @@ class Utilities:
             _min_height=50,
             _no_ripple_effect=True,
         )
-        self.saved_order_button3_label=MDLabel(text="", halign="left")
+        self.saved_order_button3_label = MDLabel(text="", halign="left")
         self.saved_order_button3.add_widget(self.saved_order_button3_label)
         self.saved_order_button4 = MDFlatButton(
             text="",
@@ -799,7 +832,7 @@ class Utilities:
             _min_height=50,
             _no_ripple_effect=True,
         )
-        self.saved_order_button4_label=MDLabel(text="", halign="left")
+        self.saved_order_button4_label = MDLabel(text="", halign="left")
         self.saved_order_button4.add_widget(self.saved_order_button4_label)
         self.saved_order_button5 = MDFlatButton(
             text="",
@@ -809,10 +842,10 @@ class Utilities:
             _min_height=50,
             _no_ripple_effect=True,
         )
-        self.saved_order_button5_label=MDLabel(text="", halign="left")
+        self.saved_order_button5_label = MDLabel(text="", halign="left")
         self.saved_order_button5.add_widget(self.saved_order_button5_label)
         saved_orders_container.add_widget(self.saved_order_title_container)
-        #saved_orders_container.add_widget(self.saved_order_divider)
+        # saved_orders_container.add_widget(self.saved_order_divider)
         saved_orders_container.add_widget(self.saved_order_button1)
         saved_orders_container.add_widget(self.saved_order_button2)
         saved_orders_container.add_widget(self.saved_order_button3)
@@ -821,9 +854,6 @@ class Utilities:
         logo_container = BoxLayout(size_hint_y=0.2, padding=(-200, 0, 0, 0))
         logo = ImageButton(source="images/rigs_logo_scaled.png")
         logo_container.add_widget(logo)
-
-
-
 
         register_text = MDLabel(
             text="Cash Register",
@@ -844,10 +874,10 @@ class Utilities:
             height=150,
             size_hint_x=1,
             color=self.get_text_color(),
-            #markup=True,
-            #valign="bottom",
+            # markup=True,
+            # valign="bottom",
             halign="left",
-           # pos_hint={"left": 0.1}
+            # pos_hint={"left": 0.1}
         )
         clock_container.add_widget(self.app.clock_label)
         line_container = MDBoxLayout(
@@ -885,7 +915,6 @@ class Utilities:
         Clock.schedule_interval(self.update_clock, 1)
 
         return self.clock_layout
-
 
     def modify_clock_layout_for_dual_pane_mode(self):
         self.dual_button.text = f"[b][size=20]Go Back To Dual Pane Mode[/b][/size]"
@@ -1128,9 +1157,8 @@ class Utilities:
 
             human_readable_time = f"{hours}h:{minutes}m:{seconds}s"
 
-            if idle_time > 600000: # 10 minutes
-            #if idle_time > 10000: # 10 secs
-
+            if idle_time > 600000:  # 10 minutes
+                # if idle_time > 10000: # 10 secs
 
                 self.trigger_guard_and_lock(trigger=False)
 
@@ -1399,6 +1427,7 @@ class Utilities:
     # def launch_tetris(self):
     #     subprocess.Popen(['/home/rigs/0/bin/python', 'games/tetris.py'])
 
+
 class ReusableTimer:
     def __init__(self, interval, function, *args, **kwargs):
         self.interval = interval
@@ -1429,7 +1458,7 @@ class ReusableTimer:
 class ImageButton(ButtonBehavior, Image):
     def __init__(self, **kwargs):
         super(ImageButton, self).__init__(**kwargs)
-        self.register_event_type('on_double_tap')
+        self.register_event_type("on_double_tap")
         self.last_tap_time = None
         self.double_tap_time = 0.25
         self.app = MDApp.get_running_app()
@@ -1437,8 +1466,11 @@ class ImageButton(ButtonBehavior, Image):
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
             current_time = Clock.get_time()
-            if self.last_tap_time and current_time - self.last_tap_time < self.double_tap_time:
-                self.dispatch('on_double_tap')
+            if (
+                self.last_tap_time
+                and current_time - self.last_tap_time < self.double_tap_time
+            ):
+                self.dispatch("on_double_tap")
                 self.last_tap_time = None
             else:
                 self.last_tap_time = current_time
@@ -1449,5 +1481,5 @@ class ImageButton(ButtonBehavior, Image):
         self.launch_tetris()
 
     def launch_tetris(self):
-        #subprocess.Popen(['/home/rigs/0/bin/python', 'games/tetris.py', self.app.logged_in_user])
-        subprocess.Popen(['python', 'games/tetris.py', self.app.logged_in_user])
+        # subprocess.Popen(['/home/rigs/0/bin/python', 'games/tetris.py', self.app.logged_in_user])
+        subprocess.Popen(["python", "games/tetris.py", self.app.logged_in_user])

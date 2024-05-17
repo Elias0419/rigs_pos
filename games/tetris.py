@@ -3,6 +3,7 @@ import random
 import json
 import os
 import sys
+
 if len(sys.argv) > 1:
     logged_in_user = sys.argv[1]
 colors = [
@@ -14,22 +15,27 @@ colors = [
     (180, 34, 22),
     (180, 34, 122),
 ]
+
+
 def load_high_scores(file_path):
     if not os.path.exists(file_path):
-        with open(file_path, 'w') as file:
-            json.dump([{'name': 'nobody', 'score': 0} for _ in range(3)], file)
-    with open(file_path, 'r') as file:
+        with open(file_path, "w") as file:
+            json.dump([{"name": "nobody", "score": 0} for _ in range(3)], file)
+    with open(file_path, "r") as file:
         return json.load(file)
 
+
 def save_high_scores(file_path, scores):
-    with open(file_path, 'w') as file:
+    with open(file_path, "w") as file:
         json.dump(scores, file)
+
 
 def update_high_scores(scores, new_score, player_name):
 
-    scores.append({'name': player_name, 'score': new_score})
-    scores.sort(key=lambda x: x['score'], reverse=True)
+    scores.append({"name": player_name, "score": new_score})
+    scores.sort(key=lambda x: x["score"], reverse=True)
     return scores[:3]
+
 
 class Figure:
     x = 0
@@ -71,7 +77,7 @@ class Tetris:
         self.y = 60
         self.zoom = 20
         self.figure = None
-        self.high_scores = load_high_scores('games/high_scores.json')
+        self.high_scores = load_high_scores("games/high_scores.json")
         self.height = height
         self.width = width
         self.field = []
@@ -91,10 +97,12 @@ class Tetris:
         for i in range(4):
             for j in range(4):
                 if i * 4 + j in self.figure.image():
-                    if i + self.figure.y > self.height - 1 or \
-                            j + self.figure.x > self.width - 1 or \
-                            j + self.figure.x < 0 or \
-                            self.field[i + self.figure.y][j + self.figure.x] > 0:
+                    if (
+                        i + self.figure.y > self.height - 1
+                        or j + self.figure.x > self.width - 1
+                        or j + self.figure.x < 0
+                        or self.field[i + self.figure.y][j + self.figure.x] > 0
+                    ):
                         intersection = True
         return intersection
 
@@ -110,7 +118,7 @@ class Tetris:
                 for i1 in range(i, 1, -1):
                     for j in range(self.width):
                         self.field[i1][j] = self.field[i1 - 1][j]
-        self.score += lines ** 2
+        self.score += lines**2
 
     def go_space(self):
         while not self.intersects():
@@ -126,9 +134,10 @@ class Tetris:
 
     def game_over(self):
         self.state = "gameover"
-        self.high_scores = update_high_scores(self.high_scores, self.score, logged_in_user)
-        save_high_scores('games/high_scores.json', self.high_scores)
-
+        self.high_scores = update_high_scores(
+            self.high_scores, self.score, logged_in_user
+        )
+        save_high_scores("games/high_scores.json", self.high_scores)
 
     def freeze(self):
         for i in range(4):
@@ -151,7 +160,6 @@ class Tetris:
         self.figure.rotate()
         if self.intersects():
             self.figure.rotation = old_rotation
-
 
     def play_game(self):
         pygame.init()
@@ -216,24 +224,48 @@ class Tetris:
 
             for i in range(game.height):
                 for j in range(game.width):
-                    pygame.draw.rect(screen, GRAY, [game.x + game.zoom * j, game.y + game.zoom * i, game.zoom, game.zoom], 1)
+                    pygame.draw.rect(
+                        screen,
+                        GRAY,
+                        [
+                            game.x + game.zoom * j,
+                            game.y + game.zoom * i,
+                            game.zoom,
+                            game.zoom,
+                        ],
+                        1,
+                    )
                     if game.field[i][j] > 0:
-                        pygame.draw.rect(screen, colors[game.field[i][j]],
-                                        [game.x + game.zoom * j + 1, game.y + game.zoom * i + 1, game.zoom - 2, game.zoom - 1])
+                        pygame.draw.rect(
+                            screen,
+                            colors[game.field[i][j]],
+                            [
+                                game.x + game.zoom * j + 1,
+                                game.y + game.zoom * i + 1,
+                                game.zoom - 2,
+                                game.zoom - 1,
+                            ],
+                        )
 
             if game.figure is not None:
                 for i in range(4):
                     for j in range(4):
                         p = i * 4 + j
                         if p in game.figure.image():
-                            pygame.draw.rect(screen, colors[game.figure.color],
-                                            [game.x + game.zoom * (j + game.figure.x) + 1,
-                                            game.y + game.zoom * (i + game.figure.y) + 1,
-                                            game.zoom - 2, game.zoom - 2])
+                            pygame.draw.rect(
+                                screen,
+                                colors[game.figure.color],
+                                [
+                                    game.x + game.zoom * (j + game.figure.x) + 1,
+                                    game.y + game.zoom * (i + game.figure.y) + 1,
+                                    game.zoom - 2,
+                                    game.zoom - 2,
+                                ],
+                            )
 
-            font = pygame.font.SysFont('Calibri', 25, True, False)
+            font = pygame.font.SysFont("Calibri", 25, True, False)
             text = font.render("Score: " + str(game.score), True, BLACK)
-            high_score = self.high_scores[0]['score'] if self.high_scores else 0
+            high_score = self.high_scores[0]["score"] if self.high_scores else 0
             high_score_text = font.render(f"High Score: {high_score}", True, BLACK)
             screen.blit(text, [0, 0])
             screen.blit(high_score_text, [200, 0])
@@ -249,6 +281,7 @@ class Tetris:
             clock.tick(fps)
 
         pygame.quit()
+
 
 game = Tetris(20, 10)
 game.play_game()
