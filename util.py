@@ -6,7 +6,6 @@ import sys
 import random
 import os
 import uuid
-import pygame
 import random
 from datetime import datetime, timedelta
 import dbus
@@ -639,8 +638,16 @@ class Utilities:
             on_press=lambda x: self.confirm_clear_order(),
         )
         trash_icon_container.add_widget(self.app.trash_icon)
+        print_icon_container = MDBoxLayout(size_hint_y=None, height=100)
 
-        save_icon_container = MDBoxLayout(size_hint_y=0.1)
+        self.app.print_icon = MDIconButton(
+            icon="printer",
+            pos_hint={"top": 0.75, "right": 0},
+            on_press=lambda x: self.print_draft_receipt(),
+        )
+        print_icon_container.add_widget(self.app.print_icon)
+
+        save_icon_container = MDBoxLayout(size_hint_y=None, height=100)
         # _blank = BoxLayout(size_hint_y=0.9)
         self.app.save_icon = MDIconButton(
             icon="content-save",
@@ -680,6 +687,7 @@ class Utilities:
         )
         sidebar.add_widget(trash_icon_container)
         sidebar.add_widget(save_icon_container)
+        sidebar.add_widget(print_icon_container)
         sidebar.add_widget(lock_icon)
         # sidebar.add_widget(trash_icon)
         self.top_area_layout.add_widget(sidebar)
@@ -915,6 +923,10 @@ class Utilities:
         Clock.schedule_interval(self.update_clock, 1)
 
         return self.clock_layout
+
+    def print_draft_receipt(self):
+        order_details = self.app.order_manager.get_order_details()
+        self.app.receipt_printer.print_receipt(order_details, draft=True)
 
     def modify_clock_layout_for_dual_pane_mode(self):
         self.dual_button.text = f"[b][size=20]Go Back To Dual Pane Mode[/b][/size]"
