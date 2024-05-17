@@ -726,7 +726,7 @@ class Utilities:
         btn_tools = self.create_md_raised_button(
             f"[b][size=40]Tools[/b][/size]",
             self.app.button_handler.on_button_press,
-            # lambda x: self.launch_tetris(),
+            # lambda x: self.app.popup_manager.show_cost_overlay(),
             # lambda x: self.modify_clock_layout_for_dual_pane_mode(),
             # lambda x: self.app.popup_manager.show_dual_inventory_and_label_managers(),
             # lambda x: self.enable_dual_pane_mode(),
@@ -1493,5 +1493,5 @@ class ImageButton(ButtonBehavior, Image):
         self.launch_tetris()
 
     def launch_tetris(self):
-        # subprocess.Popen(['/home/rigs/0/bin/python', 'games/tetris.py', self.app.logged_in_user])
-        subprocess.Popen(["python", "games/tetris.py", self.app.logged_in_user])
+        subprocess.Popen(['/home/rigs/0/bin/python', 'games/tetris.py', self.app.logged_in_user])
+        # subprocess.Popen(["python", "games/tetris.py", self.app.logged_in_user])
