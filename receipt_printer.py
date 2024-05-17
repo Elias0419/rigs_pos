@@ -25,7 +25,8 @@ class ReceiptPrinter:
             self.app.popup_manager.receipt_errors_popup.dismiss()
 
     def print_receipt(self, order_details, reprint=False, draft=False):
-        print(order_details)
+        if len(order_details['items']) == 0:
+            return
         try:
             logo = Image.open("images/rigs_logo_scaled.png")
         except Exception as e:
