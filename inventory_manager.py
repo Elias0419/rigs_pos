@@ -253,6 +253,7 @@ class InventoryRow(BoxLayout):
         super(InventoryRow, self).__init__(**kwargs)
         self.bind(price=self.update_formatted_price)
         self.bind(name=self.update_formatted_name)
+
         self.order_manager = OrderManager(None)
         self.spacing = 5
         self.padding = 5
@@ -270,13 +271,14 @@ class InventoryRow(BoxLayout):
             self.formatted_price = "Invalid"
 
     def add_to_order(self):
-
+        item_details = self.app.db_manager.get_item_details(barcode=self.barcode)
+        item_id = item_details.get('item_id')
         try:
             price_float = float(self.price)
         except ValueError as e:
             print(e)
 
-        self.order_manager.add_item(self.name, price_float)
+        self.order_manager.add_item(self.name, price_float, item_id=item_id)
 
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()

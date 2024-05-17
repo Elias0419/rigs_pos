@@ -125,11 +125,11 @@ class BarcodeScanner:
                     self.endpoint.wMaxPacketSize,
                     timeout=5000,
                 )
-                print(f"Raw USB data: {data}")
+                # print(f"Raw USB data: {data}")
                 if data[2] != 0:
                     character = conversion_table.get(data[2], [""])[0]
                     if character == "\n":
-                        print(f"Barcode detected: {self.current_barcode}")
+                        # print(f"Barcode detected: {self.current_barcode}")
                         self.barcode_ready.set()
 
                     else:
@@ -202,10 +202,12 @@ class BarcodeScanner:
                 self.process_item_details(item_details)
 
     def process_item_details(self, item_details):
-        item_name = item_details.get("name", "Error!")
-        item_price = item_details.get("price", 0.0)
-
-        self.app.order_manager.add_item(item_name, item_price)
+        # print(item_details)
+        item_name = item_details.get('name', 'Error!')
+        item_price = item_details.get('price', 0.0)
+        item_id = item_details.get('item_id')
+        self.app.order_manager.add_item(item_name, item_price, item_id=item_id)
+        # self.app.order_manager.add_item(item_name, item_price)
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
 
