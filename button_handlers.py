@@ -202,10 +202,13 @@ class ButtonHandler:
         self.app.order_layout.clear_widgets()
         self.app.order_manager.delete_order_from_disk(order_details)
 
-    def on_receipt_button_press(self, instance):
+    def on_receipt_button_press(self, instance, draft=False):
         printer = self.app.receipt_printer
         order_details = self.app.order_manager.get_order_details()
-        printer.print_receipt(order_details)
+        if draft:
+            printer.print_receipt(order_details, draft=True)
+        else:
+            printer.print_receipt(order_details)
 
     def on_lock_screen_button_press(self, button_text, instance):
         if button_text == "Reset":

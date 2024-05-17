@@ -95,7 +95,8 @@ class ReceiptPrinter:
             barcode_data_short = "{B" + short_uuid
             self.printer.textln(date)
             self.printer.textln(order_details["order_id"])
-            self.printer.barcode(barcode_data_short, "CODE128", pos="OFF")
+            if not draft:
+                self.printer.barcode(barcode_data_short, "CODE128", pos="OFF")
             if reprint:
                 self.printer.set(align="center", font="a", bold=True)
                 self.printer.textln()
