@@ -25,6 +25,7 @@ class ReceiptPrinter:
             self.app.popup_manager.receipt_errors_popup.dismiss()
 
     def print_receipt(self, order_details, reprint=False, draft=False):
+        print(order_details)
         if len(order_details['items']) == 0:
             return
         try:
@@ -55,6 +56,12 @@ class ReceiptPrinter:
                 item_line = item_name + spaces + price
 
                 self.printer.textln(item_line)
+                if item['discount']['amount'] > 0:
+                    discount_amount = item['discount']['amount']
+                    discount_text = f"Discount: -${discount_amount:.2f}"
+                    spaces = " " * (max_line_width - len(discount_text))
+                    self.printer.textln(spaces + discount_text)
+
                 self.printer.textln()
 
             self.printer.set(align="right", font="a", bold=True)
