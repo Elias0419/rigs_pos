@@ -50,6 +50,134 @@ class PopupManager:
     def __init__(self, ref):
         self.app = ref
 
+
+
+    def show_cost_overlay(self):
+        order_details_with_cost = self.add_costs_to_order_details()
+        total_cost = round(self.calculate_total_cost(order_details_with_cost), 2)
+        total_price = round(self.calculate_total_price(order_details_with_cost), 2)
+        total_profit = round(total_price - total_cost, 2)
+
+        discount_percentages = [5, 10, 15, 20, 25, 50]
+        discount_amounts = [5, 10, 15, 20, 25, 50]
+
+        layout = MDBoxLayout(orientation='vertical')
+        card = MDCard(orientation='vertical')
+        inner_layout = MDGridLayout(orientation='tb-lr', rows=10)
+        header = MDGridLayout(orientation='lr-tb', cols=11)
+
+        header.add_widget(MDLabel(text="Name", size_hint_x=0.3))
+        header.add_widget(MDLabel(text="Price", size_hint_x=0.075, halign='center'))
+        header.add_widget(MDLabel(text="Cost", size_hint_x=0.075, halign='center'))
+        header.add_widget(MDLabel(text="Profit", size_hint_x=0.075, halign='center'))
+        header.add_widget(MDLabel(text="Quantity", size_hint_x=0.075, halign='center'))
+        header.add_widget(MDLabel(text="Total Price", size_hint_x=0.075, halign='center'))
+        header.add_widget(MDLabel(text="Total Cost", size_hint_x=0.075, halign='center'))
+        header.add_widget(MDLabel(text="Total Profit", size_hint_x=0.075, halign='center'))
+        header.add_widget(MDLabel(text="Discount", size_hint_x=0.075, halign='center'))
+        header.add_widget(MDLabel(text="", size_hint_x=None, width=50))
+        header.add_widget(MDLabel(text="", size_hint_x=None, width=50))
+        inner_layout.add_widget(header)
+
+        for item_id, item_data in order_details_with_cost['items'].items():
+            item_layout = MDGridLayout(orientation='lr-tb', cols=11)
+            item_price = round(item_data['price'], 2)
+            item_cost = round(item_data['cost'], 2)
+            item_quantity = item_data['quantity']
+            item_name = item_data['name']
+
+            item_profit = round(item_price - item_cost, 2)
+            price_x_quantity = round(item_price * item_quantity, 2)
+            cost_x_quantity = round(item_cost * item_quantity, 2)
+            profit_x_quantity = round(item_profit * item_quantity, 2)
+
+            name_text = MDLabel(text=item_name, size_hint_x=0.3)
+            price_text = MDLabel(text=str(item_price), size_hint_x=0.075, halign='center')
+            cost_text = MDLabel(text=str(item_cost), size_hint_x=0.075, halign='center')
+            profit_text = MDLabel(text=str(item_profit), size_hint_x=0.075, halign='center')
+            quantity_text = MDLabel(text=str(item_quantity), size_hint_x=0.075, halign='center')
+            total_price_text = MDLabel(text=str(price_x_quantity), size_hint_x=0.075, halign='center')
+            total_cost_text = MDLabel(text=str(cost_x_quantity), size_hint_x=0.075, halign='center')
+            total_profit_text = MDLabel(text=str(profit_x_quantity), size_hint_x=0.075, halign='center')
+            item_discount_text = MDLabel(text=str(0), size_hint_x=0.075, halign='center')
+            plus_container = MDBoxLayout(orientation='vertical', size_hint_x=None, width=50,)
+            plus_button = MDIconButton(icon='plus')
+            plus_container.add_widget(plus_button)
+            minus_container = MDBoxLayout(orientation='vertical',size_hint_x=None, width=50,)
+            minus_button = MDIconButton(icon='minus')
+            minus_container.add_widget(minus_button)
+
+            item_layout.add_widget(name_text)
+            item_layout.add_widget(price_text)
+            item_layout.add_widget(cost_text)
+            item_layout.add_widget(profit_text)
+            item_layout.add_widget(quantity_text)
+            item_layout.add_widget(total_price_text)
+            item_layout.add_widget(total_cost_text)
+            item_layout.add_widget(total_profit_text)
+            item_layout.add_widget(item_discount_text)
+
+            item_layout.add_widget(minus_container)
+            item_layout.add_widget(plus_container)
+
+            inner_layout.add_widget(item_layout)
+
+        card.add_widget(inner_layout)
+        layout.add_widget(card)
+        popup = Popup(
+            size_hint=(0.8, 0.4),
+            content=layout
+        )
+        popup.open()
+
+            #print(f"Item: {item_id}, Quantity: {item_data['quantity']}, Cost: {item_data['cost']}, Price: {item_data['price']}")
+
+        # print(f"Total Cost: {total_cost}")
+        # print(f"Total Price: {total_price}")
+        # print(f"Total Profit: {total_profit}")
+        #
+        # print("\nDiscounts and Impact on Profit:")
+        # for discount in discount_percentages:
+        #     discounted_price = total_price * (1 - discount / 100)
+        #     discounted_profit = discounted_price - total_cost
+        #     print(f"{discount}% Discount: New Price: {discounted_price}, New Profit: {discounted_profit}")
+        #
+        # for discount in discount_amounts:
+        #     discounted_price = total_price - discount
+        #     discounted_profit = discounted_price - total_cost
+        #     print(f"${discount} Discount: New Price: {discounted_price}, New Profit: {discounted_profit}")
+
+    def calculate_total_cost(self, order_details):
+        total_cost = 0
+        for item_data in order_details['items'].values():
+            total_cost += item_data['quantity'] * item_data['cost']
+        return total_cost
+
+    def calculate_total_price(self, order_details):
+        total_price = 0
+        for item_data in order_details['items'].values():
+            total_price += item_data['quantity'] * item_data['price']
+        return total_price
+
+
+
+    def get_cost_from_db(self, order_details):
+        costs = {}
+        item_quantities = {item_id: item_data['quantity'] for item_id, item_data in order_details['items'].items()}
+        for item_id, quantity in item_quantities.items():
+            item_details = self.app.db_manager.get_item_details(item_id)
+            cost = item_details['cost']
+            costs[item_id] = {'quantity': quantity, 'cost': cost}
+        return costs
+
+    def add_costs_to_order_details(self):
+        order_details = self.app.order_manager.get_order_details()
+        costs = self.get_cost_from_db(order_details)
+        for item_id, item_data in order_details['items'].items():
+            if item_id in costs:
+                item_data['cost'] = costs[item_id]['cost']
+        return order_details
+
     def open_clock_out_popup(self):
         if self.app.logged_in_user == "nobody":
             return
