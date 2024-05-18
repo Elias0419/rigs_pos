@@ -41,7 +41,6 @@ from wrapper import Wrapper
 from distributor_manager import DistPopup, DistView
 
 
-
 class Utilities:
     def __init__(self, ref):
         self.app = ref
@@ -1505,5 +1504,10 @@ class ImageButton(ButtonBehavior, Image):
         self.launch_tetris()
 
     def launch_tetris(self):
-        subprocess.Popen(['/home/rigs/0/bin/python', 'games/tetris.py', self.app.logged_in_user])
+        try:
+            subprocess.Popen(
+                ["/home/rigs/0/bin/python", "games/tetris.py", self.app.logged_in_user]
+            )
+        except:
+            pass
         # subprocess.Popen(["python", "games/tetris.py", self.app.logged_in_user])
