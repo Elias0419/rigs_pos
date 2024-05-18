@@ -9,6 +9,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.button import MDRaisedButton, MDFlatButton, MDIconButton
+from kivymd.uix.menu import MDDropdownMenu
 
 from kivymd.uix.selectioncontrol import MDCheckbox
 
@@ -58,15 +59,15 @@ class PopupManager:
         total_price = round(self.calculate_total_price(order_details_with_cost), 2)
         total_profit = round(total_price - total_cost, 2)
 
-        discount_percentages = [5, 10, 15, 20, 25, 50]
-        discount_amounts = [5, 10, 15, 20, 25, 50]
+        # discount_percentages = [5, 10, 15, 20, 25, 50]
+        # discount_amounts = [5, 10, 15, 20, 25, 50]
 
         layout = MDBoxLayout(orientation='vertical')
         card = MDCard(orientation='vertical')
-        inner_layout = MDGridLayout(orientation='tb-lr', rows=10)
-        header = MDGridLayout(orientation='lr-tb', cols=11)
+        inner_layout = MDGridLayout(orientation='tb-lr', rows=11)
+        header = MDGridLayout(orientation='lr-tb', cols=11, padding=5, spacing=5, size_hint_y=None, height=50)
 
-        header.add_widget(MDLabel(text="Name", size_hint_x=0.3))
+        header.add_widget(MDLabel(text="", size_hint_x=0.3))
         header.add_widget(MDLabel(text="Price", size_hint_x=0.075, halign='center'))
         header.add_widget(MDLabel(text="Cost", size_hint_x=0.075, halign='center'))
         header.add_widget(MDLabel(text="Profit", size_hint_x=0.075, halign='center'))
@@ -74,13 +75,14 @@ class PopupManager:
         header.add_widget(MDLabel(text="Total Price", size_hint_x=0.075, halign='center'))
         header.add_widget(MDLabel(text="Total Cost", size_hint_x=0.075, halign='center'))
         header.add_widget(MDLabel(text="Total Profit", size_hint_x=0.075, halign='center'))
+
+        header.add_widget(MDLabel(text="", size_hint_x=None, width=100))
         header.add_widget(MDLabel(text="Discount", size_hint_x=0.075, halign='center'))
-        header.add_widget(MDLabel(text="", size_hint_x=None, width=50))
-        header.add_widget(MDLabel(text="", size_hint_x=None, width=50))
+        header.add_widget(MDLabel(text="", size_hint_x=None, width=20))
         inner_layout.add_widget(header)
 
         for item_id, item_data in order_details_with_cost['items'].items():
-            item_layout = MDGridLayout(orientation='lr-tb', cols=11)
+            item_layout = MDGridLayout(orientation='lr-tb', cols=11, padding=5, spacing=5, size_hint_y=None, height=50)
             item_price = round(item_data['price'], 2)
             item_cost = round(item_data['cost'], 2)
             item_quantity = item_data['quantity']
@@ -99,13 +101,36 @@ class PopupManager:
             total_price_text = MDLabel(text=str(price_x_quantity), size_hint_x=0.075, halign='center')
             total_cost_text = MDLabel(text=str(cost_x_quantity), size_hint_x=0.075, halign='center')
             total_profit_text = MDLabel(text=str(profit_x_quantity), size_hint_x=0.075, halign='center')
-            item_discount_text = MDLabel(text=str(0), size_hint_x=0.075, halign='center')
-            plus_container = MDBoxLayout(orientation='vertical', size_hint_x=None, width=50,)
-            plus_button = MDIconButton(icon='plus')
-            plus_container.add_widget(plus_button)
-            minus_container = MDBoxLayout(orientation='vertical',size_hint_x=None, width=50,)
-            minus_button = MDIconButton(icon='minus')
-            minus_container.add_widget(minus_button)
+            # item_discount_text = MDLabel(text=str(0), size_hint_x=0.075, halign='center')
+
+            item_discount_text = MDLabel(text="", size_hint_x=0.075, halign='center')
+            #button_container1 = MDBoxLayout(orientation='vertical', size_hint_x=0.1)
+            discount_button = MDRaisedButton(text="0", pos_hint={'top':1})
+            #button_container1.add_widget(discount_button)
+            menu_items = [
+            {"text": "5", "viewclass": "OneLineListItem", "on_release": lambda x: self.set_item(x)},
+            {"text": "10", "viewclass": "OneLineListItem", "on_release": lambda x: self.set_item(x)},
+            {"text": "15", "viewclass": "OneLineListItem", "on_release": lambda x: self.set_item(x)},
+            {"text": "20", "viewclass": "OneLineListItem", "on_release": lambda x: self.set_item(x)},
+            {"text": "25", "viewclass": "OneLineListItem", "on_release": lambda x: self.set_item(x)},
+            {"text": "50", "viewclass": "OneLineListItem", "on_release": lambda x: self.set_item(x)},
+        ]
+            discount_dropdown = MDDropdownMenu(items=menu_items, caller=discount_button, width_mult=4)
+            discount_button.bind(on_release=lambda x: discount_dropdown.open())
+
+            discount_type_button = MDRaisedButton(text="%")
+            menu_items_type = [
+            {"text": "%", "viewclass": "OneLineListItem", "on_release": lambda x: self.set_item(x)},
+            {"text": "$", "viewclass": "OneLineListItem", "on_release": lambda x: self.set_item(x)},
+        ]
+            discount_type_dropdown = MDDropdownMenu(items=menu_items_type, caller=discount_type_button, width_mult=4)
+            discount_type_button.bind(on_release=lambda x: discount_type_dropdown.open())
+            # plus_container = MDBoxLayout(orientation='vertical', size_hint_x=None, width=50,)
+            # plus_button = MDIconButton(icon='plus')
+            # plus_container.add_widget(plus_button)
+            # minus_container = MDBoxLayout(orientation='vertical',size_hint_x=None, width=50,)
+            # minus_button = MDIconButton(icon='minus')
+            # minus_container.add_widget(minus_button)
 
             item_layout.add_widget(name_text)
             item_layout.add_widget(price_text)
@@ -116,9 +141,10 @@ class PopupManager:
             item_layout.add_widget(total_cost_text)
             item_layout.add_widget(total_profit_text)
             item_layout.add_widget(item_discount_text)
-
-            item_layout.add_widget(minus_container)
-            item_layout.add_widget(plus_container)
+            item_layout.add_widget(discount_button)
+            item_layout.add_widget(discount_type_button)
+            # item_layout.add_widget(minus_container)
+            # item_layout.add_widget(plus_container)
 
             inner_layout.add_widget(item_layout)
 
@@ -146,7 +172,8 @@ class PopupManager:
         #     discounted_price = total_price - discount
         #     discounted_profit = discounted_price - total_cost
         #     print(f"${discount} Discount: New Price: {discounted_price}, New Profit: {discounted_profit}")
-
+    def set_item(self):
+        pass
     def calculate_total_cost(self, order_details):
         total_cost = 0
         for item_data in order_details['items'].values():
