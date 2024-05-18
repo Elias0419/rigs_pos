@@ -50,6 +50,95 @@ from PIL import Image as PILImage
 class PopupManager:
     def __init__(self, ref):
         self.app = ref
+        self.notes_data = {}
+
+    def show_notes_widget(self):
+        layout = MDBoxLayout(orientation='vertical', size_hint_y=None, padding=10, spacing=10)
+        layout.bind(minimum_height=layout.setter('height'))
+
+        add_topic_btn = Button(text="Add Topic", size_hint_y=None, height=40)
+        add_topic_btn.bind(on_release=self.add_topic)
+        layout.add_widget(add_topic_btn)
+
+        self.topics_layout = layout
+
+        for topic in self.notes_data:
+            self.create_topic_button(topic)
+
+        card = MDCard(orientation='vertical', size_hint_y=None, padding=10)
+        card.add_widget(layout)
+        card.bind(minimum_height=card.setter('height'))
+
+        scroll_view = ScrollView()
+        scroll_view.add_widget(card)
+
+        popup = Popup(title="Notes", content=scroll_view, size_hint=(0.8, 0.8))
+        popup.open()
+
+    def create_topic_button(self, topic):
+        topic_button = Button(text=topic, size_hint_y=None, height=40)
+        topic_button.bind(on_release=lambda btn: self.show_topic_notes(topic))
+        self.topics_layout.add_widget(topic_button)
+
+    def add_topic(self, instance):
+        content = BoxLayout(orientation='vertical', padding=10)
+        topic_input = TextInput(hint_text="Enter Topic Name", size_hint_y=None, height=40)
+        save_button = Button(text="Save", size_hint_y=None, height=40)
+        content.add_widget(topic_input)
+        content.add_widget(save_button)
+
+        add_topic_popup = Popup(title="Add New Topic", content=content, size_hint=(0.8, 0.4))
+
+        def save_topic(instance):
+            topic = topic_input.text.strip()
+            if topic and topic not in self.notes_data:
+                self.notes_data[topic] = []
+                self.create_topic_button(topic)
+                add_topic_popup.dismiss()
+
+        save_button.bind(on_release=save_topic)
+        add_topic_popup.open()
+
+    def show_topic_notes(self, topic):
+        layout = MDBoxLayout(orientation='vertical', size_hint_y=None, padding=10, spacing=10)
+        layout.bind(minimum_height=layout.setter('height'))
+
+        add_note_btn = Button(text="Add Note", size_hint_y=None, height=40)
+        add_note_btn.bind(on_release=lambda btn: self.add_note_to_topic(topic))
+        layout.add_widget(add_note_btn)
+
+        for note in self.notes_data[topic]:
+            label = Label(text=note, size_hint_y=None, height=40)
+            layout.add_widget(label)
+
+        card = MDCard(orientation='vertical', size_hint_y=None, padding=10)
+        card.add_widget(layout)
+        card.bind(minimum_height=card.setter('height'))
+
+        scroll_view = ScrollView()
+        scroll_view.add_widget(card)
+
+        popup = Popup(title=topic, content=scroll_view, size_hint=(0.8, 0.8))
+        popup.open()
+
+    def add_note_to_topic(self, topic):
+        content = BoxLayout(orientation='vertical', padding=10)
+        note_input = TextInput(hint_text="Enter Note", size_hint_y=None, height=80)
+        save_button = Button(text="Save", size_hint_y=None, height=40)
+        content.add_widget(note_input)
+        content.add_widget(save_button)
+
+        add_note_popup = Popup(title="Add Note", content=content, size_hint=(0.8, 0.4))
+
+        def save_note_to_topic(instance):
+            note = note_input.text.strip()
+            if note:
+                self.notes_data[topic].append(note)
+                add_note_popup.dismiss()
+                self.show_topic_notes(topic)
+
+        save_button.bind(on_release=save_note_to_topic)
+        add_note_popup.open()
 
     def show_cost_overlay(self):
         order_details_with_cost = self.add_costs_to_order_details()
