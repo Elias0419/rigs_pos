@@ -174,6 +174,33 @@ class PopupManager:
         footer = MDGridLayout(size_hint_y=0.1, cols=1, orientation='lr-tb')
         footer_text = MDLabel(text=f"TEST TEST TEST TEST TEST TEST TEST TEST")
         footer.add_widget(footer_text)
+
+        def set_item(discount, item_layout, item_data, discount_button, discount_type_button, total_price_text, total_profit_text):
+
+            discount_value = float(discount)
+            discount_type = discount_type_button.text
+
+
+            if discount_type == "%":
+                discount_amount = (item_data["price"] * item_data["quantity"]) * (discount_value / 100)
+            else:
+                discount_amount = discount_value
+
+            new_total_price = (item_data["price"] * item_data["quantity"]) - discount_amount
+            new_profit = new_total_price - (item_data["cost"] * item_data["quantity"])
+
+
+            total_price_text.text = str(round(new_total_price, 2))
+            total_profit_text.text = str(round(new_profit, 2))
+            discount_button.text = str(discount_value)
+
+        def create_menu_item(discount, item_layout, item_data, discount_button, discount_type_button, total_price_text, total_profit_text):
+            return {
+                "text": str(discount),
+                "viewclass": "OneLineListItem",
+                "on_release": lambda: set_item(discount, item_layout, item_data, discount_button, discount_type_button, total_price_text, total_profit_text)
+            }
+
         for item_id, item_data in order_details_with_cost["items"].items():
             item_layout = MDGridLayout(
                 orientation="lr-tb",
@@ -206,35 +233,19 @@ class PopupManager:
             discount_button = MDRaisedButton(text="0", pos_hint={"top": 1})
             discount_type_button = MDRaisedButton(text="%")
 
-            def set_item(discount, item_layout=item_layout, item_data=item_data, discount_button=discount_button, discount_type_button=discount_type_button, total_price_text=total_price_text, total_profit_text=total_profit_text):
-                discount_value = float(discount)
-                discount_type = discount_type_button.text
-
-                if discount_type == "%":
-                    discount_amount = (item_data["price"] * item_data["quantity"]) * (discount_value / 100)
-                else:
-                    discount_amount = discount_value
-
-                new_total_price = (item_data["price"] * item_data["quantity"]) - discount_amount
-                new_profit = new_total_price - (item_data["cost"] * item_data["quantity"])
-
-                total_price_text.text = str(round(new_total_price, 2))
-                total_profit_text.text = str(round(new_profit, 2))
-                discount_button.text = str(discount_value)
-
             menu_items = [
-                {"text": str(i), "viewclass": "OneLineListItem", "on_release": lambda x=str(i): set_item(x)}
+                create_menu_item(i, item_layout, item_data, discount_button, discount_type_button, total_price_text, total_profit_text)
                 for i in [0, 5, 10, 15, 20, 25, 50]
             ]
             discount_dropdown = MDDropdownMenu(items=menu_items, caller=discount_button, width_mult=4)
-            discount_button.bind(on_release= lambda x: discount_dropdown.open())
+            discount_button.bind(on_release=lambda x, dd=discount_dropdown: dd.open())
 
             menu_items_type = [
-                {"text": i, "viewclass": "OneLineListItem", "on_release": lambda x=i: discount_type_button.setter('text')(discount_type_button, x)}
+                {"text": i, "viewclass": "OneLineListItem", "on_release": lambda x=i, b=discount_type_button: b.setter('text')(b, x)}
                 for i in ["%", "$"]
             ]
             discount_type_dropdown = MDDropdownMenu(items=menu_items_type, caller=discount_type_button, width_mult=4)
-            discount_type_button.bind(on_release=lambda x: discount_type_dropdown.open())
+            discount_type_button.bind(on_release=lambda x, dd=discount_type_dropdown: dd.open())
 
             item_layout.add_widget(name_text)
             item_layout.add_widget(price_text)
@@ -255,25 +266,7 @@ class PopupManager:
         layout.add_widget(footer)
         popup = Popup(size_hint=(0.8, 0.8), content=layout, overlay_color=(0,0,0,0), separator_height=0, title='')
         popup.open()
-    # print(f"Item: {item_id}, Quantity: {item_data['quantity']}, Cost: {item_data['cost']}, Price: {item_data['price']}")
 
-        # print(f"Total Cost: {total_cost}")
-        # print(f"Total Price: {total_price}")
-        # print(f"Total Profit: {total_profit}")
-        #
-        # print("\nDiscounts and Impact on Profit:")
-        # for discount in discount_percentages:
-        #     discounted_price = total_price * (1 - discount / 100)
-        #     discounted_profit = discounted_price - total_cost
-        #     print(f"{discount}% Discount: New Price: {discounted_price}, New Profit: {discounted_profit}")
-        #
-        # for discount in discount_amounts:
-        #     discounted_price = total_price - discount
-        #     discounted_profit = discounted_price - total_cost
-        #     print(f"${discount} Discount: New Price: {discounted_price}, New Profit: {discounted_profit}")
-
-    def set_item(self):
-        pass
 
     def calculate_total_cost(self, order_details):
         total_cost = 0
