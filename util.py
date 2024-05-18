@@ -6,26 +6,28 @@ import sys
 import random
 import os
 import uuid
-import random
 from datetime import datetime, timedelta
+
 import dbus
 from kivy.clock import Clock
-from kivymd.uix.button import MDRaisedButton, MDFlatButton, MDIconButton
-from kivy.uix.behaviors import ButtonBehavior
-from kivymd.app import MDApp
-from kivy.uix.textinput import TextInput
-from open_cash_drawer import open_cash_drawer
-from barcode.upc import UniversalProductCodeA as upc_a
 from kivy.core.window import Window
-from receipt_printer import ReceiptPrinter
-from kivymd.uix.boxlayout import BoxLayout
-from kivymd.uix.label import MDLabel
-from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.gridlayout import GridLayout
+from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.floatlayout import FloatLayout
-from kivymd.toast import toast
 from kivy.uix.image import Image
-from kivymd.uix.button import MDIconButton
+from kivy.uix.textinput import TextInput
+
+from kivymd.app import MDApp
+from kivymd.toast import toast
+from kivymd.uix.boxlayout import BoxLayout
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.button import MDRaisedButton, MDFlatButton, MDIconButton
+from kivymd.uix.gridlayout import GridLayout
+from kivymd.uix.label import MDLabel
+
+from barcode.upc import UniversalProductCodeA as upc_a
+
+from open_cash_drawer import open_cash_drawer
+from receipt_printer import ReceiptPrinter
 from barcode_scanner import BarcodeScanner
 
 from button_handlers import ButtonHandler
@@ -35,9 +37,9 @@ from inventory_manager import InventoryManagementView, InventoryManagementRow
 from label_printer import LabelPrintingView, LabelPrinter
 from order_manager import OrderManager
 from popups import PopupManager, FinancialSummaryWidget, Calculator
-from receipt_printer import ReceiptPrinter
 from wrapper import Wrapper
 from distributor_manager import DistPopup, DistView
+
 
 
 class Utilities:
@@ -647,6 +649,15 @@ class Utilities:
         )
         print_icon_container.add_widget(self.app.print_icon)
 
+        calc_icon_container = MDBoxLayout(size_hint_y=None, height=100)
+
+        self.app.calc_icon = MDIconButton(
+            icon="calculator",
+            pos_hint={"top": 0.75, "right": 0},
+            on_press=lambda x: self.app.calculator.show_calculator_popup(),
+        )
+        calc_icon_container.add_widget(self.app.calc_icon)
+
         save_icon_container = MDBoxLayout(size_hint_y=None, height=100)
         # _blank = BoxLayout(size_hint_y=0.9)
         self.app.save_icon = MDIconButton(
@@ -685,6 +696,7 @@ class Utilities:
         lock_icon = MDIconButton(
             icon="lock", on_press=lambda x: self.trigger_guard_and_lock(trigger=True)
         )
+        sidebar.add_widget(calc_icon_container)
         sidebar.add_widget(trash_icon_container)
         sidebar.add_widget(save_icon_container)
         sidebar.add_widget(print_icon_container)
@@ -725,8 +737,8 @@ class Utilities:
         )
         btn_tools = self.create_md_raised_button(
             f"[b][size=40]Tools[/b][/size]",
-            self.app.button_handler.on_button_press,
-            # lambda x: self.app.popup_manager.show_cost_overlay(),
+            # self.app.button_handler.on_button_press,
+            lambda x: self.app.popup_manager.show_cost_overlay(),
             # lambda x: self.modify_clock_layout_for_dual_pane_mode(),
             # lambda x: self.app.popup_manager.show_dual_inventory_and_label_managers(),
             # lambda x: self.enable_dual_pane_mode(),

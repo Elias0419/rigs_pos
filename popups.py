@@ -3507,7 +3507,6 @@ class FinancialSummaryWidget(MDFlatButton):
         self.app.popup_manager.show_adjust_price_popup()
         self.order_mod_popup.dismiss()
 
-
 class Calculator:
     def __init__(self):
         self.operators = ["+", "-", "*", "/"]
@@ -3516,40 +3515,33 @@ class Calculator:
         self.calculation = ""
 
     def create_calculator_layout(self):
-        main_layout = MDGridLayout(cols=1, rows=3, spacing=5, size_hint=(1, 1))
-        text_layout = MDBoxLayout(orientation="horizontal", size_hint_y=0.1)
+        main_layout = MDGridLayout(cols=1, spacing=5, size_hint=(1, 1))
+        text_layout = MDBoxLayout(orientation="horizontal", size_hint_y=0.2)
         self.solution = MDTextField(
             multiline=False,
             readonly=True,
             halign="right",
             font_size=30,
             mode="rectangle",
+            size_hint_x=1
         )
         text_layout.add_widget(self.solution)
         main_layout.add_widget(text_layout)
 
-        number_layout = MDGridLayout(cols=3, spacing=5, rows=4, size_hint=(1, 1))
+        number_layout = MDGridLayout(cols=3, spacing=5, size_hint=(1, 0.6))
 
         buttons = [
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7",
-            "8",
-            "9",
-            ".",
-            "0",
-            "C",
+            "1", "2", "3",
+            "4", "5", "6",
+            "7", "8", "9",
+            ".", "0", "C"
         ]
 
         for button in buttons:
             number_layout.add_widget(
                 MDRaisedButton(
                     text=button,
-                    font_style="H6",
+                    font_style="H1",
                     size_hint=(1, 1),
                     on_press=self.on_button_press,
                 )
@@ -3557,29 +3549,27 @@ class Calculator:
         main_layout.add_widget(number_layout)
 
         operation_button_layout = MDGridLayout(
-            cols=5, spacing=5, rows=1, size_hint=(1, 0.2)
+            cols=5, spacing=5, size_hint=(1, 0.1)
         )
         operation_buttons = ["+", "-", "*", "/", "="]
         for op_button in operation_buttons:
             if op_button == "=":
-
                 operation_button_layout.add_widget(
                     MDRaisedButton(
                         text=op_button,
                         md_bg_color=get_color_from_hex("#4CAF50"),
                         size_hint=(1, 1),
-                        font_style="H6",
+                        font_style="H1",
                         on_press=self.on_solution,
                     )
                 )
             else:
-
                 operation_button_layout.add_widget(
                     MDRaisedButton(
                         text=op_button,
                         md_bg_color=get_color_from_hex("#2196F3"),
                         size_hint=(1, 1),
-                        font_style="H6",
+                        font_style="H1",
                         on_press=self.on_button_press,
                     )
                 )
