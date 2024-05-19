@@ -93,16 +93,30 @@ class ReceiptPrinter:
             self.printer.textln()
 
             # Use full UUID for barcode
-            full_uuid = str(uuid.uuid4())
+            barcode_data = str(order_details["order_id"])
             self.printer.textln(date)
             self.printer.textln(order_details["order_id"])
             if not draft:
                 try:
-                    self.printer.barcode(full_uuid, "CODE128", width=64, height=3, pos="OFF", font="A", function_type="B")
+                    self.printer.barcode(barcode_data, "CODE128", width=64, height=3, pos="OFF", font="A", function_type="B")
                 except Exception as e:
-                    print("Error printing barcode:", e)
+                    self.app.popup_manager.catch_receipt_printer_errors(e, order_details)
+                    return False
+
+            if reprint:
+                self.printer.set(align="center", font="a", bold=True)
+                self.printer.textln()
+                self.printer.textln("Copy")
+            if draft:
+                self.printer.set(align="center", font="a", bold=True)
+                self.printer.textln()
+                self.printer.textln("UNPAID")
+
+            self.printer.cut()
+            return True
         except Exception as e:
-            print("Error printing receipt:", e)
+            self.app.popup_manager.catch_receipt_printer_errors(e, order_details)
+            return False
 
     def close(self):
         try:
