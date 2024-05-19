@@ -103,7 +103,7 @@ class ReceiptPrinter:
         self.printer.textln(order_details["order_id"])
         if not draft:
             # try:
-                self.printer.barcode(barcode_data, "CODE128", width=64, height=3, pos="OFF", font="A", function_type="B")
+                self.printer.barcode(barcode_data, "CODE128", width=6, height=64, pos="OFF", font="A", function_type="B")
             # except Exception as e:
             #     self.app.popup_manager.catch_receipt_printer_errors(e, order_details)
             #     return False
