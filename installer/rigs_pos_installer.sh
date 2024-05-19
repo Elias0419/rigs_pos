@@ -72,10 +72,10 @@ zope.event==5.0
 zope.interface==6.3
 zope.schema==7.0.1
 "
-if [ "$USER" != "rigs" ]; then
-  echo "Who are you? Only rigs can run this script."
-  exit 1
-fi
+#if [ "$USER" != "rigs" ]; then
+#  echo "Who are you? Only rigs can run this script."
+#  exit 1
+#fi
 if [ "$(ps -p 1 -o comm=)" != "systemd" ]; then
   echo "This system is not running systemd init."
   exit 1
@@ -276,13 +276,14 @@ echo ""
 sleep 1
 echo "$DEPENDENCIES" | xargs pip install > /dev/null 2>&1
 
-
+chown -R rigs /home/rigs/0
 echo "Getting the application files..."
 echo ""
 sleep 1
 git clone https://github.com/Elias0419/rigs_pos > /dev/null 2>&1
-cd rigs_pos
-mkdir saved_orders
+chown -R rigs /home/rigs/rigs_pos
+#cd rigs_pos
+#mkdir saved_orders
 
 
 if [ "$demo_mode" -eq 1 ]; then
@@ -337,4 +338,3 @@ EOF
     fi
     reboot
 fi
-
