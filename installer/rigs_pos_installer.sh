@@ -292,8 +292,6 @@ sleep 1
 git clone https://github.com/Elias0419/rigs_pos > /dev/null 2>&1
 chown -R rigs /home/rigs/rigs_pos
 
-
-
 if [ "$demo_mode" -eq 1 ]; then
     echo "Application Installed Successfully!"
     echo ""
@@ -340,10 +338,28 @@ EOF
     if [ "$OS" = "Ubuntu" ]; then
         sed -i 's|^Environment=.*|Environment=/run/user/1000/gdm/Xauthority|' $SERVICE_FILE
     fi
-    sudo systemctl enable rigs_pos
+    systemctl enable rigs_pos
     if [ "$OS" == "Ubuntu" ]; then
         sudo sed -i 's/^#WaylandEnable=false/WaylandEnable=false/' /etc/gdm3/custom.conf
         rm /usr/share/gnome-shell/extensions/ubuntu-appindicators@ubuntu.com/appIndicator.js
     fi
+
+    bash -c 'cat > /etc/udev/rules.d/55-barcode-scanner.rules' <<EOF
+SUBSYSTEM=="usb", ATTR{idVendor}=="05e0", ATTR{idProduct}=="1200", MODE="666"
+EOF
+
+    bash -c 'cat > /etc/udev/rules.d/99-labelprinter.rules' <<EOF
+SUBSYSTEM=="usb", ATTRS{idVendor}=="04f9", ATTRS{idProduct}=="2043", MODE="0666"
+EOF
+
+    bash -c 'cat > /etc/udev/rules.d/99-receiptprinter.rules' <<EOF
+SUBSYSTEM=="usb", ATTRS{idVendor}=="04b8", ATTRS{idProduct}=="0e28", MODE="0666"
+EOF
+
+    bash -c 'cat > /etc/udev/rules.d/99-usbserial.rules' <<EOF
+SUBSYSTEM=="tty", ATTRS{idVendor}=="067b", ATTRS{idProduct}=="23a3", MODE="0666"
+EOF
+
+
     reboot
 fi
