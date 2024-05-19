@@ -88,7 +88,18 @@ if [ "$(id -u)" != "0" ]; then
     echo "Please re-run this script with sudo."
     exit 1
 fi
-
+if [[ "$OS" == "Arch Linux" ]]; then
+#     echo ""
+#     echo "Press enter to continue or 'q' to quit"
+#     read -r -n 1 input
+#      if [[ $input == "q" ]]; then
+#         echo "Bye!"
+#         exit 1
+#     else
+    yes | pacman-key --init
+    pacman-key populate archlinux
+#     fi
+fi
 
 command_exists () {
     type "$1" &> /dev/null ;
