@@ -23,6 +23,12 @@ class ReceiptPrinter:
         success = self.print_receipt(order_details)
         if success:
             self.app.popup_manager.receipt_errors_popup.dismiss()
+    # https://stackoverflow.com/questions/62848693/how-to-build-a-mddropdownmenu-and-its-items-on-pressing-a-button
+
+    def uuid_to_decimal_string(self, uuid_str):
+        uuid_int = int(uuid_str.replace('-', ''), 16)
+        decimal_str = f"{uuid_int:040d}"
+        return decimal_str
 
     def print_receipt(self, order_details, reprint=False, draft=False):
         print(order_details)
@@ -92,8 +98,7 @@ class ReceiptPrinter:
             self.printer.set(align="center", font="b", bold=False)
             self.printer.textln()
 
-            # Use full UUID for barcode
-            barcode_data = str(order_details["order_id"]).replace('-', '')
+            barcode_data = self.uuid_to_decimal_string(str(order_details["order_id"]))
             self.printer.textln(date)
             self.printer.textln(order_details["order_id"])
             if not draft:
@@ -117,6 +122,7 @@ class ReceiptPrinter:
         except Exception as e:
             self.app.popup_manager.catch_receipt_printer_errors(e, order_details)
             return False
+
 
     def close(self):
         try:
