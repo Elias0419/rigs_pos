@@ -26,7 +26,7 @@ class ReceiptPrinter:
 
     def print_receipt(self, order_details, reprint=False, draft=False):
         print(order_details)
-        if len(order_details['items']) == 0:
+        if len(order_details["items"]) == 0:
             return
         try:
             logo = Image.open("images/rigs_logo_scaled.png")
@@ -56,8 +56,8 @@ class ReceiptPrinter:
                 item_line = item_name + spaces + price
 
                 self.printer.textln(item_line)
-                if float(item['discount']['amount']) > 0:
-                    discount_amount = float(item['discount']['amount'])
+                if float(item["discount"]["amount"]) > 0:
+                    discount_amount = float(item["discount"]["amount"])
                     discount_text = f"Discount: -${discount_amount:.2f}"
                     spaces = " " * (max_line_width - len(discount_text))
                     self.printer.textln(spaces + discount_text)
@@ -89,36 +89,20 @@ class ReceiptPrinter:
                 else:
                     self.printer.textln("Credit Payment")
 
-            # if "split_payments" in locals():
-            #     for payment in split_payments:
-            #         method = payment["method"]
-            #         amount = payment["amount"]
-            #         self.printer.textln(f"{method}: ${amount:.2f}")
-
             self.printer.set(align="center", font="b", bold=False)
             self.printer.textln()
 
-            barcode_data = str(order_details["order_id"])
-            short_uuid = barcode_data[:13]  # test truncation length
-            barcode_data_short = "{B" + short_uuid
+            # Use full UUID for barcode
+            full_uuid = str(uuid.uuid4())
             self.printer.textln(date)
             self.printer.textln(order_details["order_id"])
             if not draft:
-                self.printer.barcode(barcode_data_short, "CODE128", pos="OFF")
-            if reprint:
-                self.printer.set(align="center", font="a", bold=True)
-                self.printer.textln()
-                self.printer.textln("Copy")
-            if draft:
-                self.printer.set(align="center", font="a", bold=True)
-                self.printer.textln()
-                self.printer.textln("UNPAID")
-
-            self.printer.cut()
-            return True
+                try:
+                    self.printer.barcode(full_uuid, "CODE128", width=64, height=3, pos="OFF", font="A", function_type="B")
+                except Exception as e:
+                    print("Error printing barcode:", e)
         except Exception as e:
-            self.app.popup_manager.catch_receipt_printer_errors(e, order_details)
-            return False
+            print("Error printing receipt:", e)
 
     def close(self):
         try:
