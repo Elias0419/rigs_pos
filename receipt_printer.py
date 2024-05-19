@@ -28,7 +28,7 @@ class ReceiptPrinter:
     def uuid_to_decimal_string(self, uuid_str):
         uuid_bytes = uuid_str.replace('-', '').encode()
         base64_bytes = base64.b64encode(uuid_bytes)
-        return base64_bytes.decode('utf-8')
+        return str(base64_bytes.decode('utf-8')).replace('=','')
 
 
     def print_receipt(self, order_details, reprint=False, draft=False):
