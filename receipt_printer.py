@@ -3,7 +3,7 @@ from escpos.printer import Usb
 from PIL import Image
 from escpos.config import Config
 import textwrap
-
+import base64
 import io
 
 
@@ -26,9 +26,10 @@ class ReceiptPrinter:
     # https://stackoverflow.com/questions/62848693/how-to-build-a-mddropdownmenu-and-its-items-on-pressing-a-button
 
     def uuid_to_decimal_string(self, uuid_str):
-        uuid_int = int(uuid_str.replace('-', ''), 16)
-        formatted_code = "{B" + f"{uuid_int:040d}"
-        return formatted_code
+        uuid_bytes = uuid_str.replace('-', '').encode()
+        base64_bytes = base64.b64encode(uuid_bytes)
+        return base64_bytes.decode('utf-8')
+
 
     def print_receipt(self, order_details, reprint=False, draft=False):
         print(order_details)
@@ -103,7 +104,7 @@ class ReceiptPrinter:
         self.printer.textln(order_details["order_id"])
         if not draft:
             # try:
-                self.printer.barcode(barcode_data, "CODE128", width=1, height=32, pos="OFF", font="A", function_type="B")
+                self.printer.barcode(barcode_data, "CODE128", width=2, height=32, pos="OFF", font="A", function_type="B")
             # except Exception as e:
             #     self.app.popup_manager.catch_receipt_printer_errors(e, order_details)
             #     return False
