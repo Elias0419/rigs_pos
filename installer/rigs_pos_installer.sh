@@ -321,23 +321,24 @@ if [ "$demo_mode" -eq 1 ]; then
 else
     cat <<EOF > $SERVICE_FILE
 [Unit]
-Description=RIGS Point of Sale Service
-After=graphical.target
-Requires=graphical.target
+Description=Rigs Python Service
+After=multi-user.target
 
 [Service]
-Environment=/run/user/1000/gdm/Xauthority
-WorkingDirectory=/home/rigs/rigs_pos
-ExecStart=/bin/bash -c 'sleep 10; /home/rigs/0/bin/python3 /home/rigs/rigs_pos/wrapper.py'
-Restart=on-failure
+Type=simple
 User=rigs
-
+KillMode=process
+WorkingDirectory=/home/rigs/rigs_pos
+Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1000/bus"
+Environment="DISPLAY=:0"
+ExecStartPre=/usr/bin/sleep 10
+ExecStart=/home/rigs/0/bin/python3 /home/rigs/rigs_pos/wrapper.py
 [Install]
-WantedBy=graphical.target
+WantedBy=multi-user.target
 EOF
 
-    if [ "$OS" != "Ubuntu" ]; then
-        sed -i 's|^Environment=.*|Environment=/home/rigs/.Xauthority|' $SERVICE_FILE
+    if [ "$OS" = "Ubuntu" ]; then
+        sed -i 's|^Environment=.*|Environment=/run/user/1000/gdm/Xauthority|' $SERVICE_FILE
     fi
     sudo systemctl enable rigs_pos
     if [ "$OS" == "Ubuntu" ]; then
