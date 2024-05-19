@@ -72,10 +72,7 @@ zope.event==5.0
 zope.interface==6.3
 zope.schema==7.0.1
 "
-#if [ "$USER" != "rigs" ]; then
-#  echo "Who are you? Only rigs can run this script."
-#  exit 1
-#fi
+
 if [ "$(ps -p 1 -o comm=)" != "systemd" ]; then
   echo "This system is not running systemd init."
   exit 1
@@ -88,8 +85,7 @@ else
     exit 1
 fi
 if [ "$(id -u)" != "0" ]; then
-    echo "This script requires superuser access."
-    echo "Please re-run this script with 'sudo'."
+    echo "Please re-run this script with sudo."
     exit 1
 fi
 
@@ -108,7 +104,7 @@ install_python_package () {
             sudo dnf install -y python3
             ;;
         "Arch Linux")
-            sudo pacman -Sy python
+            sudo pacman -S python --noconfirm
             ;;
         "Gentoo")
             sudo emerge python
@@ -130,7 +126,7 @@ install_git_package () {
             sudo dnf install -y git
             ;;
         "Arch Linux")
-            sudo pacman -Sy git
+            sudo pacman -S git --noconfirm
             ;;
         "Gentoo")
             sudo emerge git
@@ -223,6 +219,19 @@ if [[ "$OS" == "Fedora Linux" ]]; then
         sudo dnf install -y gcc python3-devel cmake dbus-devel glib2-devel
     fi
 fi
+if [[ "$OS" == "Arch Linux" ]]; then
+    echo ""
+    echo "On Arch we need to install some build dependencies"
+    echo ""
+    echo "Press enter to continue or 'q' to quit"
+    read -r -n 1 input
+     if [[ $input == "q" ]]; then
+        echo "Bye!"
+        exit 1
+    else
+        pacman -S --noconfirm gcc cmake pkg-config
+    fi
+fi
 echo ""
 echo "WARNING: IF YOU ARE HERE TESTING THIS PLEASE CHOOSE DEMO MODE BELOW"
 echo "Press ctrl-c to quit now or:"
@@ -282,8 +291,7 @@ echo ""
 sleep 1
 git clone https://github.com/Elias0419/rigs_pos > /dev/null 2>&1
 chown -R rigs /home/rigs/rigs_pos
-#cd rigs_pos
-#mkdir saved_orders
+
 
 
 if [ "$demo_mode" -eq 1 ]; then
