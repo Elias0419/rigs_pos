@@ -337,7 +337,7 @@ WantedBy=graphical.target
 EOF
 
     if [ "$OS" != "Ubuntu" ]; then
-        sed -i 's|^Environment=.*|Environment=/home/x/.Xauthority|' $SERVICE_FILE
+        sed -i 's|^Environment=.*|Environment=/home/rigs/.Xauthority|' $SERVICE_FILE
     fi
     sudo systemctl enable rigs_pos
     if [ "$OS" == "Ubuntu" ]; then
