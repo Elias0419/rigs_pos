@@ -150,102 +150,103 @@ else
     install_git=0
 fi
 if [[ $install_git == "1" ]] && [[ $install_python == "1" ]]; then
-    echo "Python and Git are not installed."
-    echo "Press enter to install them or q to quit"
-    read -r -n 1 input
+    # echo "Python and Git are not installed."
+    # echo "Press enter to install them or q to quit"
+    # read -r -n 1 input
 
-    if [[ $input == "q" ]]; then
-        echo "Bye!"
-        exit 1
-    else
-        install_git_package "$OS"
-        install_python_package "$OS"
-    fi
+    # if [[ $input == "q" ]]; then
+    #     echo "Bye!"
+    #     exit 1
+    # else
+    install_git_package "$OS"
+    install_python_package "$OS"
+    # fi
 elif [[ $install_git == "1" ]] && [[ $install_python == "0" ]]; then
-    echo "Git is not installed."
-    echo "Press enter to install it or q to quit"
-    read -r -n 1 input
+    # echo "Git is not installed."
+    # echo "Press enter to install it or q to quit"
+    # read -r -n 1 input
 
-    if [[ $input == "q" ]]; then
-        echo "Bye!"
-        exit 1
-    else
-        install_git_package "$OS"
-    fi
+    # if [[ $input == "q" ]]; then
+    #     echo "Bye!"
+    #     exit 1
+    # else
+    install_git_package "$OS"
+    # fi
 elif [[ $install_git == "0" ]] && [[ $install_python == "1" ]]; then
-    echo "Python is not installed."
-    echo "Press enter to install it or q to quit"
-    read -r -n 1 input
+    # echo "Python is not installed."
+    # echo "Press enter to install it or q to quit"
+    # read -r -n 1 input
 
-    if [[ $input == "q" ]]; then
-        echo "Bye!"
-        exit 1
-    else
-        install_python_package "$OS"
-    fi
+    # if [[ $input == "q" ]]; then
+    #     echo "Bye!"
+    #     exit 1
+    # else
+    install_python_package "$OS"
+    # fi
 fi
+
 PYTHON_VERSION=$(python3 -V | grep -oP 'Python \K[0-9]+\.[0-9]+')
 if [[ $OS == "Ubuntu" ]]; then
     echo ""
     echo "On Ubuntu we need to install some build dependencies"
     echo ""
-    echo "Press enter to continue or 'q' to quit"
-    read -r -n 1 input
-     if [[ $input == "q" ]]; then
-        echo "Bye!"
-        exit 1
-    else
+#     echo "Press enter to continue or 'q' to quit"
+#     read -r -n 1 input
+#      if [[ $input == "q" ]]; then
+#         echo "Bye!"
+#         exit 1
+#     else
 
-        cp ${SOURCES_LIST} ${BACKUP_SOURCES_LIST}
-        if grep -q "^deb.*security.ubuntu.com.* universe" "$SOURCES_LIST"; then
-            echo ""
-        else
-            sed -i '/^deb.*security.ubuntu.com.* main restricted$/s/main restricted/main restricted universe/' "$SOURCES_LIST"
-        fi
-        sudo apt-get update
-        sudo apt-get install -y "python${PYTHON_VERSION}-venv" python3-dev build-essential cmake libdbus-1-dev libglib2.0-dev xclip
+    cp ${SOURCES_LIST} ${BACKUP_SOURCES_LIST}
+    if grep -q "^deb.*security.ubuntu.com.* universe" "$SOURCES_LIST"; then
+        echo ""
+    else
+        sed -i '/^deb.*security.ubuntu.com.* main restricted$/s/main restricted/main restricted universe/' "$SOURCES_LIST"
     fi
+    sudo apt-get update
+    sudo apt-get install -y "python${PYTHON_VERSION}-venv" python3-dev build-essential cmake libdbus-1-dev libglib2.0-dev xclip
+    #fi
 fi
 if [[ "$OS" == "Fedora Linux" ]]; then
     echo ""
     echo "On Fedora we need to install some build dependencies"
     echo ""
-    echo "Press enter to continue or 'q' to quit"
-    read -r -n 1 input
-     if [[ $input == "q" ]]; then
-        echo "Bye!"
-        exit 1
-    else
-        sudo dnf install -y gcc python3-devel cmake dbus-devel glib2-devel xclip
-    fi
+#     echo "Press enter to continue or 'q' to quit"
+#     read -r -n 1 input
+#      if [[ $input == "q" ]]; then
+#         echo "Bye!"
+#         exit 1
+#     else
+    sudo dnf install -y gcc python3-devel cmake dbus-devel glib2-devel xclip
+#     fi
 fi
 if [[ "$OS" == "Arch Linux" ]]; then
     echo ""
     echo "On Arch we need to install some build dependencies"
-    echo ""
-    echo "Press enter to continue or 'q' to quit"
-    read -r -n 1 input
-     if [[ $input == "q" ]]; then
-        echo "Bye!"
-        exit 1
-    else
-        pacman -S --noconfirm gcc cmake pkg-config xclip
-    fi
+#     echo ""
+#     echo "Press enter to continue or 'q' to quit"
+#     read -r -n 1 input
+#      if [[ $input == "q" ]]; then
+#         echo "Bye!"
+#         exit 1
+#     else
+    pacman -S --noconfirm gcc cmake pkg-config xclip
+#     fi
 fi
-echo ""
-echo "WARNING: IF YOU ARE HERE TESTING THIS PLEASE CHOOSE DEMO MODE BELOW"
-echo "Press ctrl-c to quit now or:"
-echo "Press 'd' to enter demo mode or Enter to continue:"
-echo ""
-read -r -n 1 input
+# echo ""
+# echo "WARNING: IF YOU ARE HERE TESTING THIS PLEASE CHOOSE DEMO MODE BELOW"
+# echo "Press ctrl-c to quit now or:"
+# echo "Press 'd' to enter demo mode or Enter to continue:"
+# echo ""
+# read -r -n 1 input
+#
+# if [[ $input == "d" ]]; then
+#     demo_mode=1
+# else
+#     demo_mode=0
+# fi
 
-if [[ $input == "d" ]]; then
-    demo_mode=1
-else
-    demo_mode=0
-fi
-
-
+demo_mode=0
 echo "
 
 
@@ -359,7 +360,7 @@ EOF
     bash -c 'cat > /etc/udev/rules.d/99-usbserial.rules' <<EOF
 SUBSYSTEM=="tty", ATTRS{idVendor}=="067b", ATTRS{idProduct}=="23a3", MODE="0666"
 EOF
-
+systemctl disable installer_run_once.service
 
     reboot
 fi
