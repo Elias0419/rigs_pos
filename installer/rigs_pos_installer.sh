@@ -203,7 +203,7 @@ if [[ $OS == "Ubuntu" ]]; then
             sed -i '/^deb.*security.ubuntu.com.* main restricted$/s/main restricted/main restricted universe/' "$SOURCES_LIST"
         fi
         sudo apt-get update
-        sudo apt-get install -y "python${PYTHON_VERSION}-venv" python3-dev build-essential cmake libdbus-1-dev libglib2.0-dev
+        sudo apt-get install -y "python${PYTHON_VERSION}-venv" python3-dev build-essential cmake libdbus-1-dev libglib2.0-dev xclip
     fi
 fi
 if [[ "$OS" == "Fedora Linux" ]]; then
@@ -216,7 +216,7 @@ if [[ "$OS" == "Fedora Linux" ]]; then
         echo "Bye!"
         exit 1
     else
-        sudo dnf install -y gcc python3-devel cmake dbus-devel glib2-devel
+        sudo dnf install -y gcc python3-devel cmake dbus-devel glib2-devel xclip
     fi
 fi
 if [[ "$OS" == "Arch Linux" ]]; then
@@ -229,7 +229,7 @@ if [[ "$OS" == "Arch Linux" ]]; then
         echo "Bye!"
         exit 1
     else
-        pacman -S --noconfirm gcc cmake pkg-config
+        pacman -S --noconfirm gcc cmake pkg-config xclip
     fi
 fi
 echo ""

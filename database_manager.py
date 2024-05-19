@@ -2,7 +2,7 @@ import sqlite3
 from datetime import datetime
 import json
 import uuid
-
+import os
 
 class DatabaseManager:
     _instance = None
@@ -15,12 +15,18 @@ class DatabaseManager:
     def __init__(self, db_path, ref):
         if not hasattr(self, "_init"):
             self.db_path = db_path
+            self.ensure_database_exists()
             self.ensure_tables_exist()
             self.app = ref
             self._init = True
 
     def _get_connection(self):
         return sqlite3.connect(self.db_path)
+
+    def ensure_database_exists(self):
+        if not os.path.exists(self.db_path):
+            conn = sqlite3.connect(self.db_path)
+            conn.close()
 
     def ensure_tables_exist(self):
         self.create_items_table()
