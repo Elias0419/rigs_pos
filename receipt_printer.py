@@ -93,7 +93,7 @@ class ReceiptPrinter:
             self.printer.textln()
 
             # Use full UUID for barcode
-            barcode_data = str(order_details["order_id"])
+            barcode_data = str(order_details["order_id"]).replace('-', '')
             self.printer.textln(date)
             self.printer.textln(order_details["order_id"])
             if not draft:
