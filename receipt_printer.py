@@ -25,7 +25,7 @@ class ReceiptPrinter:
             self.app.popup_manager.receipt_errors_popup.dismiss()
     # https://stackoverflow.com/questions/62848693/how-to-build-a-mddropdownmenu-and-its-items-on-pressing-a-button
 
-    def uuid_to_code128_format(self, uuid_str):
+    def uuid_to_decimal_string(self, uuid_str):
         uuid_int = int(uuid_str.replace('-', ''), 16)
         formatted_code = "{B" + f"{uuid_int:040d}"
         return formatted_code
