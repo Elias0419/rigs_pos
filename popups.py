@@ -53,8 +53,10 @@ class PopupManager:
         self.notes_data = {}
 
     def show_notes_widget(self):
-        layout = MDBoxLayout(orientation='vertical', size_hint_y=None, padding=10, spacing=10)
-        layout.bind(minimum_height=layout.setter('height'))
+        layout = MDBoxLayout(
+            orientation="vertical", size_hint_y=None, padding=10, spacing=10
+        )
+        layout.bind(minimum_height=layout.setter("height"))
 
         add_topic_btn = Button(text="Add Topic", size_hint_y=None, height=40)
         add_topic_btn.bind(on_release=self.add_topic)
@@ -65,9 +67,9 @@ class PopupManager:
         for topic in self.notes_data:
             self.create_topic_button(topic)
 
-        card = MDCard(orientation='vertical', size_hint_y=None, padding=10)
+        card = MDCard(orientation="vertical", size_hint_y=None, padding=10)
         card.add_widget(layout)
-        card.bind(minimum_height=card.setter('height'))
+        card.bind(minimum_height=card.setter("height"))
 
         scroll_view = ScrollView()
         scroll_view.add_widget(card)
@@ -81,13 +83,17 @@ class PopupManager:
         self.topics_layout.add_widget(topic_button)
 
     def add_topic(self, instance):
-        content = BoxLayout(orientation='vertical', padding=10)
-        topic_input = TextInput(hint_text="Enter Topic Name", size_hint_y=None, height=40)
+        content = BoxLayout(orientation="vertical", padding=10)
+        topic_input = TextInput(
+            hint_text="Enter Topic Name", size_hint_y=None, height=40
+        )
         save_button = Button(text="Save", size_hint_y=None, height=40)
         content.add_widget(topic_input)
         content.add_widget(save_button)
 
-        add_topic_popup = Popup(title="Add New Topic", content=content, size_hint=(0.8, 0.4))
+        add_topic_popup = Popup(
+            title="Add New Topic", content=content, size_hint=(0.8, 0.4)
+        )
 
         def save_topic(instance):
             topic = topic_input.text.strip()
@@ -100,8 +106,10 @@ class PopupManager:
         add_topic_popup.open()
 
     def show_topic_notes(self, topic):
-        layout = MDBoxLayout(orientation='vertical', size_hint_y=None, padding=10, spacing=10)
-        layout.bind(minimum_height=layout.setter('height'))
+        layout = MDBoxLayout(
+            orientation="vertical", size_hint_y=None, padding=10, spacing=10
+        )
+        layout.bind(minimum_height=layout.setter("height"))
 
         add_note_btn = Button(text="Add Note", size_hint_y=None, height=40)
         add_note_btn.bind(on_release=lambda btn: self.add_note_to_topic(topic))
@@ -111,9 +119,9 @@ class PopupManager:
             label = Label(text=note, size_hint_y=None, height=40)
             layout.add_widget(label)
 
-        card = MDCard(orientation='vertical', size_hint_y=None, padding=10)
+        card = MDCard(orientation="vertical", size_hint_y=None, padding=10)
         card.add_widget(layout)
-        card.bind(minimum_height=card.setter('height'))
+        card.bind(minimum_height=card.setter("height"))
 
         scroll_view = ScrollView()
         scroll_view.add_widget(card)
@@ -122,7 +130,7 @@ class PopupManager:
         popup.open()
 
     def add_note_to_topic(self, topic):
-        content = BoxLayout(orientation='vertical', padding=10)
+        content = BoxLayout(orientation="vertical", padding=10)
         note_input = TextInput(hint_text="Enter Note", size_hint_y=None, height=80)
         save_button = Button(text="Save", size_hint_y=None, height=40)
         content.add_widget(note_input)
@@ -171,15 +179,33 @@ class PopupManager:
         header.add_widget(MDLabel(text="", size_hint_x=None, width=20))
         inner_layout.add_widget(header)
 
-        footer = MDGridLayout(size_hint_y=0.1, cols=1, orientation='lr-tb')
-        footer_text = MDLabel(text=f"TEST TEST TEST TEST TEST TEST TEST TEST")
-        footer.add_widget(footer_text)
+        footer = MDGridLayout(size_hint_y=0.1, cols=3, orientation='lr-tb', padding=5, spacing=5)
+        total_price_label = MDLabel(text=f"Total Price: {total_price}", size_hint_x=0.33, halign="center")
+        total_cost_label = MDLabel(text=f"Total Cost: {total_cost}", size_hint_x=0.33, halign="center")
+        total_profit_label = MDLabel(text=f"Total Profit: {total_profit}", size_hint_x=0.33, halign="center")
+        footer.add_widget(total_price_label)
+        footer.add_widget(total_cost_label)
+        footer.add_widget(total_profit_label)
 
-        def set_item(discount, item_layout, item_data, discount_button, discount_type_button, total_price_text, total_profit_text):
+        item_totals = {
+            'total_prices': [],
+            'total_costs': [],
+            'total_profits': []
+        }
+
+        def update_footer():
+            total_price = sum(item_totals['total_prices'])
+            total_cost = sum(item_totals['total_costs'])
+            total_profit = sum(item_totals['total_profits'])
+
+            total_price_label.text = f"Total Price: {round(total_price, 2)}"
+            total_cost_label.text = f"Total Cost: {round(total_cost, 2)}"
+            total_profit_label.text = f"Total Profit: {round(total_profit, 2)}"
+
+        def set_item(discount, item_index, item_data, discount_button, discount_type_button, total_price_text, total_profit_text):
 
             discount_value = float(discount)
             discount_type = discount_type_button.text
-
 
             if discount_type == "%":
                 discount_amount = (item_data["price"] * item_data["quantity"]) * (discount_value / 100)
@@ -189,19 +215,24 @@ class PopupManager:
             new_total_price = (item_data["price"] * item_data["quantity"]) - discount_amount
             new_profit = new_total_price - (item_data["cost"] * item_data["quantity"])
 
-
             total_price_text.text = str(round(new_total_price, 2))
             total_profit_text.text = str(round(new_profit, 2))
             discount_button.text = str(discount_value)
 
-        def create_menu_item(discount, item_layout, item_data, discount_button, discount_type_button, total_price_text, total_profit_text):
+            item_totals['total_prices'][item_index] = new_total_price
+            item_totals['total_costs'][item_index] = item_data["cost"] * item_data["quantity"]
+            item_totals['total_profits'][item_index] = new_profit
+
+            update_footer()
+
+        def create_menu_item(discount, item_index, item_data, discount_button, discount_type_button, total_price_text, total_profit_text):
             return {
                 "text": str(discount),
                 "viewclass": "OneLineListItem",
-                "on_release": lambda: set_item(discount, item_layout, item_data, discount_button, discount_type_button, total_price_text, total_profit_text)
+                "on_release": lambda: set_item(discount, item_index, item_data, discount_button, discount_type_button, total_price_text, total_profit_text)
             }
 
-        for item_id, item_data in order_details_with_cost["items"].items():
+        for item_index, (item_id, item_data) in enumerate(order_details_with_cost["items"].items()):
             item_layout = MDGridLayout(
                 orientation="lr-tb",
                 cols=11,
@@ -234,7 +265,7 @@ class PopupManager:
             discount_type_button = MDRaisedButton(text="%")
 
             menu_items = [
-                create_menu_item(i, item_layout, item_data, discount_button, discount_type_button, total_price_text, total_profit_text)
+                create_menu_item(i, item_index, item_data, discount_button, discount_type_button, total_price_text, total_profit_text)
                 for i in [0, 5, 10, 15, 20, 25, 50]
             ]
             discount_dropdown = MDDropdownMenu(items=menu_items, caller=discount_button, width_mult=4)
@@ -261,11 +292,18 @@ class PopupManager:
 
             inner_layout.add_widget(item_layout)
 
+            item_totals['total_prices'].append(price_x_quantity)
+            item_totals['total_costs'].append(cost_x_quantity)
+            item_totals['total_profits'].append(profit_x_quantity)
+
+        update_footer()
+
         card.add_widget(inner_layout)
         layout.add_widget(card)
         layout.add_widget(footer)
         popup = Popup(size_hint=(0.8, 0.8), content=layout, overlay_color=(0,0,0,0), separator_height=0, title='')
         popup.open()
+
 
 
     def calculate_total_cost(self, order_details):
