@@ -97,7 +97,7 @@ if [[ "$OS" == "Arch Linux" ]]; then
 #         exit 1
 #     else
     yes | pacman-key --init
-    pacman-key populate archlinux
+    yes | pacman-key --populate archlinux
 #     fi
 fi
 
