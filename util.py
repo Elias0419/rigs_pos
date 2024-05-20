@@ -63,7 +63,7 @@ class Utilities:
     def instantiate_modules(self):
         self.initialize_receipt_printer()
         self.app.barcode_scanner = BarcodeScanner(self.app)
-        self.app.db_manager = DatabaseManager("inventory.db", self.app)
+        self.app.db_manager = DatabaseManager("db/inventory.db", self.app)
         self.app.financial_summary = FinancialSummaryWidget(self.app)
         self.app.order_manager = OrderManager(self.app)
         self.app.history_manager = HistoryView(self.app)
@@ -1010,7 +1010,7 @@ class Utilities:
     # @eel.expose
     # @staticmethod
     # def get_order_history_for_eel():
-    #     db_manager = DatabaseManager("inventory.db")
+    #     db_manager = DatabaseManager("db/inventory.db")
     #     order_history = db_manager.get_order_history()
     #     formatted_data = [
     #         {

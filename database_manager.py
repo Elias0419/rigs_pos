@@ -691,6 +691,6 @@ class DatabaseManager:
 
 
 if __name__ == "__main__":
-    db = DatabaseManager("inventory.db", None)
+    db = DatabaseManager("db/inventory.db", None)
     res = db.get_all_items()
     print(res)

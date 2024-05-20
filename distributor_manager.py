@@ -19,7 +19,7 @@ class DistPopup(Popup):
         if not hasattr(self, "_init"):
             self._init = True
             super(DistPopup, self).__init__(**kwargs)
-            self.db_manager = DatabaseManager("inventory.db", self)
+            self.db_manager = DatabaseManager("db/inventory.db", self)
             # self.dist_view = DistView()
 
     def show_dist_reporting_popup(self, instance=None):

@@ -30,7 +30,7 @@ class InventoryManagementView(BoxLayout):
         if not hasattr(self, "_init"):
             super(InventoryManagementView, self).__init__(**kwargs)
 
-            self.database_manager = DatabaseManager("inventory.db", None)
+            self.database_manager = DatabaseManager("db/inventory.db", None)
             self.full_inventory = self.database_manager.get_all_items()
             Clock.schedule_once(lambda dt: self.filter_inventory(None), 0.1)
             self.app = App.get_running_app()
@@ -187,7 +187,7 @@ class InventoryManagementRow(BoxLayout):
     def __init__(self, **kwargs):
         super(InventoryManagementRow, self).__init__(**kwargs)
         self.bind(price=self.update_formatted_price)
-        self.database_manager = DatabaseManager("inventory.db", self)
+        self.database_manager = DatabaseManager("db/inventory.db", self)
         self.inventory_management_view = InventoryManagementView()
         self.app = App.get_running_app()
 
