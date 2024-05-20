@@ -301,6 +301,7 @@ chown -R rigs /home/rigs/0
 echo "Getting the application files..."
 echo ""
 sleep 1
+cd /home/rigs
 git clone https://github.com/Elias0419/rigs_pos > /dev/null 2>&1
 chown -R rigs /home/rigs/rigs_pos
 
