@@ -24,7 +24,7 @@ def read_csv(file_name):
 
 
 def create_db_and_insert_data(data):
-    conn = sqlite3.connect("inventory.db")
+    conn = sqlite3.connect("db/inventory.db")
     cursor = conn.cursor()
 
     cursor.execute(

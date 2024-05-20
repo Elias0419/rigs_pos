@@ -38,7 +38,7 @@ class HistoryPopup(Popup):
         if not hasattr(self, "_init"):
             self._init = True
             super(HistoryPopup, self).__init__(**kwargs)
-            self.db_manager = DatabaseManager("inventory.db", self)
+            self.db_manager = DatabaseManager("db/inventory.db", self)
             # self.history_view = HistoryView()
 
     def show_hist_reporting_popup(self, instance=None):
@@ -580,7 +580,7 @@ class OrderDetailsPopup(Popup):
         self.history_popup = HistoryPopup()
         self.size_hint = (0.4, 0.8)
         self.receipt_printer = receipt_printer
-        self.db_manager = DatabaseManager("inventory.db", self)
+        self.db_manager = DatabaseManager("db/inventory.db", self)
 
         content_layout = GridLayout(orientation="tb-lr", spacing=5, cols=1, rows=3)
         formatted_order_details = self.format_order_details(order)
