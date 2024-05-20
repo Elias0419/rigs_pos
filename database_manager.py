@@ -3,6 +3,7 @@ from datetime import datetime
 import json
 import uuid
 import os
+import requests
 
 class DatabaseManager:
     _instance = None
@@ -25,8 +26,15 @@ class DatabaseManager:
 
     def ensure_database_exists(self):
         if not os.path.exists(self.db_path):
-            conn = sqlite3.connect(self.db_path)
-            conn.close()
+            try:
+                self.download_database_from_github()
+            except Exception as e:
+                print(
+                    f"[DatabaseManager]:{e}\nNo database file was found and I could not retrieve a backup from github.\n"
+                    #TODO do something here
+                    )
+                conn = sqlite3.connect(self.db_path)
+                conn.close()
 
     def ensure_tables_exist(self):
         self.create_items_table()
@@ -34,6 +42,13 @@ class DatabaseManager:
         self.create_modified_orders_table()
         self.create_dist_table()
         self.create_payment_history_table()
+
+    def download_database_from_github(self):
+        github_url = "https://raw.githubusercontent.com/Elias0419/rigs_pos/main/db/inventory.db"
+        response = requests.get(github_url)
+        response.raise_for_status()
+        with open(self.db_path, 'wb') as f:
+            f.write(response.content)
 
     def create_payment_history_table(self):
         conn = self._get_connection()
