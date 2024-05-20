@@ -1164,17 +1164,38 @@ class Utilities:
         except Exception as e:
             print(e)
 
-    def check_inactivity(self, *args):
-        try:
-            bus = dbus.SessionBus()
-            screensaver_proxy = bus.get_object(
-                "org.freedesktop.ScreenSaver", "/org/freedesktop/ScreenSaver"
-            )
-            screensaver_interface = dbus.Interface(
-                screensaver_proxy, dbus_interface="org.freedesktop.ScreenSaver"
-            )
-            idle_time = screensaver_interface.GetSessionIdleTime()
+    # def check_inactivity(self, *args):
+    #     try:
+    #         bus = dbus.SessionBus()
+    #         screensaver_proxy = bus.get_object(
+    #             "org.freedesktop.ScreenSaver", "/org/freedesktop/ScreenSaver"
+    #         )
+    #         screensaver_interface = dbus.Interface(
+    #             screensaver_proxy, dbus_interface="org.freedesktop.ScreenSaver"
+    #         )
+    #         idle_time = screensaver_interface.GetSessionIdleTime()
+    #
+    #         hours, remainder = divmod(idle_time, 3600000)
+    #         minutes, seconds = divmod(remainder, 60000)
+    #         seconds //= 1000
+    #
+    #         human_readable_time = f"{hours}h:{minutes}m:{seconds}s"
+    #
+    #         if idle_time > 600000:  # 10 minutes
+    #             # if idle_time > 10000: # 10 secs
+    #
+    #             self.trigger_guard_and_lock(trigger=False)
+    #
+    #     except Exception as e:
+    #         print(f"Exception in check_inactivity\n{e}")
+    #         pass
 
+
+    def check_inactivity(self, *args):
+        print("check\n")
+        try:
+            idle_time = int(subprocess.check_output(["xprintidle"]).strip())
+            print(idle_time)
             hours, remainder = divmod(idle_time, 3600000)
             minutes, seconds = divmod(remainder, 60000)
             seconds //= 1000
@@ -1182,13 +1203,10 @@ class Utilities:
             human_readable_time = f"{hours}h:{minutes}m:{seconds}s"
 
             if idle_time > 600000:  # 10 minutes
-                # if idle_time > 10000: # 10 secs
-
                 self.trigger_guard_and_lock(trigger=False)
 
         except Exception as e:
             print(f"Exception in check_inactivity\n{e}")
-            pass
 
     def clear_split_numeric_input(self):
         self.app.popup_manager.split_payment_numeric_cash_input.text = ""
