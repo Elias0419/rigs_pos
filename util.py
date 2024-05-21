@@ -1192,10 +1192,10 @@ class Utilities:
 
 
     def check_inactivity(self, *args):
-        print("check\n")
+        #print("check\n")
         try:
             idle_time = int(subprocess.check_output(["xprintidle"]).strip())
-            print(idle_time)
+            #print(idle_time)
             hours, remainder = divmod(idle_time, 3600000)
             minutes, seconds = divmod(remainder, 60000)
             seconds //= 1000
