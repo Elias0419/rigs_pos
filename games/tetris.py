@@ -270,7 +270,6 @@ class Tetris:
             screen.blit(text, [0, 0])
             screen.blit(high_score_text, [200, 0])
 
-            # Draw and check quit button
             pygame.draw.rect(screen, WHITE, quit_button)
             pygame.draw.rect(screen, WHITE, reset_button)
             quit_text = font.render("Quit", True, BLACK)
