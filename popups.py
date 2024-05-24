@@ -3324,29 +3324,41 @@ class PopupManager:
     def on_inventory_item_dismiss(self, instance):
         self.app.inventory_manager.reset_inventory_context()
         # self.app.inventory_manager.detach_from_parent()
-
     def handle_duplicate_barcodes(self, barcode):
-        print("in popups", barcode)
-        items = self.app.db_manager.handle_duplicate_barcodes(barcode)
-        layout = GridLayout(rows=10, cols=1, spacing=5, size_hint=(1, 1))
-        for item in items:
-            button = MDRaisedButton(
-                text=item["name"],
-                size_hint=(1, None),
-                on_press=lambda x, barcode=barcode, choice=item["name"], price=item[
-                    "price"
-                ]: self.add_dupe_choice_to_order(
-                    barcode=barcode, choice=choice, price=price
-                ),
-            )
-            layout.add_widget(button)
+        try:
+            print("in popups", barcode)
+            items = self.app.db_manager.handle_duplicate_barcodes(barcode)
 
-        self.handle_duplicate_barcodes_popup = Popup(
-            title="Duplicate Barcode Detected!",
-            content=layout,
-            size_hint=(0.2, 0.6),
-        )
-        self.handle_duplicate_barcodes_popup.open()
+            # Ensure items is a list and contains dictionaries with expected keys
+            if not isinstance(items, list):
+                raise ValueError("Expected a list of items")
+
+            for item in items:
+                if not isinstance(item, dict):
+                    raise ValueError("Expected item to be a dictionary")
+                if "name" not in item or "price" not in item:
+                    raise KeyError("Item dictionary missing required keys")
+
+            layout = GridLayout(rows=10, cols=1, spacing=5, size_hint=(1, 1))
+            for item in items:
+                button = MDRaisedButton(
+                    text=item["name"],
+                    size_hint=(1, None),
+                    on_press=lambda x, barcode=barcode, choice=item["name"], price=item["price"]: self.add_dupe_choice_to_order(
+                        barcode=barcode, choice=choice, price=price
+                    ),
+                )
+                layout.add_widget(button)
+
+            self.handle_duplicate_barcodes_popup = Popup(
+                title="Duplicate Barcode Detected!",
+                content=layout,
+                size_hint=(0.2, 0.6),
+            )
+            self.handle_duplicate_barcodes_popup.open()
+        except Exception as e:
+            print(f"Exception in handle_duplicate_barcodes\n{e}")
+
 
     def add_dupe_choice_to_order(self, barcode, choice, price):
 
