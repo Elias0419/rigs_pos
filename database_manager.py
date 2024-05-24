@@ -5,6 +5,7 @@ import uuid
 import os
 import requests
 
+
 class DatabaseManager:
     _instance = None
 
@@ -31,8 +32,8 @@ class DatabaseManager:
             except Exception as e:
                 print(
                     f"[DatabaseManager]:{e}\nNo database file was found and I could not retrieve a backup from github.\n"
-                    #TODO do something here
-                    )
+                    # TODO do something here
+                )
                 conn = sqlite3.connect(self.db_path)
                 conn.close()
 
@@ -44,10 +45,12 @@ class DatabaseManager:
         self.create_payment_history_table()
 
     def download_database_from_github(self):
-        github_url = "https://raw.githubusercontent.com/Elias0419/rigs_pos/main/db/inventory.db"
+        github_url = (
+            "https://raw.githubusercontent.com/Elias0419/rigs_pos/main/db/inventory.db"
+        )
         response = requests.get(github_url)
         response.raise_for_status()
-        with open(self.db_path, 'wb') as f:
+        with open(self.db_path, "wb") as f:
             f.write(response.content)
 
     def create_payment_history_table(self):
@@ -244,7 +247,7 @@ class DatabaseManager:
                 (barcode, name, price, cost, sku, category, taxable, item_id),
             )
             if cursor.rowcount == 0:
-                print("No item found with UUID:", item_id)
+
                 return False
             conn.commit()
             item_details = {
@@ -280,7 +283,7 @@ class DatabaseManager:
             rows = cursor.fetchall()
 
             for row in rows:
-                print(row)
+                # print(row)
                 item_details = {
                     "barcode": row[0],
                     "name": row[1],
@@ -302,7 +305,7 @@ class DatabaseManager:
         return items
 
     def get_item_details(self, item_id="", name="", price=0.0, barcode="", dupe=False):
-        print(f"called get with\nbarcode {barcode}\nname {name}\nitem_id {item_id}")
+        # print(f"called get with\nbarcode {barcode}\nname {name}\nitem_id {item_id}")
         conn = None
         try:
             conn = self._get_connection()
@@ -373,7 +376,7 @@ class DatabaseManager:
         finally:
             if conn:
                 conn.close()
-        print(item_details)
+        # print(item_details)
         return item_details
 
     def delete_item(self, item_id):
@@ -384,9 +387,8 @@ class DatabaseManager:
             delete_query = "DELETE FROM items WHERE item_id = ?"
             cursor.execute(delete_query, (item_id,))
 
-            # If no rows were affected, the item_id does not exist
             if cursor.rowcount == 0:
-                print(f"No item found with item_id: {item_id}")
+
                 return False
 
             conn.commit()
