@@ -100,7 +100,7 @@ class Utilities:
                 barcode_cache[barcode] = {"items": [item], "is_dupe": False}
             else:
                 barcode_cache[barcode]["items"].append(item)
-                barcode_cache[barcode]["is_dupe"] = True  # Mark as duplicate
+                barcode_cache[barcode]["is_dupe"] = True
         print(len(barcode_cache))
         return barcode_cache
 
@@ -806,7 +806,7 @@ class Utilities:
 
         self.base_layout = FloatLayout()
         try:
-            bg_image = Image(source="images/test.webp", fit_mode="fill")
+            bg_image = Image(source="images/grey_mountains.jpg", fit_mode="fill")
             self.base_layout.add_widget(bg_image)
 
         except Exception as e:
