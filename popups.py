@@ -3326,6 +3326,7 @@ class PopupManager:
         # self.app.inventory_manager.detach_from_parent()
 
     def handle_duplicate_barcodes(self, barcode):
+        print("in popups", barcode)
         items = self.app.db_manager.handle_duplicate_barcodes(barcode)
         layout = GridLayout(rows=10, cols=1, spacing=5, size_hint=(1, 1))
         for item in items:

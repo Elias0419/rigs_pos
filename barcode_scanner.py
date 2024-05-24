@@ -198,6 +198,7 @@ class BarcodeScanner:
         barcode_data = self.app.barcode_cache.get(known_barcode)
 
         if barcode_data["is_dupe"]:
+            print("in barcode manager")
             self.app.popup_manager.handle_duplicate_barcodes(known_barcode)
         else:
             item_details = self.app.db_manager.get_item_details(barcode=known_barcode)
