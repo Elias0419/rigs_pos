@@ -30,8 +30,8 @@
         id: price
         text: root.formatted_price
         size_hint_x: 0.2
-    Button:
-        text: "Add to Order"
+    MDFlatButton:
+        text: "[u]Add to Order[/u]"
         on_press: root.add_to_order()
         size_hint_x: 0.2
 <InventoryView>:
@@ -52,10 +52,10 @@
         viewclass: 'InventoryRow'
         RecycleBoxLayout:
             #spacing: 5
-            default_size: None, dp(40)
+            default_size: None, dp(48)
             default_size_hint: 1, None
             size_hint_y: None
-            height: len(rv.data) * dp(40)
+            height: len(rv.data) * dp(48)
             #height: self.minimum_height
             orientation: 'vertical'
 <LabelPrintingRow>:

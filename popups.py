@@ -2142,12 +2142,13 @@ class PopupManager:
         inventory_view = InventoryView(order_manager=self.app.order_manager)
         inventory_view.show_inventory(inventory)
         self.inventory_popup = self.create_focus_popup(
-            title="Inventory",
+            title="",
             content=inventory_view,
             textinput=inventory_view.ids.inventory_search_input,
             size_hint=(0.6, 1),
             pos_hint={"top": 1},
             overlay_color=(0, 0, 0, 0),
+            separator_height=0
         )
         self.inventory_popup.open()
 
@@ -2448,6 +2449,9 @@ class PopupManager:
             content=popup_layout,
             size_hint=(0.4, 0.6),
             overlay_color=(0, 0, 0, 0),
+            separator_color="white",
+            separator_height=0.5,
+            title_align="center",
         )
         self.finalize_order_popup.open()
 
@@ -2644,6 +2648,9 @@ class PopupManager:
             size_hint=(None, None),
             size=("500dp", "800dp"),
             auto_dismiss=False,
+            separator_color="white",
+            separator_height=0.5,
+            title_align="center",
         )
         self.finalize_order_popup.dismiss()
         self.timeout_event = Clock.schedule_once(
@@ -3082,6 +3089,7 @@ class PopupManager:
         pos_hint={},
         on_dismiss=None,
         overlay_color=(0, 0, 0, 0),
+        separator_height=1
     ):
         if on_dismiss is None:
             on_dismiss = self.do_nothing
@@ -3092,6 +3100,7 @@ class PopupManager:
             pos_hint=pos_hint,
             on_dismiss=on_dismiss,
             overlay_color=overlay_color,
+            separator_height=separator_height
         )
         popup.focus_on_textinput(textinput)
         return popup
