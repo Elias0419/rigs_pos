@@ -45,4 +45,7 @@ class CashRegisterApp(MDApp):
 
 if __name__ == "__main__":
     app = CashRegisterApp()
-    app.run()
+    try:
+        app.run()
+    except KeyboardInterrupt:
+        print("Exiting...")
