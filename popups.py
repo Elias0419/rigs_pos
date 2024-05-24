@@ -2162,13 +2162,15 @@ class PopupManager:
             # "Calculator",
             # "Reporting",
             # "Distrib TEST",
-            "Admin",
             "System",
             "Label Printer",
             "Inventory",
             "Dual Pane",
             "Open Register",
         ]
+
+        if self.app.admin:
+            tool_buttons.insert(0, "Admin")
 
         # btn_height_hint = 0.2
         # spacing_hint = 0.01
@@ -2192,18 +2194,30 @@ class PopupManager:
                 on_press=self.app.button_handler.on_tool_button_press,
             )
             float_layout.add_widget(btn)
-
-        self.tools_popup = Popup(
-            content=float_layout,
-            size_hint=(0.2, 0.8),
-            title="",
-            background="images/transparent.png",
-            background_color=(0, 0, 0, 0),
-            separator_height=0,
-            pos_hint={"center_x": 0.725, "center_y": 0.20},
-            overlay_color=(0, 0, 0, 0),
-            # pos_hint={"top":1}
-        )
+        if self.app.admin:
+            self.tools_popup = Popup(
+                content=float_layout,
+                size_hint=(0.2, 0.8),
+                title="",
+                background="images/transparent.png",
+                background_color=(0, 0, 0, 0),
+                separator_height=0,
+                pos_hint={"center_x": 0.725, "center_y": 0.20},
+                overlay_color=(0, 0, 0, 0),
+                # pos_hint={"top":1}
+            )
+        else:
+            self.tools_popup = Popup(
+                content=float_layout,
+                size_hint=(0.2, 0.8),
+                title="",
+                background="images/transparent.png",
+                background_color=(0, 0, 0, 0),
+                separator_height=0,
+                pos_hint={"center_x": 0.725, "center_y": 0.12},
+                overlay_color=(0, 0, 0, 0),
+                # pos_hint={"top":1}
+            )
         self.tools_popup.open()
 
     def show_admin_popup(self):
@@ -3510,8 +3524,8 @@ class FinancialSummaryWidget(MDFlatButton):
             md_bg_color=(0.5, 0.5, 0.5, 0.05),
             on_press=lambda x: self.open_list_saved_orders_popup(),
         )
-        order_mod_layout.add_widget(save_order_button)
-        order_mod_layout.add_widget(load_order_button)
+        # order_mod_layout.add_widget(save_order_button)
+        # order_mod_layout.add_widget(load_order_button)
         order_mod_layout.add_widget(discount_order_button)
         order_mod_layout.add_widget(adjust_price_button)
         order_mod_layout.add_widget(clear_order_button)
