@@ -1524,36 +1524,45 @@ class PopupManager:
     def add_order_discount_popup(self):
         print("pop")
         discount_order_popup_layout = GridLayout(
-            orientation="tb-lr", spacing=5, cols=1, rows=2
+            orientation="tb-lr", spacing=5, cols=1, rows=3
         )
         self.discount_order_popup = Popup(
             title="Add Discount",
             content=discount_order_popup_layout,
             size_hint=(0.2, 0.6),
         )
+        # if self.app.admin: #TODO
+        #     discounts = [5, 10, 15, 20, 30, 40, 50]
+        # else:
+        #     discounts = [5, 10, 15]
+        self.order_discount_toggle = True
+        toggle_container = MDGridLayout(orientation="lr-tb", cols=2, size_hint_y=0.2)
+        self.percent_toggle = MDFlatButton(text="[size=48][b]%[/b][/size]", size_hint=(1,1),line_color="white", on_press=lambda x : self.handle_order_discount_toggle(percent=True))
+        self.amount_toggle = MDFlatButton(text="[size=18]$[/size]", size_hint=(1,1), on_press=lambda x : self.handle_order_discount_toggle(percent=False))
+        toggle_container.add_widget(self.percent_toggle)
+        toggle_container.add_widget(self.amount_toggle)
 
-        discounts = [
-            {"type": "percent", "values": [10, 20, 30, 40, 50]},
-            {"type": "amount", "values": [10, 20, 30, 40, 50]},
-        ]
+        discounts = [5, 10, 15, 20, 30, 40, 50]
+        discount_layout = GridLayout(orientation="lr-tb", cols=2, spacing=10)
 
-        discount_layout = GridLayout(orientation="tb-lr", cols=2, spacing=10)
-
-        for discount_type in discounts:
-            for value in discount_type["values"]:
-                label = (
-                    f"[size=20][b]{value}%[/size][/b]"
-                    if discount_type["type"] == "percent"
-                    else f"[size=20][b]${value}[/size][/b]"
-                )
-                discount_button = self.app.utilities.create_md_raised_button(
-                    label,
-                    lambda x, v=value, t=discount_type["type"]: self.apply_discount(
-                        v, t
-                    ),
-                    (0.8, 0.8),
-                )
-                discount_layout.add_widget(discount_button)
+        for discount in discounts:
+            discount_button = MDFlatButton(md_bg_color="gray", text=str(discount), size_hint=(1,1))
+            discount_layout.add_widget(discount_button)
+        # for discount_type in discounts:
+        #     for value in discount_type["values"]:
+        #         label = (
+        #             f"[size=20][b]{value}%[/size][/b]"
+        #             if discount_type["type"] == "percent"
+        #             else f"[size=20][b]${value}[/size][/b]"
+        #         )
+        #         discount_button = self.app.utilities.create_md_raised_button(
+        #             label,
+        #             lambda x, v=value, t=discount_type["type"]: self.apply_discount(
+        #                 v, t
+        #             ),
+        #             (0.8, 0.8),
+        #         )
+        #         discount_layout.add_widget(discount_button)
         button_layout = GridLayout(
             orientation="lr-tb", spacing=5, cols=2, rows=1, size_hint_y=0.2
         )
@@ -1568,10 +1577,24 @@ class PopupManager:
 
         button_layout.add_widget(custom_button)
         button_layout.add_widget(cancel_button)
+        discount_order_popup_layout.add_widget(toggle_container)
         discount_order_popup_layout.add_widget(discount_layout)
         discount_order_popup_layout.add_widget(button_layout)
 
         self.discount_order_popup.open()
+
+    def handle_order_discount_toggle(self, percent):
+        if percent:
+            self.percent_toggle.line_color="white"
+            self.percent_toggle.text = "[size=48][b]%[/b][/size]"
+            self.amount_toggle.text  = "[size=18]$[/size]"
+            self.amount_toggle.line_color=(0,0,0,0)
+        else:
+            self.amount_toggle.line_color="white"
+            self.amount_toggle.text  = "[size=48][b]$[/b][/size]"
+            self.percent_toggle.text = "[size=18]%[/size]"
+            self.percent_toggle.line_color=(0,0,0,0)
+
 
     def apply_discount(self, value, discount_type):
         print(value, type)
