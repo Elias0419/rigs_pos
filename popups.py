@@ -3325,7 +3325,7 @@ class PopupManager:
         self.app.inventory_manager.reset_inventory_context()
         # self.app.inventory_manager.detach_from_parent()
     def handle_duplicate_barcodes(self, barcode):
-        try:
+        # try:
             print("in popups", barcode)
             items = self.app.db_manager.handle_duplicate_barcodes(barcode)
 
@@ -3356,8 +3356,8 @@ class PopupManager:
                 size_hint=(0.2, 0.6),
             )
             self.handle_duplicate_barcodes_popup.open()
-        except Exception as e:
-            print(f"Exception in handle_duplicate_barcodes\n{e}")
+        # except Exception as e:
+        #     print(f"Exception in handle_duplicate_barcodes\n{e}")
 
 
     def add_dupe_choice_to_order(self, barcode, choice, price):
