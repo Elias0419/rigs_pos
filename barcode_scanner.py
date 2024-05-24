@@ -167,7 +167,7 @@ class BarcodeScanner:
             self.handle_scanned_barcode(barcode)
 
     def handle_scanned_barcode(self, barcode):
-        try:
+        # try:
             if "-" in barcode and any(c.isalpha() for c in barcode):
                 self.app.history_manager.display_order_details_from_barcode_scan(
                     barcode
@@ -191,8 +191,8 @@ class BarcodeScanner:
 
             self.app.popup_manager.show_add_or_bypass_popup(barcode)
 
-        except Exception as e:
-            print(f"Exception in handle_scanned_barcode\n{e}")
+        # except Exception as e:
+        #     print(f"Exception in handle_scanned_barcode\n{e}")
 
     def handle_known_barcode(self, known_barcode):
         barcode_data = self.app.barcode_cache.get(known_barcode)
