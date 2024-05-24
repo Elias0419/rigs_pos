@@ -2263,7 +2263,7 @@ class PopupManager:
             background="images/transparent.png",
             background_color=(0, 0, 0, 0),
             separator_height=0,
-            pos_hint={"center_x": 0.9, "center_y": 0.22},
+            pos_hint={"center_x": 0.75, "center_y": 0.22},
             overlay_color=(0, 0, 0, 0),
             # pos_hint={"top":1}
         )
@@ -2700,7 +2700,7 @@ class PopupManager:
         self.change_popup = Popup(
             title="",
             content=change_layout,
-            size_hint=(0.4, 0.4),
+            size_hint=(0.2, 0.4),
             separator_height=0,
             auto_dismiss=False,
         )
@@ -3324,12 +3324,12 @@ class PopupManager:
     def on_inventory_item_dismiss(self, instance):
         self.app.inventory_manager.reset_inventory_context()
         # self.app.inventory_manager.detach_from_parent()
+
     def handle_duplicate_barcodes(self, barcode):
-        # try:
+        try:
             print("in popups", barcode)
             items = self.app.db_manager.handle_duplicate_barcodes(barcode)
 
-            # Ensure items is a list and contains dictionaries with expected keys
             if not isinstance(items, list):
                 raise ValueError("Expected a list of items")
 
@@ -3356,8 +3356,8 @@ class PopupManager:
                 size_hint=(0.2, 0.6),
             )
             self.handle_duplicate_barcodes_popup.open()
-        # except Exception as e:
-        #     print(f"Exception in handle_duplicate_barcodes\n{e}")
+        except Exception as e:
+            print(f"Exception in handle_duplicate_barcodes\n{e}")
 
 
     def add_dupe_choice_to_order(self, barcode, choice, price):

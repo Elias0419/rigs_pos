@@ -256,7 +256,7 @@ class Utilities:
             )
             log_in_time = self.read_formatted_clock_in_time(self.clock_in_file)
             self.time_clock.text = (
-                f"User: {self.app.logged_in_user['name']}\nTap the clock to log out"
+                f"Logged in as {self.app.logged_in_user['name']}\n[u]Tap here to log out[/u]"
             )
             self.clock_out_event = Clock.schedule_once(
                 self.auto_clock_out, self.time_until_end_of_shift()
@@ -667,7 +667,7 @@ class Utilities:
         save_icon_container.add_widget(self.app.save_icon)
         top_center_container = MDBoxLayout(orientation="vertical", size_hint_y=0.2)
         # center_container.add_widget(trash_icon_container)
-        self.time_clock = MDLabel(text="", size_hint_y=0.2)
+        self.time_clock = MDFlatButton(text="", size_hint_y=0.2, on_press=lambda x: self.app.popup_manager.open_clock_out_popup())
         time_clock_container = GridLayout(orientation="lr-tb", cols=2)
         _blank2 = MDBoxLayout(size_hint_y=0.8)
         clock_icon = MDIconButton(
@@ -676,7 +676,7 @@ class Utilities:
             on_press=lambda x: self.app.popup_manager.open_clock_out_popup(),
         )
         time_clock_container.add_widget(self.time_clock)
-        time_clock_container.add_widget(clock_icon)
+        #time_clock_container.add_widget(clock_icon)
         top_center_container.add_widget(time_clock_container)
         top_center_container.add_widget(_blank2)
         # self.center_container.add_widget(self.mirror_image)
@@ -758,7 +758,8 @@ class Utilities:
             padding=(8, 8),
             font_style="H6",
             size_hint_x=None,
-           _min_width=200,
+           _min_width=225,
+           _min_height=100,
            line_color="white",
 
         )
@@ -769,7 +770,8 @@ class Utilities:
             padding=(8, 8),
             font_style="H6",
             size_hint_x=None,
-           _min_width=200,
+           _min_width=225,
+           _min_height=100,
            line_color="white",
 
         )
@@ -780,7 +782,8 @@ class Utilities:
             padding=(8, 8),
             font_style="H6",
             size_hint_x=None,
-           _min_width=200,
+           _min_width=225,
+           _min_height=100,
            line_color="white",
         )
 
@@ -790,7 +793,8 @@ class Utilities:
             padding=(8, 8),
             font_style="H6",
             size_hint_x=None,
-           _min_width=200,
+           _min_width=225,
+           _min_height=100,
            line_color="white",
         )
         _blank3 = MDBoxLayout(size_hint_x=None, width=500)
