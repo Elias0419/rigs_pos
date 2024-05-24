@@ -2200,7 +2200,7 @@ class PopupManager:
             background="images/transparent.png",
             background_color=(0, 0, 0, 0),
             separator_height=0,
-            pos_hint={"center_x": 0.9, "center_y": 0.22},
+            pos_hint={"center_x": 0.725, "center_y": 0.20},
             overlay_color=(0, 0, 0, 0),
             # pos_hint={"top":1}
         )
@@ -2615,7 +2615,7 @@ class PopupManager:
                 text=f"[b]${total_with_tax:.2f} Paid With {order_details['payment_method']}[/b]",
                 halign="center",
                 theme_text_color="Primary",
-                markup=True,
+
             )
         )
 
@@ -2625,7 +2625,7 @@ class PopupManager:
             on_release=self.app.button_handler.on_done_button_press,
             pos_hint={"center_x": 0.25, "center_y": 0.5},
             size_hint=(0.45, 1),
-            markup=True,
+
         )
 
         receipt_button = MDRaisedButton(
@@ -2633,7 +2633,7 @@ class PopupManager:
             on_release=self.app.button_handler.on_receipt_button_press,
             pos_hint={"center_x": 0.75, "center_y": 0.5},
             size_hint=(0.45, 1),
-            markup=True,
+
         )
 
         card.add_widget(button_layout)
@@ -3397,8 +3397,9 @@ class FinancialSummaryWidget(MDFlatButton):
             super(FinancialSummaryWidget, self).__init__(**kwargs)
 
             self.size_hint_y = None
-            self.size_hint_x = 1
-            self.height = 150
+            self.size_hint_x = 0.2
+            self.height = 250
+            #self.padding = (100, 0, 0, 0)
             self._no_ripple_effect = True
             self.text = ""
 

@@ -695,17 +695,19 @@ class Utilities:
         lock_icon = MDIconButton(
             icon="lock", on_press=lambda x: self.trigger_guard_and_lock(trigger=True)
         )
-        sidebar.add_widget(calc_icon_container)
+
         sidebar.add_widget(trash_icon_container)
         sidebar.add_widget(save_icon_container)
         sidebar.add_widget(print_icon_container)
+        sidebar.add_widget(MDBoxLayout())
+        sidebar.add_widget(calc_icon_container)
         sidebar.add_widget(lock_icon)
         # sidebar.add_widget(trash_icon)
         self.top_area_layout.add_widget(sidebar)
         self.main_layout.add_widget(self.top_area_layout)
         # main_layout.add_widget(sidebar)
         button_layout = GridLayout(
-            cols=4,
+            cols=5,
             spacing=20,
             padding=20,
             size_hint_y=0.05,
@@ -713,43 +715,86 @@ class Utilities:
             orientation="lr-tb",
         )
 
-        btn_pay = self.create_md_raised_button(
-            f"[b][size=40]Pay[/b][/size]",
-            self.app.button_handler.on_button_press,
-            (8, 8),
-            "H6",
+        # btn_pay = self.create_md_raised_button(
+        #     f"[b][size=40]Pay[/b][/size]",
+        #     self.app.button_handler.on_button_press,
+        #     (8, 8),
+        #     "H6",
+        # )
+        #
+        # btn_custom_item = self.create_md_raised_button(
+        #     f"[b][size=40]Custom[/b][/size]",
+        #     self.app.button_handler.on_button_press,
+        #     (8, 8),
+        #     "H6",
+        # )
+        # btn_inventory = self.create_md_raised_button(
+        #     f"[b][size=40]Search[/b][/size]",
+        #     # lambda x: self.app.popup_manager.maximize_dual_popup(),
+        #     self.app.button_handler.on_button_press,
+        #     # lambda x: self.app.popup_manager.show_lock_screen(),
+        #     (8, 8),
+        #     "H6",
+        # )
+        # btn_tools = self.create_md_raised_button(
+        #     f"[b][size=40]Tools[/b][/size]",
+        #     self.app.button_handler.on_button_press,
+        #     # lambda x: self.app.popup_manager.show_notes_widget(),
+        #     # lambda x: self.app.popup_manager.show_cost_overlay(),
+        #     # lambda x: self.modify_clock_layout_for_dual_pane_mode(),
+        #     # lambda x: self.app.popup_manager.show_dual_inventory_and_label_managers(),
+        #     # lambda x: self.enable_dual_pane_mode(),
+        #     # lambda x: self.store_user_details("noob","1111",False),
+        #     # lambda x: self.app.popup_manager.show_lock_screen(),
+        #     # lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
+        #     # lambda x: sys.exit(42),
+        #     # lambda x: self.app.financial_summary.update_mirror_image(),
+        #     (8, 8),
+        #     "H6",
+        # )
+        btn_pay = MDFlatButton(
+            text="[b][size=40]PAY[/b][/size]",
+            on_press=self.app.button_handler.on_button_press,
+            padding=(8, 8),
+            font_style="H6",
+            size_hint_x=None,
+           _min_width=200,
+           line_color="white",
+
         )
 
-        btn_custom_item = self.create_md_raised_button(
-            f"[b][size=40]Custom[/b][/size]",
-            self.app.button_handler.on_button_press,
-            (8, 8),
-            "H6",
+        btn_custom_item = MDFlatButton(
+            text="[b][size=40]CUSTOM[/b][/size]",
+            on_press=self.app.button_handler.on_button_press,
+            padding=(8, 8),
+            font_style="H6",
+            size_hint_x=None,
+           _min_width=200,
+           line_color="white",
+
         )
-        btn_inventory = self.create_md_raised_button(
-            f"[b][size=40]Search[/b][/size]",
-            # lambda x: self.app.popup_manager.maximize_dual_popup(),
-            self.app.button_handler.on_button_press,
-            # lambda x: self.app.popup_manager.show_lock_screen(),
-            (8, 8),
-            "H6",
+
+        btn_inventory = MDFlatButton(
+            text="[b][size=40]SEARCH[/b][/size]",
+            on_press=self.app.button_handler.on_button_press,
+            padding=(8, 8),
+            font_style="H6",
+            size_hint_x=None,
+           _min_width=200,
+           line_color="white",
         )
-        btn_tools = self.create_md_raised_button(
-            f"[b][size=40]Tools[/b][/size]",
-            self.app.button_handler.on_button_press,
-            # lambda x: self.app.popup_manager.show_notes_widget(),
-            # lambda x: self.app.popup_manager.show_cost_overlay(),
-            # lambda x: self.modify_clock_layout_for_dual_pane_mode(),
-            # lambda x: self.app.popup_manager.show_dual_inventory_and_label_managers(),
-            # lambda x: self.enable_dual_pane_mode(),
-            # lambda x: self.store_user_details("noob","1111",False),
-            # lambda x: self.app.popup_manager.show_lock_screen(),
-            # lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
-            # lambda x: sys.exit(42),
-            # lambda x: self.app.financial_summary.update_mirror_image(),
-            (8, 8),
-            "H6",
+
+        btn_tools = MDFlatButton(
+            text="[b][size=40]TOOLS[/b][/size]",
+            on_press=self.app.button_handler.on_button_press,
+            padding=(8, 8),
+            font_style="H6",
+            size_hint_x=None,
+           _min_width=200,
+           line_color="white",
         )
+        _blank3 = MDBoxLayout(size_hint_x=None, width=500)
+        button_layout.add_widget(_blank3)
         button_layout.add_widget(btn_pay)
         button_layout.add_widget(btn_custom_item)
         button_layout.add_widget(btn_inventory)
@@ -871,7 +916,7 @@ class Utilities:
         saved_orders_container.add_widget(self.saved_order_button3)
         saved_orders_container.add_widget(self.saved_order_button4)
         saved_orders_container.add_widget(self.saved_order_button5)
-        logo_container = BoxLayout(size_hint_y=0.2, padding=(-200, 0, 0, 0))
+        logo_container = BoxLayout(size_hint_y=0.2, padding=(-250, 0, 0, -150))
         logo = ImageButton(source="images/rigs_logo_scaled.png")
         logo_container.add_widget(logo)
 
@@ -886,7 +931,7 @@ class Utilities:
         blank_space = MDLabel(
             text="", size_hint_y=1, height=450, valign="top", halign="center"
         )
-        clock_container = BoxLayout(size_hint_y=0.2)
+        clock_container = BoxLayout(size_hint_y=0.2, padding=(-40, 0, 0, -100))
         self.app.clock_label = MDLabel(
             text="",
             size_hint_y=None,
