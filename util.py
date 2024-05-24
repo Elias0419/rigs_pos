@@ -806,7 +806,7 @@ class Utilities:
 
         self.base_layout = FloatLayout()
         try:
-            bg_image = Image(source="images/grey_mountains.jpg", fit_mode="fill")
+            bg_image = Image(source="images/test.webp", fit_mode="fill")
             self.base_layout.add_widget(bg_image)
 
         except Exception as e:
