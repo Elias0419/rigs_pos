@@ -157,6 +157,7 @@ class ButtonHandler:
         self.app.popup_manager.system_popup.dismiss()
 
     def on_button_press(self, instance):
+
         button_actions = {
             "Clear Order": self.clear_order,
             "Pay": self.pay_order,
@@ -170,7 +171,7 @@ class ButtonHandler:
         #     action()
 
         for action_text, action in button_actions.items():
-            if action_text in instance.text:
+            if action_text.lower() in instance.text.lower():
                 action()
                 break
 
