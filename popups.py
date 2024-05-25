@@ -1140,7 +1140,7 @@ class PopupManager:
 
     def show_item_details_popup(self, item_id):
 
-        print("show_item_details_popup", item_id)
+        # print("show_item_details_popup", item_id)
         item_info = self.app.order_manager.items.get(item_id)
         if item_info:
             item_name = item_info["name"]
@@ -1296,8 +1296,9 @@ class PopupManager:
 
     def add_discount_popup(self, item_id, instance=None):
         print("add_discount_popup", item_id)
+        self.current_item_discount_type = 'percent'
         discount_item_popup_layout = GridLayout(
-            orientation="tb-lr", spacing=5, cols=1, rows=2
+            orientation="tb-lr", spacing=5, cols=1, rows=3
         )
         self.discount_item_popup = Popup(
             title="Add Discount",
@@ -1305,28 +1306,33 @@ class PopupManager:
             size_hint=(0.2, 0.6),
         )
 
-        discounts = [
-            {"type": "percent", "values": [10, 20, 30, 40, 50]},
-            {"type": "amount", "values": [10, 20, 30, 40, 50]},
-        ]
+        toggle_container = MDGridLayout(orientation="lr-tb", cols=2, size_hint_y=0.2)
+        self.percent_toggle = MDFlatButton(
+            text="[size=48][b]%[/b][/size]",
+            size_hint=(1, 1),
+            line_color="white",
+            on_press=lambda x: self.handle_discount_toggle(percent=True)
+        )
+        self.amount_toggle = MDFlatButton(
+            text="[size=18]$[/size]",
+            size_hint=(1, 1),
+            on_press=lambda x: self.handle_discount_toggle(percent=False)
+        )
+        toggle_container.add_widget(self.percent_toggle)
+        toggle_container.add_widget(self.amount_toggle)
 
-        discount_item_layout = GridLayout(orientation="tb-lr", cols=2, spacing=10)
+        discounts = [5, 10, 15, 20, 30, 40, 50]
+        discount_item_layout = GridLayout(orientation="lr-tb", cols=2, spacing=10)
+        for discount in discounts:
+            discount_button = MDFlatButton(
+                md_bg_color="gray",
+                text=str(discount),
+                size_hint=(1, 1),
+                on_press=lambda x, d=discount: self.apply_item_discount(d, self.current_item_discount_type, item_id)
+            )
+            discount_item_layout.add_widget(discount_button)
 
-        for discount_type in discounts:
-            for value in discount_type["values"]:
-                label = (
-                    f"[size=20][b]{value}%[/size][/b]"
-                    if discount_type["type"] == "percent"
-                    else f"[size=20][b]${value}[/size][/b]"
-                )
-                discount_button = self.app.utilities.create_md_raised_button(
-                    label,
-                    lambda x, v=value, t=discount_type[
-                        "type"
-                    ]: self.apply_item_discount(v, t, item_id=item_id),
-                    (0.8, 0.8),
-                )
-                discount_item_layout.add_widget(discount_button)
+        # Buttons for custom and cancel
         button_layout = GridLayout(
             orientation="lr-tb", spacing=5, cols=2, rows=1, size_hint_y=0.2
         )
@@ -1341,23 +1347,32 @@ class PopupManager:
 
         button_layout.add_widget(custom_button)
         button_layout.add_widget(cancel_button)
+        discount_item_popup_layout.add_widget(toggle_container)
         discount_item_popup_layout.add_widget(discount_item_layout)
         discount_item_popup_layout.add_widget(button_layout)
 
         self.discount_item_popup.open()
 
-    def apply_item_discount(self, value, discount_type, item_id=""):
-        print("apply_item_discount", item_id)
-        if discount_type == "percent":
-
-            self.app.order_manager.discount_single_item(
-                discount_amount=value, percent=True, item_id=item_id
-            )
+    def handle_discount_toggle(self, percent):
+        if percent:
+            self.percent_toggle.line_color="white"
+            self.percent_toggle.text = "[size=48][b]%[/b][/size]"
+            self.amount_toggle.text  = "[size=18]$[/size]"
+            self.amount_toggle.line_color=(0, 0, 0, 0)
+            self.current_item_discount_type = 'percent'
         else:
+            self.amount_toggle.line_color="white"
+            self.amount_toggle.text  = "[size=48][b]$[/b][/size]"
+            self.percent_toggle.text = "[size=18]%[/size]"
+            self.percent_toggle.line_color=(0, 0, 0, 0)
+            self.current_item_discount_type = 'amount'
 
-            self.app.order_manager.discount_single_item(
-                discount_amount=value, percent=False, item_id=item_id
-            )
+    def apply_item_discount(self, value, discount_type, item_id):
+        percent = discount_type == 'percent'
+        self.app.order_manager.discount_single_item(
+            discount_amount=value, percent=percent, item_id=item_id
+        )
+
 
     def custom_add_item_discount_popup(self, item_id, instance=None):
 
@@ -1522,6 +1537,7 @@ class PopupManager:
         self.custom_discount_order_popup.open()
 
     def add_order_discount_popup(self):
+        self.current_discount_type = 'percent'
         print("pop")
         discount_order_popup_layout = GridLayout(
             orientation="tb-lr", spacing=5, cols=1, rows=3
@@ -1531,38 +1547,36 @@ class PopupManager:
             content=discount_order_popup_layout,
             size_hint=(0.2, 0.6),
         )
-        # if self.app.admin: #TODO
-        #     discounts = [5, 10, 15, 20, 30, 40, 50]
-        # else:
-        #     discounts = [5, 10, 15]
-        self.order_discount_toggle = True
+
+
         toggle_container = MDGridLayout(orientation="lr-tb", cols=2, size_hint_y=0.2)
-        self.percent_toggle = MDFlatButton(text="[size=48][b]%[/b][/size]", size_hint=(1,1),line_color="white", on_press=lambda x : self.handle_order_discount_toggle(percent=True))
-        self.amount_toggle = MDFlatButton(text="[size=18]$[/size]", size_hint=(1,1), on_press=lambda x : self.handle_order_discount_toggle(percent=False))
+        self.percent_toggle = MDFlatButton(
+            text="[size=48][b]%[/b][/size]",
+            size_hint=(1, 1),
+            line_color="white",
+            on_press=lambda x: self.handle_order_discount_toggle(percent=True)
+        )
+        self.amount_toggle = MDFlatButton(
+            text="[size=18]$[/size]",
+            size_hint=(1, 1),
+            on_press=lambda x: self.handle_order_discount_toggle(percent=False)
+        )
         toggle_container.add_widget(self.percent_toggle)
         toggle_container.add_widget(self.amount_toggle)
 
+
         discounts = [5, 10, 15, 20, 30, 40, 50]
         discount_layout = GridLayout(orientation="lr-tb", cols=2, spacing=10)
-
         for discount in discounts:
-            discount_button = MDFlatButton(md_bg_color="gray", text=str(discount), size_hint=(1,1))
+            discount_button = MDFlatButton(
+                md_bg_color="gray",
+                text=str(discount),
+                size_hint=(1, 1),
+                on_press=lambda x, d=discount: self.apply_discount(d)
+            )
             discount_layout.add_widget(discount_button)
-        # for discount_type in discounts:
-        #     for value in discount_type["values"]:
-        #         label = (
-        #             f"[size=20][b]{value}%[/size][/b]"
-        #             if discount_type["type"] == "percent"
-        #             else f"[size=20][b]${value}[/size][/b]"
-        #         )
-        #         discount_button = self.app.utilities.create_md_raised_button(
-        #             label,
-        #             lambda x, v=value, t=discount_type["type"]: self.apply_discount(
-        #                 v, t
-        #             ),
-        #             (0.8, 0.8),
-        #         )
-        #         discount_layout.add_widget(discount_button)
+
+
         button_layout = GridLayout(
             orientation="lr-tb", spacing=5, cols=2, rows=1, size_hint_y=0.2
         )
@@ -1588,26 +1602,23 @@ class PopupManager:
             self.percent_toggle.line_color="white"
             self.percent_toggle.text = "[size=48][b]%[/b][/size]"
             self.amount_toggle.text  = "[size=18]$[/size]"
-            self.amount_toggle.line_color=(0,0,0,0)
+            self.amount_toggle.line_color=(0, 0, 0, 0)
+            self.current_discount_type = 'percent'
         else:
             self.amount_toggle.line_color="white"
             self.amount_toggle.text  = "[size=48][b]$[/b][/size]"
             self.percent_toggle.text = "[size=18]%[/size]"
-            self.percent_toggle.line_color=(0,0,0,0)
+            self.percent_toggle.line_color=(0, 0, 0, 0)
+            self.current_discount_type = 'amount'
 
+    def apply_discount(self, value):
 
-    def apply_discount(self, value, discount_type):
-        print(value, type)
-        if discount_type == "percent":
+        percent = self.current_discount_type == 'percent'
+        self.app.order_manager.discount_entire_order(
+            discount_amount=value,
+            percent=percent
+        )
 
-            self.app.order_manager.discount_entire_order(
-                discount_amount=value, percent=True
-            )
-        else:
-
-            self.app.order_manager.discount_entire_order(
-                discount_amount=value, percent=False
-            )
 
     def show_theme_change_popup(self):
         layout = GridLayout(cols=4, rows=8, orientation="lr-tb")
@@ -2204,7 +2215,7 @@ class PopupManager:
 
         for index, tool in enumerate(tool_buttons):
             # center_y = start_y - (index * (btn_height_hint + spacing_hint)) / (1 if total_height_needed < 1 else total_height_needed)
-            btn = MDRaisedButton(
+            btn = MDFlatButton(
                 text=f"[b][size=20]{tool}[/b][/size]",
                 # size_hint=(1, 1),
                 # opacity=0.8,
@@ -2212,6 +2223,7 @@ class PopupManager:
                 size_hint_y=None,
                 _min_height=75,
                 _min_width=200,
+                md_bg_color=(0.5, 0.5, 0.5, 0.25),
                 # height=200,
                 # pos_hint={"center_x": 0.5, "center_y": center_y},
                 on_press=self.app.button_handler.on_tool_button_press,
@@ -2265,7 +2277,7 @@ class PopupManager:
 
         for index, entry in enumerate(admin_buttons):
             # center_y = start_y - (index * (btn_height_hint + spacing_hint)) / (1 if total_height_needed < 1 else total_height_needed)
-            btn = MDRaisedButton(
+            btn = MDFlatButton(
                 text=f"[b][size=20]{entry}[/b][/size]",
                 # size_hint=(1, 1),
                 # opacity=0.8,
@@ -2276,6 +2288,7 @@ class PopupManager:
                 # height=200,
                 # pos_hint={"center_x": 0.5, "center_y": center_y},
                 on_press=self.app.button_handler.on_admin_button_press,
+                md_bg_color=(0.5, 0.5, 0.5, 0.25),
             )
             float_layout.add_widget(btn)
 
@@ -3515,56 +3528,68 @@ class FinancialSummaryWidget(MDFlatButton):
         self.order_mod_popup.dismiss()
 
     def open_order_modification_popup(self):
-        order_mod_layout = MDBoxLayout(orientation="vertical", spacing=5, padding=5)
+        order_mod_layout = MDBoxLayout(orientation="vertical", spacing=10, padding=10)
         if float(self.app.order_manager.order_discount) > 0:
             discount_order_button = MDFlatButton(
                 text="[b][size=20]Remove Order Discount[/b][/size]",
                 # pos_hint={"center_x": 0.5, "center_y": 1},
-                size_hint=(1, 0.15),
-                md_bg_color=(0.5, 0.5, 0.5, 0.05),
+                size_hint=(None, None),
+                height = 100,
+                width = 100,
+
+                md_bg_color=(0.5, 0.5, 0.5, 0.25),
                 on_press=lambda x: self.remove_order_discount(),
             )
         else:
             discount_order_button = MDFlatButton(
                 text="[b][size=20]Add Order Discount[/b][/size]",
                 # pos_hint={"center_x": 0.5, "center_y": 1},
-                size_hint=(1, 0.15),
-                md_bg_color=(0.5, 0.5, 0.5, 0.05),
+                size_hint=(None, None),
+                height = 100,
+                width = 100,
+
+                md_bg_color=(0.5, 0.5, 0.5, 0.25),
                 on_press=lambda x: self.app.popup_manager.add_order_discount_popup(),
             )
         clear_order_button = MDFlatButton(
             text="[b][size=20]Clear Order[/b][/size]",
             # pos_hint={"center_x": 0.5, "center_y": 1 - 0.2},
-            size_hint=(1, 0.15),
-            md_bg_color=(0.5, 0.5, 0.5, 0.05),
+            size_hint=(None, None),
+            height = 100,
+            width = 100,
+
+            md_bg_color=(0.5, 0.5, 0.5, 0.25),
             on_press=lambda x: self.clear_order(),
         )
         adjust_price_button = MDFlatButton(
             text="[b][size=20]Adjust Payment[/b][/size]",
             # pos_hint={"center_x": 0.5, "center_y": 1 - 0.4},
-            size_hint=(1, 0.15),
-            md_bg_color=(0.5, 0.5, 0.5, 0.05),
+            size_hint=(None, None),
+            height = 100,
+            width = 100,
+
+            md_bg_color=(0.5, 0.5, 0.5, 0.25),
             on_press=lambda x: self.adjust_price(),
         )
-        save_order_button = MDFlatButton(
-            text="[b][size=20]Save Order[/b][/size]",
-            # pos_hint={"center_x": 0.5, "center_y": 1 - 0.6},
-            size_hint=(1, 0.15),
-            md_bg_color=(0.5, 0.5, 0.5, 0.05),
-            on_press=lambda x: self.save_order(),
-        )
-        load_order_button = MDFlatButton(
-            text="[b][size=20]Load Order[/b][/size]",
-            # pos_hint={"center_x": 0.5, "center_y": 1 - 0.8},
-            size_hint=(1, 0.15),
-            md_bg_color=(0.5, 0.5, 0.5, 0.05),
-            on_press=lambda x: self.open_list_saved_orders_popup(),
-        )
+        # save_order_button = MDFlatButton(
+        #     text="[b][size=20]Save Order[/b][/size]",
+        #     # pos_hint={"center_x": 0.5, "center_y": 1 - 0.6},
+        #     size_hint=(1, 0.15),
+        #     md_bg_color=(0.5, 0.5, 0.5, 0.5),
+        #     on_press=lambda x: self.save_order(),
+        # )
+        # load_order_button = MDFlatButton(
+        #     text="[b][size=20]Load Order[/b][/size]",
+        #     # pos_hint={"center_x": 0.5, "center_y": 1 - 0.8},
+        #     size_hint=(1, 0.15),
+        #     md_bg_color=(0.5, 0.5, 0.5, 0.5),
+        #     on_press=lambda x: self.open_list_saved_orders_popup(),
+        # )
         # order_mod_layout.add_widget(save_order_button)
         # order_mod_layout.add_widget(load_order_button)
-        order_mod_layout.add_widget(discount_order_button)
-        order_mod_layout.add_widget(adjust_price_button)
         order_mod_layout.add_widget(clear_order_button)
+        order_mod_layout.add_widget(adjust_price_button)
+        order_mod_layout.add_widget(discount_order_button)
         self.order_mod_popup = Popup(
             title="",
             content=order_mod_layout,
@@ -3572,7 +3597,7 @@ class FinancialSummaryWidget(MDFlatButton):
             background="images/transparent.png",
             background_color=(0, 0, 0, 0),
             separator_height=0,
-            pos_hint={"center_x": 0.72, "center_y": 0.4},
+            pos_hint={"center_x": 0.85, "center_y": 0.4},
             # padding=(0,250,600,0),
             overlay_color=[0, 0, 0, 0],
         )
