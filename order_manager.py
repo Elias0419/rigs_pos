@@ -3,6 +3,7 @@ import json
 import os
 from open_cash_drawer import open_cash_drawer
 
+
 class OrderManager:
     _instance = None
 
@@ -378,11 +379,15 @@ class OrderManager:
                 item_quantity = int(item["quantity"])
 
                 if percent:
-
-                    discount_value = item_price * discount_amount / 100
+                    if discount_amount >= 100:
+                        discount_value = item_price
+                    else:
+                        discount_value = item_price * discount_amount / 100
                 else:
-
-                    discount_value = discount_amount
+                    if discount_amount >= item_price * item_quantity:
+                        discount_value = item_price * item_quantity
+                    else:
+                        discount_value = discount_amount
 
                 discount_value = float(discount_value)
 
