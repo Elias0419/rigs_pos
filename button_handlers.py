@@ -176,9 +176,16 @@ class ButtonHandler:
                 break
 
     def pay_order(self):
+        order_count = self.app.order_manager.get_order_details()
         total = self.app.order_manager.calculate_total_with_tax()
-        if total > 0:
-            self.app.order_manager.finalize_order()
+        if len(order_count['items']) > 0:
+            if total == 0:
+                self.handle_zeroed_orders()
+            elif total > 0:
+                self.app.order_manager.finalize_order()
+
+    def handle_zeroed_orders(self):
+        print("zeroed")
 
     def show_custom_item_popup(self):
         self.app.popup_manager.show_custom_item_popup()
