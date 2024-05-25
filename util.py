@@ -759,7 +759,7 @@ class Utilities:
             font_style="H6",
             size_hint_x=None,
            _min_width=225,
-           _min_height=100,
+           # _min_height=100,
            line_color="white",
 
         )
@@ -771,7 +771,7 @@ class Utilities:
             font_style="H6",
             size_hint_x=None,
            _min_width=225,
-           _min_height=100,
+           # _min_height=100,
            line_color="white",
 
         )
@@ -783,7 +783,7 @@ class Utilities:
             font_style="H6",
             size_hint_x=None,
            _min_width=225,
-           _min_height=100,
+           # _min_height=100,
            line_color="white",
         )
 
@@ -794,7 +794,7 @@ class Utilities:
             font_style="H6",
             size_hint_x=None,
            _min_width=225,
-           _min_height=100,
+           # _min_height=100,
            line_color="white",
         )
         _blank3 = MDBoxLayout(size_hint_x=None, width=500)
