@@ -44,7 +44,7 @@ class OrderManager:
 
     def update_tax_amount(self):
         self.tax_amount = max(self.total * self.tax_rate, 0)
-        print(self.tax_amount)
+        # print(self.tax_amount)
         return self.tax_amount
 
     def recalculate_order_totals(self, remove=False):
@@ -466,10 +466,10 @@ class OrderManager:
         self.app.utilities.update_financial_summary()
         self.app.popup_manager.item_popup.dismiss()
 
-    def adjust_item_quantity_in(self, item_id, adjustment):
+    def adjust_item_quantity_in(self, item_id, item_button, adjustment):
         self.adjust_item_quantity(item_id, adjustment)
-        self.app.popup_manager.item_popup.dismiss()
-        self.app.popup_manager.show_item_details_popup(item_id)
+        # self.app.popup_manager.item_popup.dismiss()
+        # self.app.popup_manager.show_item_details_popup(item_id, item_button)
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
 
