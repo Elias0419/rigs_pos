@@ -15,6 +15,7 @@ from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.image import Image
 from kivy.uix.textinput import TextInput
+from kivymd.uix.gridlayout import MDGridLayout
 
 from kivymd.app import MDApp
 from kivymd.toast import toast
@@ -689,7 +690,8 @@ class Utilities:
         right_area_layout.add_widget(self.app.order_layout)
 
         financial_button = self.create_financial_layout()
-        financial_layout = BoxLayout(size_hint_y=0.2)
+        financial_layout = MDGridLayout(size_hint_y=0.2, orientation='lr-tb', cols=2)
+        financial_layout.add_widget(MDLabel(size_hint_x=0.4))
         financial_layout.add_widget(financial_button)
         right_area_layout.add_widget(financial_layout)
         self.top_area_layout.add_widget(right_area_layout)
