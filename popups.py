@@ -1577,7 +1577,7 @@ class PopupManager:
                 md_bg_color=(0.5, 0.5, 0.5, 0.25),
                 text=f'[b][size=28]{str(discount)}[/b][/size]',
                 size_hint=(1, 1),
-                on_press=lambda x, d=discount: self.apply_discount(d, self.current_discount_type)
+                on_press=lambda x, d=discount: self.apply_discount(d)
             )
             discount_layout.add_widget(discount_button)
 
@@ -2197,11 +2197,7 @@ class PopupManager:
             orientation="tb-lr", size_hint=(1, 1), rows=10, spacing=10
         )
         tool_buttons = [
-            # "Clear Order",
-            # "Calculator",
-            # "Reporting",
-            # "Distrib TEST",
-            "System",
+
             "Label Printer",
             "Inventory",
             "Dual Pane",
@@ -2210,27 +2206,18 @@ class PopupManager:
 
         if self.app.admin:
             tool_buttons.insert(0, "Admin")
-
-        # btn_height_hint = 0.2
-        # spacing_hint = 0.01
-        # total_spacing_hint = (len(tool_buttons) - 1) * spacing_hint
-        # total_btns_height = len(tool_buttons) * btn_height_hint
-        # start_y = 1 - (btn_height_hint / 2)
-        # total_height_needed = total_btns_height + total_spacing_hint
+            tool_buttons.insert(1, "System")
 
         for index, tool in enumerate(tool_buttons):
-            # center_y = start_y - (index * (btn_height_hint + spacing_hint)) / (1 if total_height_needed < 1 else total_height_needed)
+
             btn = MDFlatButton(
                 text=f"[b][size=20]{tool}[/b][/size]",
-                # size_hint=(1, 1),
-                # opacity=0.8,
-                # size_hint_min_x=1,
+
                 size_hint_y=None,
                 _min_height=75,
                 _min_width=200,
                 md_bg_color=(0.5, 0.5, 0.5, 0.25),
-                # height=200,
-                # pos_hint={"center_x": 0.5, "center_y": center_y},
+
                 on_press=self.app.button_handler.on_tool_button_press,
             )
             float_layout.add_widget(btn)
@@ -2242,7 +2229,7 @@ class PopupManager:
                 background="images/transparent.png",
                 background_color=(0, 0, 0, 0),
                 separator_height=0,
-                pos_hint={"center_x": 0.725, "center_y": 0.20},
+                pos_hint={"center_x": 0.77, "center_y": 0.20},
                 overlay_color=(0, 0, 0, 0),
                 # pos_hint={"top":1}
             )
@@ -2254,44 +2241,34 @@ class PopupManager:
                 background="images/transparent.png",
                 background_color=(0, 0, 0, 0),
                 separator_height=0,
-                pos_hint={"center_x": 0.725, "center_y": 0.12},
+                pos_hint={"center_x": 0.77, "center_y": 0.05},
                 overlay_color=(0, 0, 0, 0),
                 # pos_hint={"top":1}
             )
         self.tools_popup.open()
 
     def show_admin_popup(self):
-        # float_layout = FloatLayout()
+
         float_layout = GridLayout(
             orientation="tb-lr", size_hint=(1, 1), rows=10, spacing=10
         )
         admin_buttons = [
-            # "Clear Order",
-            # "Calculator",
+
             "Reporting",
             "Time Sheets",
             "Users",
         ]
 
-        # btn_height_hint = 0.2
-        # spacing_hint = 0.01
-        # total_spacing_hint = (len(tool_buttons) - 1) * spacing_hint
-        # total_btns_height = len(tool_buttons) * btn_height_hint
-        # start_y = 1 - (btn_height_hint / 2)
-        # total_height_needed = total_btns_height + total_spacing_hint
 
         for index, entry in enumerate(admin_buttons):
-            # center_y = start_y - (index * (btn_height_hint + spacing_hint)) / (1 if total_height_needed < 1 else total_height_needed)
+
             btn = MDFlatButton(
                 text=f"[b][size=20]{entry}[/b][/size]",
-                # size_hint=(1, 1),
-                # opacity=0.8,
-                # size_hint_min_x=1,
+
                 size_hint_y=None,
                 _min_height=75,
                 _min_width=200,
-                # height=200,
-                # pos_hint={"center_x": 0.5, "center_y": center_y},
+
                 on_press=self.app.button_handler.on_admin_button_press,
                 md_bg_color=(0.5, 0.5, 0.5, 0.25),
             )
@@ -3539,8 +3516,9 @@ class FinancialSummaryWidget(MDFlatButton):
                 text="[b][size=20]Remove Order Discount[/b][/size]",
                 # pos_hint={"center_x": 0.5, "center_y": 1},
                 size_hint=(None, None),
-                height = 100,
-                width = 100,
+                _min_height = 100,
+                _min_width = 100,
+
 
                 md_bg_color=(0.5, 0.5, 0.5, 0.25),
                 on_press=lambda x: self.remove_order_discount(),
@@ -3550,8 +3528,8 @@ class FinancialSummaryWidget(MDFlatButton):
                 text="[b][size=20]Add Order Discount[/b][/size]",
                 # pos_hint={"center_x": 0.5, "center_y": 1},
                 size_hint=(None, None),
-                height = 100,
-                width = 100,
+                _min_height = 100,
+                _min_width = 100,
 
                 md_bg_color=(0.5, 0.5, 0.5, 0.25),
                 on_press=lambda x: self.app.popup_manager.add_order_discount_popup(),
@@ -3560,8 +3538,7 @@ class FinancialSummaryWidget(MDFlatButton):
             text="[b][size=20]Clear Order[/b][/size]",
             # pos_hint={"center_x": 0.5, "center_y": 1 - 0.2},
             size_hint=(None, None),
-            height = 100,
-            width = 100,
+            _min_height = 100,
 
             md_bg_color=(0.5, 0.5, 0.5, 0.25),
             on_press=lambda x: self.clear_order(),
@@ -3570,28 +3547,12 @@ class FinancialSummaryWidget(MDFlatButton):
             text="[b][size=20]Adjust Payment[/b][/size]",
             # pos_hint={"center_x": 0.5, "center_y": 1 - 0.4},
             size_hint=(None, None),
-            height = 100,
-            width = 100,
+            _min_height = 100,
 
             md_bg_color=(0.5, 0.5, 0.5, 0.25),
             on_press=lambda x: self.adjust_price(),
         )
-        # save_order_button = MDFlatButton(
-        #     text="[b][size=20]Save Order[/b][/size]",
-        #     # pos_hint={"center_x": 0.5, "center_y": 1 - 0.6},
-        #     size_hint=(1, 0.15),
-        #     md_bg_color=(0.5, 0.5, 0.5, 0.5),
-        #     on_press=lambda x: self.save_order(),
-        # )
-        # load_order_button = MDFlatButton(
-        #     text="[b][size=20]Load Order[/b][/size]",
-        #     # pos_hint={"center_x": 0.5, "center_y": 1 - 0.8},
-        #     size_hint=(1, 0.15),
-        #     md_bg_color=(0.5, 0.5, 0.5, 0.5),
-        #     on_press=lambda x: self.open_list_saved_orders_popup(),
-        # )
-        # order_mod_layout.add_widget(save_order_button)
-        # order_mod_layout.add_widget(load_order_button)
+
         order_mod_layout.add_widget(clear_order_button)
         order_mod_layout.add_widget(adjust_price_button)
         order_mod_layout.add_widget(discount_order_button)
@@ -3602,7 +3563,7 @@ class FinancialSummaryWidget(MDFlatButton):
             background="images/transparent.png",
             background_color=(0, 0, 0, 0),
             separator_height=0,
-            pos_hint={"center_x": 0.85, "center_y": 0.4},
+            pos_hint={"center_x": 0.825, "center_y": 0.4},
             # padding=(0,250,600,0),
             overlay_color=[0, 0, 0, 0],
         )
