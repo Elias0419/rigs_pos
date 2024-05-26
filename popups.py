@@ -3509,10 +3509,12 @@ class FinancialSummaryWidget(MDFlatButton):
         if not hasattr(self, "_initialized"):
             self.app = ref
             super(FinancialSummaryWidget, self).__init__(**kwargs)
-
+            # self.pos_hint = {'top':0.1,'right': 0.9}
             self.size_hint_y = None
-            self.size_hint_x = 0.2
-            self.height = 250
+            self.size_hint_x = None
+            self.width = 350
+            self.height = 200
+
             # self.padding = (100, 0, 0, 0)
             self._no_ripple_effect = True
             self.text = ""
@@ -3539,7 +3541,7 @@ class FinancialSummaryWidget(MDFlatButton):
         self.subtotal_label.text = f"[size=20]Subtotal: ${subtotal:.2f}[/size]"
         self.discount_label.text = f"[size=20]Discount: ${discount:.2f}[/size]"
         self.tax_label.text = f"[size=20]Tax: ${tax:.2f}[/size]"
-        self.total_label.text = f"[size=32]Total: [b]${total_with_tax:.2f}[/b][/size]"
+        self.total_label.text = f"[size=42]Total: [b]${total_with_tax:.2f}[/b][/size]"
         # self.update_mirror_image()
 
     def on_press(self):
@@ -3558,7 +3560,7 @@ class FinancialSummaryWidget(MDFlatButton):
         except:
             pass
 
-    def crop_bottom_right_corner(self, source_path, target_path, crop_size=(250, 50)):
+    def crop_bottom_right_corner(self, source_path, target_path, crop_size=(350, 50)):
         with PILImage.open(source_path) as img:
             original_width, original_height = img.size
             crop_width, crop_height = crop_size
@@ -3627,7 +3629,7 @@ class FinancialSummaryWidget(MDFlatButton):
             background="images/transparent.png",
             background_color=(0, 0, 0, 0),
             separator_height=0,
-            pos_hint={"center_x": 0.825, "center_y": 0.4},
+            pos_hint={"center_x": 0.825, "center_y": 0.43},
             # padding=(0,250,600,0),
             overlay_color=[0, 0, 0, 0],
         )
