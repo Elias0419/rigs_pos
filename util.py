@@ -255,9 +255,7 @@ class Utilities:
                 session_id=session_id,
             )
             log_in_time = self.read_formatted_clock_in_time(self.clock_in_file)
-            self.time_clock.text = (
-                f"Logged in as {self.app.logged_in_user['name']}\n[u]Tap here to log out[/u]"
-            )
+            self.time_clock.text = f"Logged in as {self.app.logged_in_user['name']}\n[u]Tap here to log out[/u]"
             self.clock_out_event = Clock.schedule_once(
                 self.auto_clock_out, self.time_until_end_of_shift()
             )
@@ -553,8 +551,8 @@ class Utilities:
             item_button = MDFlatButton(size_hint=(1, 1))
             item_button.add_widget(item_layout)
             item_button.bind(
-                on_press=lambda x, item_id=item_id: self.app.popup_manager.show_item_details_popup(
-                    item_id
+                on_press=lambda x, item_button=item_button, item_id=item_id: self.app.popup_manager.show_item_details_popup(
+                    item_id, item_button
                 )
             )
 
@@ -667,7 +665,11 @@ class Utilities:
         save_icon_container.add_widget(self.app.save_icon)
         top_center_container = MDBoxLayout(orientation="vertical", size_hint_y=0.2)
         # center_container.add_widget(trash_icon_container)
-        self.time_clock = MDFlatButton(text="", size_hint_y=0.2, on_press=lambda x: self.app.popup_manager.open_clock_out_popup())
+        self.time_clock = MDFlatButton(
+            text="",
+            size_hint_y=0.2,
+            on_press=lambda x: self.app.popup_manager.open_clock_out_popup(),
+        )
         time_clock_container = GridLayout(orientation="lr-tb", cols=2)
         _blank2 = MDBoxLayout(size_hint_y=0.8)
         clock_icon = MDIconButton(
@@ -676,7 +678,7 @@ class Utilities:
             on_press=lambda x: self.app.popup_manager.open_clock_out_popup(),
         )
         time_clock_container.add_widget(self.time_clock)
-        #time_clock_container.add_widget(clock_icon)
+        # time_clock_container.add_widget(clock_icon)
         top_center_container.add_widget(time_clock_container)
         top_center_container.add_widget(_blank2)
         # self.center_container.add_widget(self.mirror_image)
@@ -715,17 +717,15 @@ class Utilities:
             orientation="lr-tb",
         )
 
-
         btn_pay = MDFlatButton(
             text="[b][size=40]PAY[/b][/size]",
             on_press=self.app.button_handler.on_button_press,
             padding=(8, 8),
             font_style="H6",
             size_hint_x=None,
-           _min_width=225,
-           # _min_height=100,
-           line_color="white",
-
+            _min_width=225,
+            # _min_height=100,
+            line_color="white",
         )
 
         btn_custom_item = MDFlatButton(
@@ -734,10 +734,9 @@ class Utilities:
             padding=(8, 8),
             font_style="H6",
             size_hint_x=None,
-           _min_width=225,
-           # _min_height=100,
-           line_color="white",
-
+            _min_width=225,
+            # _min_height=100,
+            line_color="white",
         )
 
         btn_inventory = MDFlatButton(
@@ -746,9 +745,9 @@ class Utilities:
             padding=(8, 8),
             font_style="H6",
             size_hint_x=None,
-           _min_width=225,
-           # _min_height=100,
-           line_color="white",
+            _min_width=225,
+            # _min_height=100,
+            line_color="white",
         )
 
         btn_tools = MDFlatButton(
@@ -757,9 +756,9 @@ class Utilities:
             padding=(8, 8),
             font_style="H6",
             size_hint_x=None,
-           _min_width=225,
-           # _min_height=100,
-           line_color="white",
+            _min_width=225,
+            # _min_height=100,
+            line_color="white",
         )
         _blank3 = MDBoxLayout(size_hint_x=None, width=500)
         button_layout.add_widget(_blank3)
@@ -1012,7 +1011,6 @@ class Utilities:
         self.app.trash_icon.icon = "trash-can-outline"
         self.click = 0
 
-
     def dismiss_guard_popup(self):
 
         self.app.popup_manager.guard_popup.dismiss()
@@ -1124,8 +1122,6 @@ class Utilities:
         except FileNotFoundError as e:
             print(e)
 
-
-
     def turn_on_monitor(self):
         try:
             subprocess.run(
@@ -1134,14 +1130,11 @@ class Utilities:
         except Exception as e:
             print(e)
 
-
-
-
     def check_inactivity(self, *args):
-        #print("check\n")
+        # print("check\n")
         try:
             idle_time = int(subprocess.check_output(["xprintidle"]).strip())
-            #print(idle_time)
+            # print(idle_time)
             hours, remainder = divmod(idle_time, 3600000)
             minutes, seconds = divmod(remainder, 60000)
             seconds //= 1000
@@ -1415,7 +1408,6 @@ class Utilities:
     # def launch_tetris(self):
     #     subprocess.Popen(['/home/rigs/0/bin/python', 'games/tetris.py'])
 
-
     # def reboot(self):
     #     print("reboot")
     #     sys.exit(43)
@@ -1451,7 +1443,7 @@ class Utilities:
     #     print("start eel")
     #     eel.start("index.html")
     #
-     # def handle_emergency_reboot(self):
+    # def handle_emergency_reboot(self):
     #     print("handle_emergency_reboot")
     #     with open("settings.json", "r+") as f:
     #         settings = json.load(f)
@@ -1489,42 +1481,43 @@ class Utilities:
     #
     # old version of main buttons
     #         # btn_pay = self.create_md_raised_button(
-        #     f"[b][size=40]Pay[/b][/size]",
-        #     self.app.button_handler.on_button_press,
-        #     (8, 8),
-        #     "H6",
-        # )
-        #
-        # btn_custom_item = self.create_md_raised_button(
-        #     f"[b][size=40]Custom[/b][/size]",
-        #     self.app.button_handler.on_button_press,
-        #     (8, 8),
-        #     "H6",
-        # )
-        # btn_inventory = self.create_md_raised_button(
-        #     f"[b][size=40]Search[/b][/size]",
-        #     # lambda x: self.app.popup_manager.maximize_dual_popup(),
-        #     self.app.button_handler.on_button_press,
-        #     # lambda x: self.app.popup_manager.show_lock_screen(),
-        #     (8, 8),
-        #     "H6",
-        # )
-        # btn_tools = self.create_md_raised_button(
-        #     f"[b][size=40]Tools[/b][/size]",
-        #     self.app.button_handler.on_button_press,
-        #     # lambda x: self.app.popup_manager.show_notes_widget(),
-        #     # lambda x: self.app.popup_manager.show_cost_overlay(),
-        #     # lambda x: self.modify_clock_layout_for_dual_pane_mode(),
-        #     # lambda x: self.app.popup_manager.show_dual_inventory_and_label_managers(),
-        #     # lambda x: self.enable_dual_pane_mode(),
-        #     # lambda x: self.store_user_details("noob","1111",False),
-        #     # lambda x: self.app.popup_manager.show_lock_screen(),
-        #     # lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
-        #     # lambda x: sys.exit(42),
-        #     # lambda x: self.app.financial_summary.update_mirror_image(),
-        #     (8, 8),
-        #     "H6",
-        # )
+    #     f"[b][size=40]Pay[/b][/size]",
+    #     self.app.button_handler.on_button_press,
+    #     (8, 8),
+    #     "H6",
+    # )
+    #
+    # btn_custom_item = self.create_md_raised_button(
+    #     f"[b][size=40]Custom[/b][/size]",
+    #     self.app.button_handler.on_button_press,
+    #     (8, 8),
+    #     "H6",
+    # )
+    # btn_inventory = self.create_md_raised_button(
+    #     f"[b][size=40]Search[/b][/size]",
+    #     # lambda x: self.app.popup_manager.maximize_dual_popup(),
+    #     self.app.button_handler.on_button_press,
+    #     # lambda x: self.app.popup_manager.show_lock_screen(),
+    #     (8, 8),
+    #     "H6",
+    # )
+    # btn_tools = self.create_md_raised_button(
+    #     f"[b][size=40]Tools[/b][/size]",
+    #     self.app.button_handler.on_button_press,
+    #     # lambda x: self.app.popup_manager.show_notes_widget(),
+    #     # lambda x: self.app.popup_manager.show_cost_overlay(),
+    #     # lambda x: self.modify_clock_layout_for_dual_pane_mode(),
+    #     # lambda x: self.app.popup_manager.show_dual_inventory_and_label_managers(),
+    #     # lambda x: self.enable_dual_pane_mode(),
+    #     # lambda x: self.store_user_details("noob","1111",False),
+    #     # lambda x: self.app.popup_manager.show_lock_screen(),
+    #     # lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
+    #     # lambda x: sys.exit(42),
+    #     # lambda x: self.app.financial_summary.update_mirror_image(),
+    #     (8, 8),
+    #     "H6",
+    # )
+
 
 class ReusableTimer:
     def __init__(self, interval, function, *args, **kwargs):

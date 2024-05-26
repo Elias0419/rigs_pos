@@ -171,68 +171,110 @@ class PopupManager:
         header.add_widget(MDLabel(text="Cost", size_hint_x=0.075, halign="center"))
         header.add_widget(MDLabel(text="Profit", size_hint_x=0.075, halign="center"))
         header.add_widget(MDLabel(text="Quantity", size_hint_x=0.075, halign="center"))
-        header.add_widget(MDLabel(text="Total Price", size_hint_x=0.075, halign="center"))
-        header.add_widget(MDLabel(text="Total Cost", size_hint_x=0.075, halign="center"))
-        header.add_widget(MDLabel(text="Total Profit", size_hint_x=0.075, halign="center"))
+        header.add_widget(
+            MDLabel(text="Total Price", size_hint_x=0.075, halign="center")
+        )
+        header.add_widget(
+            MDLabel(text="Total Cost", size_hint_x=0.075, halign="center")
+        )
+        header.add_widget(
+            MDLabel(text="Total Profit", size_hint_x=0.075, halign="center")
+        )
         header.add_widget(MDLabel(text="", size_hint_x=None, width=100))
         header.add_widget(MDLabel(text="Discount", size_hint_x=0.075, halign="center"))
         header.add_widget(MDLabel(text="", size_hint_x=None, width=20))
         inner_layout.add_widget(header)
 
-        footer = MDGridLayout(size_hint_y=0.1, cols=3, orientation='lr-tb', padding=5, spacing=5)
-        total_price_label = MDLabel(text=f"Total Price: {total_price}", size_hint_x=0.33, halign="center")
-        total_cost_label = MDLabel(text=f"Total Cost: {total_cost}", size_hint_x=0.33, halign="center")
-        total_profit_label = MDLabel(text=f"Total Profit: {total_profit}", size_hint_x=0.33, halign="center")
+        footer = MDGridLayout(
+            size_hint_y=0.1, cols=3, orientation="lr-tb", padding=5, spacing=5
+        )
+        total_price_label = MDLabel(
+            text=f"Total Price: {total_price}", size_hint_x=0.33, halign="center"
+        )
+        total_cost_label = MDLabel(
+            text=f"Total Cost: {total_cost}", size_hint_x=0.33, halign="center"
+        )
+        total_profit_label = MDLabel(
+            text=f"Total Profit: {total_profit}", size_hint_x=0.33, halign="center"
+        )
         footer.add_widget(total_price_label)
         footer.add_widget(total_cost_label)
         footer.add_widget(total_profit_label)
 
-        item_totals = {
-            'total_prices': [],
-            'total_costs': [],
-            'total_profits': []
-        }
+        item_totals = {"total_prices": [], "total_costs": [], "total_profits": []}
 
         def update_footer():
-            total_price = sum(item_totals['total_prices'])
-            total_cost = sum(item_totals['total_costs'])
-            total_profit = sum(item_totals['total_profits'])
+            total_price = sum(item_totals["total_prices"])
+            total_cost = sum(item_totals["total_costs"])
+            total_profit = sum(item_totals["total_profits"])
 
             total_price_label.text = f"Total Price: {round(total_price, 2)}"
             total_cost_label.text = f"Total Cost: {round(total_cost, 2)}"
             total_profit_label.text = f"Total Profit: {round(total_profit, 2)}"
 
-        def set_item(discount, item_index, item_data, discount_button, discount_type_button, total_price_text, total_profit_text):
+        def set_item(
+            discount,
+            item_index,
+            item_data,
+            discount_button,
+            discount_type_button,
+            total_price_text,
+            total_profit_text,
+        ):
 
             discount_value = float(discount)
             discount_type = discount_type_button.text
 
             if discount_type == "%":
-                discount_amount = (item_data["price"] * item_data["quantity"]) * (discount_value / 100)
+                discount_amount = (item_data["price"] * item_data["quantity"]) * (
+                    discount_value / 100
+                )
             else:
                 discount_amount = discount_value
 
-            new_total_price = (item_data["price"] * item_data["quantity"]) - discount_amount
+            new_total_price = (
+                item_data["price"] * item_data["quantity"]
+            ) - discount_amount
             new_profit = new_total_price - (item_data["cost"] * item_data["quantity"])
 
             total_price_text.text = str(round(new_total_price, 2))
             total_profit_text.text = str(round(new_profit, 2))
             discount_button.text = str(discount_value)
 
-            item_totals['total_prices'][item_index] = new_total_price
-            item_totals['total_costs'][item_index] = item_data["cost"] * item_data["quantity"]
-            item_totals['total_profits'][item_index] = new_profit
+            item_totals["total_prices"][item_index] = new_total_price
+            item_totals["total_costs"][item_index] = (
+                item_data["cost"] * item_data["quantity"]
+            )
+            item_totals["total_profits"][item_index] = new_profit
 
             update_footer()
 
-        def create_menu_item(discount, item_index, item_data, discount_button, discount_type_button, total_price_text, total_profit_text):
+        def create_menu_item(
+            discount,
+            item_index,
+            item_data,
+            discount_button,
+            discount_type_button,
+            total_price_text,
+            total_profit_text,
+        ):
             return {
                 "text": str(discount),
                 "viewclass": "OneLineListItem",
-                "on_release": lambda: set_item(discount, item_index, item_data, discount_button, discount_type_button, total_price_text, total_profit_text)
+                "on_release": lambda: set_item(
+                    discount,
+                    item_index,
+                    item_data,
+                    discount_button,
+                    discount_type_button,
+                    total_price_text,
+                    total_profit_text,
+                ),
             }
 
-        for item_index, (item_id, item_data) in enumerate(order_details_with_cost["items"].items()):
+        for item_index, (item_id, item_data) in enumerate(
+            order_details_with_cost["items"].items()
+        ):
             item_layout = MDGridLayout(
                 orientation="lr-tb",
                 cols=11,
@@ -252,31 +294,63 @@ class PopupManager:
             profit_x_quantity = round(item_profit * item_quantity, 2)
 
             name_text = MDLabel(text=item_name, size_hint_x=0.3)
-            price_text = MDLabel(text=str(item_price), size_hint_x=0.075, halign="center")
+            price_text = MDLabel(
+                text=str(item_price), size_hint_x=0.075, halign="center"
+            )
             cost_text = MDLabel(text=str(item_cost), size_hint_x=0.075, halign="center")
-            profit_text = MDLabel(text=str(item_profit), size_hint_x=0.075, halign="center")
-            quantity_text = MDLabel(text=str(item_quantity), size_hint_x=0.075, halign="center")
-            total_price_text = MDLabel(text=str(price_x_quantity), size_hint_x=0.075, halign="center")
-            total_cost_text = MDLabel(text=str(cost_x_quantity), size_hint_x=0.075, halign="center")
-            total_profit_text = MDLabel(text=str(profit_x_quantity), size_hint_x=0.075, halign="center")
+            profit_text = MDLabel(
+                text=str(item_profit), size_hint_x=0.075, halign="center"
+            )
+            quantity_text = MDLabel(
+                text=str(item_quantity), size_hint_x=0.075, halign="center"
+            )
+            total_price_text = MDLabel(
+                text=str(price_x_quantity), size_hint_x=0.075, halign="center"
+            )
+            total_cost_text = MDLabel(
+                text=str(cost_x_quantity), size_hint_x=0.075, halign="center"
+            )
+            total_profit_text = MDLabel(
+                text=str(profit_x_quantity), size_hint_x=0.075, halign="center"
+            )
             item_discount_text = MDLabel(text="", size_hint_x=0.075, halign="center")
 
             discount_button = MDRaisedButton(text="0", pos_hint={"top": 1})
             discount_type_button = MDRaisedButton(text="%")
 
             menu_items = [
-                create_menu_item(i, item_index, item_data, discount_button, discount_type_button, total_price_text, total_profit_text)
+                create_menu_item(
+                    i,
+                    item_index,
+                    item_data,
+                    discount_button,
+                    discount_type_button,
+                    total_price_text,
+                    total_profit_text,
+                )
                 for i in [0, 5, 10, 15, 20, 25, 50]
             ]
-            discount_dropdown = MDDropdownMenu(items=menu_items, caller=discount_button, width_mult=4)
+            discount_dropdown = MDDropdownMenu(
+                items=menu_items, caller=discount_button, width_mult=4
+            )
             discount_button.bind(on_release=lambda x, dd=discount_dropdown: dd.open())
 
             menu_items_type = [
-                {"text": i, "viewclass": "OneLineListItem", "on_release": lambda x=i, b=discount_type_button: b.setter('text')(b, x)}
+                {
+                    "text": i,
+                    "viewclass": "OneLineListItem",
+                    "on_release": lambda x=i, b=discount_type_button: b.setter("text")(
+                        b, x
+                    ),
+                }
                 for i in ["%", "$"]
             ]
-            discount_type_dropdown = MDDropdownMenu(items=menu_items_type, caller=discount_type_button, width_mult=4)
-            discount_type_button.bind(on_release=lambda x, dd=discount_type_dropdown: dd.open())
+            discount_type_dropdown = MDDropdownMenu(
+                items=menu_items_type, caller=discount_type_button, width_mult=4
+            )
+            discount_type_button.bind(
+                on_release=lambda x, dd=discount_type_dropdown: dd.open()
+            )
 
             item_layout.add_widget(name_text)
             item_layout.add_widget(price_text)
@@ -292,19 +366,23 @@ class PopupManager:
 
             inner_layout.add_widget(item_layout)
 
-            item_totals['total_prices'].append(price_x_quantity)
-            item_totals['total_costs'].append(cost_x_quantity)
-            item_totals['total_profits'].append(profit_x_quantity)
+            item_totals["total_prices"].append(price_x_quantity)
+            item_totals["total_costs"].append(cost_x_quantity)
+            item_totals["total_profits"].append(profit_x_quantity)
 
         update_footer()
 
         card.add_widget(inner_layout)
         layout.add_widget(card)
         layout.add_widget(footer)
-        popup = Popup(size_hint=(0.8, 0.8), content=layout, overlay_color=(0,0,0,0), separator_height=0, title='')
+        popup = Popup(
+            size_hint=(0.8, 0.8),
+            content=layout,
+            overlay_color=(0, 0, 0, 0),
+            separator_height=0,
+            title="",
+        )
         popup.open()
-
-
 
     def calculate_total_cost(self, order_details):
         total_cost = 0
@@ -1138,9 +1216,8 @@ class PopupManager:
         )
         self.add_or_bypass_popup.open()
 
-    def show_item_details_popup(self, item_id):
+    def show_item_details_popup(self, item_id, item_button):
 
-        # print("show_item_details_popup", item_id)
         item_info = self.app.order_manager.items.get(item_id)
         if item_info:
             item_name = item_info["name"]
@@ -1151,55 +1228,51 @@ class PopupManager:
         item_popup_layout = GridLayout(
             rows=3, cols=3, orientation="lr-tb", size_hint=(1, 1), spacing=5, padding=10
         )
-        details_layout = BoxLayout(orientation="vertical", size_hint=(1, 1))
+        # details_layout = BoxLayout(orientation="vertical", size_hint=(1, 1))
         _blank = BoxLayout(
             size_hint=(1, 1),
         )
-        _blank2 = BoxLayout(
-            size_hint=(1, 1),
-        )
-
-        details_text = MDLabel(
-            text=f"[size=20]{item_name}\n\n${original_price} x {item_quantity} = ${item_price:.2f}[/size]",
-            size_hint=(1, 1),
-            halign="center",
-        )
-        details_button = MDFlatButton(
-            text="",
-            size_hint=(1, 1),
-            md_bg_color="grey",
-            on_press=lambda x: self.inventory_item_short_details(item_id),
-        )
-        details_button.add_widget(details_text)
-        details_layout.add_widget(details_button)
+        # _blank2 = BoxLayout(
+        #     size_hint=(1, 1),
+        # )
+        #
+        # details_text = MDLabel(
+        #     text=f"[size=20]{item_name}\n\n${original_price} x {item_quantity} = ${item_price:.2f}[/size]",
+        #     size_hint=(1, 1),
+        #     halign="center",
+        # )
+        # details_button = MDFlatButton(
+        #     text="",
+        #     size_hint=(1, 1),
+        #     md_bg_color="grey",
+        #     on_press=lambda x: self.inventory_item_short_details(item_id),
+        # )
+        # details_button.add_widget(details_text)
+        # details_layout.add_widget(details_button)
 
         minus_container = AnchorLayout(anchor_x="center", anchor_y="center")
         minus_button = MDFlatButton(
             text=f"[size=100]-[/size]",
             on_press=lambda x: self.app.order_manager.adjust_item_quantity_in(
-                item_id, -1
+                item_id, item_button, -1
             ),
         )
         minus_container.add_widget(minus_button)
 
-        quantity_container = AnchorLayout(anchor_x="center", anchor_y="center")
-        quantity_label = MDLabel(
-            text=f"[size=30]{str(item_quantity)}[/size]",
-            halign="center",
-            valign="center",
-        )
-        quantity_container.add_widget(quantity_label)
+        # quantity_container = AnchorLayout(anchor_x="center", anchor_y="center")
+        # quantity_label = MDLabel(
+        #     text=f"[size=30]{str(item_quantity)}[/size]",
+        #     halign="center",
+        #     valign="center",
+        # )
+        # quantity_container.add_widget(quantity_label)
 
         plus_container = AnchorLayout(anchor_x="center", anchor_y="center")
         plus_button = MDFlatButton(
-            # icon = "plus",
             text=f"[size=75]+[/size]",
             on_press=lambda x: self.app.order_manager.adjust_item_quantity_in(
-                item_id, 1
+                item_id, item_button, 1
             ),
-            # pos_hint={}
-            # center_x=0.5,
-            # center_y=0.5,
         )
         plus_container.add_widget(plus_button)
 
@@ -1215,7 +1288,7 @@ class PopupManager:
                         item_id
                     ),
                     # self.add_discount_popup,
-                    (1, 0.4),
+                    (1, 0.8),
                 )
             )
 
@@ -1225,7 +1298,7 @@ class PopupManager:
                     f"[b][size=20]Add Discount[/size][/b]",
                     lambda x, item_id=item_id: self.open_add_discount_popup(item_id),
                     # self.add_discount_popup,
-                    (1, 0.4),
+                    (1, 0.8),
                 )
             )
 
@@ -1238,7 +1311,7 @@ class PopupManager:
             self.app.utilities.create_md_raised_button(
                 f"[b][size=20]Remove Item[/size][/b]",
                 lambda x: self.app.order_manager.remove_item_in(item_name, item_price),
-                (1, 0.4),
+                (1, 0.8),
             )
         )
 
@@ -1248,29 +1321,38 @@ class PopupManager:
         )
         cancel_button_layout.add_widget(
             Button(
-                text="Cancel",
-                size_hint=(1, 0.4),
+                text="Close",
+                size_hint=(1, 0.8),
                 on_press=lambda x: self.close_item_popup(),
             )
         )
 
-        item_popup_layout.add_widget(_blank)
-        item_popup_layout.add_widget(details_layout)
-        item_popup_layout.add_widget(_blank2)
+        # item_popup_layout.add_widget(_blank)
+        # item_popup_layout.add_widget(details_layout)
+        # item_popup_layout.add_widget(_blank2)
         item_popup_layout.add_widget(minus_container)
-        item_popup_layout.add_widget(quantity_container)
+        item_popup_layout.add_widget(_blank)
+        # item_popup_layout.add_widget(quantity_container)
         item_popup_layout.add_widget(plus_container)
         item_popup_layout.add_widget(dicount_button_layout)
         item_popup_layout.add_widget(remove_button_layout)
         item_popup_layout.add_widget(cancel_button_layout)
 
+        button_x, button_y = item_button.to_window(*item_button.pos)
+        button_height = item_button.height
+
+        popup_x = button_x / self.app.root.width
+        popup_y = (button_y + button_height) / self.app.root.height
+
         self.item_popup = Popup(
             title="",
             content=item_popup_layout,
-            size_hint=(0.4, 0.4),
-            background="images/transparent.png",
-            background_color=(0, 0, 0, 0),
+            size_hint=(0.4, 0.2),
+            # background="images/transparent.png",
+            background_color=(0, 0, 0, 0.5),
             separator_height=0,
+            overlay_color=(0, 0, 0, 0),
+            pos_hint={"x": popup_x, "top": popup_y},
         )
         self.item_popup.open()
 
@@ -1294,28 +1376,25 @@ class PopupManager:
     def open_add_discount_popup(self, item_id):
         self.add_discount_popup(item_id)
 
-
-
     def handle_discount_toggle(self, percent):
         if percent:
-            self.percent_toggle.line_color="white"
+            self.percent_toggle.line_color = "white"
             self.percent_toggle.text = "[size=48][b]%[/b][/size]"
-            self.amount_toggle.text  = "[size=18]$[/size]"
-            self.amount_toggle.line_color=(0, 0, 0, 0)
-            self.current_item_discount_type = 'percent'
+            self.amount_toggle.text = "[size=18]$[/size]"
+            self.amount_toggle.line_color = (0, 0, 0, 0)
+            self.current_item_discount_type = "percent"
         else:
-            self.amount_toggle.line_color="white"
-            self.amount_toggle.text  = "[size=48][b]$[/b][/size]"
+            self.amount_toggle.line_color = "white"
+            self.amount_toggle.text = "[size=48][b]$[/b][/size]"
             self.percent_toggle.text = "[size=18]%[/size]"
-            self.percent_toggle.line_color=(0, 0, 0, 0)
-            self.current_item_discount_type = 'amount'
+            self.percent_toggle.line_color = (0, 0, 0, 0)
+            self.current_item_discount_type = "amount"
 
     def apply_item_discount(self, value, discount_type, item_id):
-        percent = discount_type == 'percent'
+        percent = discount_type == "percent"
         self.app.order_manager.discount_single_item(
             discount_amount=value, percent=percent, item_id=item_id
         )
-
 
     def custom_add_item_discount_popup(self, item_id, instance=None):
 
@@ -1481,7 +1560,7 @@ class PopupManager:
 
     def add_discount_popup(self, item_id, instance=None):
         # print("add_discount_popup", item_id)
-        self.current_item_discount_type = 'percent'
+        self.current_item_discount_type = "percent"
         discount_item_popup_layout = GridLayout(
             orientation="tb-lr", spacing=5, cols=1, rows=3
         )
@@ -1496,12 +1575,12 @@ class PopupManager:
             text="[size=48][b]%[/b][/size]",
             size_hint=(1, 1),
             line_color="white",
-            on_press=lambda x: self.handle_discount_toggle(percent=True)
+            on_press=lambda x: self.handle_discount_toggle(percent=True),
         )
         self.amount_toggle = MDFlatButton(
             text="[size=18]$[/size]",
             size_hint=(1, 1),
-            on_press=lambda x: self.handle_discount_toggle(percent=False)
+            on_press=lambda x: self.handle_discount_toggle(percent=False),
         )
         toggle_container.add_widget(self.percent_toggle)
         if self.app.admin:
@@ -1514,9 +1593,11 @@ class PopupManager:
         for discount in discounts:
             discount_button = MDFlatButton(
                 md_bg_color=(0.5, 0.5, 0.5, 0.25),
-                text=f'[b][size=28]{str(discount)}[/b][/size]',
+                text=f"[b][size=28]{str(discount)}[/b][/size]",
                 size_hint=(1, 1),
-                on_press=lambda x, d=discount: self.apply_item_discount(d, self.current_item_discount_type, item_id)
+                on_press=lambda x, d=discount: self.apply_item_discount(
+                    d, self.current_item_discount_type, item_id
+                ),
             )
             discount_item_layout.add_widget(discount_button)
 
@@ -1541,7 +1622,7 @@ class PopupManager:
         self.discount_item_popup.open()
 
     def add_order_discount_popup(self):
-        self.current_discount_type = 'percent'
+        self.current_discount_type = "percent"
         discount_order_popup_layout = GridLayout(
             orientation="tb-lr", spacing=5, cols=1, rows=3
         )
@@ -1556,13 +1637,13 @@ class PopupManager:
             text="[size=48][b]%[/b][/size]",
             size_hint=(1, 1),
             line_color="white",
-            on_press=lambda x: self.handle_order_discount_toggle(percent=True)
+            on_press=lambda x: self.handle_order_discount_toggle(percent=True),
         )
         if self.app.admin:
             self.amount_toggle = MDFlatButton(
                 text="[size=18]$[/size]",
                 size_hint=(1, 1),
-                on_press=lambda x: self.handle_order_discount_toggle(percent=False)
+                on_press=lambda x: self.handle_order_discount_toggle(percent=False),
             )
             toggle_container.add_widget(self.amount_toggle)
         toggle_container.add_widget(self.percent_toggle)
@@ -1575,9 +1656,9 @@ class PopupManager:
         for discount in discounts:
             discount_button = MDFlatButton(
                 md_bg_color=(0.5, 0.5, 0.5, 0.25),
-                text=f'[b][size=28]{str(discount)}[/b][/size]',
+                text=f"[b][size=28]{str(discount)}[/b][/size]",
                 size_hint=(1, 1),
-                on_press=lambda x, d=discount: self.apply_discount(d)
+                on_press=lambda x, d=discount: self.apply_discount(d),
             )
             discount_layout.add_widget(discount_button)
 
@@ -1601,29 +1682,26 @@ class PopupManager:
 
         self.discount_order_popup.open()
 
-
     def handle_order_discount_toggle(self, percent):
         if percent:
-            self.percent_toggle.line_color="white"
+            self.percent_toggle.line_color = "white"
             self.percent_toggle.text = "[size=48][b]%[/b][/size]"
-            self.amount_toggle.text  = "[size=18]$[/size]"
-            self.amount_toggle.line_color=(0, 0, 0, 0)
-            self.current_discount_type = 'percent'
+            self.amount_toggle.text = "[size=18]$[/size]"
+            self.amount_toggle.line_color = (0, 0, 0, 0)
+            self.current_discount_type = "percent"
         else:
-            self.amount_toggle.line_color="white"
-            self.amount_toggle.text  = "[size=48][b]$[/b][/size]"
+            self.amount_toggle.line_color = "white"
+            self.amount_toggle.text = "[size=48][b]$[/b][/size]"
             self.percent_toggle.text = "[size=18]%[/size]"
-            self.percent_toggle.line_color=(0, 0, 0, 0)
-            self.current_discount_type = 'amount'
+            self.percent_toggle.line_color = (0, 0, 0, 0)
+            self.current_discount_type = "amount"
 
     def apply_discount(self, value):
 
-        percent = self.current_discount_type == 'percent'
+        percent = self.current_discount_type == "percent"
         self.app.order_manager.discount_entire_order(
-            discount_amount=value,
-            percent=percent
+            discount_amount=value, percent=percent
         )
-
 
     def show_theme_change_popup(self):
         layout = GridLayout(cols=4, rows=8, orientation="lr-tb")
@@ -2187,7 +2265,7 @@ class PopupManager:
             size_hint=(0.6, 1),
             pos_hint={"top": 1},
             overlay_color=(0, 0, 0, 0),
-            separator_height=0
+            separator_height=0,
         )
         self.inventory_popup.open()
 
@@ -2197,7 +2275,6 @@ class PopupManager:
             orientation="tb-lr", size_hint=(1, 1), rows=10, spacing=10
         )
         tool_buttons = [
-
             "Label Printer",
             "Inventory",
             "Dual Pane",
@@ -2212,12 +2289,10 @@ class PopupManager:
 
             btn = MDFlatButton(
                 text=f"[b][size=20]{tool}[/b][/size]",
-
                 size_hint_y=None,
                 _min_height=75,
                 _min_width=200,
                 md_bg_color=(0.5, 0.5, 0.5, 0.25),
-
                 on_press=self.app.button_handler.on_tool_button_press,
             )
             float_layout.add_widget(btn)
@@ -2253,22 +2328,18 @@ class PopupManager:
             orientation="tb-lr", size_hint=(1, 1), rows=10, spacing=10
         )
         admin_buttons = [
-
             "Reporting",
             "Time Sheets",
             "Users",
         ]
 
-
         for index, entry in enumerate(admin_buttons):
 
             btn = MDFlatButton(
                 text=f"[b][size=20]{entry}[/b][/size]",
-
                 size_hint_y=None,
                 _min_height=75,
                 _min_width=200,
-
                 on_press=self.app.button_handler.on_admin_button_press,
                 md_bg_color=(0.5, 0.5, 0.5, 0.25),
             )
@@ -2647,7 +2718,6 @@ class PopupManager:
                 text=f"[b]${total_with_tax:.2f} Paid With {order_details['payment_method']}[/b]",
                 halign="center",
                 theme_text_color="Primary",
-
             )
         )
 
@@ -2657,7 +2727,6 @@ class PopupManager:
             on_release=self.app.button_handler.on_done_button_press,
             pos_hint={"center_x": 0.25, "center_y": 0.5},
             size_hint=(0.45, 1),
-
         )
 
         receipt_button = MDRaisedButton(
@@ -2665,7 +2734,6 @@ class PopupManager:
             on_release=self.app.button_handler.on_receipt_button_press,
             pos_hint={"center_x": 0.75, "center_y": 0.5},
             size_hint=(0.45, 1),
-
         )
 
         card.add_widget(button_layout)
@@ -3121,7 +3189,7 @@ class PopupManager:
         pos_hint={},
         on_dismiss=None,
         overlay_color=(0, 0, 0, 0),
-        separator_height=1
+        separator_height=1,
     ):
         if on_dismiss is None:
             on_dismiss = self.do_nothing
@@ -3132,7 +3200,7 @@ class PopupManager:
             pos_hint=pos_hint,
             on_dismiss=on_dismiss,
             overlay_color=overlay_color,
-            separator_height=separator_height
+            separator_height=separator_height,
         )
         popup.focus_on_textinput(textinput)
         return popup
@@ -3362,7 +3430,9 @@ class PopupManager:
                 button = MDRaisedButton(
                     text=item["name"],
                     size_hint=(1, None),
-                    on_press=lambda x, barcode=barcode, choice=item["name"], price=item["price"]: self.add_dupe_choice_to_order(
+                    on_press=lambda x, barcode=barcode, choice=item["name"], price=item[
+                        "price"
+                    ]: self.add_dupe_choice_to_order(
                         barcode=barcode, choice=choice, price=price
                     ),
                 )
@@ -3376,7 +3446,6 @@ class PopupManager:
             self.handle_duplicate_barcodes_popup.open()
         except Exception as e:
             print(f"Exception in handle_duplicate_barcodes\n{e}")
-
 
     def add_dupe_choice_to_order(self, barcode, choice, price):
 
@@ -3444,7 +3513,7 @@ class FinancialSummaryWidget(MDFlatButton):
             self.size_hint_y = None
             self.size_hint_x = 0.2
             self.height = 250
-            #self.padding = (100, 0, 0, 0)
+            # self.padding = (100, 0, 0, 0)
             self._no_ripple_effect = True
             self.text = ""
 
@@ -3516,10 +3585,8 @@ class FinancialSummaryWidget(MDFlatButton):
                 text="[b][size=20]Remove Order Discount[/b][/size]",
                 # pos_hint={"center_x": 0.5, "center_y": 1},
                 size_hint=(None, None),
-                _min_height = 100,
-                _min_width = 100,
-
-
+                _min_height=100,
+                _min_width=100,
                 md_bg_color=(0.5, 0.5, 0.5, 0.25),
                 on_press=lambda x: self.remove_order_discount(),
             )
@@ -3528,9 +3595,8 @@ class FinancialSummaryWidget(MDFlatButton):
                 text="[b][size=20]Add Order Discount[/b][/size]",
                 # pos_hint={"center_x": 0.5, "center_y": 1},
                 size_hint=(None, None),
-                _min_height = 100,
-                _min_width = 100,
-
+                _min_height=100,
+                _min_width=100,
                 md_bg_color=(0.5, 0.5, 0.5, 0.25),
                 on_press=lambda x: self.app.popup_manager.add_order_discount_popup(),
             )
@@ -3538,8 +3604,7 @@ class FinancialSummaryWidget(MDFlatButton):
             text="[b][size=20]Clear Order[/b][/size]",
             # pos_hint={"center_x": 0.5, "center_y": 1 - 0.2},
             size_hint=(None, None),
-            _min_height = 100,
-
+            _min_height=100,
             md_bg_color=(0.5, 0.5, 0.5, 0.25),
             on_press=lambda x: self.clear_order(),
         )
@@ -3547,8 +3612,7 @@ class FinancialSummaryWidget(MDFlatButton):
             text="[b][size=20]Adjust Payment[/b][/size]",
             # pos_hint={"center_x": 0.5, "center_y": 1 - 0.4},
             size_hint=(None, None),
-            _min_height = 100,
-
+            _min_height=100,
             md_bg_color=(0.5, 0.5, 0.5, 0.25),
             on_press=lambda x: self.adjust_price(),
         )
