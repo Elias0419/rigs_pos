@@ -149,133 +149,25 @@ class PopupManager:
         add_note_popup.open()
 
     def show_cost_overlay(self):
-        order_details_with_cost = self.add_costs_to_order_details()
-        total_cost = round(self.calculate_total_cost(order_details_with_cost), 2)
-        total_price = round(self.calculate_total_price(order_details_with_cost), 2)
-        total_profit = round(total_price - total_cost, 2)
+        order_count = self.app.order_manager.get_order_details()
+        if len(order_count['items']) == 0:
+            temp_layout = MDBoxLayout(orientation="vertical")
+            temp_message = MDLabel(text=f'This is a test of the "Advanced Discount" feature.\nThe current order is empty so there is nothing here.\n')
+            temp_button = Button(text="Dismiss", on_press=lambda x: self.temp_popup.dismiss())
+            temp_layout.add_widget(temp_message)
+            temp_layout.add_widget(temp_button)
+            self.temp_popup = Popup(content=temp_layout, size_hint=(0.4,0.4))
+            self.temp_popup.open()
+        else:
+            order_details_with_cost = self.add_costs_to_order_details()
+            total_cost = round(self.calculate_total_cost(order_details_with_cost), 2)
+            total_price = round(self.calculate_total_price(order_details_with_cost), 2)
+            total_profit = round(total_price - total_cost, 2)
 
-        layout = MDBoxLayout(orientation="vertical")
-        card = MDCard(orientation="vertical")
-        inner_layout = MDGridLayout(orientation="tb-lr", rows=11)
-        header = MDGridLayout(
-            orientation="lr-tb",
-            cols=11,
-            padding=5,
-            spacing=5,
-            size_hint_y=None,
-            height=50,
-        )
-
-        header.add_widget(MDLabel(text="", size_hint_x=0.3))
-        header.add_widget(MDLabel(text="Price", size_hint_x=0.075, halign="center"))
-        header.add_widget(MDLabel(text="Cost", size_hint_x=0.075, halign="center"))
-        header.add_widget(MDLabel(text="Profit", size_hint_x=0.075, halign="center"))
-        header.add_widget(MDLabel(text="Quantity", size_hint_x=0.075, halign="center"))
-        header.add_widget(
-            MDLabel(text="Total Price", size_hint_x=0.075, halign="center")
-        )
-        header.add_widget(
-            MDLabel(text="Total Cost", size_hint_x=0.075, halign="center")
-        )
-        header.add_widget(
-            MDLabel(text="Total Profit", size_hint_x=0.075, halign="center")
-        )
-        header.add_widget(MDLabel(text="", size_hint_x=None, width=100))
-        header.add_widget(MDLabel(text="Discount", size_hint_x=0.075, halign="center"))
-        header.add_widget(MDLabel(text="", size_hint_x=None, width=20))
-        inner_layout.add_widget(header)
-
-        footer = MDGridLayout(
-            size_hint_y=0.1, cols=3, orientation="lr-tb", padding=5, spacing=5
-        )
-        total_price_label = MDLabel(
-            text=f"Total Price: {total_price}", size_hint_x=0.33, halign="center"
-        )
-        total_cost_label = MDLabel(
-            text=f"Total Cost: {total_cost}", size_hint_x=0.33, halign="center"
-        )
-        total_profit_label = MDLabel(
-            text=f"Total Profit: {total_profit}", size_hint_x=0.33, halign="center"
-        )
-        footer.add_widget(total_price_label)
-        footer.add_widget(total_cost_label)
-        footer.add_widget(total_profit_label)
-
-        item_totals = {"total_prices": [], "total_costs": [], "total_profits": []}
-
-        def update_footer():
-            total_price = sum(item_totals["total_prices"])
-            total_cost = sum(item_totals["total_costs"])
-            total_profit = sum(item_totals["total_profits"])
-
-            total_price_label.text = f"Total Price: {round(total_price, 2)}"
-            total_cost_label.text = f"Total Cost: {round(total_cost, 2)}"
-            total_profit_label.text = f"Total Profit: {round(total_profit, 2)}"
-
-        def set_item(
-            discount,
-            item_index,
-            item_data,
-            discount_button,
-            discount_type_button,
-            total_price_text,
-            total_profit_text,
-        ):
-
-            discount_value = float(discount)
-            discount_type = discount_type_button.text
-
-            if discount_type == "%":
-                discount_amount = (item_data["price"] * item_data["quantity"]) * (
-                    discount_value / 100
-                )
-            else:
-                discount_amount = discount_value
-
-            new_total_price = (
-                item_data["price"] * item_data["quantity"]
-            ) - discount_amount
-            new_profit = new_total_price - (item_data["cost"] * item_data["quantity"])
-
-            total_price_text.text = str(round(new_total_price, 2))
-            total_profit_text.text = str(round(new_profit, 2))
-            discount_button.text = str(discount_value)
-
-            item_totals["total_prices"][item_index] = new_total_price
-            item_totals["total_costs"][item_index] = (
-                item_data["cost"] * item_data["quantity"]
-            )
-            item_totals["total_profits"][item_index] = new_profit
-
-            update_footer()
-
-        def create_menu_item(
-            discount,
-            item_index,
-            item_data,
-            discount_button,
-            discount_type_button,
-            total_price_text,
-            total_profit_text,
-        ):
-            return {
-                "text": str(discount),
-                "viewclass": "OneLineListItem",
-                "on_release": lambda: set_item(
-                    discount,
-                    item_index,
-                    item_data,
-                    discount_button,
-                    discount_type_button,
-                    total_price_text,
-                    total_profit_text,
-                ),
-            }
-
-        for item_index, (item_id, item_data) in enumerate(
-            order_details_with_cost["items"].items()
-        ):
-            item_layout = MDGridLayout(
+            layout = MDBoxLayout(orientation="vertical")
+            card = MDCard(orientation="vertical")
+            inner_layout = MDGridLayout(orientation="tb-lr", rows=11)
+            header = MDGridLayout(
                 orientation="lr-tb",
                 cols=11,
                 padding=5,
@@ -283,106 +175,256 @@ class PopupManager:
                 size_hint_y=None,
                 height=50,
             )
-            item_price = round(item_data["price"], 2)
-            item_cost = round(item_data["cost"], 2)
-            item_quantity = item_data["quantity"]
-            item_name = item_data["name"]
 
-            item_profit = round(item_price - item_cost, 2)
-            price_x_quantity = round(item_price * item_quantity, 2)
-            cost_x_quantity = round(item_cost * item_quantity, 2)
-            profit_x_quantity = round(item_profit * item_quantity, 2)
+            header.add_widget(MDLabel(text="", size_hint_x=0.3))
+            header.add_widget(MDLabel(text="Price", size_hint_x=0.075, halign="center"))
+            header.add_widget(MDLabel(text="Cost", size_hint_x=0.075, halign="center"))
+            header.add_widget(MDLabel(text="Profit", size_hint_x=0.075, halign="center"))
+            header.add_widget(MDLabel(text="Quantity", size_hint_x=0.075, halign="center"))
+            header.add_widget(
+                MDLabel(text="Total Price", size_hint_x=0.075, halign="center")
+            )
+            header.add_widget(
+                MDLabel(text="Total Cost", size_hint_x=0.075, halign="center")
+            )
+            header.add_widget(
+                MDLabel(text="Total Profit", size_hint_x=0.075, halign="center")
+            )
+            header.add_widget(MDLabel(text="", size_hint_x=None, width=100))
+            header.add_widget(MDLabel(text="Discount", size_hint_x=0.075, halign="center"))
+            header.add_widget(MDLabel(text="", size_hint_x=None, width=20))
+            inner_layout.add_widget(header)
 
-            name_text = MDLabel(text=item_name, size_hint_x=0.3)
-            price_text = MDLabel(
-                text=str(item_price), size_hint_x=0.075, halign="center"
+            footer = MDGridLayout(
+                size_hint_y=0.1, cols=3, orientation="lr-tb", padding=5, spacing=5
             )
-            cost_text = MDLabel(text=str(item_cost), size_hint_x=0.075, halign="center")
-            profit_text = MDLabel(
-                text=str(item_profit), size_hint_x=0.075, halign="center"
+            total_price_label = MDLabel(
+                text=f"Total Price: {total_price}", size_hint_x=0.33, halign="center"
             )
-            quantity_text = MDLabel(
-                text=str(item_quantity), size_hint_x=0.075, halign="center"
+            total_cost_label = MDLabel(
+                text=f"Total Cost: {total_cost}", size_hint_x=0.33, halign="center"
             )
-            total_price_text = MDLabel(
-                text=str(price_x_quantity), size_hint_x=0.075, halign="center"
+            total_profit_label = MDLabel(
+                text=f"Total Profit: {total_profit}", size_hint_x=0.33, halign="center"
             )
-            total_cost_text = MDLabel(
-                text=str(cost_x_quantity), size_hint_x=0.075, halign="center"
-            )
-            total_profit_text = MDLabel(
-                text=str(profit_x_quantity), size_hint_x=0.075, halign="center"
-            )
-            item_discount_text = MDLabel(text="", size_hint_x=0.075, halign="center")
+            footer.add_widget(total_price_label)
+            footer.add_widget(total_cost_label)
+            footer.add_widget(total_profit_label)
 
-            discount_button = MDRaisedButton(text="0", pos_hint={"top": 1})
-            discount_type_button = MDRaisedButton(text="%")
+            item_totals = {"total_prices": [], "total_costs": [], "total_profits": []}
 
-            menu_items = [
-                create_menu_item(
-                    i,
-                    item_index,
-                    item_data,
-                    discount_button,
-                    discount_type_button,
-                    total_price_text,
-                    total_profit_text,
+            def update_footer():
+                total_price = sum(item_totals["total_prices"])
+                total_cost = sum(item_totals["total_costs"])
+                total_profit = sum(item_totals["total_profits"])
+
+                total_price_label.text = f"Total Price: {round(total_price, 2)}"
+                total_cost_label.text = f"Total Cost: {round(total_cost, 2)}"
+                total_profit_label.text = f"Total Profit: {round(total_profit, 2)}"
+
+            def set_item(
+                discount,
+                item_index,
+                item_data,
+                discount_button,
+                discount_type_button,
+                total_price_text,
+                total_profit_text,
+            ):
+
+                discount_value = float(discount)
+                discount_type = discount_type_button.text
+
+                if discount_type == "%":
+                    discount_amount = (item_data["price"] * item_data["quantity"]) * (
+                        discount_value / 100
+                    )
+                else:
+                    discount_amount = discount_value
+
+                new_total_price = (
+                    item_data["price"] * item_data["quantity"]
+                ) - discount_amount
+                new_profit = new_total_price - (item_data["cost"] * item_data["quantity"])
+
+                total_price_text.text = str(round(new_total_price, 2))
+                total_profit_text.text = str(round(new_profit, 2))
+                discount_button.text = str(discount_value)
+
+                item_totals["total_prices"][item_index] = new_total_price
+                item_totals["total_costs"][item_index] = (
+                    item_data["cost"] * item_data["quantity"]
                 )
-                for i in [0, 5, 10, 15, 20, 25, 50]
-            ]
-            discount_dropdown = MDDropdownMenu(
-                items=menu_items, caller=discount_button, width_mult=4
-            )
-            discount_button.bind(on_release=lambda x, dd=discount_dropdown: dd.open())
+                item_totals["total_profits"][item_index] = new_profit
 
-            menu_items_type = [
-                {
-                    "text": i,
+                update_footer()
+
+            def create_menu_item(
+                discount,
+                item_index,
+                item_data,
+                discount_button,
+                discount_type_button,
+                total_price_text,
+                total_profit_text,
+            ):
+                return {
+                    "text": str(discount),
                     "viewclass": "OneLineListItem",
-                    "on_release": lambda x=i, b=discount_type_button: b.setter("text")(
-                        b, x
+                    "on_release": lambda: set_item(
+                        discount,
+                        item_index,
+                        item_data,
+                        discount_button,
+                        discount_type_button,
+                        total_price_text,
+                        total_profit_text,
                     ),
                 }
-                for i in ["%", "$"]
-            ]
-            discount_type_dropdown = MDDropdownMenu(
-                items=menu_items_type, caller=discount_type_button, width_mult=4
+
+            for item_index, (item_id, item_data) in enumerate(
+                order_details_with_cost["items"].items()
+            ):
+                item_layout = MDGridLayout(
+                    orientation="lr-tb",
+                    cols=11,
+                    padding=5,
+                    spacing=5,
+                    size_hint_y=None,
+                    height=50,
+                )
+                item_price = round(item_data["price"], 2)
+                item_cost = round(item_data["cost"], 2)
+                item_quantity = item_data["quantity"]
+                item_name = item_data["name"]
+
+                item_profit = round(item_price - item_cost, 2)
+                price_x_quantity = round(item_price * item_quantity, 2)
+                cost_x_quantity = round(item_cost * item_quantity, 2)
+                profit_x_quantity = round(item_profit * item_quantity, 2)
+
+                name_text = MDLabel(text=item_name, size_hint_x=0.3)
+                price_text = MDLabel(
+                    text=str(item_price), size_hint_x=0.075, halign="center"
+                )
+                cost_text = MDLabel(text=str(item_cost), size_hint_x=0.075, halign="center")
+                profit_text = MDLabel(
+                    text=str(item_profit), size_hint_x=0.075, halign="center"
+                )
+                quantity_text = MDLabel(
+                    text=str(item_quantity), size_hint_x=0.075, halign="center"
+                )
+                total_price_text = MDLabel(
+                    text=str(price_x_quantity), size_hint_x=0.075, halign="center"
+                )
+                total_cost_text = MDLabel(
+                    text=str(cost_x_quantity), size_hint_x=0.075, halign="center"
+                )
+                total_profit_text = MDLabel(
+                    text=str(profit_x_quantity), size_hint_x=0.075, halign="center"
+                )
+                item_discount_text = MDLabel(text="", size_hint_x=0.075, halign="center")
+
+                self.discount_button = MDRaisedButton(text="0", pos_hint={"top": 1})
+                self.discount_type_button = MDRaisedButton(text="%")
+
+                menu_items = [
+                    create_menu_item(
+                        i,
+                        item_index,
+                        item_data,
+                        self.discount_button,
+                        self.discount_type_button,
+                        total_price_text,
+                        total_profit_text,
+                    )
+                    for i in [0, 5, 10, 15, 20, 25, 50]
+                ]
+
+                self.discount_dropdown = MDDropdownMenu(
+                items=menu_items,
+                caller=self.discount_button,
+                width_mult=4,
+                )
+                self.discount_button.bind(on_release=lambda x, dd=self.discount_dropdown: dd.open())
+
+                menu_items_type = [
+                    {
+                        "text": i,
+                        "viewclass": "OneLineListItem",
+                        "on_release": lambda x=i: self.set_discount_type(self.discount_type_button, x),
+                    }
+                    for i in ["%", "$"]
+                ]
+                self.discount_type_dropdown = MDDropdownMenu(
+                    items=menu_items_type,
+                    caller=self.discount_type_button,
+                    width_mult=4,
+                )
+                self.discount_type_button.bind(
+                    on_release=lambda x, dd=self.discount_type_dropdown: dd.open()
+                )
+                # discount_dropdown = MDDropdownMenu(
+                #     items=menu_items, caller=discount_button, width_mult=4
+                # )
+                # discount_button.bind(on_release=lambda x, dd=discount_dropdown: dd.open())
+                #
+                # menu_items_type = [
+                #     {
+                #         "text": i,
+                #         "viewclass": "OneLineListItem",
+                #         "on_release": lambda x=i, b=discount_type_button: b.setter("text")(
+                #             b, x
+                #         ),
+                #     }
+                #     for i in ["%", "$"]
+                # ]
+                # discount_type_dropdown = MDDropdownMenu(
+                #     items=menu_items_type, caller=discount_type_button, width_mult=4
+                # )
+                # discount_type_button.bind(
+                #     on_release=lambda x, dd=discount_type_dropdown: dd.open()
+                # )
+
+                item_layout.add_widget(name_text)
+                item_layout.add_widget(price_text)
+                item_layout.add_widget(cost_text)
+                item_layout.add_widget(profit_text)
+                item_layout.add_widget(quantity_text)
+                item_layout.add_widget(total_price_text)
+                item_layout.add_widget(total_cost_text)
+                item_layout.add_widget(total_profit_text)
+                item_layout.add_widget(item_discount_text)
+                item_layout.add_widget(self.discount_button)
+                item_layout.add_widget(self.discount_type_button)
+
+                inner_layout.add_widget(item_layout)
+
+                item_totals["total_prices"].append(price_x_quantity)
+                item_totals["total_costs"].append(cost_x_quantity)
+                item_totals["total_profits"].append(profit_x_quantity)
+
+            update_footer()
+
+            card.add_widget(inner_layout)
+            layout.add_widget(card)
+            layout.add_widget(footer)
+            popup = Popup(
+                size_hint=(0.8, 0.8),
+                content=layout,
+                overlay_color=(0, 0, 0, 0),
+                separator_height=0,
+                title="",
             )
-            discount_type_button.bind(
-                on_release=lambda x, dd=discount_type_dropdown: dd.open()
-            )
+            popup.open()
 
-            item_layout.add_widget(name_text)
-            item_layout.add_widget(price_text)
-            item_layout.add_widget(cost_text)
-            item_layout.add_widget(profit_text)
-            item_layout.add_widget(quantity_text)
-            item_layout.add_widget(total_price_text)
-            item_layout.add_widget(total_cost_text)
-            item_layout.add_widget(total_profit_text)
-            item_layout.add_widget(item_discount_text)
-            item_layout.add_widget(discount_button)
-            item_layout.add_widget(discount_type_button)
+    def set_discount(self, button, text):
+        button.text = text
+        self.discount_dropdown.dismiss()
 
-            inner_layout.add_widget(item_layout)
-
-            item_totals["total_prices"].append(price_x_quantity)
-            item_totals["total_costs"].append(cost_x_quantity)
-            item_totals["total_profits"].append(profit_x_quantity)
-
-        update_footer()
-
-        card.add_widget(inner_layout)
-        layout.add_widget(card)
-        layout.add_widget(footer)
-        popup = Popup(
-            size_hint=(0.8, 0.8),
-            content=layout,
-            overlay_color=(0, 0, 0, 0),
-            separator_height=0,
-            title="",
-        )
-        popup.open()
+    def set_discount_type(self, button, text):
+        button.text = text
+        self.discount_type_dropdown.dismiss()
 
     def calculate_total_cost(self, order_details):
         total_cost = 0
