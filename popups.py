@@ -2172,7 +2172,7 @@ class PopupManager:
                 for button in numeric_buttons:
                     if button != " ":
                         btn = MDFlatButton(
-                            text=f"[b][size=20]{button}[/size][/b]",
+                            text=f"[b][size=28]{button}[/size][/b]",
                             # color=(1, 1, 1, 1),
                             size_hint=(0.8, 0.8),
                             _no_ripple_effect=True,

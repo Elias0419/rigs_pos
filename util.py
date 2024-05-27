@@ -24,6 +24,7 @@ from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.button import MDRaisedButton, MDFlatButton, MDIconButton
 from kivymd.uix.gridlayout import GridLayout
 from kivymd.uix.label import MDLabel
+from kivy.uix.behaviors import ButtonBehavior
 
 from barcode.upc import UniversalProductCodeA as upc_a
 
@@ -47,7 +48,7 @@ class Utilities:
         self.app = ref
 
     def initialize_global_variables(self):
-        self.app.admin = False
+        # self.app.admin = False
         self.app.pin_store = "pin_store.json"
         self.app.attendance_log = "attendance_log.json"
         self.app.entered_pin = ""
@@ -699,10 +700,13 @@ class Utilities:
         lock_icon = MDIconButton(
             icon="lock", on_press=lambda x: self.trigger_guard_and_lock(trigger=True)
         )
+        self.cost_overlay_icon = MDButtonLabel(on_press=lambda x: self.app.popup_manager.show_cost_overlay(), text="", halign="center")
 
         sidebar.add_widget(trash_icon_container)
         sidebar.add_widget(save_icon_container)
         sidebar.add_widget(print_icon_container)
+
+        sidebar.add_widget(self.cost_overlay_icon)
         sidebar.add_widget(MDBoxLayout())
         sidebar.add_widget(calc_icon_container)
         sidebar.add_widget(lock_icon)
@@ -1581,3 +1585,14 @@ class ImageButton(ButtonBehavior, Image):
         except:
             pass
         # subprocess.Popen(["python", "games/tetris.py", self.app.logged_in_user])
+
+class MDButtonLabel(ButtonBehavior, MDLabel):
+    def __init__(self, **kwargs):
+        self.on_touch_down_callback = kwargs.pop('on_touch_down_callback', None)
+        super().__init__(**kwargs)
+
+    def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos):
+            if self.on_touch_down_callback:
+                self.on_touch_down_callback()
+        return super().on_touch_down(touch)
