@@ -281,6 +281,14 @@ class PopupManager:
                         total_profit_text,
                     ),
                 }
+            def create_menu_item_type(
+                i, item_index, discount_button
+            ):
+                return {
+                    "text": str(i),
+                    "viewclass": "OneLineListItem",
+                    "on_release": lambda: self.set_discount_type(discount_button, i)
+                }
 
             for item_index, (item_id, item_data) in enumerate(
                 order_details_with_cost["items"].items()
@@ -347,15 +355,16 @@ class PopupManager:
                 width_mult=4,
                 )
                 self.discount_button.bind(on_release=lambda x, dd=self.discount_dropdown: dd.open())
-
                 menu_items_type = [
-                    {
-                        "text": i,
-                        "viewclass": "OneLineListItem",
-                        "on_release": lambda x=i: self.set_discount_type(self.discount_type_button, x),
-                    }
+                    create_menu_item_type(
+                        i,
+                        item_index,
+                        self.discount_type_button,
+                    )
                     for i in ["%", "$"]
                 ]
+
+
                 self.discount_type_dropdown = MDDropdownMenu(
                     items=menu_items_type,
                     caller=self.discount_type_button,
