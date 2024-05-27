@@ -235,8 +235,10 @@ class ButtonHandler:
                 admin = info_dict["admin"]
                 # if correct_pin[2] == True:
                 if admin:
-
+                    self.app.utilities.cost_overlay_icon.text = f"[b][size=20]$[/size][/b]"
                     self.app.admin = True
+                else:
+                    self.app.utilities.cost_overlay_icon.text = ""
                 self.app.utilities.clock_in(self.app.entered_pin)
 
                 self.app.popup_manager.lock_popup.dismiss()
