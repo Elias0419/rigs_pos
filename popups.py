@@ -55,10 +55,16 @@ class PopupManager:
     def show_notes_widget(self):
         self.notes_dir = "notes"
         os.makedirs(self.notes_dir, exist_ok=True)
-        layout = MDBoxLayout(size_hint=(1, 1), orientation="vertical")
+        layout = MDBoxLayout(
+            size_hint=(1, 1), orientation="vertical", spacing=10, padding=10
+        )
         scroll_view = ScrollView(size_hint=(1, 1), do_scroll_x=False, do_scroll_y=True)
         self.top_level_notes_container = MDBoxLayout(
-            orientation="vertical", size_hint_y=None, adaptive_height=True
+            orientation="vertical",
+            size_hint_y=None,
+            adaptive_height=True,
+            spacing=10,
+            padding=10,
         )
         scroll_view.add_widget(self.top_level_notes_container)
         button_container = MDBoxLayout(size_hint_x=1, size_hint_y=None, height=100)
@@ -69,7 +75,15 @@ class PopupManager:
         button_container.add_widget(button)
         layout.add_widget(scroll_view)
         layout.add_widget(button_container)
-        popup = Popup(title="Notes", content=layout, size_hint=(0.8, 0.8))
+        popup = Popup(
+            title="Notes",
+            content=layout,
+            size_hint=(None, 0.8),
+            width=900,
+            pos_hint={"center_x": 0.7},
+            overlay_color=(0, 0, 0, 0),
+            separator_height=0,
+        )
         popup.open()
         self.populate_top_level_notes()
 
@@ -85,11 +99,13 @@ class PopupManager:
         for last_modified, file_name, content in note_files:
             note_id = file_name.replace(".json", "")
             note_button = MDFlatButton(
+                line_color="white",
+                line_width=0.2,
                 text=content["name"],
                 size_hint_x=None,
                 size_hint_y=None,
                 height=50,
-                _min_width=1000,
+                _min_width=800,
                 on_press=lambda x, nid=note_id, name=content[
                     "name"
                 ]: self.show_note_details(self.notes_dir, note_id=nid, name=name),
@@ -113,38 +129,28 @@ class PopupManager:
         )
         layout.add_widget(text_input)
         layout.add_widget(confirm_button)
-        self.add_topic_popup = FocusPopup(size_hint=(0.4, 0.2), content=layout)
+        self.add_topic_popup = FocusPopup(
+            size_hint=(0.4, 0.2),
+            title="Add Topic",
+            content=layout,
+            pos_hint={"center_x": 0.7, "center_y": 0.2},
+            overlay_color=(0, 0, 0, 0),
+            separator_height=0,
+        )
         self.add_topic_popup.focus_on_textinput(text_input)
         self.add_topic_popup.open()
-
-    # def populate_top_level_notes(self):
-    #     for file_name in os.listdir(self.notes_dir):
-    #         if file_name.endswith(".json"):
-    #             full_path = os.path.join(self.notes_dir, file_name)
-    #             with open(full_path, "r", encoding='utf-8') as file:
-    #                 content = json.load(file)
-    #             note_id = file_name.replace(".json", "")
-    #             note_name = content['name']
-    #             note_button = MDFlatButton(
-    #                 text=content["name"],
-    #                 size_hint_x=None,
-    #                 size_hint_y=None,
-    #                 height=50,
-    #                 _min_width=1000,
-    #                 on_press=lambda x, nid=note_id, name=note_name: self.show_note_details(self.notes_dir, note_id=nid, name=name)
-    #             )
-    #             self.top_level_notes_container.add_widget(note_button)
-    #     self.update_notes_container_height()
 
     def add_to_top_level_notes(self, text):
         note_id = self.create_note(text, body="")
         self.top_level_notes_container.add_widget(
             MDFlatButton(
+                line_color="white",
+                line_width=0.2,
                 text=text,
                 size_hint_x=None,
                 size_hint_y=None,
                 height=50,
-                _min_width=1000,
+                _min_width=800,
                 on_press=lambda x: self.show_note_details(
                     self.notes_dir, note_id, name=text
                 ),
@@ -167,7 +173,14 @@ class PopupManager:
         text_input.text = content["body"]
         card.add_widget(text_input)
         layout.add_widget(card)
-        popup = Popup(content=layout, size_hint=(0.8, 0.8))
+        popup = Popup(
+            content=layout,
+            title=name,
+            size_hint=(0.4, 0.8),
+            pos_hint={"center_x": 0.25},
+            overlay_color=(0, 0, 0, 0),
+            separator_height=0,
+        )
         popup.open()
 
     def create_note(self, name, body):
