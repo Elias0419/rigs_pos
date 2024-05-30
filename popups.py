@@ -2398,10 +2398,12 @@ class PopupManager:
             orientation="tb-lr", size_hint=(1, 1), rows=10, spacing=10
         )
         tool_buttons = [
+            "Notes",
             "Label Printer",
             "Inventory",
             "Dual Pane",
             "Open Register",
+
         ]
 
         if self.app.admin:
@@ -2427,7 +2429,7 @@ class PopupManager:
                 background="images/transparent.png",
                 background_color=(0, 0, 0, 0),
                 separator_height=0,
-                pos_hint={"center_x": 0.77, "center_y": 0.20},
+                pos_hint={"center_x": 0.77, "center_y": 0.275},
                 overlay_color=(0, 0, 0, 0),
                 # pos_hint={"top":1}
             )
@@ -2439,7 +2441,7 @@ class PopupManager:
                 background="images/transparent.png",
                 background_color=(0, 0, 0, 0),
                 separator_height=0,
-                pos_hint={"center_x": 0.77, "center_y": 0.05},
+                pos_hint={"center_x": 0.77, "center_y": 0.125},
                 overlay_color=(0, 0, 0, 0),
                 # pos_hint={"top":1}
             )

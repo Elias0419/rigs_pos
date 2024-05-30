@@ -47,6 +47,9 @@ class ButtonHandler:
     def show_add_user(self):
         self.app.popup_manager.show_add_user_popup()
 
+    def show_notes_popup(self):
+        self.app.popup_manager.show_notes_widget()
+
     def on_tool_button_press(self, instance):
         tool_actions = {
             "Clear Order": self.clear_order,
@@ -59,6 +62,7 @@ class ButtonHandler:
             "Distrib TEST": self.show_distrib,
             "Dual Pane": self.show_dual_pane_mode,
             "Admin": self.show_admin_popup,
+            "Notes": self.show_notes_popup,
         }
         for action_text, action in tool_actions.items():
             if action_text in instance.text:
