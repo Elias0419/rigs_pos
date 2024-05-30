@@ -10,7 +10,7 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.uix.button import MDRaisedButton, MDFlatButton, MDIconButton
 from kivymd.uix.menu import MDDropdownMenu
-
+from kivymd.app import MDApp
 from kivymd.uix.selectioncontrol import MDCheckbox
 
 
@@ -30,6 +30,7 @@ from kivy.uix.image import Image
 import os
 import time
 import json
+import uuid
 from datetime import datetime
 from functools import partial
 from kivymd.uix.gridlayout import MDGridLayout
@@ -50,113 +51,159 @@ from PIL import Image as PILImage
 class PopupManager:
     def __init__(self, ref):
         self.app = ref
-        self.notes_data = {}
 
     def show_notes_widget(self):
-        layout = MDBoxLayout(
-            orientation="vertical", size_hint_y=None, padding=10, spacing=10
+        self.notes_dir = "notes"
+        os.makedirs(self.notes_dir, exist_ok=True)
+        layout = MDBoxLayout(size_hint=(1, 1), orientation="vertical")
+        scroll_view = ScrollView(size_hint=(1, 1), do_scroll_x=False, do_scroll_y=True)
+        self.top_level_notes_container = MDBoxLayout(
+            orientation="vertical", size_hint_y=None, adaptive_height=True
         )
-        layout.bind(minimum_height=layout.setter("height"))
+        scroll_view.add_widget(self.top_level_notes_container)
+        button_container = MDBoxLayout(size_hint_x=1, size_hint_y=None, height=100)
+        button = Button(
+            text="Add Topic", on_press=lambda x: self.add_topic(), size_hint_x=0.1
+        )
+        button_container.add_widget(MDBoxLayout(size_hint_x=0.9))
+        button_container.add_widget(button)
+        layout.add_widget(scroll_view)
+        layout.add_widget(button_container)
+        popup = Popup(title="Notes", content=layout, size_hint=(0.8, 0.8))
+        popup.open()
+        self.populate_top_level_notes()
 
-        add_topic_btn = Button(text="Add Topic", size_hint_y=None, height=40)
-        add_topic_btn.bind(on_release=self.add_topic)
-        layout.add_widget(add_topic_btn)
+    def populate_top_level_notes(self):
+        note_files = []
+        for file_name in os.listdir(self.notes_dir):
+            if file_name.endswith(".json"):
+                full_path = os.path.join(self.notes_dir, file_name)
+                with open(full_path, "r", encoding="utf-8") as file:
+                    content = json.load(file)
+                note_files.append((content["last_modified"], file_name, content))
+        note_files.sort(reverse=True, key=lambda x: x[0])
+        for last_modified, file_name, content in note_files:
+            note_id = file_name.replace(".json", "")
+            note_button = MDFlatButton(
+                text=content["name"],
+                size_hint_x=None,
+                size_hint_y=None,
+                height=50,
+                _min_width=1000,
+                on_press=lambda x, nid=note_id, name=content[
+                    "name"
+                ]: self.show_note_details(self.notes_dir, note_id=nid, name=name),
+            )
+            self.top_level_notes_container.add_widget(note_button)
+        self.update_notes_container_height()
 
-        self.topics_layout = layout
+    def save_note_content(self, note_id, content):
+        content["last_modified"] = datetime.now().isoformat()
+        with open(os.path.join(self.notes_dir, f"{note_id}.json"), "w") as file:
+            json.dump(content, file)
 
-        for topic in self.notes_data:
-            self.create_topic_button(topic)
+    def add_topic(self):
+        layout = MDBoxLayout(orientation="vertical")
+        text_input = TextInput(
+            multiline=False, size_hint_x=1, size_hint_y=None, height=50
+        )
+        confirm_button = MDFlatButton(
+            text="Confirm",
+            on_press=lambda x: self.add_to_top_level_notes(text_input.text),
+        )
+        layout.add_widget(text_input)
+        layout.add_widget(confirm_button)
+        self.add_topic_popup = FocusPopup(size_hint=(0.4, 0.2), content=layout)
+        self.add_topic_popup.focus_on_textinput(text_input)
+        self.add_topic_popup.open()
 
-        card = MDCard(orientation="vertical", size_hint_y=None, padding=10)
-        card.add_widget(layout)
-        card.bind(minimum_height=card.setter("height"))
+    # def populate_top_level_notes(self):
+    #     for file_name in os.listdir(self.notes_dir):
+    #         if file_name.endswith(".json"):
+    #             full_path = os.path.join(self.notes_dir, file_name)
+    #             with open(full_path, "r", encoding='utf-8') as file:
+    #                 content = json.load(file)
+    #             note_id = file_name.replace(".json", "")
+    #             note_name = content['name']
+    #             note_button = MDFlatButton(
+    #                 text=content["name"],
+    #                 size_hint_x=None,
+    #                 size_hint_y=None,
+    #                 height=50,
+    #                 _min_width=1000,
+    #                 on_press=lambda x, nid=note_id, name=note_name: self.show_note_details(self.notes_dir, note_id=nid, name=name)
+    #             )
+    #             self.top_level_notes_container.add_widget(note_button)
+    #     self.update_notes_container_height()
 
-        scroll_view = ScrollView()
-        scroll_view.add_widget(card)
+    def add_to_top_level_notes(self, text):
+        note_id = self.create_note(text, body="")
+        self.top_level_notes_container.add_widget(
+            MDFlatButton(
+                text=text,
+                size_hint_x=None,
+                size_hint_y=None,
+                height=50,
+                _min_width=1000,
+                on_press=lambda x: self.show_note_details(
+                    self.notes_dir, note_id, name=text
+                ),
+            )
+        )
+        self.add_topic_popup.dismiss()
+        self.update_notes_container_height()
 
-        popup = Popup(title="Notes", content=scroll_view, size_hint=(0.8, 0.8))
+    def update_notes_container_height(self):
+        total_height = sum(
+            child.height for child in self.top_level_notes_container.children
+        )
+        self.top_level_notes_container.height = total_height
+
+    def show_note_details(self, notes_dir, note_id, name):
+        layout = BoxLayout(size_hint=(1, 1), orientation="vertical")
+        card = MDCard(size_hint=(1, 1))
+        text_input = AutoSaveTextInput(notes_dir=notes_dir, note_id=note_id, name=name)
+        content = text_input.load_note_content()
+        text_input.text = content["body"]
+        card.add_widget(text_input)
+        layout.add_widget(card)
+        popup = Popup(content=layout, size_hint=(0.8, 0.8))
         popup.open()
 
-    def create_topic_button(self, topic):
-        topic_button = Button(text=topic, size_hint_y=None, height=40)
-        topic_button.bind(on_release=lambda btn: self.show_topic_notes(topic))
-        self.topics_layout.add_widget(topic_button)
+    def create_note(self, name, body):
+        note_id = str(uuid.uuid4())
 
-    def add_topic(self, instance):
-        content = BoxLayout(orientation="vertical", padding=10)
-        topic_input = TextInput(
-            hint_text="Enter Topic Name", size_hint_y=None, height=40
+        last_modified = datetime.now().isoformat()
+
+        self.save_note_content(
+            note_id, {"name": name, "body": body, "last_modified": last_modified}
         )
-        save_button = Button(text="Save", size_hint_y=None, height=40)
-        content.add_widget(topic_input)
-        content.add_widget(save_button)
+        return note_id
 
-        add_topic_popup = Popup(
-            title="Add New Topic", content=content, size_hint=(0.8, 0.4)
-        )
+    def save_note_content(self, note_id, content):
+        with open(os.path.join(self.notes_dir, f"{note_id}.json"), "w") as file:
+            json.dump(content, file)
 
-        def save_topic(instance):
-            topic = topic_input.text.strip()
-            if topic and topic not in self.notes_data:
-                self.notes_data[topic] = []
-                self.create_topic_button(topic)
-                add_topic_popup.dismiss()
-
-        save_button.bind(on_release=save_topic)
-        add_topic_popup.open()
-
-    def show_topic_notes(self, topic):
-        layout = MDBoxLayout(
-            orientation="vertical", size_hint_y=None, padding=10, spacing=10
-        )
-        layout.bind(minimum_height=layout.setter("height"))
-
-        add_note_btn = Button(text="Add Note", size_hint_y=None, height=40)
-        add_note_btn.bind(on_release=lambda btn: self.add_note_to_topic(topic))
-        layout.add_widget(add_note_btn)
-
-        for note in self.notes_data[topic]:
-            label = Label(text=note, size_hint_y=None, height=40)
-            layout.add_widget(label)
-
-        card = MDCard(orientation="vertical", size_hint_y=None, padding=10)
-        card.add_widget(layout)
-        card.bind(minimum_height=card.setter("height"))
-
-        scroll_view = ScrollView()
-        scroll_view.add_widget(card)
-
-        popup = Popup(title=topic, content=scroll_view, size_hint=(0.8, 0.8))
-        popup.open()
-
-    def add_note_to_topic(self, topic):
-        content = BoxLayout(orientation="vertical", padding=10)
-        note_input = TextInput(hint_text="Enter Note", size_hint_y=None, height=80)
-        save_button = Button(text="Save", size_hint_y=None, height=40)
-        content.add_widget(note_input)
-        content.add_widget(save_button)
-
-        add_note_popup = Popup(title="Add Note", content=content, size_hint=(0.8, 0.4))
-
-        def save_note_to_topic(instance):
-            note = note_input.text.strip()
-            if note:
-                self.notes_data[topic].append(note)
-                add_note_popup.dismiss()
-                self.show_topic_notes(topic)
-
-        save_button.bind(on_release=save_note_to_topic)
-        add_note_popup.open()
+    def load_note_content(self, note_id):
+        try:
+            with open(os.path.join(self.notes_dir, f"{note_id}.json"), "r") as file:
+                return json.load(file)
+        except FileNotFoundError:
+            return {"name": "", "body": ""}
 
     def show_cost_overlay(self):
         order_count = self.app.order_manager.get_order_details()
-        if len(order_count['items']) == 0:
+        if len(order_count["items"]) == 0:
             temp_layout = MDBoxLayout(orientation="vertical")
-            temp_message = MDLabel(text=f'This is a test of the "Advanced Discount" feature.\nThe current order is empty so there is nothing here.\n')
-            temp_button = Button(text="Dismiss", on_press=lambda x: self.temp_popup.dismiss())
+            temp_message = MDLabel(
+                text=f'This is a test of the "Advanced Discount" feature.\nThe current order is empty so there is nothing here.\n'
+            )
+            temp_button = Button(
+                text="Dismiss", on_press=lambda x: self.temp_popup.dismiss()
+            )
             temp_layout.add_widget(temp_message)
             temp_layout.add_widget(temp_button)
-            self.temp_popup = Popup(content=temp_layout, size_hint=(0.4,0.4))
+            self.temp_popup = Popup(content=temp_layout, size_hint=(0.4, 0.4))
             self.temp_popup.open()
         else:
             order_details_with_cost = self.add_costs_to_order_details()
@@ -179,8 +226,12 @@ class PopupManager:
             header.add_widget(MDLabel(text="", size_hint_x=0.3))
             header.add_widget(MDLabel(text="Price", size_hint_x=0.075, halign="center"))
             header.add_widget(MDLabel(text="Cost", size_hint_x=0.075, halign="center"))
-            header.add_widget(MDLabel(text="Profit", size_hint_x=0.075, halign="center"))
-            header.add_widget(MDLabel(text="Quantity", size_hint_x=0.075, halign="center"))
+            header.add_widget(
+                MDLabel(text="Profit", size_hint_x=0.075, halign="center")
+            )
+            header.add_widget(
+                MDLabel(text="Quantity", size_hint_x=0.075, halign="center")
+            )
             header.add_widget(
                 MDLabel(text="Total Price", size_hint_x=0.075, halign="center")
             )
@@ -191,7 +242,9 @@ class PopupManager:
                 MDLabel(text="Total Profit", size_hint_x=0.075, halign="center")
             )
             header.add_widget(MDLabel(text="", size_hint_x=None, width=100))
-            header.add_widget(MDLabel(text="Discount", size_hint_x=0.075, halign="center"))
+            header.add_widget(
+                MDLabel(text="Discount", size_hint_x=0.075, halign="center")
+            )
             header.add_widget(MDLabel(text="", size_hint_x=None, width=20))
             inner_layout.add_widget(header)
 
@@ -245,7 +298,9 @@ class PopupManager:
                 new_total_price = (
                     item_data["price"] * item_data["quantity"]
                 ) - discount_amount
-                new_profit = new_total_price - (item_data["cost"] * item_data["quantity"])
+                new_profit = new_total_price - (
+                    item_data["cost"] * item_data["quantity"]
+                )
 
                 total_price_text.text = str(round(new_total_price, 2))
                 total_profit_text.text = str(round(new_profit, 2))
@@ -281,13 +336,12 @@ class PopupManager:
                         total_profit_text,
                     ),
                 }
-            def create_menu_item_type(
-                i, item_index, discount_button
-            ):
+
+            def create_menu_item_type(i, item_index, discount_button):
                 return {
                     "text": str(i),
                     "viewclass": "OneLineListItem",
-                    "on_release": lambda: self.set_discount_type(discount_button, i)
+                    "on_release": lambda: self.set_discount_type(discount_button, i),
                 }
 
             for item_index, (item_id, item_data) in enumerate(
@@ -315,7 +369,9 @@ class PopupManager:
                 price_text = MDLabel(
                     text=str(item_price), size_hint_x=0.075, halign="center"
                 )
-                cost_text = MDLabel(text=str(item_cost), size_hint_x=0.075, halign="center")
+                cost_text = MDLabel(
+                    text=str(item_cost), size_hint_x=0.075, halign="center"
+                )
                 profit_text = MDLabel(
                     text=str(item_profit), size_hint_x=0.075, halign="center"
                 )
@@ -331,7 +387,9 @@ class PopupManager:
                 total_profit_text = MDLabel(
                     text=str(profit_x_quantity), size_hint_x=0.075, halign="center"
                 )
-                item_discount_text = MDLabel(text="", size_hint_x=0.075, halign="center")
+                item_discount_text = MDLabel(
+                    text="", size_hint_x=0.075, halign="center"
+                )
 
                 self.discount_button = MDRaisedButton(text="0", pos_hint={"top": 1})
                 self.discount_type_button = MDRaisedButton(text="%")
@@ -350,11 +408,13 @@ class PopupManager:
                 ]
 
                 self.discount_dropdown = MDDropdownMenu(
-                items=menu_items,
-                caller=self.discount_button,
-                width_mult=4,
+                    items=menu_items,
+                    caller=self.discount_button,
+                    width_mult=4,
                 )
-                self.discount_button.bind(on_release=lambda x, dd=self.discount_dropdown: dd.open())
+                self.discount_button.bind(
+                    on_release=lambda x, dd=self.discount_dropdown: dd.open()
+                )
                 menu_items_type = [
                     create_menu_item_type(
                         i,
@@ -363,7 +423,6 @@ class PopupManager:
                     )
                     for i in ["%", "$"]
                 ]
-
 
                 self.discount_type_dropdown = MDDropdownMenu(
                     items=menu_items_type,
@@ -3962,3 +4021,33 @@ class CustomCheckbox(MDCheckbox):
             self.md_bg_color = self.active_color
         else:
             self.md_bg_color = self.theme_cls.primary_light
+
+
+class AutoSaveTextInput(TextInput):
+    def __init__(self, notes_dir, note_id, name, **kwargs):
+        super().__init__(**kwargs)
+        self.notes_dir = notes_dir
+        self.note_id = note_id
+        self.note_name = name
+        self.bind(text=self.on_text)
+
+    def on_text(self, instance, value):
+        self.save_note_content({"name": self.note_name, "body": value})
+
+    def save_note_content(self, content):
+        content["last_modified"] = datetime.now().isoformat()
+        with open(os.path.join(self.notes_dir, f"{self.note_id}.json"), "w") as file:
+            json.dump(content, file)
+
+    # def save_note_content(self, content):
+    #     with open(os.path.join(self.notes_dir, f"{self.note_id}.json"), "w") as file:
+    #         json.dump(content, file)
+
+    def load_note_content(self):
+        try:
+            with open(
+                os.path.join(self.notes_dir, f"{self.note_id}.json"), "r"
+            ) as file:
+                return json.load(file)
+        except FileNotFoundError:
+            return {"name": "", "body": ""}  # Default content if f
