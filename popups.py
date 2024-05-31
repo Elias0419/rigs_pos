@@ -478,27 +478,6 @@ class PopupManager:
                 self.discount_type_button.bind(
                     on_release=lambda x, dd=self.discount_type_dropdown: dd.open()
                 )
-                # discount_dropdown = MDDropdownMenu(
-                #     items=menu_items, caller=discount_button, width_mult=4
-                # )
-                # discount_button.bind(on_release=lambda x, dd=discount_dropdown: dd.open())
-                #
-                # menu_items_type = [
-                #     {
-                #         "text": i,
-                #         "viewclass": "OneLineListItem",
-                #         "on_release": lambda x=i, b=discount_type_button: b.setter("text")(
-                #             b, x
-                #         ),
-                #     }
-                #     for i in ["%", "$"]
-                # ]
-                # discount_type_dropdown = MDDropdownMenu(
-                #     items=menu_items_type, caller=discount_type_button, width_mult=4
-                # )
-                # discount_type_button.bind(
-                #     on_release=lambda x, dd=discount_type_dropdown: dd.open()
-                # )
 
                 item_layout.add_widget(name_text)
                 item_layout.add_widget(price_text)
@@ -2252,7 +2231,12 @@ class PopupManager:
             self.guard_popup.open()
             update_time()
 
-    def show_lock_screen(self):
+    def show_lock_screen(
+        self, clock_out=False, current_user=None, auto=False, timestamp=None
+    ):
+        print(clock_out, current_user, auto, timestamp)
+        if clock_out and current_user is not None:
+            print("condtion\n\nTEST")
         if self.app.disable_lock_screen:
             self.do_nothing(None)
         else:
@@ -2309,10 +2293,25 @@ class PopupManager:
                 # lock_button_layout.add_widget(self.lockscreen_keypad_layout)
                 lock_button_layout_container.add_widget(self.lockscreen_keypad_layout)
                 clock_layout = self.create_clock_layout()
+                self.clock_out_info = MDLabel(text="")
                 _blank = MDBoxLayout()
                 _blank2 = MDBoxLayout()
                 _blank3 = MDBoxLayout()
-                left_side_layout.add_widget(_blank)
+
+                def format_timestamp(timestamp):
+                    return datetime.strptime(
+                        timestamp, "%Y-%m-%dT%H:%M:%S.%f"
+                    ).strftime("%m/%d/%Y\n%I:%M %p")
+
+                if timestamp:
+                    human_readable_timestamp = format_timestamp(timestamp)
+                if clock_out and auto:
+                    self.clock_out_info.text = (
+                        f"Automatically logged out.\n\nPrevious user:\n{current_user}"
+                    )
+                elif clock_out:
+                    self.clock_out_info.text = f"Logged out.\n\nPrevious session:\n{current_user}\n{human_readable_timestamp}"
+                left_side_layout.add_widget(self.clock_out_info)
                 left_side_layout.add_widget(clock_layout)
                 left_side_layout.add_widget(_blank2)
                 left_side_layout.add_widget(lock_button_layout_container)
@@ -3334,7 +3333,7 @@ class PopupManager:
                 except Exception as e:
                     print(e)
 
-    def do_nothing(self, instance):
+    def do_nothing(self, instance=None, *args, **kwargs):
         pass
 
     def create_focus_popup(
