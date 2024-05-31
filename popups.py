@@ -2235,7 +2235,7 @@ class PopupManager:
         self, clock_out=False, current_user=None, auto=False, timestamp=None
     ):
         #print(clock_out, current_user, auto, timestamp)
-        if clock_out and current_user is not None:
+        #if clock_out and current_user is not None:
             #print("condtion\n\nTEST")
         if self.app.disable_lock_screen:
             self.do_nothing(None)
