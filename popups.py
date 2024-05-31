@@ -68,8 +68,13 @@ class PopupManager:
         )
         scroll_view.add_widget(self.top_level_notes_container)
         button_container = MDBoxLayout(size_hint_x=1, size_hint_y=None, height=100)
-        button = Button(
-            text="Add Topic", on_press=lambda x: self.add_topic(), size_hint_x=0.1
+        button = MDFlatButton(
+            text="Add Topic",
+            on_press=lambda x: self.add_topic(),
+            size_hint_x=0.1,
+            line_color="white",
+            _min_height=100,
+            _min_width=100,
         )
         button_container.add_widget(MDBoxLayout(size_hint_x=0.9))
         button_container.add_widget(button)
@@ -94,10 +99,14 @@ class PopupManager:
                 full_path = os.path.join(self.notes_dir, file_name)
                 with open(full_path, "r", encoding="utf-8") as file:
                     content = json.load(file)
-                note_files.append((content["last_modified"], file_name, content))
+
+                if self.app.admin or not content.get("admin", False):
+                    note_files.append((content["last_modified"], file_name, content))
         note_files.sort(reverse=True, key=lambda x: x[0])
         for last_modified, file_name, content in note_files:
+
             note_id = file_name.replace(".json", "")
+
             note_button = MDFlatButton(
                 line_color="white",
                 line_width=0.2,
@@ -106,9 +115,11 @@ class PopupManager:
                 size_hint_y=None,
                 height=50,
                 _min_width=800,
-                on_press=lambda x, nid=note_id, name=content[
-                    "name"
-                ]: self.show_note_details(self.notes_dir, note_id=nid, name=name),
+                on_press=lambda x, nid=note_id, name=content["name"], admin=content[
+                    "admin"
+                ]: self.show_note_details(
+                    self.notes_dir, note_id=nid, name=name, admin=admin
+                ),
             )
             self.top_level_notes_container.add_widget(note_button)
         self.update_notes_container_height()
@@ -119,16 +130,30 @@ class PopupManager:
             json.dump(content, file)
 
     def add_topic(self):
-        layout = MDBoxLayout(orientation="vertical")
+
+        layout = MDBoxLayout(orientation="vertical", spacing=10, padding=10)
         text_input = TextInput(
             multiline=False, size_hint_x=1, size_hint_y=None, height=50
         )
+        bottom_layout = MDBoxLayout()
+        admin_checkbox = CustomCheckbox(size_hint_x=None, width=50)
+        admin_question = MDLabel(text="Admin only?", size_hint_x=None, width=100)
         confirm_button = MDFlatButton(
             text="Confirm",
-            on_press=lambda x: self.add_to_top_level_notes(text_input.text),
+            on_press=lambda x: self.add_to_top_level_notes(
+                text_input.text, admin_checkbox.active
+            ),
+            _min_height=75,
+            _min_width=125,
+            line_color="white",
         )
         layout.add_widget(text_input)
-        layout.add_widget(confirm_button)
+        bottom_layout.add_widget(confirm_button)
+        bottom_layout.add_widget(MDBoxLayout(size_hint_x=None, width=400))
+        if self.app.admin:
+            bottom_layout.add_widget(admin_question)
+            bottom_layout.add_widget(admin_checkbox)
+        layout.add_widget(bottom_layout)
         self.add_topic_popup = FocusPopup(
             size_hint=(0.4, 0.2),
             title="Add Topic",
@@ -140,8 +165,8 @@ class PopupManager:
         self.add_topic_popup.focus_on_textinput(text_input)
         self.add_topic_popup.open()
 
-    def add_to_top_level_notes(self, text):
-        note_id = self.create_note(text, body="")
+    def add_to_top_level_notes(self, text, admin):
+        note_id = self.create_note(text, body="", admin=admin)
         self.top_level_notes_container.add_widget(
             MDFlatButton(
                 line_color="white",
@@ -152,7 +177,7 @@ class PopupManager:
                 height=50,
                 _min_width=800,
                 on_press=lambda x: self.show_note_details(
-                    self.notes_dir, note_id, name=text
+                    self.notes_dir, note_id, name=text, admin=admin
                 ),
             )
         )
@@ -165,10 +190,12 @@ class PopupManager:
         )
         self.top_level_notes_container.height = total_height
 
-    def show_note_details(self, notes_dir, note_id, name):
+    def show_note_details(self, notes_dir, note_id, name, admin):
         layout = BoxLayout(size_hint=(1, 1), orientation="vertical")
         card = MDCard(size_hint=(1, 1))
-        text_input = AutoSaveTextInput(notes_dir=notes_dir, note_id=note_id, name=name)
+        text_input = AutoSaveTextInput(
+            notes_dir=notes_dir, note_id=note_id, name=name, admin=admin
+        )
         content = text_input.load_note_content()
         text_input.text = content["body"]
         card.add_widget(text_input)
@@ -183,26 +210,32 @@ class PopupManager:
         )
         popup.open()
 
-    def create_note(self, name, body):
+    def create_note(self, name, body="", admin=False):
         note_id = str(uuid.uuid4())
 
         last_modified = datetime.now().isoformat()
 
         self.save_note_content(
-            note_id, {"name": name, "body": body, "last_modified": last_modified}
+            note_id,
+            {
+                "name": name,
+                "body": body,
+                "last_modified": last_modified,
+                "admin": admin,
+            },
         )
         return note_id
 
-    def save_note_content(self, note_id, content):
-        with open(os.path.join(self.notes_dir, f"{note_id}.json"), "w") as file:
-            json.dump(content, file)
-
-    def load_note_content(self, note_id):
-        try:
-            with open(os.path.join(self.notes_dir, f"{note_id}.json"), "r") as file:
-                return json.load(file)
-        except FileNotFoundError:
-            return {"name": "", "body": ""}
+    # def save_note_content(self, note_id, content):
+    #     with open(os.path.join(self.notes_dir, f"{note_id}.json"), "w") as file:
+    #         json.dump(content, file)
+    #
+    # def load_note_content(self, note_id):
+    #     try:
+    #         with open(os.path.join(self.notes_dir, f"{note_id}.json"), "r") as file:
+    #             return json.load(file)
+    #     except FileNotFoundError:
+    #         return {"name": "", "body": ""}
 
     def show_cost_overlay(self):
         order_count = self.app.order_manager.get_order_details()
@@ -2403,7 +2436,6 @@ class PopupManager:
             "Inventory",
             "Dual Pane",
             "Open Register",
-
         ]
 
         if self.app.admin:
@@ -4039,11 +4071,12 @@ class CustomCheckbox(MDCheckbox):
 
 
 class AutoSaveTextInput(TextInput):
-    def __init__(self, notes_dir, note_id, name, **kwargs):
+    def __init__(self, notes_dir, note_id, name, admin, **kwargs):
         super().__init__(**kwargs)
         self.notes_dir = notes_dir
         self.note_id = note_id
         self.note_name = name
+        self.admin = admin
         self.bind(text=self.on_text)
 
     def on_text(self, instance, value):
@@ -4051,12 +4084,9 @@ class AutoSaveTextInput(TextInput):
 
     def save_note_content(self, content):
         content["last_modified"] = datetime.now().isoformat()
+        content["admin"] = self.admin
         with open(os.path.join(self.notes_dir, f"{self.note_id}.json"), "w") as file:
             json.dump(content, file)
-
-    # def save_note_content(self, content):
-    #     with open(os.path.join(self.notes_dir, f"{self.note_id}.json"), "w") as file:
-    #         json.dump(content, file)
 
     def load_note_content(self):
         try:
@@ -4065,4 +4095,4 @@ class AutoSaveTextInput(TextInput):
             ) as file:
                 return json.load(file)
         except FileNotFoundError:
-            return {"name": "", "body": ""}  # Default content if f
+            return {"name": "", "body": "", "last_modified": "", "admin": False}
