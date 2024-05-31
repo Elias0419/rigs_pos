@@ -39,11 +39,11 @@ class Wrapper:
             if result.returncode in [0, 1, 42]:
                 recent_restarts += 1
                 if recent_restarts >= max_restarts:
-                    # self.send_email(
-                    #     "App has failed!",
-                    #     f"Script exited with returncode {result.returncode}.",
-                    #     recipient,
-                    # )
+                    self.send_email(
+                        "App has failed!",
+                        f"Script exited with returncode {result.returncode}.",
+                        recipient,
+                    )
 
                     # self.set_emergency_reboot_flag()
                     try:
@@ -58,41 +58,41 @@ class Wrapper:
                         )
                         time.sleep(5)
                         if fallback_process.poll() is None:
-                            # self.send_email(
-                            #     "Fallback successful",
-                            #     "The application has successfully fallen back.",
-                            #     recipient,
-                            # )
+                            self.send_email(
+                                "Fallback successful",
+                                "The application has successfully fallen back.",
+                                recipient,
+                            )
                             break
                         else:
-                            # self.send_email(
-                            #     "Fallback Failed",
-                            #     "The application has failed to fall back and is now stopped!",
-                            #     recipient,
-                            # )
+                            self.send_email(
+                                "Fallback Failed",
+                                "The application has failed to fall back and is now stopped!",
+                                recipient,
+                            )
                             sys.exit(43)
 
                     except:
-                        # self.send_email(
-                        #     "Fallback Failed",
-                        #     "The application has failed to fall back and is now stopped!",
-                        #     recipient,
-                        # )
+                        self.send_email(
+                            "Fallback Failed",
+                            "The application has failed to fall back and is now stopped!",
+                            recipient,
+                        )
                         sys.exit(43)
                 continue
             elif result.returncode == 43:
-                # self.send_email(
-                #     "Alert",
-                #     "Script has been stopped with adminstrator's return code",
-                #     recipient,
-                # )
+                self.send_email(
+                    "Alert",
+                    "Script has been stopped with adminstrator's return code",
+                    recipient,
+                )
                 break
             else:
-                # self.send_email(
-                #     "App has failed!",
-                #     f"Script has failed with unexpected return code: {result.returncode}",
-                #     recipient,
-                # )
+                self.send_email(
+                    "App has failed!",
+                    f"Script has failed with unexpected return code: {result.returncode}",
+                    recipient,
+                )
                 break
 
     # def set_emergency_reboot_flag(self):
