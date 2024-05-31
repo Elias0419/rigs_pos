@@ -213,9 +213,9 @@ class Utilities:
 
     # def time_until_end_of_shift(self): # testing
     #
-    #     hour = 8
+    #     hour = 11
     #     minute = 45
-    #
+    #     now = datetime.now()
     #     end_of_shift = datetime(now.year, now.month, now.day, hour, minute)
     #
     #     if now >= end_of_shift:
@@ -241,6 +241,7 @@ class Utilities:
 
         session_id = str(uuid.uuid4())
         self.app.logged_in_user = user_details
+
         today_str = datetime.now().strftime("%Y-%m-%d")
         self.clock_in_file = f"{user_details['name']}-{today_str}-{session_id}.json"
 
@@ -262,7 +263,7 @@ class Utilities:
                 self.auto_clock_out, self.time_until_end_of_shift()
             )
 
-    def clock_out(self):
+    def clock_out(self, timestamp=None, auto=False):
         if hasattr(self, "clock_out_event"):
             self.clock_out_event.cancel()
         if os.path.exists(self.clock_in_file):
@@ -274,8 +275,17 @@ class Utilities:
                 "clock_out",
                 session_id=session_id,
             )
-        self.app.popup_manager.clock_out_popup.dismiss()
-        self.app.utilities.trigger_guard_and_lock()
+        current_user = self.app.logged_in_user["name"]
+        self.app.logged_in_user["name"] = "nobody"
+        self.app.admin = False
+        try:
+            self.app.popup_manager.clock_out_popup.dismiss()
+        except:
+            pass
+        timestamp = timestamp or datetime.now().isoformat()
+        self.app.utilities.trigger_guard_and_lock(
+            clock_out=True, current_user=current_user, timestamp=timestamp, auto=auto
+        )
 
     def auto_clock_out(self, dt):
         if os.path.exists(self.clock_in_file):
@@ -293,6 +303,11 @@ class Utilities:
                 timestamp=formatted_midnight,
                 session_id=session_id,
             )
+
+        timestamp = datetime.now().isoformat()
+        self.app.utilities.trigger_guard_and_lock(
+            auto_clock_out=True, timestamp=timestamp
+        )
 
     def update_attendance_log(
         self, log_file, user_name, action, session_id, auto=False, timestamp=None
@@ -691,7 +706,7 @@ class Utilities:
         right_area_layout.add_widget(self.app.order_layout)
 
         financial_button = self.create_financial_layout()
-        financial_layout = MDGridLayout(size_hint_y=0.2, orientation='lr-tb', cols=2)
+        financial_layout = MDGridLayout(size_hint_y=0.2, orientation="lr-tb", cols=2)
         financial_layout.add_widget(MDLabel(size_hint_x=0.4))
         financial_layout.add_widget(financial_button)
         right_area_layout.add_widget(financial_layout)
@@ -700,7 +715,11 @@ class Utilities:
         lock_icon = MDIconButton(
             icon="lock", on_press=lambda x: self.trigger_guard_and_lock(trigger=True)
         )
-        self.cost_overlay_icon = MDButtonLabel(on_press=lambda x: self.app.popup_manager.show_cost_overlay(), text="", halign="center")
+        self.cost_overlay_icon = MDButtonLabel(
+            on_press=lambda x: self.app.popup_manager.show_cost_overlay(),
+            text="",
+            halign="center",
+        )
 
         sidebar.add_widget(trash_icon_container)
         sidebar.add_widget(save_icon_container)
@@ -759,6 +778,7 @@ class Utilities:
         btn_tools = MDFlatButton(
             text="[b][size=40]TOOLS[/b][/size]",
             on_press=self.app.button_handler.on_button_press,
+            # on_press=lambda x: self.trigger_guard_and_lock(),
             padding=(8, 8),
             font_style="H6",
             size_hint_x=None,
@@ -1064,7 +1084,29 @@ class Utilities:
     def on_split_custom_cash_cancel(self, instance):
         self.app.popup_manager.dismiss_popups("split_custom_cash_popup")
 
-    def trigger_guard_and_lock(self, trigger=False):
+    def trigger_guard_and_lock(
+        self,
+        trigger=False,
+        clock_out=False,
+        auto_clock_out=False,
+        current_user=None,
+        timestamp="",
+        auto=False,
+    ):
+        if auto_clock_out:
+            try:
+                self.app.popup_manager.lock_popup.dismiss()
+            except:
+                pass
+            try:
+                self.app.popup_manager.guard_popup.dismiss()
+            except:
+                pass
+            self.app.is_lock_screen_displayed = False
+            self.app.is_guard_screen_displayed = False
+            self.clock_out(timestamp=timestamp, auto=True)
+        if current_user is None and self.app.logged_in_user != "nobody":
+            current_user = self.app.logged_in_user["name"]
         if trigger:
             self.app.disable_lock_screen = False
             try:
@@ -1079,7 +1121,12 @@ class Utilities:
             and not self.app.is_lock_screen_displayed
         ):
 
-            self.app.popup_manager.show_lock_screen()
+            self.app.popup_manager.show_lock_screen(
+                clock_out=clock_out,
+                current_user=current_user,
+                auto=auto,
+                timestamp=timestamp,
+            )
             self.app.popup_manager.show_guard_screen()
             self.app.is_lock_screen_displayed = True
             self.app.is_guard_screen_displayed = True
@@ -1586,9 +1633,10 @@ class ImageButton(ButtonBehavior, Image):
             pass
         # subprocess.Popen(["python", "games/tetris.py", self.app.logged_in_user])
 
+
 class MDButtonLabel(ButtonBehavior, MDLabel):
     def __init__(self, **kwargs):
-        self.on_touch_down_callback = kwargs.pop('on_touch_down_callback', None)
+        self.on_touch_down_callback = kwargs.pop("on_touch_down_callback", None)
         super().__init__(**kwargs)
 
     def on_touch_down(self, touch):
