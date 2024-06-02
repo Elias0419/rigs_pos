@@ -1094,6 +1094,8 @@ class Utilities:
         auto=False,
     ):
         print(f"DEBUG 1:\n{self.app.is_lock_screen_displayed}\n{self.app.is_guard_screen_displayed}")
+        if clock_out:
+            self.app.is_lock_screen_displayed == False
         if auto_clock_out:
             try:
                 self.app.popup_manager.lock_popup.dismiss()
@@ -1196,9 +1198,9 @@ class Utilities:
             seconds //= 1000
 
             human_readable_time = f"{hours}h:{minutes}m:{seconds}s"
-            #if idle_time > 6000:  # debug
-            if idle_time > 600000:  # 10 minutes
-                self.trigger_guard_and_lock(trigger=False)
+            if idle_time > 6000:  # debug
+            #if idle_time > 600000:  # 10 minutes
+                self.trigger_guard_and_lock()
 
         except Exception as e:
             print(f"Exception in check_inactivity\n{e}")
