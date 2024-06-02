@@ -1093,7 +1093,6 @@ class Utilities:
         timestamp="",
         auto=False,
     ):
-        print(f"DEBUG 1:\nLOCK:{self.app.is_lock_screen_displayed}\nGUARD:{self.app.is_guard_screen_displayed}\nclock_out:{clock_out}")
         if clock_out:
             self.app.is_lock_screen_displayed = False
             self.app.disable_lock_screen = False
@@ -1112,7 +1111,6 @@ class Utilities:
         if current_user is None and self.app.logged_in_user != "nobody":
             current_user = self.app.logged_in_user["name"]
         if trigger:
-            print(f"DEBUG 2 (trigger):\n{self.app.is_lock_screen_displayed}\n{self.app.is_guard_screen_displayed}")
             self.app.disable_lock_screen = False
             try:
                 self.app.popup_manager.lock_popup.dismiss()
@@ -1125,7 +1123,6 @@ class Utilities:
             not self.app.is_guard_screen_displayed
             and not self.app.is_lock_screen_displayed
         ):
-            print(f"DEBUG 3:\nLOCK:{self.app.is_lock_screen_displayed}\nGUARD:{self.app.is_guard_screen_displayed}\nclock_out:{clock_out}")
             self.app.popup_manager.show_lock_screen(
                 clock_out=clock_out,
                 current_user=current_user,
@@ -1138,15 +1135,12 @@ class Utilities:
         elif (
             self.app.is_lock_screen_displayed and not self.app.is_guard_screen_displayed
         ):
-            print(f"DEBUG 4:\nLOCK:{self.app.is_lock_screen_displayed}\nGUARD:{self.app.is_guard_screen_displayed}\nclock_out:{clock_out}")
-
             self.app.popup_manager.show_guard_screen()
             self.app.is_guard_screen_displayed = True
 
         elif (
             self.app.is_guard_screen_displayed and not self.app.is_lock_screen_displayed
         ):
-            print(f"DEBUG 5:\nLOCK:{self.app.is_lock_screen_displayed}\nGUARD:{self.app.is_guard_screen_displayed}\nclock_out:{clock_out}")
             self.app.popup_manager.show_lock_screen()
             self.app.is_lock_screen_displayed = True
 
@@ -1199,8 +1193,8 @@ class Utilities:
             seconds //= 1000
 
             human_readable_time = f"{hours}h:{minutes}m:{seconds}s"
-            if idle_time > 6000:  # debug
-            #if idle_time > 600000:  # 10 minutes
+            # if idle_time > 6000:  # debug
+            if idle_time > 600000:  # 10 minutes
                 self.trigger_guard_and_lock()
 
         except Exception as e:
