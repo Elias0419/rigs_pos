@@ -283,7 +283,7 @@ class Utilities:
         except:
             pass
         timestamp = timestamp or datetime.now().isoformat()
-        self.app.utilities.trigger_guard_and_lock(
+        self.trigger_guard_and_lock(
             clock_out=True, current_user=current_user, timestamp=timestamp, auto=auto
         )
 
@@ -1093,6 +1093,7 @@ class Utilities:
         timestamp="",
         auto=False,
     ):
+        print(f"DEBUG 1:\n{self.app.is_lock_screen_displayed}\n{self.app.is_guard_screen_displayed}")
         if auto_clock_out:
             try:
                 self.app.popup_manager.lock_popup.dismiss()
@@ -1108,6 +1109,7 @@ class Utilities:
         if current_user is None and self.app.logged_in_user != "nobody":
             current_user = self.app.logged_in_user["name"]
         if trigger:
+            print(f"DEBUG 2 (trigger):\n{self.app.is_lock_screen_displayed}\n{self.app.is_guard_screen_displayed}")
             self.app.disable_lock_screen = False
             try:
                 self.app.popup_manager.lock_popup.dismiss()
@@ -1120,7 +1122,7 @@ class Utilities:
             not self.app.is_guard_screen_displayed
             and not self.app.is_lock_screen_displayed
         ):
-
+            print(f"DEBUG 3:\n{self.app.is_lock_screen_displayed}\n{self.app.is_guard_screen_displayed}")
             self.app.popup_manager.show_lock_screen(
                 clock_out=clock_out,
                 current_user=current_user,
@@ -1133,6 +1135,7 @@ class Utilities:
         elif (
             self.app.is_lock_screen_displayed and not self.app.is_guard_screen_displayed
         ):
+            print(f"DEBUG 4:\n{self.app.is_lock_screen_displayed}\n{self.app.is_guard_screen_displayed}")
 
             self.app.popup_manager.show_guard_screen()
             self.app.is_guard_screen_displayed = True
@@ -1140,7 +1143,7 @@ class Utilities:
         elif (
             self.app.is_guard_screen_displayed and not self.app.is_lock_screen_displayed
         ):
-
+            print(f"DEBUG 5:\n{self.app.is_lock_screen_displayed}\n{self.app.is_guard_screen_displayed}")
             self.app.popup_manager.show_lock_screen()
             self.app.is_lock_screen_displayed = True
 
@@ -1193,8 +1196,8 @@ class Utilities:
             seconds //= 1000
 
             human_readable_time = f"{hours}h:{minutes}m:{seconds}s"
-
-            if idle_time > 600000:  # 10 minutes
+            if idle_time > 6000:  # debug
+            #if idle_time > 600000:  # 10 minutes
                 self.trigger_guard_and_lock(trigger=False)
 
         except Exception as e:
