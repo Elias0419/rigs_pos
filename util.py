@@ -1095,7 +1095,7 @@ class Utilities:
     ):
         print(f"DEBUG 1:\nLOCK:{self.app.is_lock_screen_displayed}\nGUARD:{self.app.is_guard_screen_displayed}\nclock_out:{clock_out}")
         if clock_out:
-            self.app.is_lock_screen_displayed == False
+            self.app.is_lock_screen_displayed = False
         if auto_clock_out:
             try:
                 self.app.popup_manager.lock_popup.dismiss()
