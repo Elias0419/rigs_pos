@@ -1196,8 +1196,8 @@ class Utilities:
             seconds //= 1000
 
             human_readable_time = f"{hours}h:{minutes}m:{seconds}s"
-            if idle_time > 6000:  # debug
-            #if idle_time > 600000:  # 10 minutes
+            #if idle_time > 6000:  # debug
+            if idle_time > 600000:  # 10 minutes
                 self.trigger_guard_and_lock(trigger=False)
 
         except Exception as e:
