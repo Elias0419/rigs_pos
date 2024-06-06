@@ -1783,8 +1783,9 @@ class PopupManager:
             size_hint=(1, 1),
             on_press=lambda x: self.handle_order_discount_toggle(percent=False),
         )
-        toggle_container.add_widget(self.amount_toggle)
         toggle_container.add_widget(self.percent_toggle)
+        toggle_container.add_widget(self.amount_toggle)
+
 
         # if self.app.admin:
         #     discounts = [5, 10, 15, 20, 30, 40, 50, 100]
