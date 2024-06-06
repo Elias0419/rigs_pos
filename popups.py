@@ -1718,12 +1718,14 @@ class PopupManager:
             on_press=lambda x: self.handle_discount_toggle(percent=False),
         )
         toggle_container.add_widget(self.percent_toggle)
-        if self.app.admin:
-            toggle_container.add_widget(self.amount_toggle)
-        if self.app.admin:
-            discounts = [5, 10, 15, 20, 30, 40, 50, 100]
-        else:
-            discounts = [5, 10, 15]
+        # if self.app.admin:
+        #     toggle_container.add_widget(self.amount_toggle)
+        # if self.app.admin:
+        #     discounts = [5, 10, 15, 20, 30, 40, 50, 100]
+        # else:
+        #     discounts = [5, 10, 15]
+        toggle_container.add_widget(self.amount_toggle) # revert
+        discounts = [5, 10, 15, 20, 30, 40, 50, 100] # revert
         discount_item_layout = GridLayout(orientation="lr-tb", cols=2, spacing=10)
         for discount in discounts:
             discount_button = MDFlatButton(
@@ -1747,8 +1749,9 @@ class PopupManager:
             text="Cancel",
             on_press=lambda x: self.app.utilities.dismiss_single_discount_popup(),
         )
-        if self.app.admin:
-            button_layout.add_widget(custom_button)
+        # if self.app.admin:
+        #     button_layout.add_widget(custom_button)
+        button_layout.add_widget(custom_button) # revert
         button_layout.add_widget(cancel_button)
         discount_item_popup_layout.add_widget(toggle_container)
         discount_item_popup_layout.add_widget(discount_item_layout)
@@ -1774,19 +1777,20 @@ class PopupManager:
             line_color="white",
             on_press=lambda x: self.handle_order_discount_toggle(percent=True),
         )
-        if self.app.admin:
-            self.amount_toggle = MDFlatButton(
-                text="[size=18]$[/size]",
-                size_hint=(1, 1),
-                on_press=lambda x: self.handle_order_discount_toggle(percent=False),
-            )
-            toggle_container.add_widget(self.amount_toggle)
+        # if self.app.admin: # revert
+        self.amount_toggle = MDFlatButton(
+            text="[size=18]$[/size]",
+            size_hint=(1, 1),
+            on_press=lambda x: self.handle_order_discount_toggle(percent=False),
+        )
+        toggle_container.add_widget(self.amount_toggle)
         toggle_container.add_widget(self.percent_toggle)
 
-        if self.app.admin:
-            discounts = [5, 10, 15, 20, 30, 40, 50, 100]
-        else:
-            discounts = [5, 10, 15]
+        # if self.app.admin:
+        #     discounts = [5, 10, 15, 20, 30, 40, 50, 100]
+        # else:
+        #     discounts = [5, 10, 15]
+        discounts = [5, 10, 15, 20, 30, 40, 50, 100] # revert
         discount_layout = GridLayout(orientation="lr-tb", cols=2, spacing=10)
         for discount in discounts:
             discount_button = MDFlatButton(
@@ -1800,12 +1804,12 @@ class PopupManager:
         button_layout = GridLayout(
             orientation="lr-tb", spacing=5, cols=2, rows=1, size_hint_y=0.2
         )
-        if self.app.admin:
-            custom_button = Button(
-                text="Custom",
-                on_press=lambda x: self.custom_add_order_discount_popup(),
-            )
-            button_layout.add_widget(custom_button)
+        # if self.app.admin: # revert
+        custom_button = Button(
+            text="Custom",
+            on_press=lambda x: self.custom_add_order_discount_popup(),
+        )
+        button_layout.add_widget(custom_button)
         cancel_button = Button(
             text="Cancel",
             on_press=lambda x: self.app.utilities.dismiss_discount_order_popup(),
