@@ -43,6 +43,7 @@ class DatabaseManager:
         self.create_modified_orders_table()
         self.create_dist_table()
         self.create_payment_history_table()
+        self.create_attendance_log_table()
 
     def download_database_from_github(self):
         github_url = (
@@ -75,6 +76,29 @@ class DatabaseManager:
             conn.commit()
         except sqlite3.Error as e:
             print(e)
+        finally:
+            conn.close()
+
+    def create_attendance_log_table(self):
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """CREATE TABLE IF NOT EXISTS attendance_log (
+                    session_id TEXT PRIMARY KEY,
+                    name TEXT,
+                    date DATE,
+                    clock_in TIME,
+                    clock_out TIME,
+                    hours INTEGER,
+                    minutes INTEGER,
+                    cash REAL,
+                    delete_flag BOOLEAN DEFAULT 0
+                )"""
+            )
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Error creating attendance log table: {e}")
         finally:
             conn.close()
 
@@ -703,6 +727,48 @@ class DatabaseManager:
         except sqlite3.Error as e:
             print(e)
             return None
+        finally:
+            conn.close()
+
+    def delete_attendance_log_entry(self, session_id):
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM attendance_log WHERE session_id = ?", (session_id,))
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Error deleting attendance log entry: {e}")
+        finally:
+            conn.close()
+
+    def insert_attendance_log_entry(self, session_id, name, date, clock_in, clock_out=None, hours=None, minutes=None):
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """INSERT INTO attendance_log (session_id, name, date, clock_in, clock_out, hours, minutes)
+                VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                (session_id, name, date, clock_in, clock_out, hours, minutes)
+            )
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Error inserting into attendance log: {e}")
+        finally:
+            conn.close()
+
+    def update_attendance_log_entry(self, session_id, clock_out):
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """UPDATE attendance_log
+                SET clock_out = ?
+                WHERE session_id = ?""",
+                (clock_out, session_id)
+            )
+            conn.commit()
+        except sqlite3.Error as e:
+            print(f"Error updating attendance log: {e}")
         finally:
             conn.close()
 
