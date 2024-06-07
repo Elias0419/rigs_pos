@@ -2,7 +2,7 @@ import threading
 import usb.core
 import usb.util
 import re
-
+import subprocess
 import time
 
 
@@ -129,6 +129,7 @@ class BarcodeScanner:
                 if data[2] != 0:
                     character = conversion_table.get(data[2], [""])[0]
                     if character == "\n":
+                        subprocess.run(["xdotool", "key", "Shift_L"])
                         # print(f"Barcode detected: {self.current_barcode}")
                         self.barcode_ready.set()
 
