@@ -129,7 +129,10 @@ class BarcodeScanner:
                 if data[2] != 0:
                     character = conversion_table.get(data[2], [""])[0]
                     if character == "\n":
-                        subprocess.run(["xdotool", "key", "Shift_L"])
+                        try: # in case we don't have xdotool
+                            subprocess.run(["xdotool", "key", "Shift_L"])
+                        except:
+                            pass
                         # print(f"Barcode detected: {self.current_barcode}")
                         self.barcode_ready.set()
 
