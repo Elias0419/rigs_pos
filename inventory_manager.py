@@ -296,7 +296,7 @@ class InventoryView(BoxLayout):
     def show_inventory(self, inventory_items):
 
         self.full_inventory = inventory_items
-        data = self.generate_data_for_rv(inventory_items)
+        data = self.generate_data_for_rv("")
         for item in data:
             item["order_manager"] = self.order_manager
         self.rv.data = data
