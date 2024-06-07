@@ -318,10 +318,10 @@ class InventoryView(BoxLayout):
             filtered_items = [
                 item for item in self.full_inventory if query in item[1].lower()
             ]
-        else:
-            filtered_items = self.full_inventory
+        # else:
+        #     filtered_items = self.full_inventory
 
-        self.rv.data = self.generate_data_for_rv(filtered_items)
+            self.rv.data = self.generate_data_for_rv(filtered_items)
 
 
 class MarkupLabel(Label):
