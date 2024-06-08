@@ -2455,6 +2455,7 @@ class PopupManager:
                 _min_width=200,
                 md_bg_color=(0.5, 0.5, 0.5, 0.25),
                 on_press=self.app.button_handler.on_tool_button_press,
+                _no_ripple_effect=True,
             )
             float_layout.add_widget(btn)
         if self.app.admin:
@@ -2503,6 +2504,7 @@ class PopupManager:
                 _min_width=200,
                 on_press=self.app.button_handler.on_admin_button_press,
                 md_bg_color=(0.5, 0.5, 0.5, 0.25),
+                _no_ripple_effect=True,
             )
             float_layout.add_widget(btn)
 
