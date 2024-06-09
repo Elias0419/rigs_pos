@@ -251,11 +251,16 @@ class Utilities:
                     {"clock_in": datetime.now().isoformat(), "session_id": session_id},
                     file,
                 )
+            # self.update_attendance_log(
+            #     self.app.attendance_log,
+            #     user_details["name"],
+            #     "clock_in",
+            #     session_id=session_id,
+            # )
             self.update_attendance_log(
-                self.app.attendance_log,
                 user_details["name"],
-                "clock_in",
                 session_id=session_id,
+                clock_in=True,
             )
             log_in_time = self.read_formatted_clock_in_time(self.clock_in_file)
             self.time_clock.text = f"Logged in as {self.app.logged_in_user['name']}\n[u]Tap here to log out[/u]"
@@ -270,10 +275,10 @@ class Utilities:
             session_id = self.extract_session_id(self.clock_in_file)
             os.remove(self.clock_in_file)
             self.update_attendance_log(
-                self.app.attendance_log,
-                self.app.logged_in_user["name"],
-                "clock_out",
+                name=self.app.logged_in_user["name"],
                 session_id=session_id,
+                clock_out=True,
+
             )
         current_user = self.app.logged_in_user["name"]
         self.app.logged_in_user["name"] = "nobody"
@@ -309,27 +314,36 @@ class Utilities:
             auto_clock_out=True, timestamp=timestamp
         )
 
-    def update_attendance_log(
-        self, log_file, user_name, action, session_id, auto=False, timestamp=None
-    ):
+    def update_attendance_log(self, name, session_id, timestamp=None, clock_in=False, clock_out=False):
         if timestamp is None:
             timestamp = datetime.now().isoformat()
+        if clock_in:
+            self.app.db_manager.insert_attendance_log_entry(name, session_id, timestamp)
+        elif clock_out:
+            self.app.db_manager.update_attendance_log_entry(session_id, timestamp)
 
-        entry = {
-            "name": user_name,
-            "timestamp": timestamp,
-            "action": action if not auto else "auto",
-            "session_id": session_id,
-        }
-        if not os.path.exists(log_file):
-            with open(log_file, "w") as file:
-                json.dump([entry], file, indent=4)
-        else:
-            with open(log_file, "r+") as file:
-                log = json.load(file)
-                log.append(entry)
-                file.seek(0)
-                json.dump(log, file, indent=4)
+
+    # def update_attendance_log(
+    #     self, log_file, user_name, action, session_id, auto=False, timestamp=None
+    # ):
+    #     if timestamp is None:
+    #         timestamp = datetime.now().isoformat()
+    #
+    #     entry = {
+    #         "name": user_name,
+    #         "timestamp": timestamp,
+    #         "action": action if not auto else "auto",
+    #         "session_id": session_id,
+    #     }
+    #     if not os.path.exists(log_file):
+    #         with open(log_file, "w") as file:
+    #             json.dump([entry], file, indent=4)
+    #     else:
+    #         with open(log_file, "r+") as file:
+    #             log = json.load(file)
+    #             log.append(entry)
+    #             file.seek(0)
+    #             json.dump(log, file, indent=4)
 
     def delete_session_from_log(self, session_id):
         try:
@@ -352,48 +366,40 @@ class Utilities:
         return data["session_id"]
 
     def load_attendance_data(self):
-        if not os.path.exists(self.app.attendance_log):
-            with open(self.app.attendance_log, "w") as file:
-                json.dump([], file)
-            return []
 
-        with open(self.app.attendance_log, "r") as file:
-            data = json.load(file)
+        data = self.app.db_manager.retrieve_attendence_log_entries()
         return data
 
     def organize_sessions(self, data):
         sessions = {}
         for entry in data:
-            user = entry["name"]
-            if user not in sessions:
-                sessions[user] = []
+            session_id, user, clock_in, clock_out = entry[0], entry[1], entry[2], entry[3]
 
-            if entry["action"] == "clock_in":
-                sessions[user].append(
-                    {
-                        "clock_in": entry["timestamp"],
-                        "clock_out": None,
-                        "session_id": entry["session_id"],
-                    }
-                )
-            elif entry["action"] == "clock_out" and sessions[user]:
-                for session in reversed(sessions[user]):
-                    if (
-                        session["clock_out"] is None
-                        and session["session_id"] == entry["session_id"]
-                    ):
-                        session["clock_out"] = entry["timestamp"]
-                        break
+            if user not in sessions:
+                sessions[user] = {}
+
+            if session_id not in sessions[user]:
+                sessions[user][session_id] = {
+                    "clock_in": None,
+                    "clock_out": None,
+                    "session_id": session_id
+                }
+
+            if clock_in:
+                sessions[user][session_id]["clock_in"] = clock_in
+            if clock_out:
+                sessions[user][session_id]["clock_out"] = clock_out
 
         return sessions
+
 
     def format_sessions_for_display(self, sessions):
         formatted_data = []
         for user, user_sessions in sessions.items():
-            for session in user_sessions:
-                if session["clock_out"]:
-                    clock_in_time = datetime.fromisoformat(session["clock_in"])
-                    clock_out_time = datetime.fromisoformat(session["clock_out"])
+            for session_id, session_details in user_sessions.items():
+                if session_details["clock_out"]:
+                    clock_in_time = datetime.fromisoformat(session_details["clock_in"])
+                    clock_out_time = datetime.fromisoformat(session_details["clock_out"])
                     duration = clock_out_time - clock_in_time
                     hours, remainder = divmod(duration.total_seconds(), 3600)
                     minutes = remainder // 60
@@ -404,7 +410,7 @@ class Utilities:
                         "clock_out": clock_out_time.strftime("%H:%M"),
                         "hours": int(hours),
                         "minutes": int(minutes),
-                        "session_id": session["session_id"],
+                        "session_id": session_id,
                     }
                     formatted_data.append(formatted_session)
         return formatted_data
@@ -778,7 +784,7 @@ class Utilities:
         btn_tools = MDFlatButton(
             text="[b][size=40]TOOLS[/b][/size]",
             on_press=self.app.button_handler.on_button_press,
-            # on_press=lambda x: self.trigger_guard_and_lock(),
+            # on_press=lambda x: self.app.db_manager.retrieve_attendence_log_entries(),
             padding=(8, 8),
             font_style="H6",
             size_hint_x=None,

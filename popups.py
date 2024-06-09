@@ -559,15 +559,14 @@ class PopupManager:
         open_session = None
 
         for entry in reversed(data):
-            if entry["name"] == self.app.logged_in_user["name"]:
-                if entry["action"] == "clock_in":
-                    open_session = entry
-                    break
-                elif entry["action"] == "clock_out":
-                    break
 
+            if entry[1] == self.app.logged_in_user["name"] and entry[3] == None:
+                open_session = entry
+                break
+            elif entry[3] is not None:
+                break
         if open_session:
-            clock_in_time = datetime.fromisoformat(open_session["timestamp"])
+            clock_in_time = datetime.fromisoformat(open_session[2])
             clock_out_time = datetime.now()
             duration = clock_out_time - clock_in_time
             hours, remainder = divmod(duration.total_seconds(), 3600)
@@ -889,7 +888,7 @@ class PopupManager:
         # self.show_attendence_log(filter=True, filter_name=name)
 
     def delete_session(self, session_id, name, delete=False):
-        self.app.utilities.delete_session_from_log(session_id)
+        self.app.db_manager.delete_attendance_log_entry(session_id)
         if delete:
             self.delete_session_popup.dismiss()
         self.attendence_log_popup.dismiss()

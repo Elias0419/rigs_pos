@@ -38,12 +38,14 @@ class DatabaseManager:
                 conn.close()
 
     def ensure_tables_exist(self):
+
         self.create_items_table()
         self.create_order_history_table()
         self.create_modified_orders_table()
         self.create_dist_table()
         self.create_payment_history_table()
         self.create_attendance_log_table()
+
 
     def download_database_from_github(self):
         github_url = (
@@ -87,13 +89,8 @@ class DatabaseManager:
                 """CREATE TABLE IF NOT EXISTS attendance_log (
                     session_id TEXT PRIMARY KEY,
                     name TEXT,
-                    date DATE,
                     clock_in TIME,
-                    clock_out TIME,
-                    hours INTEGER,
-                    minutes INTEGER,
-                    cash REAL,
-                    delete_flag BOOLEAN DEFAULT 0
+                    clock_out TIME
                 )"""
             )
             conn.commit()
@@ -686,7 +683,7 @@ class DatabaseManager:
             cursor = conn.cursor()
 
             cursor.execute(
-                "INSERT INTO payments (timestamp, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, >)",
+                "INSERT INTO payments (timestamp, session_id, date, name, clock_in, clock_out, hours, minutes, cash, dd, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     timestamp,
                     session_id,
@@ -741,14 +738,14 @@ class DatabaseManager:
         finally:
             conn.close()
 
-    def insert_attendance_log_entry(self, session_id, name, clock_in, clock_out=None, hours=None, minutes=None):
+    def insert_attendance_log_entry(self, name, session_id, clock_in_time, clock_out_time=None):
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
             cursor.execute(
-                """INSERT INTO attendance_log (session_id, name, date, clock_in, clock_out, hours, minutes)
-                VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                (session_id, name, date, clock_in, clock_out, hours, minutes)
+                """INSERT INTO attendance_log (name, session_id, clock_in, clock_out)
+                VALUES (?, ?, ?, ?)""",
+                (name, session_id, clock_in_time, clock_out_time)
             )
             conn.commit()
         except sqlite3.Error as e:
@@ -756,12 +753,13 @@ class DatabaseManager:
         finally:
             conn.close()
 
-    def retrieve_attendence_log_entries(self, name, date):
+    def retrieve_attendence_log_entries(self): # debug
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM payments WHERE name = ? AND date = ?", (name, date))
+            cursor.execute("SELECT * FROM attendance_log")
             results = cursor.fetchall()
+
             return results
         except sqlite3.Error as e:
             print(f"[DatabaseManager]:\n{e}")
@@ -769,7 +767,20 @@ class DatabaseManager:
             conn.close()
 
 
-    def update_attendance_log_entry(self, session_id, clock_out):
+    # def retrieve_attendence_log_entries(self, name, date):
+    #     conn = self._get_connection()
+    #     try:
+    #         cursor = conn.cursor()
+    #         cursor.execute("SELECT * FROM attendance_log WHERE name = ? AND date = ?", (name, date))
+    #         results = cursor.fetchall()
+    #         return results
+    #     except sqlite3.Error as e:
+    #         print(f"[DatabaseManager]:\n{e}")
+    #     finally:
+    #         conn.close()
+
+
+    def update_attendance_log_entry(self, session_id, clock_out_time):
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
@@ -777,7 +788,7 @@ class DatabaseManager:
                 """UPDATE attendance_log
                 SET clock_out = ?
                 WHERE session_id = ?""",
-                (clock_out, session_id)
+                (clock_out_time, session_id)
             )
             conn.commit()
         except sqlite3.Error as e:
