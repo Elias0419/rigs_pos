@@ -46,6 +46,7 @@ from distributor_manager import DistPopup, DistView
 class Utilities:
     def __init__(self, ref):
         self.app = ref
+        self.clock_in_file = ""
 
     def initialize_global_variables(self):
         # self.app.admin = False
@@ -103,7 +104,7 @@ class Utilities:
             else:
                 barcode_cache[barcode]["items"].append(item)
                 barcode_cache[barcode]["is_dupe"] = True
-        print(len(barcode_cache))
+        # print(len(barcode_cache))
         return barcode_cache
 
     def initialize_inventory_cache(self):
@@ -239,13 +240,13 @@ class Utilities:
         if not authenticated:
             return False
 
-        session_id = str(uuid.uuid4())
         self.app.logged_in_user = user_details
 
         today_str = datetime.now().strftime("%Y-%m-%d")
-        self.clock_in_file = f"{user_details['name']}-{today_str}-{session_id}.json"
 
         if not os.path.exists(self.clock_in_file):
+            session_id = str(uuid.uuid4())
+            self.clock_in_file = f"{user_details['name']}-{today_str}-{session_id}.json"
             with open(self.clock_in_file, "w") as file:
                 json.dump(
                     {"clock_in": datetime.now().isoformat(), "session_id": session_id},
@@ -430,9 +431,9 @@ class Utilities:
         self.app.pin_reset_timer.start()
 
     def reset_pin(self, dt=None):
-        print(
-            f"reset pin\n{self.app.entered_pin}\n{self.app.popup_manager.pin_input.text}"
-        )
+        # print(
+        #     f"reset pin\n{self.app.entered_pin}\n{self.app.popup_manager.pin_input.text}"
+        # )
 
         def update_ui(dt):
             self.app.entered_pin = ""
@@ -586,7 +587,7 @@ class Utilities:
         subtotal = self.app.order_manager.subtotal
         total_with_tax = self.app.order_manager.calculate_total_with_tax()
         tax = self.app.order_manager.tax_amount
-        discount = self.app.order_manager.order_discount  ########
+        discount = self.app.order_manager.order_discount
 
         self.app.financial_summary_widget.update_summary(
             subtotal, tax, total_with_tax, discount
