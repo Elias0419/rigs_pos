@@ -279,7 +279,6 @@ class Utilities:
                 name=self.app.logged_in_user["name"],
                 session_id=session_id,
                 clock_out=True,
-
             )
         current_user = self.app.logged_in_user["name"]
         self.app.logged_in_user["name"] = "nobody"
@@ -315,14 +314,15 @@ class Utilities:
             auto_clock_out=True, timestamp=timestamp
         )
 
-    def update_attendance_log(self, name, session_id, timestamp=None, clock_in=False, clock_out=False):
+    def update_attendance_log(
+        self, name, session_id, timestamp=None, clock_in=False, clock_out=False
+    ):
         if timestamp is None:
             timestamp = datetime.now().isoformat()
         if clock_in:
             self.app.db_manager.insert_attendance_log_entry(name, session_id, timestamp)
         elif clock_out:
             self.app.db_manager.update_attendance_log_entry(session_id, timestamp)
-
 
     # def update_attendance_log(
     #     self, log_file, user_name, action, session_id, auto=False, timestamp=None
@@ -374,7 +374,12 @@ class Utilities:
     def organize_sessions(self, data):
         sessions = {}
         for entry in data:
-            session_id, user, clock_in, clock_out = entry[0], entry[1], entry[2], entry[3]
+            session_id, user, clock_in, clock_out = (
+                entry[0],
+                entry[1],
+                entry[2],
+                entry[3],
+            )
 
             if user not in sessions:
                 sessions[user] = {}
@@ -383,7 +388,7 @@ class Utilities:
                 sessions[user][session_id] = {
                     "clock_in": None,
                     "clock_out": None,
-                    "session_id": session_id
+                    "session_id": session_id,
                 }
 
             if clock_in:
@@ -393,14 +398,15 @@ class Utilities:
 
         return sessions
 
-
     def format_sessions_for_display(self, sessions):
         formatted_data = []
         for user, user_sessions in sessions.items():
             for session_id, session_details in user_sessions.items():
                 if session_details["clock_out"]:
                     clock_in_time = datetime.fromisoformat(session_details["clock_in"])
-                    clock_out_time = datetime.fromisoformat(session_details["clock_out"])
+                    clock_out_time = datetime.fromisoformat(
+                        session_details["clock_out"]
+                    )
                     duration = clock_out_time - clock_in_time
                     hours, remainder = divmod(duration.total_seconds(), 3600)
                     minutes = remainder // 60
@@ -1191,15 +1197,8 @@ class Utilities:
             print(e)
 
     def check_inactivity(self, *args):
-        # print("check\n")
         try:
             idle_time = int(subprocess.check_output(["xprintidle"]).strip())
-            # print(idle_time)
-            hours, remainder = divmod(idle_time, 3600000)
-            minutes, seconds = divmod(remainder, 60000)
-            seconds //= 1000
-
-            human_readable_time = f"{hours}h:{minutes}m:{seconds}s"
             # if idle_time > 6000:  # debug
             if idle_time > 600000:  # 10 minutes
                 self.trigger_guard_and_lock()
