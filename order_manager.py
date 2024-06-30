@@ -254,7 +254,6 @@ class OrderManager:
                 single_item_price * new_quantity - total_discount_for_new_quantity
             )
 
-            # Recalculate order totals
             self.recalculate_order_totals(remove=True)
 
     def adjust_order_to_target_total(self, target_total_with_tax):
