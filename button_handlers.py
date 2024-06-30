@@ -3,6 +3,23 @@ import re
 from open_cash_drawer import open_cash_drawer
 from kivy.clock import Clock
 from datetime import datetime, timedelta
+import time
+
+
+def debounce(wait):
+    def decorator(fn):
+        last_executed = 0
+
+        def debounced(*args, **kwargs):
+            nonlocal last_executed
+            current_time = time.time()
+            if current_time - last_executed >= wait:
+                last_executed = current_time
+                return fn(*args, **kwargs)
+
+        return debounced
+
+    return decorator
 
 
 class ButtonHandler:
@@ -15,6 +32,7 @@ class ButtonHandler:
         self.app.order_manager.clear_order()
         self.app.utilities.update_financial_summary()
 
+    @debounce(0.3)
     def show_reporting(self):
         self.app.db_manager.get_order_history()
         self.app.history_popup.show_hist_reporting_popup()
@@ -182,7 +200,7 @@ class ButtonHandler:
     def pay_order(self):
         order_count = self.app.order_manager.get_order_details()
         total = self.app.order_manager.calculate_total_with_tax()
-        if len(order_count['items']) > 0:
+        if len(order_count["items"]) > 0:
             if total == 0:
                 self.handle_zeroed_orders()
             elif total > 0:
@@ -239,7 +257,9 @@ class ButtonHandler:
                 admin = info_dict["admin"]
                 # if correct_pin[2] == True:
                 if admin:
-                    self.app.utilities.cost_overlay_icon.text = f"[b][size=20]$[/size][/b]"
+                    self.app.utilities.cost_overlay_icon.text = (
+                        f"[b][size=20]$[/size][/b]"
+                    )
                     self.app.admin = True
                 else:
                     self.app.utilities.cost_overlay_icon.text = ""
