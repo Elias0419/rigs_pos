@@ -1175,13 +1175,13 @@ class Utilities:
         try:
             with open("settings.json", "r") as f:
                 settings = json.load(f)
-                # Load theme settings
+
                 self.app.theme_cls.primary_palette = settings.get(
                     "primary_palette", "Brown"
                 )
                 self.app.theme_cls.theme_style = settings.get("theme_style", "Light")
 
-                # # Check for emergency reboot flag
+                # # check for emergency reboot flag
                 # if settings.get("emergency_reboot", True):
                 #     self.handle_emergency_reboot()
 
