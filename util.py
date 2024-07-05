@@ -302,11 +302,13 @@ class Utilities:
             ) + timedelta(days=1)
             formatted_midnight = midnight.isoformat()
             self.update_attendance_log(
-                self.app.attendance_log,
-                self.app.logged_in_user["name"],
-                "auto",
-                timestamp=formatted_midnight,
+                #self.app.attendance_log,
+                name=self.app.logged_in_user["name"],
                 session_id=session_id,
+                #"auto",
+                timestamp=formatted_midnight,
+                clock_out=True,
+
             )
 
         timestamp = datetime.now().isoformat()
