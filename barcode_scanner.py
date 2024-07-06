@@ -210,7 +210,6 @@ class BarcodeScanner:
                 self.process_item_details(item_details)
 
     def process_item_details(self, item_details):
-        # print(item_details)
         item_name = item_details.get("name", "Error!")
         item_price = item_details.get("price", 0.0)
         item_id = item_details.get("item_id")
