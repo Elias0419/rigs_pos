@@ -41,7 +41,18 @@ from order_manager import OrderManager
 from popups import PopupManager, FinancialSummaryWidget, Calculator
 from wrapper import Wrapper
 from distributor_manager import DistPopup, DistView
+import inspect
 
+def log_caller_info():
+    stack = inspect.stack()
+
+    caller_frame = stack[1]
+
+    file_name = caller_frame.filename
+    line_number = caller_frame.lineno
+    function_name = caller_frame.function
+
+    print(f"Called from {file_name}, line {line_number}, in {function_name}")
 
 class Utilities:
     def __init__(self, ref):
@@ -319,13 +330,14 @@ class Utilities:
     def update_attendance_log(
         self, name, session_id, timestamp=None, clock_in=False, clock_out=False
     ):
+        log_caller_info()
+        print(f"update_attendance_log called with: name={name}, session_id={session_id}, timestamp={timestamp}, clock_in={clock_in}, clock_out={clock_out}")
         if timestamp is None:
             timestamp = datetime.now().isoformat()
         if clock_in:
             self.app.db_manager.insert_attendance_log_entry(name, session_id, timestamp)
         elif clock_out:
             self.app.db_manager.update_attendance_log_entry(session_id, timestamp)
-
     # def update_attendance_log(
     #     self, log_file, user_name, action, session_id, auto=False, timestamp=None
     # ):
