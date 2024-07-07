@@ -43,16 +43,15 @@ from wrapper import Wrapper
 from distributor_manager import DistPopup, DistView
 import inspect
 
-def log_caller_info():
+def log_caller_info(depth=1):
     stack = inspect.stack()
 
-    caller_frame = stack[1]
-
-    file_name = caller_frame.filename
-    line_number = caller_frame.lineno
-    function_name = caller_frame.function
-
-    print(f"Called from {file_name}, line {line_number}, in {function_name}")
+    if depth < len(stack):
+        caller_frame = stack[depth]
+        file_name = caller_frame.filename
+        line_number = caller_frame.lineno
+        function_name = caller_frame.function
+        print(f"Called from {file_name}, line {line_number}, in {function_name}")
 
 class Utilities:
     def __init__(self, ref):
@@ -226,7 +225,7 @@ class Utilities:
     # def time_until_end_of_shift(self): # testing
     #
     #     hour = 11
-    #     minute = 45
+    #     minute = 3
     #     now = datetime.now()
     #     end_of_shift = datetime(now.year, now.month, now.day, hour, minute)
     #
@@ -304,7 +303,9 @@ class Utilities:
         )
 
     def auto_clock_out(self, dt):
+        print(f"called auto clock out\nclock in file: {self.clock_in_file}")
         if os.path.exists(self.clock_in_file):
+            print("path exists")
             session_id = self.extract_session_id(self.clock_in_file)
             os.remove(self.clock_in_file)
 
@@ -330,7 +331,7 @@ class Utilities:
     def update_attendance_log(
         self, name, session_id, timestamp=None, clock_in=False, clock_out=False
     ):
-        log_caller_info()
+        log_caller_info(depth=2)
         print(f"update_attendance_log called with: name={name}, session_id={session_id}, timestamp={timestamp}, clock_in={clock_in}, clock_out={clock_out}")
         if timestamp is None:
             timestamp = datetime.now().isoformat()
