@@ -200,14 +200,24 @@ class PopupManager:
         text_input.text = content["body"]
         card.add_widget(text_input)
         layout.add_widget(card)
-        popup = Popup(
-            content=layout,
-            title=name,
-            size_hint=(0.4, 0.8),
-            pos_hint={"center_x": 0.25},
-            overlay_color=(0, 0, 0, 0),
-            separator_height=0,
-        )
+        if admin:
+            popup = Popup(
+                content=layout,
+                title=f"{name} (Admin Only)",
+                size_hint=(0.4, 0.8),
+                pos_hint={"center_x": 0.25},
+                overlay_color=(0, 0, 0, 0),
+                separator_height=0,
+            )
+        else:
+            popup = Popup(
+                content=layout,
+                title=name,
+                size_hint=(0.4, 0.8),
+                pos_hint={"center_x": 0.25},
+                overlay_color=(0, 0, 0, 0),
+                separator_height=0,
+            )
         popup.open()
 
     def create_note(self, name, body="", admin=False):
