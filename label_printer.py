@@ -697,16 +697,7 @@ class LabelPrinter:
         text_bbox = draw.textbbox((0, 0), text, font=font)
         text_width = text_bbox[2] - text_bbox[0]
         x_text = (label_width - text_width) / 2
-        draw.text((0, x_text), text, fill="black", font=font)
-        # outline_color = "black"
-        # draw.rectangle(text_bbox, outline=outline_color)
-
-        # border_padding = 2 # debug
-        # border_coords = [
-        #     x_text - border_padding, 0 - border_padding,
-        #     x_text + text_width + border_padding, text_bbox[3] + border_padding
-        # ]
-        # draw.rectangle(border_coords, outline="black")
+        draw.text((x_text, 0), text, fill="black", font=font)
 
         barcode_width, barcode_height = barcode_image.size
 
