@@ -668,8 +668,8 @@ class LabelPrinter:
         barcode_y_position = 35
 
         UPC = barcode.get_barcode_class("upc")
-        writer = ImageWriter()
 
+        writer = ImageWriter()
         try:
             print(f"we have upc a:\n'{barcode_data}")
             upc = UPC(barcode_data, writer=writer)
@@ -677,13 +677,16 @@ class LabelPrinter:
             print(f"we have upc e:\n'{barcode_data}")
             upc = UPC(self.handle_upc_e(barcode_data), writer=writer)
 
-        barcode_image = upc.render({
-            "module_width": 0.17,
-            "module_height": 10 if not include_text else 8,
-            "dpi": 300,
-            "write_text": False,
-            "quiet_zone": 0,
-        })
+        barcode_image = upc.render(
+            {
+                "module_width": 0.17,
+                "module_height": 10 if not include_text else 8,
+                # "font_size": 2,
+                "dpi": 300,
+                "write_text": False,
+                "quiet_zone": 0,
+            }
+        )
 
         label_image = Image.new("RGB", (label_width, label_height), "white")
         draw = ImageDraw.Draw(label_image)
@@ -691,17 +694,24 @@ class LabelPrinter:
         font_size = 33
         font = ImageFont.truetype("/usr/share/fonts/TTF/Arialbd.TTF", font_size)
         text = f"${item_price}"
-        x_text = (label_width - draw.textsize(text, font=font)[0]) / 2
-        y_text = 0  # Adjust this if you need to position the text lower
-        draw.text((x_text, y_text), text, fill="black", font=font)
+        text_bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = text_bbox[2] - text_bbox[0]
+        x_text = (label_width - text_width) / 2
+        draw.text((x_text, 0), text, fill="black", font=font)
+        outline_color = "black"
+        draw.rectangle(text_bbox, outline=outline_color)
 
-        # Calculate and draw bounding box with a border around the text
-        text_width, text_height = draw.textsize(text, font=font)
-        border_coords = [x_text, y_text, x_text + text_width, y_text + text_height]
-        draw.rectangle(border_coords, outline="black")
+        # border_padding = 2 # debug
+        # border_coords = [
+        #     x_text - border_padding, 0 - border_padding,
+        #     x_text + text_width + border_padding, text_bbox[3] + border_padding
+        # ]
+        # draw.rectangle(border_coords, outline="black")
 
         barcode_width, barcode_height = barcode_image.size
+
         barcode_position = ((label_width - barcode_width) // 2, barcode_y_position)
+
         label_image.paste(barcode_image, barcode_position)
 
         if include_text and optional_text:
@@ -709,17 +719,22 @@ class LabelPrinter:
             additional_text_font_size = self.calculate_dynamic_font_size(
                 draw, optional_text, max_optional_text_width
             )
-            additional_font = ImageFont.truetype("/usr/share/fonts/TTF/Arial.TTF", additional_text_font_size)
-            additional_text_width, additional_text_height = draw.textsize(optional_text, font=additional_font)
+            additional_font = ImageFont.truetype(
+                "/usr/share/fonts/TTF/Arial.TTF", additional_text_font_size
+            )
+
+            additional_text_bbox = draw.textbbox(
+                (0, 0), optional_text, font=additional_font
+            )
+            additional_text_width = additional_text_bbox[2] - additional_text_bbox[0]
             x_additional_text = (label_width - additional_text_width) / 2
-            additional_text_y_position = barcode_y_position + barcode_height + 10
+            additional_text_y_position = barcode_y_position + barcode_height  # + 10
             draw.text(
                 (x_additional_text, additional_text_y_position),
                 optional_text,
                 fill="black",
                 font=additional_font,
             )
-
         if preview:
             return label_image
         else:
