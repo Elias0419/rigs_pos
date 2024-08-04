@@ -680,7 +680,7 @@ class LabelPrinter:
         barcode_image = upc.render(
             {
                 "module_width": 0.17,
-                "module_height": 12 if not include_text else 8,
+                "module_height": 10 if not include_text else 8,
                 # "font_size": 2,
                 "dpi": 300,
                 "write_text": False,
@@ -698,6 +698,13 @@ class LabelPrinter:
         text_width = text_bbox[2] - text_bbox[0]
         x_text = (label_width - text_width) / 2
         draw.text((x_text, 0), text, fill="black", font=font)
+
+        border_padding = 2
+        border_coords = [
+            x_text - border_padding, 0 - border_padding,
+            x_text + text_width + border_padding, text_bbox[3] + border_padding
+        ]
+        draw.rectangle(border_coords, outline="black")
 
         barcode_width, barcode_height = barcode_image.size
 
