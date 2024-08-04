@@ -697,7 +697,7 @@ class LabelPrinter:
         # text_bbox = draw.textbbox((0, 0), text, font=font)
         # text_width = text_bbox[2] - text_bbox[0]
         # x_text = (label_width - text_width) / 2
-        draw.text((0, 0), text, fill="black", font=font)
+        draw.text((0, -40), text, fill="black", font=font)
         # outline_color = "black"
         # draw.rectangle(text_bbox, outline=outline_color)
 
