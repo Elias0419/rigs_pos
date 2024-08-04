@@ -694,7 +694,7 @@ class LabelPrinter:
         font_size = 33
         font = ImageFont.truetype("/usr/share/fonts/TTF/Arialbd.TTF", font_size)
         text = f"${item_price}"
-        text_bbox = draw.textbbox((-40, 0), text, font=font)
+        text_bbox = draw.textbbox((0, -40), text, font=font)
         text_width = text_bbox[2] - text_bbox[0]
         x_text = (label_width - text_width) / 2
         draw.text((x_text, 0), text, fill="black", font=font)
