@@ -664,7 +664,7 @@ class LabelPrinter:
         optional_text="",
         preview=False,
     ):
-        label_width, label_height = 202, 202
+        label_width, label_height = 202, 280 # debug
         barcode_y_position = 35
 
         UPC = barcode.get_barcode_class("upc")
