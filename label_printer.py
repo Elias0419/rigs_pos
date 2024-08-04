@@ -696,10 +696,8 @@ class LabelPrinter:
         text = f"${item_price}"
         text_bbox = draw.textbbox((0, 0), text, font=font)
         text_width = text_bbox[2] - text_bbox[0]
-        text_height = text_bbox[3] - text_bbox[1]
         x_text = (label_width - text_width) / 2
-        y_text = (label_height - text_height) / 2
-        draw.text((x_text, y_text), text, fill="black", font=font)
+        draw.text((x_text, 0), text, fill="black", font=font)
         outline_color = "black"
         draw.rectangle(text_bbox, outline=outline_color)
 
