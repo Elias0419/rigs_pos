@@ -6,10 +6,14 @@ from datetime import datetime, timedelta
 import time
 import inspect
 
-def log_caller_info(depths=1):
+import datetime
+
+def log_caller_info(depths=1, to_file=False, filename="caller_info_log.txt"):
     stack = inspect.stack()
     if isinstance(depths, int):
         depths = [depths]
+
+    output_lines = []
 
     for depth in depths:
         if depth < len(stack):
@@ -17,10 +21,20 @@ def log_caller_info(depths=1):
             file_name = caller_frame.filename
             line_number = caller_frame.lineno
             function_name = caller_frame.function
-            print(f"Called from {file_name}, line {line_number}, in {function_name}")
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            line = f"{timestamp} - Called from {file_name}, line {line_number}, in {function_name}\n"
+            output_lines.append(line)
         else:
-            print(f"No caller information available for depth: {depth}")
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            line = f"{timestamp} - No caller information available for depth: {depth}\n"
+            output_lines.append(line)
 
+    if to_file:
+
+        with open(filename, 'a') as f:
+            f.writelines(output_lines)
+    else:
+        print(''.join(output_lines))
 def debounce(wait):
     def decorator(fn):
         last_executed = 0
@@ -50,8 +64,8 @@ class ButtonHandler:
     # @debounce(0.3)
     def show_reporting(self):
         for i in range(25):
-            log_caller_info(depths=i)
-        # log_caller_info(depths=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20])
+            log_caller_info(depths=i, to_file=True)
+
         self.app.db_manager.get_order_history()
         self.app.history_popup.show_hist_reporting_popup()
 
