@@ -17,7 +17,34 @@ from receipt_printer import ReceiptPrinter
 from rapidfuzz import process, fuzz
 from kivymd.uix.label import MDLabel
 from kivymd.uix.card import MDCard
+import inspect
+def log_caller_info(depths=1, to_file=False, filename="history_manager_dismiss_log.txt"):
+    stack = inspect.stack()
+    if isinstance(depths, int):
+        depths = [depths]
 
+    output_lines = []
+
+    for depth in depths:
+        if depth < len(stack):
+            caller_frame = stack[depth]
+            file_name = caller_frame.filename
+            line_number = caller_frame.lineno
+            function_name = caller_frame.function
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            line = f"{timestamp} - Called from {file_name}, line {line_number}, in {function_name}\n"
+            output_lines.append(line)
+        else:
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            line = f"{timestamp} - No caller information available for depth: {depth}\n"
+            output_lines.append(line)
+
+    if to_file:
+
+        with open(filename, 'a') as f:
+            f.writelines(output_lines)
+    else:
+        print(''.join(output_lines))
 
 class NullableStringProperty(StringProperty):
     def __init__(self, *args, **kwargs):
@@ -40,6 +67,12 @@ class HistoryPopup(Popup):
             super(HistoryPopup, self).__init__(**kwargs)
             self.db_manager = DatabaseManager("db/inventory.db", self)
             # self.history_view = HistoryView()
+
+
+    def on_dismiss(self, *args, **kwargs):
+        for i in range(10):
+            log_caller_info(depths=i, to_file=True)
+        super().on_dismiss(*args, **kwargs)
 
     def show_hist_reporting_popup(self, instance=None):
         order_history = self.db_manager.get_order_history()
