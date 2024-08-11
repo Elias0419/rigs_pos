@@ -4,7 +4,22 @@ from open_cash_drawer import open_cash_drawer
 from kivy.clock import Clock
 from datetime import datetime, timedelta
 import time
+import inspect
 
+def log_caller_info(depths=1):
+    stack = inspect.stack()
+    if isinstance(depths, int):
+        depths = [depths]
+
+    for depth in depths:
+        if depth < len(stack):
+            caller_frame = stack[depth]
+            file_name = caller_frame.filename
+            line_number = caller_frame.lineno
+            function_name = caller_frame.function
+            print(f"Called from {file_name}, line {line_number}, in {function_name}")
+        else:
+            print(f"No caller information available for depth: {depth}")
 
 def debounce(wait):
     def decorator(fn):
@@ -32,8 +47,11 @@ class ButtonHandler:
         self.app.order_manager.clear_order()
         self.app.utilities.update_financial_summary()
 
-    @debounce(0.3)
+    # @debounce(0.3)
     def show_reporting(self):
+        for i in range(25):
+            log_caller_info(depths=i)
+        # log_caller_info(depths=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20])
         self.app.db_manager.get_order_history()
         self.app.history_popup.show_hist_reporting_popup()
 
