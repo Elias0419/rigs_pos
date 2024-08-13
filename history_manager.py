@@ -831,6 +831,9 @@ class OrderDetailsPopup(Popup):
         pass
 
     def dismiss_popup(self, instance):
+        print("called dismiss popup\n\n")
+        for i in range(20):
+            log_caller_info(depths=i, to_file=True)
         self.dismiss()
 
     def format_items(self, items_str):
