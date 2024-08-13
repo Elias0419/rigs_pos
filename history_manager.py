@@ -69,10 +69,10 @@ class HistoryPopup(Popup):
             # self.history_view = HistoryView()
 
 
-    def on_dismiss(self, *args, **kwargs):
-        for i in range(10):
-            log_caller_info(depths=i, to_file=True)
-        super().on_dismiss(*args, **kwargs)
+    # def on_dismiss(self, *args, **kwargs):
+    #     for i in range(10):
+    #         log_caller_info(depths=i, to_file=True)
+    #     super().on_dismiss(*args, **kwargs)
 
     def show_hist_reporting_popup(self, instance=None):
         order_history = self.db_manager.get_order_history()
@@ -709,7 +709,8 @@ class OrderDetailsPopup(Popup):
             modify_order_layout.add_widget(text_input)
 
         def on_confirm(instance):
-
+            for i in range(20):
+                log_caller_info(depths=i, to_file=True)
             for item, name_input in zip(items, item_name_inputs):
                 item["name"] = name_input.text
 
