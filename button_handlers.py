@@ -321,7 +321,7 @@ class ButtonHandler:
             self.app.popup_manager.pin_input.text = ""
 
     def calculate_reset_time(self):
-        now = datetime.now()
+        now = datetime.datetime.now()
         target_time = now.replace(hour=22, minute=0, second=0, microsecond=0)
         if now >= target_time:
             target_time += timedelta(days=1)
