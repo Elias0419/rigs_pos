@@ -84,7 +84,7 @@ class HistoryPopup(Popup):
         self.content = history_view
         self.size_hint = (0.9, 0.9)
         self.title = f"Order History"
-        Clock.schedule_once(self.open, 0.1)
+        Clock.schedule_once(self.open, 0.5)
         # self.open()
 
     def dismiss_popup(self):
