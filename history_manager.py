@@ -69,10 +69,10 @@ class HistoryPopup(Popup):
             # self.history_view = HistoryView()
 
 
-    # def on_dismiss(self, *args, **kwargs):
-    #     for i in range(10):
-    #         log_caller_info(depths=i, to_file=True)
-    #     super().on_dismiss(*args, **kwargs)
+    def on_dismiss(self, *args, **kwargs):
+        for i in range(10):
+            log_caller_info(depths=i, to_file=True)
+        super().on_dismiss(*args, **kwargs)
 
     def show_hist_reporting_popup(self, instance=None):
         order_history = self.db_manager.get_order_history()
@@ -831,9 +831,9 @@ class OrderDetailsPopup(Popup):
         pass
 
     def dismiss_popup(self, instance):
-        print("called dismiss popup\n\n")
-        for i in range(20):
-            log_caller_info(depths=i, to_file=True)
+        # print("called dismiss popup\n\n")
+        # for i in range(20):
+        #     log_caller_info(depths=i, to_file=True)
         self.dismiss()
 
     def format_items(self, items_str):
