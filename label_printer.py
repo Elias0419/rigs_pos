@@ -602,6 +602,11 @@ class LabelPrinter:
     def preview_barcode_label(self, name):
         for i in self.print_queue:
             if i["name"] == name:
+                try:
+                    print(int(i["barcode"]))
+                except ValueError as e:
+                    print("probably no barcode")
+                    break
                 if len(i["optional_text"]) > 0:
                     label_image = self.print_barcode_label(
                         i["barcode"],
@@ -664,6 +669,7 @@ class LabelPrinter:
         optional_text="",
         preview=False,
     ):
+        print(type(barcode_data))
         label_width, label_height = 202, 202
         barcode_y_position = 35
 
@@ -676,6 +682,8 @@ class LabelPrinter:
         except barcode.errors.NumberOfDigitsError as e:
             print(f"we have upc e:\n'{barcode_data}")
             upc = UPC(self.handle_upc_e(barcode_data), writer=writer)
+        except barcode.errors.IllegalCharacterError as e:
+            print(f"probably no barcode or something unexpected{barcode_data}")
 
         barcode_image = upc.render(
             {
