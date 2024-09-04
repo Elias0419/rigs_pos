@@ -606,6 +606,7 @@ class LabelPrinter:
                     print(int(i["barcode"]))
                 except ValueError as e:
                     print("probably no barcode")
+                    self.app.popup_manager.catch_label_printer_missing_barcode()
                     break
                 if len(i["optional_text"]) > 0:
                     label_image = self.print_barcode_label(
@@ -684,7 +685,7 @@ class LabelPrinter:
             upc = UPC(self.handle_upc_e(barcode_data), writer=writer)
         except barcode.errors.IllegalCharacterError as e:
             print(f"probably no barcode or something unexpected{barcode_data}")
-
+            self.app.popup_manager.catch_label_printer_missing_barcode()
         barcode_image = upc.render(
             {
                 "module_width": 0.17,
