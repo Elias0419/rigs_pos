@@ -1,7 +1,6 @@
 import csv
 import sqlite3
 
-# test
 def read_csv(file_name):
     data = []
     with open(file_name, "r") as file:
