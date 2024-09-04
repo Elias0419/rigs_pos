@@ -9,8 +9,8 @@ class Wrapper:
         self.app = ref
 
         self.DEFAULT_CONFIG = {
-            # "script_path": "/home/rigs/rigs_pos/main.py",
-            "script_path": "/home/x/work/python/rigs_pos/main.py",
+            "script_path": "/home/rigs/rigs_pos/main.py",
+            # "script_path": "/home/x/work/python/rigs_pos/main.py",
             "max_restarts": 3,
             "restart_window": 10,
             "recipient": "info@example.com",
@@ -41,8 +41,8 @@ class Wrapper:
         last_restart_time = time.time()
 
         while True:
-            #result = subprocess.run(["/home/rigs/0/bin/python", script_path])
-            result = subprocess.run(["/home/x/work/0/bin/python", script_path])
+            result = subprocess.run(["/home/rigs/0/bin/python", script_path])
+            # result = subprocess.run(["/home/x/work/0/bin/python", script_path])
             current_time = time.time()
             if current_time - last_restart_time > restart_window:
                 recent_restarts = 0
