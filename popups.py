@@ -3382,13 +3382,13 @@ class PopupManager:
     def catch_label_printer_missing_barcode(self):
         layout = GridLayout(orientation="tb-lr", rows=2)
         error_text = Label(
-            text=f"Error: It seems like this item has no barcode.",
+            text=f"Error: It seems like this item has no barcode.\nPlease go back and generate one.",
             size_hint_y=0.5,
             pos_hint={"top": 1},
         )
         label_barcode_error_icon_button = MDRaisedButton(
-            text="Try Again",
-            on_press=lambda x: self.app.label_printer.process_queue(),
+            text="",
+            on_press=lambda x: self.do_nothing(),
             size_hint_x=1,
         )
         label_barcode_error_button = MDRaisedButton(
@@ -3406,7 +3406,7 @@ class PopupManager:
         self.label_barcode_error_popup = Popup(
             content=layout,
             size_hint=(0.4, 0.4),
-            title="Label Printer Error",
+            title="Error",
         )
         self.label_barcode_error_popup.open()
 

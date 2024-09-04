@@ -502,6 +502,7 @@ class Utilities:
             print(e)
 
     def create_md_raised_button(
+
         self,
         text,
         on_press_action,
@@ -1388,6 +1389,12 @@ class Utilities:
         popup,
         query=None,
     ):
+        try:
+            int(barcode_input.text)
+        except ValueError as e:
+            print("[Utilities]\n inventory_item_confirm_and_close no barcode")
+            self.app.popup_manager.catch_label_printer_missing_barcode()
+            return
 
         if len(name_input.text) > 0:
 

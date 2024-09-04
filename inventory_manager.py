@@ -91,6 +91,12 @@ class InventoryManagementView(BoxLayout):
         sku_input,
         category_input,
     ):
+        try:
+            int(barcode_input.text)
+        except ValueError as e:
+            print("[Inventory Manager]\n add_item_to_database no barcode")
+            self.app.popup_manager.catch_label_printer_missing_barcode()
+            return
         if name_input:
             try:
                 self.database_manager.add_item(
