@@ -52,6 +52,8 @@ class PopupManager:
     def __init__(self, ref):
         self.app = ref
 
+
+
     def show_notes_widget(self):
         self.notes_dir = "notes"
         os.makedirs(self.notes_dir, exist_ok=True)
@@ -3376,6 +3378,38 @@ class PopupManager:
         )
         popup.focus_on_textinput(textinput)
         return popup
+
+    def catch_label_printer_missing_barcode(self):
+        layout = GridLayout(orientation="tb-lr", rows=2)
+        error_text = Label(
+            text=f"Error: It seems like this item has no barcode.",
+            size_hint_y=0.5,
+            pos_hint={"top": 1},
+        )
+        label_barcode_error_icon_button = MDRaisedButton(
+            text="Try Again",
+            on_press=lambda x: self.app.label_printer.process_queue(),
+            size_hint_x=1,
+        )
+        label_barcode_error_button = MDRaisedButton(
+            text="Dismiss",
+            on_press=lambda x: self.label_barcode_error_popup.dismiss(),
+            size_hint_x=1,
+        )
+        layout.add_widget(error_text)
+        buttons_layout = GridLayout(
+            orientation="lr-tb", cols=2, size_hint_y=0.1, spacing=5
+        )
+        buttons_layout.add_widget(label_barcode_error_button)
+        buttons_layout.add_widget(label_barcode_error_icon_button)
+        layout.add_widget(buttons_layout)
+        self.label_barcode_error_popup = Popup(
+            content=layout,
+            size_hint=(0.4, 0.4),
+            title="Label Printer Error",
+        )
+        self.label_barcode_error_popup.open()
+
 
     def catch_label_printing_errors(self, e):
         if hasattr(self, "label_errors_popup") and self.label_errors_popup._is_open:
