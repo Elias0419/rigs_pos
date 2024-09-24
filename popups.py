@@ -53,6 +53,23 @@ class PopupManager:
         self.app = ref
 
 
+    def show_update_notification_popup(self, update_details):
+        update_details_string = ''
+        for line in update_details:
+            update_details_string += line
+        layout=BoxLayout()
+        button = MDFlatButton(text="OK", on_release=self.dismiss_update_notification_popup)
+        text=MDLabel(text=update_details_string, halign="center")
+        layout.add_widget(text)
+        layout.add_widget(button)
+        self.update_notification_popup=Popup(content=layout, size_hint=(0.5,0.5), title="Update Applied", overlay_color=(0,0,0,0), separator_height=0)
+        self.update_notification_popup.open()
+
+    def dismiss_update_notification_popup(self, _):
+        try:
+            self.update_notification_popup.dismiss()
+        except AttributeError as e:
+            print("[PopupManager: Expected error in dismiss_update_notification_popup]\n", e)
 
     def show_notes_widget(self):
         self.notes_dir = "notes"
@@ -1847,8 +1864,9 @@ class PopupManager:
             self.percent_toggle.line_color = (0, 0, 0, 0)
             self.current_discount_type = "amount"
 
-    def apply_discount(self, value):
-
+    def apply_discount(self, value, military=False):
+        if military:
+            self.current_discount_type = "percent"
         percent = self.current_discount_type == "percent"
         self.app.order_manager.discount_entire_order(
             discount_amount=value, percent=percent
@@ -3824,10 +3842,21 @@ class FinancialSummaryWidget(MDFlatButton):
             md_bg_color=(0.5, 0.5, 0.5, 0.25),
             on_press=lambda x: self.adjust_price(),
         )
+        medical_military_discount_button = MDFlatButton(
+            text="[b][size=20]Medical/Military Discount[/b][/size]",
+            # pos_hint={"center_x": 0.5, "center_y": 1 - 0.4},
+            size_hint=(None, None),
+            _min_height=100,
+            _min_width=100,
+            md_bg_color=(0.5, 0.5, 0.5, 0.25),
+            on_press=lambda x: self.app.popup_manager.apply_discount(10, military=True),
+        )
 
         order_mod_layout.add_widget(clear_order_button)
         order_mod_layout.add_widget(adjust_price_button)
+
         order_mod_layout.add_widget(discount_order_button)
+        order_mod_layout.add_widget(medical_military_discount_button)
         self.order_mod_popup = Popup(
             title="",
             content=order_mod_layout,

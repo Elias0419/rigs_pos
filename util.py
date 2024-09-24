@@ -43,6 +43,7 @@ from wrapper import Wrapper
 from distributor_manager import DistPopup, DistView
 import inspect
 
+
 def log_caller_info(depth=1):
     stack = inspect.stack()
 
@@ -57,6 +58,27 @@ class Utilities:
     def __init__(self, ref):
         self.app = ref
         self.clock_in_file = ""
+        self.popup_manager = PopupManager(None)
+
+    def check_if_update_was_applied(self):
+        try:
+            os.remove('update_applied')
+            return True
+        except FileNotFoundError:
+            return False
+
+    def get_update_details(self):
+        update_details = []
+        try:
+
+            with open('update/update_details', 'r') as f:
+                for line in f:
+                    update_details.append(line)
+            os.remove('update/update_details')
+            return update_details
+        except:
+            pass
+        return None
 
     def initialize_global_variables(self):
         # self.app.admin = False

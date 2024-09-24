@@ -2,7 +2,7 @@ import subprocess
 import time
 import sys
 import json
-
+import requests
 
 class Wrapper:
     def __init__(self, ref=None):
@@ -29,11 +29,21 @@ class Wrapper:
             res = subprocess.run(["git", "pull"], capture_output=True, text=True)
             if "Already up to date." in res.stdout:
                 print("[Wrapper]\nNo updates available")
+                return False
             else:
                 print("[Wrapper]\nApplication updated:\n" + res.stdout)
+                return True
         except subprocess.CalledProcessError as e:
             print("[Wrapper]\nUpdate Error:", e)
         return
+
+    def get_update_details(self):
+        try:
+            response = requests.get('https://raw.githubusercontent.com/Elias0419/rigs_pos/refs/heads/main/update/update_details')
+            return response.text
+        except:
+            print("[Wrapper]: Couldn't get update details")
+        return None
 
 
     def run_app(self, script_path, recipient, max_restarts, restart_window):
@@ -125,6 +135,11 @@ class Wrapper:
         except Exception as e:
             print(e)
 
+    def update_applied(self, details=None):
+        if details:
+            with open("update_applied", "w") as f:
+                f.write(details)
+
 
 if __name__ == "__main__":
     wrapper = Wrapper()
@@ -133,5 +148,9 @@ if __name__ == "__main__":
     recipient = config["recipient"]
     max_restarts = config["max_restarts"]
     restart_window = config["restart_window"]
-    wrapper.check_and_apply_updates()
+    if wrapper.check_and_apply_updates():
+        update_details = wrapper.get_update_details()
+        if update_details:
+            wrapper.update_applied(details=update_details)
+
     wrapper.run_app(script_path, recipient, max_restarts, restart_window)

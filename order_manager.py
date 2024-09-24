@@ -416,8 +416,8 @@ class OrderManager:
         if discount_amount != "":
             try:
                 discount_amount = float(discount_amount)
-            except Exception as e:
-                print(f"exception in discount entire order\n{e}")
+            except ValueError as e:
+                print(f"Order Manager: discount_entire_order\nexception converting to a float\n{e}")
 
             if percent:
                 discount_value = self.subtotal * discount_amount / 100
@@ -434,16 +434,19 @@ class OrderManager:
                 self.app.utilities.update_display()
                 self.app.utilities.update_financial_summary()
             except Exception as e:
-                print(f"exception updating totals in discount entire order\n{e}")
+                print(f"[Order Manager]: discount_entire_order\n exception updating totals\n{e}")
             try:
                 self.app.popup_manager.custom_discount_order_amount_input.text = ""
-            except:
-                pass
-            self.app.popup_manager.discount_order_popup.dismiss()
+            except AttributeError:
+                print("[Order Manager]: discount_entire_order\nExpected error popup_manager.custom_discount_order_amount_input.text is None")
+            try:
+                self.app.popup_manager.discount_order_popup.dismiss()
+            except AttributeError:
+                print("[Order Manager]: discount_entire_order\nExpected error popup_manager.discount_order_popup is None")
             try:
                 self.app.popup_manager.custom_discount_order_popup.dismiss()
-            except:
-                pass
+            except AttributeError:
+                print("[Order Manager]: discount_entire_order\nExpected error popup_manager.custom_discount_order_popup is None")
             self.app.financial_summary.order_mod_popup.dismiss()
 
     def add_adjusted_price_item(self):
