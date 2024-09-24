@@ -1657,8 +1657,8 @@ class ImageButton(ButtonBehavior, Image):
             subprocess.Popen(
                 ["/home/rigs/0/bin/python", "games/tetris.py", self.app.logged_in_user]
             )
-        except:
-            pass
+        except Exception as e:
+            print(e)
         # subprocess.Popen(["python", "games/tetris.py", self.app.logged_in_user])
 
 
