@@ -18,7 +18,7 @@ class ReceiptPrinter:
         try:
             self.printer = self.config_handler.printer()
         except Exception as e:
-            print(e)
+            logger.warn(e)
 
     def re_initialize_after_error(self, order_details):
         self.app.utilities.initialize_receipt_printer()
@@ -34,13 +34,13 @@ class ReceiptPrinter:
 
 
     def print_receipt(self, order_details, reprint=False, draft=False):
-        print(order_details)
+        logger.warn(order_details)
         if len(order_details['items']) == 0:
             return
         try:
             logo = Image.open("images/rigs_logo_scaled.png")
         except Exception as e:
-            print("Error loading logo:", e)
+            logger.warn("Error loading logo:", e)
 
         try:
             self.printer.image(logo, (200, -60))

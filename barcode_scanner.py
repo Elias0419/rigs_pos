@@ -21,7 +21,7 @@ class BarcodeScanner:
         try:
             self.device = self.initializeUSBDevice()
         except ValueError as e:
-            print(e)  # TODO do something
+            logger.warn(e)  # TODO do something
 
         self.barcode_ready = threading.Event()
         self.stop_thread = threading.Event()
@@ -37,15 +37,15 @@ class BarcodeScanner:
             if device.is_kernel_driver_active(0):
                 device.detach_kernel_driver(0)
         except Exception as e:
-            print(f"[Barcode Scanner] detach_kernel_driver fail\n{e}")
+            logger.warn(f"[Barcode Scanner] detach_kernel_driver fail\n{e}")
         try:
             device.set_configuration()
         except Exception as e:
-            print(f"[Barcode Scanner] set_configuration fail\n{e}")
+            logger.warn(f"[Barcode Scanner] set_configuration fail\n{e}")
         try:
             configuration = device.get_active_configuration()
         except Exception as e:
-            print(f"[Barcode Scanner] get_active_configuration fail\n{e}")
+            logger.warn(f"[Barcode Scanner] get_active_configuration fail\n{e}")
 
         interface = configuration[(0, 0)]
         try:
@@ -55,7 +55,7 @@ class BarcodeScanner:
                 == usb.util.ENDPOINT_IN,
             )
         except Exception as e:
-            print(f"[Barcode Scanner] set endpoint fail\n{e}")
+            logger.warn(f"[Barcode Scanner] set endpoint fail\n{e}")
 
         return device
 
@@ -141,7 +141,7 @@ class BarcodeScanner:
                     else:
                         self.current_barcode += character
             except AttributeError as e:
-                print(e)
+                logger.warn(e)
                 break
             except usb.core.USBError as e:
                 if e.errno == 110:

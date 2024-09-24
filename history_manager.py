@@ -49,7 +49,7 @@ def log_caller_info(depths=1, to_file=False, filename="history_manager_dismiss_l
         with open(filename, 'a') as f:
             f.writelines(output_lines)
     else:
-        print(''.join(output_lines))
+        logger.warn(''.join(output_lines))
 
 class NullableStringProperty(StringProperty):
     def __init__(self, *args, **kwargs):
@@ -252,7 +252,7 @@ class HistoryView(BoxLayout):
             self.rv_data.reverse()
             self.ids.history_rv.data = self.rv_data
         except Exception as e:
-            print(f"[HistoryManager] show_reporting_popup\n{e}")
+            logger.warn(f"[HistoryManager] show_reporting_popup\n{e}")
 
     def create_history_row(self, order):
 
@@ -271,7 +271,7 @@ class HistoryView(BoxLayout):
             history_row.history_view = self
             return history_row
         except Exception as e:
-            print(f"[HistoryManager] create_history_row\n{e}")
+            logger.warn(f"[HistoryManager] create_history_row\n{e}")
 
     def show_specific_day_popup(self, instance):
         specific_day_picker = MDDatePicker()
@@ -328,7 +328,7 @@ class HistoryView(BoxLayout):
             self.rv_data.reverse()
             self.ids.history_rv.data = self.rv_data
         except Exception as e:
-            print(f"[HistoryManager]: update_rv_data \n{e}")
+            logger.warn(f"[HistoryManager]: update_rv_data \n{e}")
 
     def is_today(self, date_obj):
         return date_obj.date() == datetime.today().date()
@@ -415,7 +415,7 @@ class HistoryView(BoxLayout):
                         filtered_history.append(order)
                         break
             except json.JSONDecodeError as e:
-                print(f"[OrderManager]: search_order_by_item_name\n{e}")
+                logger.warn(f"[OrderManager]: search_order_by_item_name\n{e}")
                 continue
 
         self.update_rv_data(filtered_history)
@@ -436,7 +436,7 @@ class HistoryView(BoxLayout):
                 None,
             )
         except Exception as e:
-            print(f"[HistoryManager] display_order_details\n{e}")
+            logger.warn(f"[HistoryManager] display_order_details\n{e}")
 
         if specific_order:
             try:
@@ -444,7 +444,7 @@ class HistoryView(BoxLayout):
 
                 popup.open()
             except Exception as e:
-                print(e)
+                logger.warn(e)
 
     # def display_order_details_from_barcode_scan(self, barcode):
     #     try:
@@ -495,7 +495,7 @@ class HistoryView(BoxLayout):
                 self.order_not_found_popup(barcode_str)
 
         except Exception as e:
-            print(f"[HistoryManager] display_order_details_from_barcode_scan\n{e}")
+            logger.warn(f"[HistoryManager] display_order_details_from_barcode_scan\n{e}")
 
     def order_not_found_popup(self, order):
         not_found_layout = BoxLayout(size_hint=(1, 1))
@@ -519,7 +519,7 @@ class HistoryView(BoxLayout):
                 history_row = self.create_history_row(specific_order)
                 self.add_widget(history_row)
             except Exception as e:
-                print(f"[HistoryManager] show_order_details\n{e}")
+                logger.warn(f"[HistoryManager] show_order_details\n{e}")
 
     def format_items(self, items_str):
         try:
@@ -537,7 +537,7 @@ class HistoryView(BoxLayout):
 
             return self.truncate_text(all_item_names)
         except json.JSONDecodeError as e:
-            print(f"JSON parsing error in format_items: {e}")
+            logger.warn(f"JSON parsing error in format_items: {e}")
             return self.truncate_text("Error parsing items")
 
     def format_money(self, value):
@@ -549,7 +549,7 @@ class HistoryView(BoxLayout):
             date_obj = datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
             return date_obj.strftime("%d %b %Y, %H:%M")
         except Exception as e:
-            print(e)
+            logger.warn(e)
 
     def truncate_text(self, text, max_length=120):
         return text if len(text) <= max_length else text[: max_length - 3] + "..."
@@ -725,7 +725,7 @@ class OrderDetailsPopup(Popup):
             self.db_manager.modify_order(order_id, items=updated_items_json)
             self.dismiss()
             self.modify_order_popup.dismiss()
-            print(self.history_view.current_filter)
+            logger.warn(self.history_view.current_filter)
             self.history_popup.dismiss_popup()
             Clock.schedule_once(self.history_popup.show_hist_reporting_popup, 0.2)
 
@@ -859,7 +859,7 @@ class OrderDetailsPopup(Popup):
 
             return all_item_names
         except json.JSONDecodeError as e:
-            print(f"JSON parsing error in format_items: {e}")
+            logger.warn(f"JSON parsing error in format_items: {e}")
             return "Error parsing items"
 
     def convert_order_to_dict(self, order):
@@ -880,7 +880,7 @@ class OrderDetailsPopup(Popup):
         try:
             items = json.loads(items_json)
         except json.JSONDecodeError as e:
-            print(f"[OrderDetailsPopup] convert_order_to_dict \n{e}")
+            logger.warn(f"[OrderDetailsPopup] convert_order_to_dict \n{e}")
             # items = ast.literal_eval(items_json)
 
         if isinstance(items, list):
