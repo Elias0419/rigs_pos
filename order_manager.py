@@ -8,7 +8,6 @@ logger = logging.getLogger('rigs_pos')
 
 class OrderManager:
     _instance = None
-    logger.error("Inside order manager init")
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
             cls._instance = super(OrderManager, cls).__new__(cls)
@@ -180,7 +179,7 @@ class OrderManager:
         try:
             os.remove(full_path)
         except Exception as e:
-            print(f"[Order Manager] Expected error in delete_order_from_disk\n{e}")
+            logger.info(f"[Order Manager] Expected error in delete_order_from_disk\n{e}")
 
     def load_order_from_disk(self, order):
         order_id = order["order_id"]
@@ -191,7 +190,7 @@ class OrderManager:
             with open(full_path, "r") as file:
                 order_data = json.load(file)
         except Exception as e:
-            print(f"[Order Manager] load_order_from_disk\n{e}")
+            logger.warn(f"[Order Manager] load_order_from_disk\n{e}")
         try:
             self.order_id = order_data["order_id"]
             self.items = order_data["items"]
@@ -208,7 +207,7 @@ class OrderManager:
             self.app.utilities.update_financial_summary()
             return True
         except Exception as e:
-            print(e)
+            logger.warn(e)
 
     def list_all_saved_orders(self):
         all_order_details = []
@@ -228,7 +227,7 @@ class OrderManager:
                         }
                         all_order_details.append(order_dict)
                 except Exception as e:
-                    print(f"[Order Manager] Error reading order file {file_name}\n{e}")
+                    logger.warn(f"[Order Manager] Error reading order file {file_name}\n{e}")
 
         return all_order_details
 
@@ -300,21 +299,21 @@ class OrderManager:
         try:
             price = float(price)
         except Exception as e:
-            print("Exception in add custom item order_manager.py,", e)
+            logger.warn("Exception in add custom item order_manager.py,", e)
             return
         # try:
         custom_item_name = name
         try:
             self.add_item(custom_item_name, price, custom_item=True, item_id=item_id)
         except Exception as e:
-            print("Exception in add custom item order_manager.py,", e)
+            logger.warn("Exception in add custom item order_manager.py,", e)
         try:
             self.app.utilities.update_display()
             self.app.utilities.update_financial_summary()
             self.app.popup_manager.custom_item_popup.dismiss()
             self.app.popup_manager.cash_input.text = ""
         except Exception as e:
-            print(f"[Order Manager]: add_custom_item\n{e}")
+            logger.warn(f"[Order Manager]: add_custom_item\n{e}")
             pass
 
     def finalize_order(self):
@@ -330,7 +329,7 @@ class OrderManager:
             try:
                 total_price_float = float(total_price_for_item)
             except ValueError as e:
-                print(e)
+                logger.warn(e)
                 continue
 
             order_summary += self.create_order_summary_item(
@@ -371,7 +370,7 @@ class OrderManager:
 
     def discount_single_item(self, discount_amount, item_id="", percent=False):
         try:
-            print("discount_single_item", item_id)
+            logger.warn("discount_single_item", item_id)
             if item_id in self.items:
                 item = self.items[item_id]
 
@@ -419,7 +418,7 @@ class OrderManager:
             try:
                 discount_amount = float(discount_amount)
             except ValueError as e:
-                print(f"Order Manager: discount_entire_order\nexception converting to a float\n{e}")
+                logger.warn(f"Order Manager: discount_entire_order\nexception converting to a float\n{e}")
 
             if percent:
                 discount_value = self.subtotal * discount_amount / 100
@@ -436,19 +435,19 @@ class OrderManager:
                 self.app.utilities.update_display()
                 self.app.utilities.update_financial_summary()
             except Exception as e:
-                print(f"[Order Manager]: discount_entire_order\n exception updating totals\n{e}")
+                logger.warn(f"[Order Manager]: discount_entire_order\n exception updating totals\n{e}")
             try:
                 self.app.popup_manager.custom_discount_order_amount_input.text = ""
             except AttributeError:
-                print("[Order Manager]: discount_entire_order\nExpected error popup_manager.custom_discount_order_amount_input.text is None")
+                logger.info("[Order Manager]: discount_entire_order\nExpected error popup_manager.custom_discount_order_amount_input.text is None")
             try:
                 self.app.popup_manager.discount_order_popup.dismiss()
             except AttributeError:
-                print("[Order Manager]: discount_entire_order\nExpected error popup_manager.discount_order_popup is None")
+                logger.info("[Order Manager]: discount_entire_order\nExpected error popup_manager.discount_order_popup is None")
             try:
                 self.app.popup_manager.custom_discount_order_popup.dismiss()
             except AttributeError:
-                print("[Order Manager]: discount_entire_order\nExpected error popup_manager.custom_discount_order_popup is None")
+                logger.info("[Order Manager]: discount_entire_order\nExpected error popup_manager.custom_discount_order_popup is None")
             self.app.financial_summary.order_mod_popup.dismiss()
 
     def add_adjusted_price_item(self):
@@ -456,7 +455,7 @@ class OrderManager:
         try:
             target_amount = float(target_amount)
         except ValueError as e:
-            print(e)
+            logger.warn(e)
 
         self.adjust_order_to_target_total(target_amount)
         self.app.utilities.update_display()

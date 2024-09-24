@@ -55,13 +55,13 @@ class Wrapper:
         try:
             res = subprocess.run(["git", "pull"], capture_output=True, text=True)
             if "Already up to date." in res.stdout:
-                print("[Wrapper]\nNo updates available")
+                logger.warn("[Wrapper]\nNo updates available")
                 return False
             else:
-                print("[Wrapper]\nApplication updated:\n" + res.stdout)
+                logger.warn("[Wrapper]\nApplication updated:\n" + res.stdout)
                 return True
         except subprocess.CalledProcessError as e:
-            print("[Wrapper]\nUpdate Error:", e)
+            logger.warn("[Wrapper]\nUpdate Error:", e)
         return
 
     def get_update_details(self):
@@ -69,7 +69,7 @@ class Wrapper:
             response = requests.get('https://raw.githubusercontent.com/Elias0419/rigs_pos/refs/heads/main/update/update_details')
             return response.text
         except:
-            print("[Wrapper]: Couldn't get update details")
+            logger.warn("[Wrapper]: Couldn't get update details")
         return None
 
 
@@ -160,7 +160,7 @@ class Wrapper:
                 ["msmtp", recipient], input=email_content, text=True
             )
         except Exception as e:
-            print(e)
+            logger.warn(e)
 
     def update_applied(self, details=None):
         if details:

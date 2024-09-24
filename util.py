@@ -5,19 +5,19 @@ logging_configured = False
 def setup_logging():
     global logging_configured
     if not logging_configured:
-        logger = logging.getLogger('rigs_pos')
+
         logger.setLevel(logging.DEBUG)
 
         fh = logging.FileHandler('rigs_pos.log')
         fh.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)',
                                       datefmt='%m/%d/%Y %H:%M:%S')
         fh.setFormatter(formatter)
         logger.addHandler(fh)
 
         ch = logging.StreamHandler()
         ch.setLevel(logging.INFO)
-        formatter_console = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+        formatter_console = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)')
         ch.setFormatter(formatter_console)
         logger.addHandler(ch)
 
@@ -26,7 +26,7 @@ def setup_logging():
         logging_configured = True
 
 
-
+logger = logging.getLogger('rigs_pos')
 
 import json
 import time
@@ -82,7 +82,7 @@ def log_caller_info(depth=1):
         file_name = caller_frame.filename
         line_number = caller_frame.lineno
         function_name = caller_frame.function
-        print(f"Called from {file_name}, line {line_number}, in {function_name}")
+        logger.warn(f"Called from {file_name}, line {line_number}, in {function_name}")
 
 class Utilities:
     def __init__(self, ref):
@@ -251,7 +251,7 @@ class Utilities:
             os.replace(temp_file_path, final_file_path)
 
         except Exception as e:
-            print(f"[Utilities]: store_user_details\n {e}")
+            logger.warn(f"[Utilities]: store_user_details\n {e}")
             if os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
 
@@ -355,9 +355,9 @@ class Utilities:
         )
 
     def auto_clock_out(self, dt):
-        print(f"called auto clock out\nclock in file: {self.clock_in_file}")
+        logger.warn(f"called auto clock out\nclock in file: {self.clock_in_file}")
         if os.path.exists(self.clock_in_file):
-            print("path exists")
+            logger.warn("path exists")
             session_id = self.extract_session_id(self.clock_in_file)
             os.remove(self.clock_in_file)
 
@@ -384,7 +384,7 @@ class Utilities:
         self, name, session_id, timestamp=None, clock_in=False, clock_out=False
     ):
         log_caller_info(depth=2)
-        print(f"update_attendance_log called with: name={name}, session_id={session_id}, timestamp={timestamp}, clock_in={clock_in}, clock_out={clock_out}")
+        logger.warn(f"update_attendance_log called with: name={name}, session_id={session_id}, timestamp={timestamp}, clock_in={clock_in}, clock_out={clock_out}")
         if timestamp is None:
             timestamp = datetime.now().isoformat()
         if clock_in:
@@ -426,7 +426,7 @@ class Utilities:
                 file.truncate()
                 json.dump(updated_log, file, indent=4)
         except Exception as e:
-            print(f"Utilities: delete_session_from_log\n{e}")
+            logger.warn(f"Utilities: delete_session_from_log\n{e}")
 
     def extract_session_id(self, filename):
         with open(filename, "r") as file:
@@ -497,7 +497,7 @@ class Utilities:
     #         print(line)
 
     def reset_pin_timer(self):
-        print("reset_pin_timer", self.app.pin_reset_timer)
+        logger.warn("reset_pin_timer", self.app.pin_reset_timer)
         if self.app.pin_reset_timer is not None:
             self.app.pin_reset_timer.stop()
 
@@ -551,7 +551,7 @@ class Utilities:
             self.app.inventory_manager.detach_from_parent()
             self.app.label_manager.detach_from_parent()
         except Exception as e:
-            print(e)
+            logger.warn(e)
 
     def create_md_raised_button(
 
@@ -579,7 +579,7 @@ class Utilities:
                     if popup._is_open:
                         popup.dismiss()
                 except Exception as e:
-                    print(e)
+                    logger.warn(e)
 
     def update_display(self):
         self.app.order_layout.clear_widgets()
@@ -884,7 +884,7 @@ class Utilities:
             self.base_layout.add_widget(bg_image)
 
         except Exception as e:
-            print(e)
+            logger.warn(e)
             with self.base_layout.canvas.before:
                 Color(0.78, 0.78, 0.78, 1)
                 self.rect = Rectangle(
@@ -1229,7 +1229,7 @@ class Utilities:
         try:
             subprocess.run(["systemctl", "reboot"])
         except Exception as e:
-            print(e)
+            logger.warn(e)
 
     def save_settings(self):
         settings = {
@@ -1254,7 +1254,7 @@ class Utilities:
                 #     self.handle_emergency_reboot()
 
         except FileNotFoundError as e:
-            print(e)
+            logger.warn(e)
 
     def turn_on_monitor(self):
         try:
@@ -1262,7 +1262,7 @@ class Utilities:
                 ["xrandr", "--output", "HDMI-1", "--brightness", "1"], check=True
             )
         except Exception as e:
-            print(e)
+            logger.warn(e)
 
     def check_inactivity(self, *args):
         try:
@@ -1272,7 +1272,7 @@ class Utilities:
                 self.trigger_guard_and_lock()
 
         except Exception as e:
-            print(f"Exception in check_inactivity\n{e}")
+            logger.warn(f"Exception in check_inactivity\n{e}")
 
     def clear_split_numeric_input(self):
         self.app.popup_manager.split_payment_numeric_cash_input.text = ""
@@ -1285,7 +1285,7 @@ class Utilities:
                 amount = float(amount)
                 self.on_split_payment_confirm(amount=amount, method=method)
             except ValueError as e:
-                print(e)
+                logger.warn(e)
 
     def on_split_payment_confirm(self, amount, method):
         amount = float(f"{amount:.2f}")
@@ -1444,7 +1444,7 @@ class Utilities:
         try:
             int(barcode_input.text)
         except ValueError as e:
-            print("[Utilities]\n inventory_item_confirm_and_close no barcode")
+            logger.warn("[Utilities]\n inventory_item_confirm_and_close no barcode")
             self.app.popup_manager.catch_label_printer_missing_barcode()
             return
 

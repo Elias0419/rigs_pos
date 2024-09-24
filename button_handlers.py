@@ -37,7 +37,7 @@ def log_caller_info(depths=1, to_file=False, filename="caller_info_log.txt"):
         with open(filename, 'a') as f:
             f.writelines(output_lines)
     else:
-        print(''.join(output_lines))
+        logger.warn(''.join(output_lines))
 def debounce(wait):
     def decorator(fn):
         last_executed = 0
@@ -242,7 +242,7 @@ class ButtonHandler:
                 self.app.order_manager.finalize_order()
 
     def handle_zeroed_orders(self):
-        print("zeroed")
+        logger.warn("zeroed")
 
     def show_custom_item_popup(self):
         self.app.popup_manager.show_custom_item_popup()

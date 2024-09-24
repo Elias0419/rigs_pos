@@ -72,7 +72,7 @@ class PopupManager:
         try:
             self.update_notification_popup.dismiss()
         except AttributeError as e:
-            print("[PopupManager: Expected error in dismiss_update_notification_popup]\n", e)
+            logger.info("[PopupManager: Expected error in dismiss_update_notification_popup]\n", e)
 
     def show_notes_widget(self):
         self.notes_dir = "notes"
@@ -2007,7 +2007,7 @@ class PopupManager:
             self.app.utilities.dual_button.text = ""
             self.app.current_context = "main"
         except Exception as e:
-            print(f"[PopupManager: Expected error in exit_dual_pane_mode\n{e}]")
+            logger.info(f"[PopupManager: Expected error in exit_dual_pane_mode\n{e}]")
 
     def toggle_active_pane(self):
         if self.overlay_popup.pos_hint == {"right": 1}:
@@ -2994,7 +2994,7 @@ class PopupManager:
         try:
             self.app.utilities.on_change_done(None)
         except Exception as e:
-            print(f"Exception in popup_manager make_change_popup_timeout\n{e}")
+            logger.warn(f"Exception in popup_manager make_change_popup_timeout\n{e}")
 
     def handle_split_payment(self):
         self.dismiss_popups(
@@ -3370,7 +3370,7 @@ class PopupManager:
                     if popup._is_open:
                         popup.dismiss()
                 except Exception as e:
-                    print(e)
+                    logger.warn(e)
 
     def do_nothing(self, instance=None, *args, **kwargs):
         pass
@@ -3502,7 +3502,7 @@ class PopupManager:
         self.receipt_errors_popup.open()
 
     def unrecoverable_error(self):
-        print("unrecoverable")
+        logger.warn("unrecoverable")
         error_layout = BoxLayout(orientation="vertical")
         error_text = Label(
             text=f"There has been an unrecoverable error\nand the system needs to reboot\nSorry!"
@@ -3640,7 +3640,7 @@ class PopupManager:
 
     def handle_duplicate_barcodes(self, barcode):
         try:
-            print("in popups", barcode)
+            logger.warn("in popups", barcode)
             items = self.app.db_manager.handle_duplicate_barcodes(barcode)
 
             if not isinstance(items, list):
@@ -3672,7 +3672,7 @@ class PopupManager:
             )
             self.handle_duplicate_barcodes_popup.open()
         except Exception as e:
-            print(f"Exception in handle_duplicate_barcodes\n{e}")
+            logger.warn(f"Exception in handle_duplicate_barcodes\n{e}")
 
     def add_dupe_choice_to_order(self, barcode, choice, price):
 
@@ -3886,7 +3886,7 @@ class FinancialSummaryWidget(MDFlatButton):
         try:
             self.order_mod_popup.dismiss()
         except Exception as e:
-            print(f"[Popups]: save_order expected errror\n{e}")
+            logger.info(f"[Popups]: save_order expected errror\n{e}")
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
 

@@ -94,7 +94,7 @@ class InventoryManagementView(BoxLayout):
         try:
             int(barcode_input.text)
         except ValueError as e:
-            print("[Inventory Manager]\n add_item_to_database no barcode")
+            logger.warn("[Inventory Manager]\n add_item_to_database no barcode")
             self.app.popup_manager.catch_label_printer_missing_barcode()
             return
         if name_input:
@@ -111,7 +111,7 @@ class InventoryManagementView(BoxLayout):
                 self.refresh_label_inventory_for_dual_pane_mode()
 
             except Exception as e:
-                print(e)
+                logger.warn(e)
 
     def refresh_label_inventory_for_dual_pane_mode(self):
         try:
@@ -244,7 +244,7 @@ class InventoryManagementRow(BoxLayout):
                 self.app.utilities.update_inventory_cache()
                 self.inventory_management_view.refresh_label_inventory_for_dual_pane_mode()
             except Exception as e:
-                print(e)
+                logger.warn(e)
 
 
 class InventoryRow(BoxLayout):
@@ -282,7 +282,7 @@ class InventoryRow(BoxLayout):
         try:
             price_float = float(self.price)
         except ValueError as e:
-            print(e)
+            logger.warn(e)
 
         self.order_manager.add_item(self.name, price_float, item_id=item_id)
 

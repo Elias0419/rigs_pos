@@ -78,7 +78,7 @@ class DatabaseManager:
             )
             conn.commit()
         except sqlite3.Error as e:
-            print(f"[DatabaseManager]:\n{e}")
+            logger.warn(f"[DatabaseManager]:\n{e}")
         finally:
             conn.close()
 
@@ -96,7 +96,7 @@ class DatabaseManager:
             )
             conn.commit()
         except sqlite3.Error as e:
-            print(f"Error creating attendance log table: {e}")
+            logger.warn(f"Error creating attendance log table: {e}")
         finally:
             conn.close()
 
@@ -121,7 +121,7 @@ class DatabaseManager:
             )
             conn.commit()
         except sqlite3.Error as e:
-            print(f"[DatabaseManager]:\n{e}")
+            logger.warn(f"[DatabaseManager]:\n{e}")
         finally:
             conn.close()
 
@@ -145,7 +145,7 @@ class DatabaseManager:
             )
             conn.commit()
         except sqlite3.Error as e:
-            print(f"[DatabaseManager]:\n{e}")
+            logger.warn(f"[DatabaseManager]:\n{e}")
         finally:
             conn.close()
 
@@ -170,7 +170,7 @@ class DatabaseManager:
             )
             conn.commit()
         except sqlite3.Error as e:
-            print(f"[DatabaseManager]:\n{e}")
+            logger.warn(f"[DatabaseManager]:\n{e}")
         finally:
             conn.close()
 
@@ -192,7 +192,7 @@ class DatabaseManager:
             )
             conn.commit()
         except sqlite3.Error as e:
-            print(f"[DatabaseManager]:\n{e}")
+            logger.warn(f"[DatabaseManager]:\n{e}")
         finally:
             conn.close()
 
@@ -240,7 +240,7 @@ class DatabaseManager:
             }
             self.app.utilities.update_barcode_cache(item_details)
         except sqlite3.IntegrityError as e:
-            print(f"[DatabaseManager]:\n{e}")
+            logger.warn(f"[DatabaseManager]:\n{e}")
             conn.close()
             return False
         conn.close()
@@ -283,7 +283,7 @@ class DatabaseManager:
             }
             self.app.utilities.update_barcode_cache(item_details)
         except Exception as e:
-            print(f"[DatabaseManager]:\n{e}")
+            logger.warn(f"[DatabaseManager]:\n{e}")
             return False
         finally:
             conn.close()
@@ -320,7 +320,7 @@ class DatabaseManager:
                 items.append(item_details)
 
         except sqlite3.Error as e:
-            print(f"Database error: {e}")
+            logger.warn(f"Database error: {e}")
         finally:
             conn.close()
 
@@ -394,7 +394,7 @@ class DatabaseManager:
                 #     item_details['parent_barcode'] = item[7]
 
         except Exception as e:
-            print(f"[DatabaseManager]: get_item_details\n {e}")
+            logger.warn(f"[DatabaseManager]: get_item_details\n {e}")
         finally:
             if conn:
                 conn.close()
@@ -402,7 +402,7 @@ class DatabaseManager:
         return item_details
 
     def delete_item(self, item_id):
-        print(f"delete\n{item_id}")
+        logger.warn(f"delete\n{item_id}")
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
@@ -416,7 +416,7 @@ class DatabaseManager:
             conn.commit()
             return True
         except sqlite3.Error as e:
-            print(f"[DatabaseManager]:\n{e}")
+            logger.warn(f"[DatabaseManager]:\n{e}")
             return False
         finally:
             conn.close()
@@ -464,7 +464,7 @@ class DatabaseManager:
             )
             conn.commit()
         except sqlite3.Error as e:
-            print(f"[DatabaseManager]:\n{e}")
+            logger.warn(f"[DatabaseManager]:\n{e}")
             return False
         finally:
             conn.close()
@@ -482,7 +482,7 @@ class DatabaseManager:
             )
             conn.commit()
         except sqlite3.Error as e:
-            print(f"[DatabaseManager]:\n{e}")
+            logger.warn(f"[DatabaseManager]:\n{e}")
             return False
         finally:
             conn.close()
@@ -499,7 +499,7 @@ class DatabaseManager:
                 )
                 conn.commit()
             except sqlite3.Error as e:
-                print(f"[DatabaseManager]:\n{e}")
+                logger.warn(f"[DatabaseManager]:\n{e}")
                 return False
             finally:
                 conn.close()
@@ -526,7 +526,7 @@ class DatabaseManager:
                 )
                 conn.commit()
             except sqlite3.Error as e:
-                print(f"[DatabaseManager]:\n{e}")
+                logger.warn(f"[DatabaseManager]:\n{e}")
                 return False
             finally:
                 conn.close()
@@ -601,13 +601,13 @@ class DatabaseManager:
     def add_item_to_database(
         self, barcode, name, price, cost=0.0, sku=None, categories=None
     ):
-        print("add to db")
+        logger.warn("add to db")
         if barcode and name and price:
             try:
                 self.add_item(barcode, name, price, cost, sku, categories)
                 self.app.popup_manager.add_to_db_popup.dismiss()
             except Exception as e:
-                print(f"[DatabaseManager] add_item_to_database:\n{e}")
+                logger.warn(f"[DatabaseManager] add_item_to_database:\n{e}")
 
     def get_all_items(self):
         # print(f"db manager get all\n\n\n\n")
@@ -621,7 +621,7 @@ class DatabaseManager:
             items = cursor.fetchall()
         #  print(len(items))
         except sqlite3.Error as e:
-            print(f"[DatabaseManager]:\n{e}")
+            logger.warn(f"[DatabaseManager]:\n{e}")
             items = []
         finally:
             conn.close()
@@ -701,7 +701,7 @@ class DatabaseManager:
             )
             conn.commit()
         except sqlite3.Error as e:
-            print(f"[DatabaseManager]:\n{e}")
+            logger.warn(f"[DatabaseManager]:\n{e}")
             return False
         finally:
             conn.close()
@@ -723,7 +723,7 @@ class DatabaseManager:
             sessions = cursor.fetchall()
             return sessions
         except sqlite3.Error as e:
-            print(f"[DatabaseManager]:\n{e}")
+            logger.warn(f"[DatabaseManager]:\n{e}")
             return None
         finally:
             conn.close()
@@ -735,7 +735,7 @@ class DatabaseManager:
             cursor.execute("DELETE FROM attendance_log WHERE session_id = ?", (session_id,))
             conn.commit()
         except sqlite3.Error as e:
-           print(f"[DatabaseManager]:\n{e}")
+           logger.warn(f"[DatabaseManager]:\n{e}")
         finally:
             conn.close()
 
@@ -750,7 +750,7 @@ class DatabaseManager:
             )
             conn.commit()
         except sqlite3.Error as e:
-            print(f"[DatabaseManager]:\n{e}")
+            logger.warn(f"[DatabaseManager]:\n{e}")
         finally:
             conn.close()
 
@@ -763,7 +763,7 @@ class DatabaseManager:
 
             return results
         except sqlite3.Error as e:
-            print(f"[DatabaseManager]:\n{e}")
+            logger.warn(f"[DatabaseManager]:\n{e}")
         finally:
             conn.close()
 
@@ -793,7 +793,7 @@ class DatabaseManager:
             )
             conn.commit()
         except sqlite3.Error as e:
-            print(f"[DatabaseManager]:\n{e}")
+            logger.warn(f"[DatabaseManager]:\n{e}")
         finally:
             conn.close()
 
@@ -801,4 +801,4 @@ class DatabaseManager:
 if __name__ == "__main__":
     db = DatabaseManager("db/inventory.db", None)
     res = db.get_all_items()
-    print(res)
+    logger.warn(res)
