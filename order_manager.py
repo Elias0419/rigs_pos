@@ -3,10 +3,12 @@ import json
 import os
 from open_cash_drawer import open_cash_drawer
 
+import logging
+logger = logging.getLogger('rigs_pos')
 
 class OrderManager:
     _instance = None
-
+    logger.error("Inside order manager init")
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
             cls._instance = super(OrderManager, cls).__new__(cls)

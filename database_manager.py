@@ -5,7 +5,8 @@ import uuid
 import os
 import requests
 
-
+import logging
+logger = logging.getLogger('rigs_pos')
 class DatabaseManager:
     _instance = None
 

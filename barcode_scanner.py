@@ -5,6 +5,8 @@ import re
 import subprocess
 import time
 
+import logging
+logger = logging.getLogger('rigs_pos')
 
 class BarcodeScanner:
     def __init__(self, ref):

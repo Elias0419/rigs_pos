@@ -1,26 +1,18 @@
-# import logging
-# from logger_conf import setup_logging
-# setup_logging()
-# logger = logging.getLogger(__name__)
-# logger.info("Application starting..")
-
-
 from kivy.config import Config
-
 # Config.set('kivy', 'keyboard_mode', 'systemanddock')
-# Config.set('input', 'isolution multitouch', 'hidinput,/dev/input/event12')
 # Config.set('graphics', 'show_cursor', '0')
 Config.set("graphics", "multisamples", "8")
 Config.set("graphics", "kivy_clock", "interrupt")
 Config.set("kivy", "exit_on_escape", "0")
 
+from kivymd.app import MDApp
 from kivy.core.window import Window
 
-# from kivy.modules import monitor, inspector
-from kivymd.app import MDApp
+from util import setup_logging, Utilities
+setup_logging()
+import logging
+logger = logging.getLogger('rigs_pos')
 
-
-from util import Utilities
 
 
 Window.maximize()

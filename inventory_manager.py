@@ -8,8 +8,8 @@ from kivymd.uix.boxlayout import BoxLayout
 
 from database_manager import DatabaseManager
 from order_manager import OrderManager
-
-
+import logging
+logger = logging.getLogger('rigs_pos')
 class InventoryManagementView(BoxLayout):
     barcode = StringProperty()
     name = StringProperty()

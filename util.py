@@ -1,3 +1,33 @@
+import logging
+
+logging_configured = False
+
+def setup_logging():
+    global logging_configured
+    if not logging_configured:
+        logger = logging.getLogger('rigs_pos')
+        logger.setLevel(logging.DEBUG)
+
+        fh = logging.FileHandler('rigs_pos.log')
+        fh.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                                      datefmt='%m/%d/%Y %H:%M:%S')
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)
+        formatter_console = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+        ch.setFormatter(formatter_console)
+        logger.addHandler(ch)
+
+        logger.propagate = False
+
+        logging_configured = True
+
+
+
+
 import json
 import time
 import subprocess
