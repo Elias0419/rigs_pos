@@ -53,14 +53,23 @@ class PopupManager:
         self.app = ref
 
 
-    def update_test(self):
-        layout=BoxLayout(size_hint=(0.5,0.5))
-        text=MDLabel(text="TACOS")
+    def show_update_notification_popup(self, update_details):
+        update_details_string = ''
+        for line in update_details:
+            update_details_string += line
+        layout=BoxLayout()
+        button = MDFlatButton(text="OK", on_release=self.dismiss_update_notification_popup)
+        text=MDLabel(text=update_details_string, halign="center")
         layout.add_widget(text)
-        popup=Popup(content=layout)
-        popup.open()
+        layout.add_widget(button)
+        self.update_notification_popup=Popup(content=layout, size_hint=(0.5,0.5), title="Update Applied", overlay_color=(0,0,0,0), separator_height=0)
+        self.update_notification_popup.open()
 
-
+    def dismiss_update_notification_popup(self, _):
+        try:
+            self.update_notification_popup.dismiss()
+        except AttributeError as e:
+            print("[PopupManager: Expected error in dismiss_update_notification_popup]\n", e)
 
     def show_notes_widget(self):
         self.notes_dir = "notes"
