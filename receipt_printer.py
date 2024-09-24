@@ -5,6 +5,8 @@ from escpos.config import Config
 import textwrap
 import base64
 import io
+import logging
+logger = logging.getLogger('rigs_pos')
 
 
 class ReceiptPrinter:
