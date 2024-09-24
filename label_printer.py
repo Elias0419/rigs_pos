@@ -31,7 +31,8 @@ from kivy.app import App
 from kivy.uix.recycleview import RecycleView
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
 
-
+import logging
+logger = logging.getLogger('rigs_pos')
 class LabelPrintingRow(BoxLayout):
     barcode = StringProperty()
     name = StringProperty()

@@ -8,6 +8,9 @@ import inspect
 
 import datetime
 
+import logging
+logger = logging.getLogger('rigs_pos')
+
 def log_caller_info(depths=1, to_file=False, filename="caller_info_log.txt"):
     stack = inspect.stack()
     if isinstance(depths, int):

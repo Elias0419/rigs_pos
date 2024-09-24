@@ -47,6 +47,9 @@ from kivy.properties import ColorProperty
 from kivymd.uix.card import MDCard
 from PIL import Image as PILImage
 
+import logging
+logger = logging.getLogger('rigs_pos')
+
 
 class PopupManager:
     def __init__(self, ref):

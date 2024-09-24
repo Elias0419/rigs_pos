@@ -4,6 +4,33 @@ import sys
 import json
 import requests
 
+import logging
+
+wrapper_logging_configured = False
+
+def setup_logging():
+    global wrapper_logging_configured
+    if not wrapper_logging_configured:
+        logger = logging.getLogger('wrapper')
+        logger.setLevel(logging.DEBUG)
+
+        fh = logging.FileHandler('wrapper.log')
+        fh.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                                      datefmt='%m/%d/%Y %H:%M:%S')
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)
+        formatter_console = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+        ch.setFormatter(formatter_console)
+        logger.addHandler(ch)
+
+        logger.propagate = False
+
+        wrapper_logging_configured = True
+
 class Wrapper:
     def __init__(self, ref=None):
         self.app = ref
