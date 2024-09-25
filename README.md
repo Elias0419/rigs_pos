@@ -2,7 +2,7 @@
 
 ![RIGS POS](https://github.com/Elias0419/rigs_pos/assets/108772953/5048521c-06b2-4ab6-b2c9-016a41d7afa9)
 
-This repository contains the Python source code and various support files for the **RIGS Point of Sale** software, a comprehensive touchscreen POS system using Kivy and Python, designed to run on Linux.
+This repository contains the Python source code and various support files for the **RIGS Point of Sale** software.
 
 ## Components
 - **Installer** (`installer/rigs_pos_installer.sh`): An installation program written in Bash that supports `install mode` for installing dependencies, the software itself, a systemd service file, and several udev rules. `Demo mode` allows for testing without permanent system changes, cleaning up installation files on exit. Currently, supports Ubuntu, Fedora, Arch, and Gentoo.
