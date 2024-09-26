@@ -3741,6 +3741,7 @@ class FinancialSummaryWidget(MDFlatButton):
             self.size_hint_x = None
             self.width = 350
             self.height = 200
+            self.font = "images/VarelaRound-Regular.ttf"
 
             # self.padding = (100, 0, 0, 0)
             self._no_ripple_effect = True
@@ -3765,6 +3766,11 @@ class FinancialSummaryWidget(MDFlatButton):
             self.update_summary(0, 0, 0, 0)
 
     def update_summary(self, subtotal, tax, total_with_tax, discount):
+        self.subtotal_label.font_name = self.font
+        self.discount_label.font_name = self.font
+        self.tax_label.font_name = self.font
+        self.total_label.font_name = self.font
+
         self.subtotal_label.text = f"[size=20]Subtotal: ${subtotal:.2f}[/size]"
         self.discount_label.text = f"[size=20]Discount: ${discount:.2f}[/size]"
         self.tax_label.text = f"[size=20]Tax: ${tax:.2f}[/size]"

@@ -89,6 +89,8 @@ class Utilities:
         self.app = ref
         self.clock_in_file = ""
         self.popup_manager = PopupManager(None)
+        self.font = "images/VarelaRound-Regular.ttf"
+
 
     def check_if_update_was_applied(self):
         try:
@@ -529,7 +531,7 @@ class Utilities:
 
         formatted_time = f"[size=36][b]{current_time}[/b][/size]"
         formatted_date = f"[size=26]{current_date}[/size]"
-
+        self.app.clock_label.font_name = self.font
         self.app.clock_label.text = f"{formatted_time}\n{formatted_date}\n"
 
         # self.app.clock_label.color = self.get_text_color()
@@ -818,7 +820,7 @@ class Utilities:
             cols=5,
             spacing=20,
             padding=20,
-            size_hint_y=0.05,
+            size_hint_y=0.1,
             size_hint_x=1,
             orientation="lr-tb",
         )
@@ -827,33 +829,36 @@ class Utilities:
             text="[b][size=40]PAY[/b][/size]",
             on_press=self.app.button_handler.on_button_press,
             padding=(8, 8),
+            font_name=self.font,
             font_style="H6",
             size_hint_x=None,
             _min_width=225,
             # _min_height=100,
-            line_color="white",
+            # line_color="white",
         )
 
         btn_custom_item = MDFlatButton(
             text="[b][size=40]CUSTOM[/b][/size]",
             on_press=self.app.button_handler.on_button_press,
             padding=(8, 8),
+            font_name=self.font,
             font_style="H6",
             size_hint_x=None,
             _min_width=225,
             # _min_height=100,
-            line_color="white",
+            # line_color="white",
         )
 
         btn_inventory = MDFlatButton(
             text="[b][size=40]SEARCH[/b][/size]",
             on_press=self.app.button_handler.on_button_press,
             padding=(8, 8),
+            font_name=self.font,
             font_style="H6",
             size_hint_x=None,
             _min_width=225,
             # _min_height=100,
-            line_color="white",
+            # line_color="white",
         )
 
         btn_tools = MDFlatButton(
@@ -861,11 +866,12 @@ class Utilities:
             on_press=self.app.button_handler.on_button_press,
             # on_press=lambda x: self.app.db_manager.retrieve_attendence_log_entries(),
             padding=(8, 8),
-            font_style="H6",
+            font_style="H1",
+            font_name=self.font,
             size_hint_x=None,
             _min_width=225,
             # _min_height=100,
-            line_color="white",
+            # line_color="white",
         )
         _blank3 = MDBoxLayout(size_hint_x=None, width=500)
         button_layout.add_widget(_blank3)
@@ -991,7 +997,7 @@ class Utilities:
         saved_orders_container.add_widget(self.saved_order_button4)
         saved_orders_container.add_widget(self.saved_order_button5)
         logo_container = BoxLayout(size_hint_y=0.2, padding=(-250, 0, 0, -150))
-        logo = ImageButton(source="images/rigs_logo_scaled.png")
+        logo = ImageButton(source="images/rigs_logo_test.png")
         logo_container.add_widget(logo)
 
         register_text = MDLabel(
@@ -999,6 +1005,7 @@ class Utilities:
             size_hint_y=None,
             font_style="H6",
             height=50,
+            font_name=self.font,
             # valign="bottom",
             # halign="center",
         )
@@ -1007,6 +1014,7 @@ class Utilities:
         )
         clock_container = BoxLayout(size_hint_y=0.2, padding=(-40, 0, 0, -100))
         self.app.clock_label = MDLabel(
+            # font_name=self.font,
             text="",
             size_hint_y=None,
             # font_style="H6",
@@ -1017,6 +1025,7 @@ class Utilities:
             # valign="bottom",
             halign="left",
             # pos_hint={"left": 0.1}
+
         )
         clock_container.add_widget(self.app.clock_label)
         line_container = MDBoxLayout(
