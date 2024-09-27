@@ -4,6 +4,34 @@ import sys
 import json
 import requests
 
+import logging
+
+wrapper_logging_configured = False
+
+def setup_logging():
+    global wrapper_logging_configured
+    if not wrapper_logging_configured:
+
+        logger.setLevel(logging.DEBUG)
+
+        fh = logging.FileHandler('wrapper.log')
+        fh.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                                      datefmt='%m/%d/%Y %H:%M:%S')
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)
+        formatter_console = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+        ch.setFormatter(formatter_console)
+        logger.addHandler(ch)
+
+        logger.propagate = False
+
+        wrapper_logging_configured = True
+logger = logging.getLogger('wrapper')
+
 class Wrapper:
     def __init__(self, ref=None):
         self.app = ref
@@ -28,13 +56,13 @@ class Wrapper:
         try:
             res = subprocess.run(["git", "pull"], capture_output=True, text=True)
             if "Already up to date." in res.stdout:
-                print("[Wrapper]\nNo updates available")
+                logger.warn("[Wrapper]\nNo updates available")
                 return False
             else:
-                print("[Wrapper]\nApplication updated:\n" + res.stdout)
+                logger.warn("[Wrapper]\nApplication updated:\n" + res.stdout)
                 return True
         except subprocess.CalledProcessError as e:
-            print("[Wrapper]\nUpdate Error:", e)
+            logger.warn("[Wrapper]\nUpdate Error:", e)
         return
 
     def get_update_details(self):
@@ -42,7 +70,7 @@ class Wrapper:
             response = requests.get('https://raw.githubusercontent.com/Elias0419/rigs_pos/refs/heads/main/update/update_details')
             return response.text
         except:
-            print("[Wrapper]: Couldn't get update details")
+            logger.warn("[Wrapper]: Couldn't get update details")
         return None
 
 
@@ -133,7 +161,7 @@ class Wrapper:
                 ["msmtp", recipient], input=email_content, text=True
             )
         except Exception as e:
-            print(e)
+            logger.warn(e)
 
     def update_applied(self, details=None):
         if details:
