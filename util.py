@@ -1,3 +1,33 @@
+import logging
+
+logging_configured = False
+
+def setup_logging():
+    global logging_configured
+    if not logging_configured:
+
+        logger.setLevel(logging.DEBUG)
+
+        fh = logging.FileHandler('rigs_pos.log')
+        fh.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)',
+                                      datefmt='%m/%d/%Y %H:%M:%S')
+        fh.setFormatter(formatter)
+        logger.addHandler(fh)
+
+        ch = logging.StreamHandler()
+        ch.setLevel(logging.INFO)
+        formatter_console = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)')
+        ch.setFormatter(formatter_console)
+        logger.addHandler(ch)
+
+        logger.propagate = False
+
+        logging_configured = True
+
+
+logger = logging.getLogger('rigs_pos')
+
 import json
 import time
 import subprocess
@@ -52,13 +82,15 @@ def log_caller_info(depth=1):
         file_name = caller_frame.filename
         line_number = caller_frame.lineno
         function_name = caller_frame.function
-        print(f"Called from {file_name}, line {line_number}, in {function_name}")
+        logger.warn(f"Called from {file_name}, line {line_number}, in {function_name}")
 
 class Utilities:
     def __init__(self, ref):
         self.app = ref
         self.clock_in_file = ""
         self.popup_manager = PopupManager(None)
+        self.font = "images/VarelaRound-Regular.ttf"
+
 
     def check_if_update_was_applied(self):
         try:
@@ -221,7 +253,7 @@ class Utilities:
             os.replace(temp_file_path, final_file_path)
 
         except Exception as e:
-            print(f"[Utilities]: store_user_details\n {e}")
+            logger.warn(f"[Utilities]: store_user_details\n {e}")
             if os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
 
@@ -325,9 +357,9 @@ class Utilities:
         )
 
     def auto_clock_out(self, dt):
-        print(f"called auto clock out\nclock in file: {self.clock_in_file}")
+        logger.warn(f"called auto clock out\nclock in file: {self.clock_in_file}")
         if os.path.exists(self.clock_in_file):
-            print("path exists")
+            logger.warn("path exists")
             session_id = self.extract_session_id(self.clock_in_file)
             os.remove(self.clock_in_file)
 
@@ -354,7 +386,7 @@ class Utilities:
         self, name, session_id, timestamp=None, clock_in=False, clock_out=False
     ):
         log_caller_info(depth=2)
-        print(f"update_attendance_log called with: name={name}, session_id={session_id}, timestamp={timestamp}, clock_in={clock_in}, clock_out={clock_out}")
+        logger.warn(f"update_attendance_log called with: name={name}, session_id={session_id}, timestamp={timestamp}, clock_in={clock_in}, clock_out={clock_out}")
         if timestamp is None:
             timestamp = datetime.now().isoformat()
         if clock_in:
@@ -396,7 +428,7 @@ class Utilities:
                 file.truncate()
                 json.dump(updated_log, file, indent=4)
         except Exception as e:
-            print(f"Utilities: delete_session_from_log\n{e}")
+            logger.warn(f"Utilities: delete_session_from_log\n{e}")
 
     def extract_session_id(self, filename):
         with open(filename, "r") as file:
@@ -467,7 +499,7 @@ class Utilities:
     #         print(line)
 
     def reset_pin_timer(self):
-        print("reset_pin_timer", self.app.pin_reset_timer)
+        logger.warn("reset_pin_timer", self.app.pin_reset_timer)
         if self.app.pin_reset_timer is not None:
             self.app.pin_reset_timer.stop()
 
@@ -499,7 +531,7 @@ class Utilities:
 
         formatted_time = f"[size=36][b]{current_time}[/b][/size]"
         formatted_date = f"[size=26]{current_date}[/size]"
-
+        self.app.clock_label.font_name = self.font
         self.app.clock_label.text = f"{formatted_time}\n{formatted_date}\n"
 
         # self.app.clock_label.color = self.get_text_color()
@@ -521,7 +553,7 @@ class Utilities:
             self.app.inventory_manager.detach_from_parent()
             self.app.label_manager.detach_from_parent()
         except Exception as e:
-            print(e)
+            logger.warn(e)
 
     def create_md_raised_button(
 
@@ -549,7 +581,7 @@ class Utilities:
                     if popup._is_open:
                         popup.dismiss()
                 except Exception as e:
-                    print(e)
+                    logger.warn(e)
 
     def update_display(self):
         self.app.order_layout.clear_widgets()
@@ -788,7 +820,7 @@ class Utilities:
             cols=5,
             spacing=20,
             padding=20,
-            size_hint_y=0.05,
+            size_hint_y=0.1,
             size_hint_x=1,
             orientation="lr-tb",
         )
@@ -797,33 +829,36 @@ class Utilities:
             text="[b][size=40]PAY[/b][/size]",
             on_press=self.app.button_handler.on_button_press,
             padding=(8, 8),
+            font_name=self.font,
             font_style="H6",
             size_hint_x=None,
             _min_width=225,
             # _min_height=100,
-            line_color="white",
+            # line_color="white",
         )
 
         btn_custom_item = MDFlatButton(
             text="[b][size=40]CUSTOM[/b][/size]",
             on_press=self.app.button_handler.on_button_press,
             padding=(8, 8),
+            font_name=self.font,
             font_style="H6",
             size_hint_x=None,
             _min_width=225,
             # _min_height=100,
-            line_color="white",
+            # line_color="white",
         )
 
         btn_inventory = MDFlatButton(
             text="[b][size=40]SEARCH[/b][/size]",
             on_press=self.app.button_handler.on_button_press,
             padding=(8, 8),
+            font_name=self.font,
             font_style="H6",
             size_hint_x=None,
             _min_width=225,
             # _min_height=100,
-            line_color="white",
+            # line_color="white",
         )
 
         btn_tools = MDFlatButton(
@@ -831,11 +866,12 @@ class Utilities:
             on_press=self.app.button_handler.on_button_press,
             # on_press=lambda x: self.app.db_manager.retrieve_attendence_log_entries(),
             padding=(8, 8),
-            font_style="H6",
+            font_style="H1",
+            font_name=self.font,
             size_hint_x=None,
             _min_width=225,
             # _min_height=100,
-            line_color="white",
+            # line_color="white",
         )
         _blank3 = MDBoxLayout(size_hint_x=None, width=500)
         button_layout.add_widget(_blank3)
@@ -854,7 +890,7 @@ class Utilities:
             self.base_layout.add_widget(bg_image)
 
         except Exception as e:
-            print(e)
+            logger.warn(e)
             with self.base_layout.canvas.before:
                 Color(0.78, 0.78, 0.78, 1)
                 self.rect = Rectangle(
@@ -961,7 +997,7 @@ class Utilities:
         saved_orders_container.add_widget(self.saved_order_button4)
         saved_orders_container.add_widget(self.saved_order_button5)
         logo_container = BoxLayout(size_hint_y=0.2, padding=(-250, 0, 0, -150))
-        logo = ImageButton(source="images/rigs_logo_scaled.png")
+        logo = ImageButton(source="images/rigs_logo_test.png")
         logo_container.add_widget(logo)
 
         register_text = MDLabel(
@@ -969,6 +1005,7 @@ class Utilities:
             size_hint_y=None,
             font_style="H6",
             height=50,
+            font_name=self.font,
             # valign="bottom",
             # halign="center",
         )
@@ -977,6 +1014,7 @@ class Utilities:
         )
         clock_container = BoxLayout(size_hint_y=0.2, padding=(-40, 0, 0, -100))
         self.app.clock_label = MDLabel(
+            # font_name=self.font,
             text="",
             size_hint_y=None,
             # font_style="H6",
@@ -987,6 +1025,7 @@ class Utilities:
             # valign="bottom",
             halign="left",
             # pos_hint={"left": 0.1}
+
         )
         clock_container.add_widget(self.app.clock_label)
         line_container = MDBoxLayout(
@@ -1199,7 +1238,7 @@ class Utilities:
         try:
             subprocess.run(["systemctl", "reboot"])
         except Exception as e:
-            print(e)
+            logger.warn(e)
 
     def save_settings(self):
         settings = {
@@ -1224,7 +1263,7 @@ class Utilities:
                 #     self.handle_emergency_reboot()
 
         except FileNotFoundError as e:
-            print(e)
+            logger.warn(e)
 
     def turn_on_monitor(self):
         try:
@@ -1232,7 +1271,7 @@ class Utilities:
                 ["xrandr", "--output", "HDMI-1", "--brightness", "1"], check=True
             )
         except Exception as e:
-            print(e)
+            logger.warn(e)
 
     def check_inactivity(self, *args):
         try:
@@ -1242,7 +1281,7 @@ class Utilities:
                 self.trigger_guard_and_lock()
 
         except Exception as e:
-            print(f"Exception in check_inactivity\n{e}")
+            logger.warn(f"Exception in check_inactivity\n{e}")
 
     def clear_split_numeric_input(self):
         self.app.popup_manager.split_payment_numeric_cash_input.text = ""
@@ -1255,7 +1294,7 @@ class Utilities:
                 amount = float(amount)
                 self.on_split_payment_confirm(amount=amount, method=method)
             except ValueError as e:
-                print(e)
+                logger.warn(e)
 
     def on_split_payment_confirm(self, amount, method):
         amount = float(f"{amount:.2f}")
@@ -1414,7 +1453,7 @@ class Utilities:
         try:
             int(barcode_input.text)
         except ValueError as e:
-            print("[Utilities]\n inventory_item_confirm_and_close no barcode")
+            logger.warn("[Utilities]\n inventory_item_confirm_and_close no barcode")
             self.app.popup_manager.catch_label_printer_missing_barcode()
             return
 

@@ -31,7 +31,8 @@ from kivy.app import App
 from kivy.uix.recycleview import RecycleView
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
 
-
+import logging
+logger = logging.getLogger('rigs_pos')
 class LabelPrintingRow(BoxLayout):
     barcode = StringProperty()
     name = StringProperty()
@@ -120,7 +121,7 @@ class LabelPrintingRow(BoxLayout):
                 self.app.popup_manager.print_queue_embed
             )
         except Exception as e:
-            print(f"Expected error in refresh_print_queue_for_embed\n{e}")
+            logger.info(f"Expected error in refresh_print_queue_for_embed\n{e}")
 
     def on_add_button_press(self, quantity_input, popup):
         self.add_quantity_to_queue(quantity_input.text)
@@ -163,7 +164,7 @@ class LabelPrintingView(BoxLayout):
                 self.print_queue_popup.dismiss()
             self.show_print_queue()
         except Exception as e:
-            print(f"Expected error in refresh_and_show_print_queue")
+            logger.info(f"Expected error in refresh_and_show_print_queue")
         self.print_queue_ref.refresh_print_queue_for_embed()
 
     def update_print_queue_with_label_text(self, item_name, optional_text):
@@ -234,7 +235,7 @@ class LabelPrintingView(BoxLayout):
                     name_label = Label(text=f"{item['name']}", size_hint_x=0.2)
             else:
                 name_label = Label(text=f"{item['name']}", size_hint_x=0.2)
-            print(name_label)
+            logger.warn(name_label)
             qty_label = Label(text=f"Qty: {item['quantity']}", size_hint_x=0.05)
             text_label = Label(
                 text=f"Text: {item['optional_text']}", size_hint_x=0.2, halign="left"
@@ -538,7 +539,7 @@ class LabelPrinter:
             with open(self.queue_file_path, "w") as file:
                 json.dump(self.print_queue, file)
         except Exception as e:
-            print(f"Error saving print queue: {e}")
+            logger.warn(f"Error saving print queue: {e}")
 
     def load_queue(self):
 
@@ -549,7 +550,7 @@ class LabelPrinter:
 
             self.print_queue = []
         except Exception as e:
-            print(f"Error loading print queue: {e}")
+            logger.warn(f"Error loading print queue: {e}")
 
     def add_to_queue(self, barcode, name, price, quantity):
         try:
@@ -564,7 +565,7 @@ class LabelPrinter:
             )
             self.save_queue()
         except Exception as e:
-            print(f"Error adding labels to the queue. Probably tried to add 0 \n{e}")
+            logger.warn(f"Error adding labels to the queue. Probably tried to add 0 \n{e}")
 
     def update_queue_item_quantity(self, name, new_quantity):
         for item in self.print_queue:
@@ -603,9 +604,9 @@ class LabelPrinter:
         for i in self.print_queue:
             if i["name"] == name:
                 try:
-                    print(int(i["barcode"]))
+                    logger.warn(int(i["barcode"]))
                 except ValueError as e:
-                    print("probably no barcode")
+                    logger.warn("probably no barcode")
                     self.app.popup_manager.catch_label_printer_missing_barcode()
                     break
                 if len(i["optional_text"]) > 0:
@@ -657,9 +658,9 @@ class LabelPrinter:
         self.preview_popup.open()
 
     def debug_dimensions(self, barcode_image):
-        print("Barcode size:", barcode_image.size)
-        print("Label size: (202, 202)")
-        print("Barcode position on label:", ((202 - barcode_image.size[0]) // 2, 35))
+        logger.warn("Barcode size:", barcode_image.size)
+        logger.warn("Label size: (202, 202)")
+        logger.warn("Barcode position on label:", ((202 - barcode_image.size[0]) // 2, 35))
 
     def print_barcode_label(
         self,
@@ -670,7 +671,7 @@ class LabelPrinter:
         optional_text="",
         preview=False,
     ):
-        print(type(barcode_data))
+        logger.warn(type(barcode_data))
         label_width, label_height = 202, 202
         barcode_y_position = 35
 
@@ -678,13 +679,13 @@ class LabelPrinter:
 
         writer = ImageWriter()
         try:
-            print(f"we have upc a:\n'{barcode_data}")
+            logger.warn(f"we have upc a:\n'{barcode_data}")
             upc = UPC(barcode_data, writer=writer)
         except barcode.errors.NumberOfDigitsError as e:
-            print(f"we have upc e:\n'{barcode_data}")
+            logger.warn(f"we have upc e:\n'{barcode_data}")
             upc = UPC(self.handle_upc_e(barcode_data), writer=writer)
         except barcode.errors.IllegalCharacterError as e:
-            print(f"probably no barcode or something unexpected{barcode_data}")
+            logger.info(f"probably no barcode or something unexpected{barcode_data}")
             self.app.popup_manager.catch_label_printer_missing_barcode()
         barcode_image = upc.render(
             {
@@ -758,10 +759,10 @@ class LabelPrinter:
         )
 
     def handle_upc_e(self, barcode_data):
-        print(f"inside handle_upc_e:\n'{barcode_data}")
+        logger.warn(f"inside handle_upc_e:\n'{barcode_data}")
         padding = 12 - len(barcode_data)
         upc = barcode_data + "0" * padding
-        print(upc)
+        logger.warn(upc)
         return upc
 
     def process_queue(self):
@@ -797,11 +798,11 @@ class LabelPrinter:
             try:
                 self.app.label_manager.print_queue_popup.dismiss()
             except Exception as e:
-                print(f"Expected error dismissing print queue popup\n{e}")
+                logger.info(f"Expected error dismissing print queue popup\n{e}")
             try:
                 self.app.popup_manager.label_errors_popup.dismiss()
             except Exception as e:
-                print(f"Expected error dismissing error popup:\n {e}")
+                logger.info(f"Expected error dismissing error popup:\n {e}")
 
     def remove_from_queue(self, name):
         for i, item in enumerate(self.print_queue):
