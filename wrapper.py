@@ -11,7 +11,7 @@ wrapper_logging_configured = False
 def setup_logging():
     global wrapper_logging_configured
     if not wrapper_logging_configured:
-        logger = logging.getLogger('wrapper')
+
         logger.setLevel(logging.DEBUG)
 
         fh = logging.FileHandler('wrapper.log')
@@ -30,6 +30,7 @@ def setup_logging():
         logger.propagate = False
 
         wrapper_logging_configured = True
+logger = logging.getLogger('wrapper')
 
 class Wrapper:
     def __init__(self, ref=None):
