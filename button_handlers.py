@@ -37,7 +37,9 @@ def log_caller_info(depths=1, to_file=False, filename="caller_info_log.txt"):
         with open(filename, 'a') as f:
             f.writelines(output_lines)
     else:
-        logger.warn(''.join(output_lines))
+        print(''.join(output_lines))
+
+
 def debounce(wait):
     def decorator(fn):
         last_executed = 0

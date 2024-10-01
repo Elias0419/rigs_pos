@@ -1,4 +1,5 @@
 import threading
+import usb
 import usb.core
 import usb.util
 import re
@@ -131,10 +132,15 @@ class BarcodeScanner:
                 if data[2] != 0:
                     character = conversion_table.get(data[2], [""])[0]
                     if character == "\n":
-                        try: # in case we don't have xdotool
+                        try:
+                            # barcode scans don't reset the inactivity timer
+                            # so we try to send a keypress on scan to prevent the
+                            # screen from sleeping during scanning
                             subprocess.run(["xdotool", "key", "Shift_L"])
-                        except:
-                            pass
+                        except FileNotFoundError as e:
+                            logger.info("[BarcodeScanner]: Expected error when xdotool is unavailable\n",e)
+                        except Exception as e:
+                            logger.warn("[BarcodeScanner]: Unexpected error in capture_raw_data\n",e)
                         # print(f"Barcode detected: {self.current_barcode}")
                         self.barcode_ready.set()
 
