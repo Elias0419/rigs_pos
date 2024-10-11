@@ -9,7 +9,7 @@ def open_cash_drawer(port="/dev/ttyUSB0", baudrate=9600):
             ser.write(b"\x00")
             time.sleep(0.1)
     except serial.SerialException as e:
-        logger.warn("[open_cash_drawer], e")
+        logger.warn("[open_cash_drawer]",e)
 
 if __name__ == "__main__":
     open_cash_drawer()
