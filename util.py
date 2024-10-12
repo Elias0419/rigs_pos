@@ -119,7 +119,7 @@ class Utilities:
         self.screen_brightness = value
         command = ["sudo", "ddccontrol", "-r", "0x10", "-w", str(value), "dev:/dev/i2c-3"]
         try:
-            subprocess.run(command)
+            subprocess.Popen(command)
         except subprocess.CalledProcessError:
             logger.warn(f"[Utilities] failed to set brightness\n{e}")
 
