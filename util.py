@@ -90,6 +90,40 @@ class Utilities:
         self.clock_in_file = ""
         self.popup_manager = PopupManager(None)
         self.font = "images/VarelaRound-Regular.ttf"
+        self.screen_brightness = 75
+
+    def adjust_screen_brightness(self, direction):
+        if self.screen_brightness < 20:
+            logger.info("Brightness is below minimum, setting to minimum of 20")
+            self.set_brightness(20)
+            return
+        elif self.screen_brightness > 80:
+            logger.info("Brightness is above maximum, setting to maximum of 80")
+            self.set_brightness(80)
+            return
+
+        if direction == "down":
+            if self.screen_brightness == 20:
+                logger.info("Brightness is already at minimum")
+            else:
+                new_value = max(self.screen_brightness - 10, 20)
+                self.set_brightness(new_value)
+        elif direction == "up":
+            if self.screen_brightness == 80:
+                logger.info("Brightness is already at maximum")
+            else:
+                new_value = min(self.screen_brightness + 10, 80)
+                self.set_brightness(new_value)
+
+    def set_brightness(self, value):
+        self.screen_brightness = value
+        command = ["sudo", "ddccontrol", "-r", "0x10", "-w", str(value), "dev:/dev/i2c-3"]
+        try:
+            subprocess.Popen(command)
+        except subprocess.CalledProcessError:
+            logger.warn(f"[Utilities] failed to set brightness\n{e}")
+
+
 
 
     def check_if_update_was_applied(self):
@@ -777,6 +811,25 @@ class Utilities:
             pos_hint={"top": 1},
             on_press=lambda x: self.app.popup_manager.open_clock_out_popup(),
         )
+
+        brightness_plus_container = MDBoxLayout(size_hint_y=None, height=100)
+        # _blank = BoxLayout(size_hint_y=0.9)
+        self.app.brightness_plus_icon = MDIconButton(
+            icon="plus",
+            # pos_hint={"top": 0.75, "right": 0},
+            on_press=lambda x: self.adjust_screen_brightness(direction="up"),
+        )
+        brightness_plus_container.add_widget(self.app.brightness_plus_icon)
+
+        brightness_minus_container = MDBoxLayout(size_hint_y=None, height=100)
+        # _blank = BoxLayout(size_hint_y=0.9)
+        self.app.brightness_minus_icon = MDIconButton(
+            icon="minus",
+            # pos_hint={"top": 0.75, "right": 0},
+            on_press=lambda x: self.adjust_screen_brightness(direction="down"),
+        )
+        brightness_minus_container.add_widget(self.app.brightness_minus_icon)
+
         time_clock_container.add_widget(self.time_clock)
         # time_clock_container.add_widget(clock_icon)
         top_center_container.add_widget(time_clock_container)
@@ -807,6 +860,8 @@ class Utilities:
         sidebar.add_widget(trash_icon_container)
         sidebar.add_widget(save_icon_container)
         sidebar.add_widget(print_icon_container)
+        sidebar.add_widget(brightness_plus_container)
+        sidebar.add_widget(brightness_minus_container)
 
         sidebar.add_widget(self.cost_overlay_icon)
         sidebar.add_widget(MDBoxLayout())

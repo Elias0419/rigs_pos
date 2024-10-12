@@ -164,9 +164,12 @@ class Wrapper:
             logger.warn(e)
 
     def update_applied(self, details=None):
+        with open("update_applied", "w") as f:
+            f.write()
         if details:
-            with open("update_applied", "w") as f:
+            with open('update/update_details', "w") as f:
                 f.write(details)
+
 
 
 if __name__ == "__main__":
