@@ -5,7 +5,7 @@ import json
 import requests
 
 import logging
-
+logger = logging.getLogger('wrapper')
 wrapper_logging_configured = False
 
 def setup_logging():
@@ -31,7 +31,6 @@ def setup_logging():
 
         wrapper_logging_configured = True
 setup_logging()
-logger = logging.getLogger('wrapper')
 
 class Wrapper:
     def __init__(self, ref=None):
