@@ -30,6 +30,7 @@ def setup_logging():
         logger.propagate = False
 
         wrapper_logging_configured = True
+setup_logging()
 logger = logging.getLogger('wrapper')
 
 class Wrapper:
