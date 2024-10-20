@@ -165,7 +165,7 @@ class Wrapper:
 
     def update_applied(self, details=None):
         with open("update_applied", "w") as f:
-            f.write()
+            f.write("")
         if details:
             with open('update/update_details', "w") as f:
                 f.write(details)
