@@ -352,7 +352,7 @@ class OrderManager:
     def remove_order_discount(self):
         if float(self.order_discount) > 0:
             self.order_discount = 0
-            self.recalculate_order_totals()
+            self.recalculate_order_totals(remove=True) #
             self.app.utilities.update_display()
             self.app.utilities.update_financial_summary()
 
