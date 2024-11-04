@@ -370,7 +370,7 @@ class OrderManager:
 
     def discount_single_item(self, discount_amount, item_id="", percent=False):
         try:
-            logger.warn("discount_single_item", item_id)
+            logger.warn("discount_single_item %s", item_id)
             if item_id in self.items:
                 item = self.items[item_id]
 
