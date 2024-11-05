@@ -360,7 +360,7 @@ class OrderManager:
             self.total = max(self.subtotal, 0)
             self.update_tax_amount()
             self._update_total_with_tax()
-
+            self.recalculate_order_discount()
             self.app.utilities.update_display()
             self.app.utilities.update_financial_summary()
 
@@ -371,7 +371,7 @@ class OrderManager:
             item_quantity = int(item["quantity"])
             item["discount"] = {"amount": 0, "percent": False}
             item["total_price"] = max(item_price * item_quantity, 0)
-            self.recalculate_order_totals()
+            self.recalculate_order_totals(remove=True)
             self.app.utilities.update_display()
             self.app.utilities.update_financial_summary()
             self.app.popup_manager.item_popup.dismiss()
