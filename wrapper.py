@@ -81,6 +81,7 @@ class Wrapper:
         while True:
             result = subprocess.run(["/home/rigs/0/bin/python", script_path])
             # result = subprocess.run(["/home/x/work/0/bin/python", script_path])
+            time.sleep(1)
             current_time = time.time()
             if current_time - last_restart_time > restart_window:
                 recent_restarts = 0
