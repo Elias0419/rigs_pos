@@ -2,6 +2,7 @@ import subprocess
 import time
 import sys
 import json
+import datetime
 import requests
 
 import logging
@@ -32,6 +33,8 @@ def setup_logging():
         wrapper_logging_configured = True
 setup_logging()
 
+
+
 class Wrapper:
     def __init__(self, ref=None):
         self.app = ref
@@ -53,6 +56,7 @@ class Wrapper:
         return config
 
     def check_and_apply_updates(self):
+        print("called check")
         try:
             res = subprocess.run(["git", "pull"], capture_output=True, text=True)
             if "Already up to date." in res.stdout:
@@ -73,87 +77,105 @@ class Wrapper:
             logger.warn("[Wrapper]: Couldn't get update details")
         return None
 
-
     def run_app(self, script_path, recipient, max_restarts, restart_window):
         recent_restarts = 0
         last_restart_time = time.time()
+        last_update_check_date = None
 
         while True:
-            result = subprocess.run(["/home/rigs/0/bin/python", script_path])
-            # result = subprocess.run(["/home/x/work/0/bin/python", script_path])
+            # Start the application
+            process = subprocess.Popen(["/home/rigs/0/bin/python", script_path])
+            # process = subprocess.Popen(["/home/x/work/0/bin/python", script_path])
             time.sleep(1)
-            current_time = time.time()
-            if current_time - last_restart_time > restart_window:
-                recent_restarts = 0
-                last_restart_time = current_time
+            while True:
+                time.sleep(1)
 
-            if result.returncode in [0, 1, 42]:
-                recent_restarts += 1
-                if recent_restarts >= max_restarts:
-                    self.send_email(
-                        "App has failed!",
-                        f"Script exited with returncode {result.returncode}.",
-                        recipient,
-                    )
+                current_time = time.time()
+                current_date = datetime.date.today()
+                now = datetime.datetime.now()
 
-                    # self.set_emergency_reboot_flag()
-                    try:
-                        fallback_process = subprocess.Popen(
-                            [
-                                "nohup",
-                                "/home/rigs/1/bin/python",
-                                "/home/rigs/fallback_rigs_pos/main.py",
-                            ],
-                            stdout=open("fallback_stdout.log", "w"),
-                            stderr=open("fallback_stderr.log", "w"),
-                        )
-                        time.sleep(5)
-                        if fallback_process.poll() is None:
+                if now.hour == 1 and last_update_check_date != current_date:
+                    last_update_check_date = current_date
+
+                    if self.check_and_apply_updates():
+                        update_details = self.get_update_details()
+                        if update_details:
+                            self.update_applied(details=update_details)
+
+                        process.terminate()
+                        try:
+                            process.wait(timeout=10)
+                        except subprocess.TimeoutExpired:
+                            process.kill()
+                            process.wait()
+
+                        break
+
+                if process.poll() is not None:
+                    result_returncode = process.returncode
+                    if current_time - last_restart_time > restart_window:
+                        recent_restarts = 0
+                        last_restart_time = current_time
+
+                    if result_returncode in [0, 1, 42]:
+                        recent_restarts += 1
+                        if recent_restarts >= max_restarts:
                             self.send_email(
-                                "Fallback successful",
-                                "The application has successfully fallen back.",
+                                "App has failed!",
+                                f"Script exited with returncode {result_returncode}.",
                                 recipient,
                             )
-                            break
-                        else:
-                            self.send_email(
-                                "Fallback Failed",
-                                "The application has failed to fall back and is now stopped!",
-                                recipient,
-                            )
-                            sys.exit(43)
 
-                    except:
+                            try:
+                                fallback_process = subprocess.Popen(
+                                    [
+                                        "nohup",
+                                        "/home/rigs/1/bin/python",
+                                        "/home/rigs/fallback_rigs_pos/main.py",
+                                    ],
+                                    stdout=open("fallback_stdout.log", "w"),
+                                    stderr=open("fallback_stderr.log", "w"),
+                                )
+                                time.sleep(5)
+                                if fallback_process.poll() is None:
+                                    self.send_email(
+                                        "Fallback successful",
+                                        "The application has successfully fallen back.",
+                                        recipient,
+                                    )
+                                    sys.exit(0)
+                                else:
+                                    self.send_email(
+                                        "Fallback Failed",
+                                        "The application has failed to fall back and is now stopped!",
+                                        recipient,
+                                    )
+                                    sys.exit(43)
+
+                            except:
+                                self.send_email(
+                                    "Fallback Failed",
+                                    "The application has failed to fall back and is now stopped!",
+                                    recipient,
+                                )
+                                sys.exit(43)
+                        # Break the inner loop to restart the application
+                        break
+                    elif result_returncode == 43:
                         self.send_email(
-                            "Fallback Failed",
-                            "The application has failed to fall back and is now stopped!",
+                            "Alert",
+                            "Script has been stopped with administrator's return code",
                             recipient,
                         )
                         sys.exit(43)
-                continue
-            elif result.returncode == 43:
-                self.send_email(
-                    "Alert",
-                    "Script has been stopped with adminstrator's return code",
-                    recipient,
-                )
-                break
-            else:
-                self.send_email(
-                    "App has failed!",
-                    f"Script has failed with unexpected return code: {result.returncode}",
-                    recipient,
-                )
-                break
+                    else:
+                        self.send_email(
+                            "App has failed!",
+                            f"Script has failed with unexpected return code: {result_returncode}",
+                            recipient,
+                        )
+                        sys.exit(43)
 
-    # def set_emergency_reboot_flag(self):
-    #
-    #     with open("settings.json", "r+") as f:
-    #         settings = json.load(f)
-    #         settings["emergency_reboot"] = True
-    #         f.seek(0)
-    #         json.dump(settings, f)
-    #         f.truncate()
 
     def send_email(self, subject, message, recipient):
         email_content = f"{subject}\n\n{message}"
@@ -171,8 +193,6 @@ class Wrapper:
             with open('update/update_details', "w") as f:
                 f.write(details)
 
-
-
 if __name__ == "__main__":
     wrapper = Wrapper()
     config = wrapper.load_config()
@@ -180,9 +200,6 @@ if __name__ == "__main__":
     recipient = config["recipient"]
     max_restarts = config["max_restarts"]
     restart_window = config["restart_window"]
-    if wrapper.check_and_apply_updates():
-        update_details = wrapper.get_update_details()
-        if update_details:
-            wrapper.update_applied(details=update_details)
 
     wrapper.run_app(script_path, recipient, max_restarts, restart_window)
+
