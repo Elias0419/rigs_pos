@@ -265,11 +265,10 @@ class OrderManager:
             if discount < 0 or discount > self.subtotal:
                 return False
 
-            self.subtotal = adjusted_subtotal
-            self.total = adjusted_subtotal
-            self.order_discount += discount
-            self.tax_amount = self.total * self.tax_rate
-            self._total_with_tax = self.total + self.tax_amount
+            self.order_discount = discount
+            self.total = max(self.subtotal - self.order_discount, 0)
+            self.update_tax_amount()
+            self._update_total_with_tax()
 
             return True
 
@@ -352,7 +351,16 @@ class OrderManager:
     def remove_order_discount(self):
         if float(self.order_discount) > 0:
             self.order_discount = 0
-            self.recalculate_order_totals(remove=True) #
+
+            self.subtotal = sum(
+                item["price"] * item["quantity"] - float(item["discount"].get("amount", 0))
+                for item in self.items.values()
+            )
+
+            self.total = max(self.subtotal, 0)
+            self.update_tax_amount()
+            self._update_total_with_tax()
+
             self.app.utilities.update_display()
             self.app.utilities.update_financial_summary()
 
