@@ -14,12 +14,6 @@ setup_logging()
 import logging
 logger = logging.getLogger('rigs_pos')
 
-
-
-# Window.maximize()
-# Window.borderless = True
-
-
 class CashRegisterApp(MDApp):
     def __init__(self, **kwargs):
         super(CashRegisterApp, self).__init__(**kwargs)
