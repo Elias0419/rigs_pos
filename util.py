@@ -162,7 +162,10 @@ class Utilities:
         self.app.selected_categories = []
 
     def instantiate_modules(self):
-        self.initialize_receipt_printer()
+        try:
+            self.initialize_receipt_printer()
+        except: # TODO: Something other than log the error
+            logger.info("Reciept Printer was not initialized")
         self.app.barcode_scanner = BarcodeScanner(self.app)
         self.app.db_manager = DatabaseManager("db/inventory.db", self.app)
         self.app.financial_summary = FinancialSummaryWidget(self.app)
@@ -187,7 +190,7 @@ class Utilities:
 
     def initialize_receipt_printer(self):
         self.app.receipt_printer = ReceiptPrinter(
-            self.app, "receipt_printer_config.yaml"
+            self.app, "/home/rigs/rigs_pos/receipt_printer_config.yaml"
         )
 
     def initialize_barcode_cache(self):
