@@ -165,7 +165,7 @@ class Utilities:
         try:
             self.initialize_receipt_printer()
         except: # TODO: Something other than log the error
-            logger.info("Reciept Printer was not initialized")
+            logger.info("Receipt Printer was not initialized")
         self.app.barcode_scanner = BarcodeScanner(self.app)
         self.app.db_manager = DatabaseManager("db/inventory.db", self.app)
         self.app.financial_summary = FinancialSummaryWidget(self.app)
