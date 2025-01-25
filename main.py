@@ -16,8 +16,8 @@ logger = logging.getLogger('rigs_pos')
 
 
 
-Window.maximize()
-Window.borderless = True
+# Window.maximize()
+# Window.borderless = True
 
 
 class CashRegisterApp(MDApp):
