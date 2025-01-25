@@ -1,6 +1,6 @@
 from kivy.config import Config
-Config.set('graphics', 'width', '1366')
-Config.set('graphics', 'height', '768')
+Config.set('graphics', 'width', '1902')
+Config.set('graphics', 'height', '1080')
 Config.set('graphics', 'show_cursor', '0')
 Config.set("graphics", "multisamples", "8")
 Config.set("graphics", "kivy_clock", "interrupt")
