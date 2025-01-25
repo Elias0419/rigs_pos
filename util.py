@@ -167,7 +167,12 @@ class Utilities:
         except: # TODO: Something other than log the error
             logger.info("Receipt Printer was not initialized")
         self.app.barcode_scanner = BarcodeScanner(self.app)
-        self.app.db_manager = DatabaseManager("db/inventory.db", self.app)
+        try:
+            self.app.db_manager = DatabaseManager("/home/rigs/rigs_pos/db/inventory.db", self.app)
+        except:
+            self.app.db_manager = DatabaseManager("/home/x/work/python/rigs_pos/db/inventory.db", self.app)
+        finally: # TODO: Something other than log the error
+            logger.info("Receipt Printer was not initialized")
         self.app.financial_summary = FinancialSummaryWidget(self.app)
         self.app.order_manager = OrderManager(self.app)
         self.app.history_manager = HistoryView(self.app)
@@ -189,9 +194,17 @@ class Utilities:
         self.app.inventory_cache = self.initialize_inventory_cache()
 
     def initialize_receipt_printer(self):
-        self.app.receipt_printer = ReceiptPrinter(
-            self.app, "/home/rigs/rigs_pos/receipt_printer_config.yaml"
-        )
+        try:
+            self.app.receipt_printer = ReceiptPrinter(
+
+                self.app, "/home/rigs/rigs_pos/receipt_printer_config.yaml"
+            )
+        except:
+            self.app.receipt_printer = ReceiptPrinter(
+
+                self.app, "/home/x/work/python/rigs_pos/receipt_printer_config.yaml"
+            )
+
 
     def initialize_barcode_cache(self):
 
