@@ -4,7 +4,7 @@ import json
 import uuid
 import os
 import requests
-
+import subprocess
 import logging
 logger = logging.getLogger('rigs_pos')
 class DatabaseManager:
@@ -49,13 +49,10 @@ class DatabaseManager:
 
 
     def download_database_from_github(self):
-        github_url = (
-            "https://raw.githubusercontent.com/Elias0419/rigs_pos/main/db/inventory.db"
-        )
-        response = requests.get(github_url)
-        response.raise_for_status()
-        with open(self.db_path, "wb") as f:
-            f.write(response.content)
+        os.chdir("/home/rigs/rigs_pos/db")
+        result = subprocess.run(['git', 'pull'], capture_output=True, text=True)
+        if result.returncode != 0:
+            raise Exception(f"Failed to pull database from GitHub: {result.stderr}")
 
     def create_payment_history_table(self):
         conn = self._get_connection()
