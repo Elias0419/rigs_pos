@@ -69,7 +69,7 @@ from inventory_manager import InventoryManagementView, InventoryManagementRow
 from label_printer import LabelPrintingView, LabelPrinter
 from order_manager import OrderManager
 from popups import PopupManager, FinancialSummaryWidget, Calculator
-from wrapper import Wrapper
+# from wrapper import Wrapper
 from distributor_manager import DistPopup, DistView
 import inspect
 
@@ -188,7 +188,7 @@ class Utilities:
         self.app.dist_popup = DistPopup()
         self.app.button_handler = ButtonHandler(self.app)
         self.app.popup_manager = PopupManager(self.app)
-        self.app.wrapper = Wrapper(self)
+        # self.app.wrapper = Wrapper()
         self.app.categories = self.initialize_categories()
         self.app.barcode_cache = self.initialize_barcode_cache()
         self.app.inventory_cache = self.initialize_inventory_cache()
