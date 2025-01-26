@@ -1350,6 +1350,9 @@ class Utilities:
             # if idle_time > 6000:  # debug
             if idle_time > 600000:  # 10 minutes
                 self.trigger_guard_and_lock()
+            # if idle_time > 660000:  #debug
+            if idle_time > 3600000:  # 1 hour
+                subprocess.run(["xset", "dpms", "force", "off"])
 
         except Exception as e:
             logger.warn(f"Exception in check_inactivity\n{e}")
