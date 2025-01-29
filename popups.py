@@ -75,7 +75,7 @@ class PopupManager:
             logger.info("[PopupManager: Expected error in dismiss_update_notification_popup]\n", e)
 
     def show_notes_widget(self):
-        self.notes_dir = "notes"
+        self.notes_dir = "/home/rigs/rigs_pos/notes"
         os.makedirs(self.notes_dir, exist_ok=True)
         layout = MDBoxLayout(
             size_hint=(1, 1), orientation="vertical", spacing=10, padding=10
