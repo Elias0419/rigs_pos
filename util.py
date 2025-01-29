@@ -172,7 +172,7 @@ class Utilities:
         except:
             self.app.db_manager = DatabaseManager("/home/x/work/python/rigs_pos/db/inventory.db", self.app)
         finally: # TODO: Something other than log the error
-            logger.info("Receipt Printer was not initialized")
+            logger.info("Receipt Printer was not initialized (in finally block)")
         self.app.financial_summary = FinancialSummaryWidget(self.app)
         self.app.order_manager = OrderManager(self.app)
         self.app.history_manager = HistoryView(self.app)
@@ -360,18 +360,13 @@ class Utilities:
 
         if not os.path.exists(self.clock_in_file):
             session_id = str(uuid.uuid4())
-            self.clock_in_file = f"{user_details['name']}-{today_str}-{session_id}.json"
+            self.clock_in_file = f"/home/rigs/rigs_pos/{user_details['name']}-{today_str}-{session_id}.json"
             with open(self.clock_in_file, "w") as file:
                 json.dump(
                     {"clock_in": datetime.now().isoformat(), "session_id": session_id},
                     file,
                 )
-            # self.update_attendance_log(
-            #     self.app.attendance_log,
-            #     user_details["name"],
-            #     "clock_in",
-            #     session_id=session_id,
-            # )
+
             self.update_attendance_log(
                 user_details["name"],
                 session_id=session_id,
