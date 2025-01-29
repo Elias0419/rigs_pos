@@ -165,7 +165,7 @@ class Utilities:
         try:
             self.initialize_receipt_printer()
         except: # TODO: Something other than log the error
-            logger.info("Receipt Printer was not initialized")
+            logger.info("Receipt Printer was not initialized 1")
         self.app.barcode_scanner = BarcodeScanner(self.app)
         try:
             self.app.db_manager = DatabaseManager("/home/rigs/rigs_pos/db/inventory.db", self.app)
