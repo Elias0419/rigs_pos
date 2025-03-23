@@ -26,17 +26,26 @@ class DatabaseManager:
     def _get_connection(self):
         return sqlite3.connect(self.db_path)
 
+    def test_if_dev_or_prod(self):
+        if os.path.exists("/home/x/work"):
+            return "dev"
+        else:
+            return "prod"
+
     def ensure_database_exists(self):
-        if not os.path.exists(self.db_path):
-            try:
-                self.download_database_from_github()
-            except Exception as e:
-                print(
-                    f"[DatabaseManager]:{e}\nNo database file was found and I could not retrieve a backup from github.\n"
-                    # TODO do something here
-                )
-                conn = sqlite3.connect(self.db_path)
-                conn.close()
+        if self.test_if_dev_or_prod() == "prod":
+            if not os.path.exists(self.db_path):
+                try:
+                    self.download_database_from_github()
+                except Exception as e:
+                    print(
+                        f"[DatabaseManager]:{e}\nNo database file was found and I could not retrieve a backup from github.\n"
+                        # TODO do something here
+                    )
+                    conn = sqlite3.connect(self.db_path)
+                    conn.close()
+        else:
+            logger.info("[DatabaseManager]\nskipping database download on the dev machine")
 
     def ensure_tables_exist(self):
 
