@@ -28,13 +28,14 @@ def setup_logging():
 
 logger = logging.getLogger('rigs_pos')
 
+import inspect
 import json
-import time
-import subprocess
-import threading
-import sys
-import random
 import os
+import random
+import subprocess
+import sys
+import threading
+import time
 import uuid
 from datetime import datetime, timedelta
 
@@ -42,33 +43,27 @@ from kivy.clock import Clock
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.image import Image
-from kivymd.uix.gridlayout import MDGridLayout
-from kivy.uix.behaviors import ButtonBehavior
 
 from kivymd.app import MDApp
 from kivymd.toast import toast
-from kivymd.uix.boxlayout import BoxLayout
-from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.button import MDRaisedButton, MDFlatButton, MDIconButton
-from kivymd.uix.gridlayout import GridLayout
+from kivymd.uix.boxlayout import BoxLayout, MDBoxLayout
+from kivymd.uix.button import MDFlatButton, MDIconButton, MDRaisedButton
+from kivymd.uix.gridlayout import GridLayout, MDGridLayout
 from kivymd.uix.label import MDLabel
 
 from barcode.upc import UniversalProductCodeA as upc_a
 
-from open_cash_drawer import open_cash_drawer
-from receipt_printer import ReceiptPrinter
 from barcode_scanner import BarcodeScanner
-
 from button_handlers import ButtonHandler
 from database_manager import DatabaseManager
-from history_manager import HistoryView, HistoryPopup, OrderDetailsPopup
-from inventory_manager import InventoryManagementView, InventoryManagementRow
-from label_printer import LabelPrintingView, LabelPrinter
-from order_manager import OrderManager
-from popups import PopupManager, FinancialSummaryWidget, Calculator
 from distributor_manager import DistPopup, DistView
-import inspect
-
+from history_manager import HistoryPopup, HistoryView, OrderDetailsPopup
+from inventory_manager import InventoryManagementRow, InventoryManagementView
+from label_printer import LabelPrinter, LabelPrintingView
+from open_cash_drawer import open_cash_drawer
+from order_manager import OrderManager
+from popups import Calculator, FinancialSummaryWidget, PopupManager
+from receipt_printer import ReceiptPrinter
 
 def log_caller_info(depth=1):
     stack = inspect.stack()
