@@ -2462,6 +2462,7 @@ class PopupManager:
         self.inventory_popup.open()
 
     def show_tools_popup(self):
+        tools_popup_md_bg_color = (0.25, 0.25, 0.25, 0.75)
         # float_layout = FloatLayout()
         float_layout = GridLayout(
             orientation="tb-lr", size_hint=(1, 1), rows=10, spacing=10
@@ -2485,7 +2486,7 @@ class PopupManager:
                 size_hint_y=None,
                 _min_height=75,
                 _min_width=200,
-                md_bg_color=(0.5, 0.5, 0.5, 0.25),
+                md_bg_color=tools_popup_md_bg_color,
                 on_press=self.app.button_handler.on_tool_button_press,
                 _no_ripple_effect=True,
             )
