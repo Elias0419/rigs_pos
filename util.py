@@ -38,13 +38,10 @@ import os
 import uuid
 from datetime import datetime, timedelta
 
-import dbus
 from kivy.clock import Clock
-from kivy.core.window import Window
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.image import Image
-from kivy.uix.textinput import TextInput
 from kivymd.uix.gridlayout import MDGridLayout
 
 from kivymd.app import MDApp
@@ -54,7 +51,6 @@ from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.button import MDRaisedButton, MDFlatButton, MDIconButton
 from kivymd.uix.gridlayout import GridLayout
 from kivymd.uix.label import MDLabel
-from kivy.uix.behaviors import ButtonBehavior
 
 from barcode.upc import UniversalProductCodeA as upc_a
 
