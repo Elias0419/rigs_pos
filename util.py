@@ -354,29 +354,50 @@ class Utilities:
         if not authenticated:
             return False
 
-        self.app.logged_in_user = user_details
+        if os.path.exists(self.clock_in_file):
+            return
 
+        session_id = str(uuid.uuid4())
         today_str = datetime.now().strftime("%Y-%m-%d")
+        prod_file = f"/home/rigs/rigs_pos/{user_details['name']}-{today_str}-{session_id}.json"
+        dev_file = f"/home/x/work/python/rigs_pos/{user_details['name']}-{today_str}-{session_id}.json"
 
-        if not os.path.exists(self.clock_in_file):
-            session_id = str(uuid.uuid4())
-            self.clock_in_file = f"/home/rigs/rigs_pos/{user_details['name']}-{today_str}-{session_id}.json"
-            with open(self.clock_in_file, "w") as file:
+        clock_in_successful = False
+
+        try:
+            with open(prod_file, "w") as file:
                 json.dump(
                     {"clock_in": datetime.now().isoformat(), "session_id": session_id},
                     file,
                 )
+            self.clock_in_file = prod_file
+            clock_in_successful = True
+        except FileNotFoundError:
+            try:
+                with open(dev_file, "w") as file:
+                    json.dump(
+                        {"clock_in": datetime.now().isoformat(), "session_id": session_id},
+                        file,
+                    )
+                self.clock_in_file = dev_file
+                clock_in_successful = True
+            except FileNotFoundError:
+                logger.warn("[Utilities] clock_in: skipping clock in")
 
-            self.update_attendance_log(
-                user_details["name"],
-                session_id=session_id,
-                clock_in=True,
-            )
-            log_in_time = self.read_formatted_clock_in_time(self.clock_in_file)
-            self.time_clock.text = f"Logged in as {self.app.logged_in_user['name']}\n[u]Tap here to log out[/u]"
-            self.clock_out_event = Clock.schedule_once(
-                self.auto_clock_out, self.time_until_end_of_shift()
-            )
+        if not clock_in_successful:
+            return False
+
+        self.app.logged_in_user = user_details
+        self.update_attendance_log(
+            user_details["name"],
+            session_id=session_id,
+            clock_in=True,
+        )
+        log_in_time = self.read_formatted_clock_in_time(self.clock_in_file)
+        self.time_clock.text = f"Logged in as {user_details['name']}\n[u]Tap here to log out[/u]"
+        self.clock_out_event = Clock.schedule_once(
+            self.auto_clock_out, self.time_until_end_of_shift()
+    )
 
     def clock_out(self, timestamp=None, auto=False):
         if hasattr(self, "clock_out_event"):
