@@ -65,7 +65,6 @@ from inventory_manager import InventoryManagementView, InventoryManagementRow
 from label_printer import LabelPrintingView, LabelPrinter
 from order_manager import OrderManager
 from popups import PopupManager, FinancialSummaryWidget, Calculator
-# from wrapper import Wrapper
 from distributor_manager import DistPopup, DistView
 import inspect
 
