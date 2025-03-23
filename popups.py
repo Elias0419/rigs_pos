@@ -1,51 +1,39 @@
-# import logging
-#
-# logger = logging.getLogger(__name__)
-from kivymd.uix.selectioncontrol import MDCheckbox
-from kivy.uix.widget import Widget
-from kivy.uix.label import Label
-from kivy.uix.button import Button
-from kivy.uix.popup import Popup
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.boxlayout import BoxLayout
-from kivymd.uix.button import MDRaisedButton, MDFlatButton, MDIconButton
-from kivymd.uix.menu import MDDropdownMenu
-from kivymd.app import MDApp
-from kivymd.uix.selectioncontrol import MDCheckbox
-
-
-from kivy.uix.textinput import TextInput
-from kivymd.color_definitions import palette
-from kivy.uix.floatlayout import FloatLayout
-from label_printer import LabelPrintingView
-from inventory_manager import InventoryManagementView, InventoryView
-from open_cash_drawer import open_cash_drawer
-from kivy.clock import Clock
-from kivymd.uix.label import MDLabel
-from kivymd.uix.list import MDList
-from kivymd.uix.card import MDCard
-from kivymd.uix.dialog import MDDialog
-from kivy.uix.scrollview import ScrollView
-from kivy.uix.image import Image
+import json
 import os
 import time
-import json
 import uuid
 from datetime import datetime
-from functools import partial
-from kivymd.uix.gridlayout import MDGridLayout
-from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.button import MDRaisedButton
-from kivymd.uix.textfield import MDTextField
-from kivy.utils import get_color_from_hex
-from kivymd.toast import toast
-from kivy.uix.anchorlayout import AnchorLayout
-from kivymd.uix.floatlayout import MDFloatLayout
-from kivy.graphics import Color, Rectangle
-from kivy.properties import ColorProperty
 
+from kivy.clock import Clock
+from kivy.properties import ColorProperty
+from kivy.uix.anchorlayout import AnchorLayout
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.image import Image
+from kivy.uix.label import Label
+from kivy.uix.popup import Popup
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.textinput import TextInput
+from kivy.utils import get_color_from_hex
+
+from kivymd.color_definitions import palette
+from kivymd.toast import toast
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.button import MDFlatButton, MDRaisedButton
 from kivymd.uix.card import MDCard
+from kivymd.uix.floatlayout import MDFloatLayout
+from kivymd.uix.gridlayout import MDGridLayout
+from kivymd.uix.label import MDLabel
+from kivymd.uix.menu import MDDropdownMenu
+from kivymd.uix.selectioncontrol import MDCheckbox
+from kivymd.uix.textfield import MDTextField
+
 from PIL import Image as PILImage
+
+from inventory_manager import InventoryManagementView, InventoryView
+from open_cash_drawer import open_cash_drawer
 
 import logging
 logger = logging.getLogger('rigs_pos')
