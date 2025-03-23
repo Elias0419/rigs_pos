@@ -3814,6 +3814,7 @@ class FinancialSummaryWidget(MDFlatButton):
         self.order_mod_popup.dismiss()
 
     def open_order_modification_popup(self):
+        open_order_modification_popup_md_bg_color = (0.25, 0.25, 0.25, 0.75)
         order_mod_layout = MDBoxLayout(orientation="vertical", spacing=10, padding=10)
         if float(self.app.order_manager.order_discount) > 0:
             discount_order_button = MDFlatButton(
@@ -3822,7 +3823,7 @@ class FinancialSummaryWidget(MDFlatButton):
                 size_hint=(None, None),
                 _min_height=100,
                 _min_width=100,
-                md_bg_color=(0.5, 0.5, 0.5, 0.25),
+                md_bg_color=open_order_modification_popup_md_bg_color,
                 on_press=lambda x: self.remove_order_discount(),
             )
         else:
@@ -3832,7 +3833,7 @@ class FinancialSummaryWidget(MDFlatButton):
                 size_hint=(None, None),
                 _min_height=100,
                 _min_width=100,
-                md_bg_color=(0.5, 0.5, 0.5, 0.25),
+                md_bg_color=open_order_modification_popup_md_bg_color,
                 on_press=lambda x: self.app.popup_manager.add_order_discount_popup(),
             )
         clear_order_button = MDFlatButton(
@@ -3840,7 +3841,7 @@ class FinancialSummaryWidget(MDFlatButton):
             # pos_hint={"center_x": 0.5, "center_y": 1 - 0.2},
             size_hint=(None, None),
             _min_height=100,
-            md_bg_color=(0.5, 0.5, 0.5, 0.25),
+            md_bg_color=open_order_modification_popup_md_bg_color,
             on_press=lambda x: self.clear_order(),
         )
         adjust_price_button = MDFlatButton(
@@ -3848,7 +3849,7 @@ class FinancialSummaryWidget(MDFlatButton):
             # pos_hint={"center_x": 0.5, "center_y": 1 - 0.4},
             size_hint=(None, None),
             _min_height=100,
-            md_bg_color=(0.5, 0.5, 0.5, 0.25),
+            md_bg_color=open_order_modification_popup_md_bg_color,
             on_press=lambda x: self.adjust_price(),
         )
         medical_military_discount_button = MDFlatButton(
@@ -3857,7 +3858,7 @@ class FinancialSummaryWidget(MDFlatButton):
             size_hint=(None, None),
             _min_height=100,
             _min_width=100,
-            md_bg_color=(0.5, 0.5, 0.5, 0.25),
+            md_bg_color=open_order_modification_popup_md_bg_color,
             on_press=lambda x: self.app.popup_manager.apply_discount(10, military=True),
         )
 
