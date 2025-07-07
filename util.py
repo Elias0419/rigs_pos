@@ -163,7 +163,7 @@ class Utilities:
         except:
             self.app.db_manager = DatabaseManager("/home/x/work/python/rigs_pos/db/inventory.db", self.app)
         finally: # TODO: Something other than log the error
-            logger.info("Receipt Printer was not initialized (in finally block)")
+            logger.info("Database was not initialized (in finally block)")
         self.app.financial_summary = FinancialSummaryWidget(self.app)
         self.app.order_manager = OrderManager(self.app)
         self.app.history_manager = HistoryView(self.app)

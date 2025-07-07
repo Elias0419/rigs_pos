@@ -33,6 +33,8 @@ class DatabaseManager:
             return "prod"
 
     def ensure_database_exists(self):
+        db_directory = os.path.dirname(self.db_path)
+        os.makedirs(db_directory, exist_ok=True)
         if self.test_if_dev_or_prod() == "prod":
             if not os.path.exists(self.db_path):
                 try:
