@@ -75,6 +75,8 @@ def log_caller_info(depth=1):
         function_name = caller_frame.function
         logger.warn(f"Called from {file_name}, line {line_number}, in {function_name}")
 
+
+
 class Utilities:
     def __init__(self, ref):
         self.app = ref
@@ -82,6 +84,12 @@ class Utilities:
         self.popup_manager = PopupManager(None)
         self.font = "images/VarelaRound-Regular.ttf"
         self.screen_brightness = 75
+
+    def is_rigs(self):
+        u = os.getlogin()
+        if u == "rigs":
+            return True
+        return False
 
     def adjust_screen_brightness(self, direction):
         if self.screen_brightness < 20:

@@ -19,16 +19,14 @@ class CashRegisterApp(MDApp):
         super(CashRegisterApp, self).__init__(**kwargs)
         self.utilities = Utilities(self)
         self.logged_in_user = "nobody"
-        self.admin = False
+        if self.utilities.is_rigs():
+            self.admin = False
+        else:
+            self.admin = True
 
     def on_start(self):
         self.utilities.initialize_global_variables()
         self.utilities.load_settings()
-        if self.utilities.check_if_update_was_applied():
-            update_details = self.utilities.get_update_details()
-            if update_details:
-                self.utilities.popup_manager.show_update_notification_popup(update_details)
-
 
     def build(self):
         self.utilities.instantiate_modules()
