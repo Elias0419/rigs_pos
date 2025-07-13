@@ -64,7 +64,12 @@ class InventoryManagementView(BoxLayout):
 
     def handle_scanned_barcode_item(self, barcode):
         barcode = barcode.strip()
-        self.app.popup_manager.barcode_input.text = barcode
+        try:
+            self.app.popup_manager.barcode_input.text = barcode
+        except AttributeError as e:
+            # we're inside a details popup, do nothing
+            # maybe do something in the future, but probably not
+            logger.warn("inventory_manager:handle_scanned_barcode_item", e)
 
     def show_inventory_for_manager(self, inventory_items):
         self.full_inventory = inventory_items
