@@ -69,7 +69,7 @@ class InventoryManagementView(BoxLayout):
         except AttributeError as e:
             # we're inside a details popup, do nothing
             # maybe do something in the future, but probably not
-            logger.warn("inventory_manager:handle_scanned_barcode_item", e)
+            logger.warn(f"inventory_manager:handle_scanned_barcode_item\n{e}")
 
     def show_inventory_for_manager(self, inventory_items):
         self.full_inventory = inventory_items
