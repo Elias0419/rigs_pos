@@ -1902,7 +1902,7 @@ class PopupManager:
     def show_system_popup(self):
         float_layout = FloatLayout()
 
-        system_buttons = ["Change Theme", "Reboot System", "Restart App", "TEST"]
+        system_buttons = ["Change Theme", "Reboot System", "Exit the cash register!"]
 
         for index, tool in enumerate(system_buttons):
             btn = MDRaisedButton(

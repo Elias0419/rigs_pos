@@ -206,7 +206,7 @@ class ButtonHandler:
     def on_system_button_press(self, instance):
         system_actions = {
             "Reboot System": self.app.popup_manager.reboot_are_you_sure,
-            "Restart App": lambda: sys.exit(42),
+            "Exit the cash register!": lambda: sys.exit(42),
             "Change Theme": self.app.popup_manager.show_theme_change_popup,
         }
 
