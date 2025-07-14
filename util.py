@@ -38,6 +38,7 @@ import threading
 import time
 import uuid
 from datetime import datetime, timedelta
+from collections import defaultdict
 
 from kivy.clock import Clock
 from kivy.uix.behaviors import ButtonBehavior
@@ -75,6 +76,31 @@ def log_caller_info(depth=1):
         function_name = caller_frame.function
         logger.warn(f"Called from {file_name}, line {line_number}, in {function_name}")
 
+
+
+class BarcodeCache:
+
+    def __init__(self, rows):
+        self.main = defaultdict(lambda: {"items": []})
+        self.variant: Dict[str, str]  = {}
+
+        for row in rows:
+            canon = str(row[0]).strip()
+            self.main[canon]["items"].append(row)
+
+        for canon, data in self.main.items():
+            data["is_dupe"] = len(data["items"]) > 1
+            for v in self._gen_variants(canon):
+                self.variant[v] = canon
+
+    @staticmethod
+    def _gen_variants(code: str):
+        yield code
+        if len(code) > 1:
+            yield code[1:]
+        if len(code) > 4:
+            yield code[:-4]
+            yield code[1:-4]
 
 
 class Utilities:
@@ -204,21 +230,25 @@ class Utilities:
                 self.app, "/home/x/work/python/rigs_pos/receipt_printer_config.yaml"
             )
 
-
     def initialize_barcode_cache(self):
+        rows = self.app.db_manager.get_all_items()
+        self.app.barcode_cache = BarcodeCache(rows)
 
-        all_items = self.app.db_manager.get_all_items()
-        barcode_cache = {}
-        # print(len(barcode_cache))
-        for item in all_items:
-            barcode = item[0]
-            if barcode not in barcode_cache:
-                barcode_cache[barcode] = {"items": [item], "is_dupe": False}
-            else:
-                barcode_cache[barcode]["items"].append(item)
-                barcode_cache[barcode]["is_dupe"] = True
-        # print(len(barcode_cache))
-        return barcode_cache
+
+    # def initialize_barcode_cache(self):
+    #
+    #     all_items = self.app.db_manager.get_all_items()
+    #     barcode_cache = {}
+    #     # print(len(barcode_cache))
+    #     for item in all_items:
+    #         barcode = item[0]
+    #         if barcode not in barcode_cache:
+    #             barcode_cache[barcode] = {"items": [item], "is_dupe": False}
+    #         else:
+    #             barcode_cache[barcode]["items"].append(item)
+    #             barcode_cache[barcode]["is_dupe"] = True
+    #     # print(len(barcode_cache))
+    #     return barcode_cache
 
     def initialize_inventory_cache(self):
         inventory = self.app.db_manager.get_all_items()

@@ -13,12 +13,20 @@ class BarcodeScanner:
     def __init__(self, ref):
         self.app = ref
         self.current_barcode = ""
-        # work
-        self.idVendor = 0x05E0
-        self.idProduct = 0x1200
-        # home
-        # self.idVendor = 0x28e9
-        # self.idProduct = 0x03da
+
+        if self.app.utilities.is_rigs():
+            self.idVendor = 0x05E0
+            self.idProduct = 0x1200
+        else:
+            self.idVendor = 0x28e9
+            self.idProduct = 0x03da
+
+        self._context_handler = {
+            "inventory"     : lambda bc: self.app.inventory_manager.handle_scanned_barcode(bc),
+            "inventory_item": lambda bc: self.app.inventory_manager.handle_scanned_barcode_item(bc),
+            "label"         : lambda bc: self.app.label_manager.handle_scanned_barcode(bc),
+        }
+
         try:
             self.device = self.initializeUSBDevice()
         except ValueError as e:
@@ -166,45 +174,75 @@ class BarcodeScanner:
             self.current_barcode = ""
             self.barcode_ready.clear()
 
-    def handle_global_barcode_scan(self, barcode):
+    # def handle_global_barcode_scan(self, barcode):
+    #
+    #     if self.app.current_context == "inventory":
+    #         self.app.inventory_manager.handle_scanned_barcode(barcode)
+    #     elif self.app.current_context == "label":
+    #         self.app.label_manager.handle_scanned_barcode(barcode)
+    #     elif self.app.current_context == "inventory_item":
+    #         self.app.inventory_manager.handle_scanned_barcode_item(barcode)
+    #
+    #     else:
+    #         self.handle_scanned_barcode(barcode)
 
-        if self.app.current_context == "inventory":
-            self.app.inventory_manager.handle_scanned_barcode(barcode)
-        elif self.app.current_context == "label":
-            self.app.label_manager.handle_scanned_barcode(barcode)
-        elif self.app.current_context == "inventory_item":
-            self.app.inventory_manager.handle_scanned_barcode_item(barcode)
-
+    def handle_global_barcode_scan(self, barcode: str):
+        handler = self._context_handler.get(self.app.current_context)
+        if handler:
+            handler(barcode)
         else:
             self.handle_scanned_barcode(barcode)
 
+    # def handle_scanned_barcode(self, barcode):
+    #     # try:
+    #         if "-" in barcode and any(c.isalpha() for c in barcode):
+    #             self.app.history_manager.display_order_details_from_barcode_scan(
+    #                 barcode
+    #             )
+    #             return
+    #
+    #         known_barcodes = self.app.barcode_cache.keys()
+    #
+    #         if barcode in known_barcodes:
+    #             self.handle_known_barcode(barcode)
+    #             return
+    #
+    #         for known_barcode in known_barcodes:
+    #             if (
+    #                 known_barcode[1:] == barcode
+    #                 or known_barcode == barcode[:-4]
+    #                 or known_barcode[1:] == barcode[:-4]
+    #             ):
+    #                 self.handle_known_barcode(known_barcode)
+    #                 return
+    #
+    #         self.app.popup_manager.show_add_or_bypass_popup(barcode)
+    #
+    #     # except Exception as e:
+    #     #     print(f"Exception in handle_scanned_barcode\n{e}")
+
     def handle_scanned_barcode(self, barcode):
-        # try:
-            if "-" in barcode and any(c.isalpha() for c in barcode):
-                self.app.history_manager.display_order_details_from_barcode_scan(
-                    barcode
-                )
-                return
+        if "-" in barcode and any(c.isalpha() for c in barcode):
+            self.app.history_manager.display_order_details_from_barcode_scan(barcode)
+            return
 
-            known_barcodes = self.app.barcode_cache.keys()
+        cache = self.app.barcode_cache
 
-            if barcode in known_barcodes:
-                self.handle_known_barcode(barcode)
-                return
+        canon = cache.variant.get(barcode)
+        if canon:
+            self._process_canonical_barcode(canon)
+            return
 
-            for known_barcode in known_barcodes:
-                if (
-                    known_barcode[1:] == barcode
-                    or known_barcode == barcode[:-4]
-                    or known_barcode[1:] == barcode[:-4]
-                ):
-                    self.handle_known_barcode(known_barcode)
-                    return
+        self.app.popup_manager.show_add_or_bypass_popup(barcode)
 
-            self.app.popup_manager.show_add_or_bypass_popup(barcode)
-
-        # except Exception as e:
-        #     print(f"Exception in handle_scanned_barcode\n{e}")
+    def _process_canonical_barcode(self, canon: str):
+        data = self.app.barcode_cache.main[canon]
+        if data["is_dupe"]:
+            self.app.popup_manager.handle_duplicate_barcodes(canon)
+        else:
+            item_details = self.app.db_manager.get_item_details(barcode=canon)
+            if item_details:
+                self.process_item_details(item_details)
 
     def handle_known_barcode(self, known_barcode):
         barcode_data = self.app.barcode_cache.get(known_barcode)
