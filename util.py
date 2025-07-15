@@ -187,6 +187,7 @@ class Utilities:
         self.app.selected_categories = []
 
     def instantiate_modules(self):
+
         try:
             self.initialize_receipt_printer()
         except: # TODO: Something other than log the error
@@ -215,7 +216,7 @@ class Utilities:
         self.app.popup_manager = PopupManager(self.app)
         # self.app.wrapper = Wrapper()
         self.app.categories = self.initialize_categories()
-        self.app.barcode_cache = self.initialize_barcode_cache()
+        self.initialize_barcode_cache()
         self.app.inventory_cache = self.initialize_inventory_cache()
 
     def initialize_receipt_printer(self):
@@ -233,7 +234,6 @@ class Utilities:
     def initialize_barcode_cache(self):
         rows = self.app.db_manager.get_all_items()
         self.app.barcode_cache = BarcodeCache(rows)
-
 
     # def initialize_barcode_cache(self):
     #
