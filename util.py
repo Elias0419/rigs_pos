@@ -259,15 +259,19 @@ class Utilities:
         self.app.inventory_cache = inventory
 
     def update_barcode_cache(self, item_details):
-        barcode = item_details["barcode"]
-        if barcode not in self.app.barcode_cache:
-            self.app.barcode_cache[barcode] = {
-                "items": [item_details],
-                "is_dupe": False,
-            }
-        else:
-            self.app.barcode_cache[barcode]["items"].append(item_details)
-            self.app.barcode_cache[barcode]["is_dupe"] = True
+        cache = self.app.barcode_cache
+        raw_barcode = item_details["barcode"]
+        barcode = str(raw_barcode).strip()
+
+        canonical = cache.variant.get(barcode, barcode)
+
+        bucket = cache.main[canonical]
+        bucket["items"].append(item_details)
+        bucket["is_dupe"] = len(bucket["items"]) > 1
+
+        if len(bucket["items"]) == 1:
+            for v in cache._gen_variants(canonical):
+                cache.variant[v] = canonical
 
     def initialize_categories(self):
         categories = [
