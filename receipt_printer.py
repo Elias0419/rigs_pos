@@ -33,7 +33,7 @@ class ReceiptPrinter:
         return str(base64_bytes.decode('utf-8')).replace('=','')
 
 
-    def print_receipt(self, order_details, reprint=False, draft=False):
+    def print_receipt(self, order_details, reprint=False, draft=False, qr_code=True):
         logger.warn(order_details)
         if len(order_details['items']) == 0:
             return
@@ -45,7 +45,7 @@ class ReceiptPrinter:
         try:
             self.printer.image(logo, (200, -60))
             date = str(datetime.now().replace(microsecond=0))
-            self.printer.set(align="center", font="a")
+            self.printer.set(align="center", font="a", normal_textsize=True)
             self.printer.textln()
             self.printer.textln("402C Main St, Wakefield, RI")
             self.printer.textln("401-363-9866")
@@ -110,10 +110,28 @@ class ReceiptPrinter:
             barcode_data = str(order_details["order_id"])
             short_uuid = barcode_data[:13]  # test truncation length
             barcode_data_short = "{B" + short_uuid
+
+            if not draft:
+                if qr_code:
+                    review_url = "https://www.google.com/maps/place/?q=place_id:ChIJCUA3L0i55YkR8eakokMtGpc"
+                    self.printer.set(align="center", font="a", bold=False)
+                    self.printer.textln()
+                    self.printer.textln("Loved our service?")
+                    self.printer.set(align="center", font="a", bold=True)
+                    self.printer.textln("Leave us a Google review!")
+                    self.printer.set(align="center", font="a", bold=False)
+                    self.printer.textln("It really helps!")
+                    self.printer.qr(review_url, native=True, size=4)
+                    self.printer.set(align="center", font="a", bold=False)
+                    self.printer.textln("https://g.page/r/CfHmpKJDLRqXEBM/review")
+                    self.printer.textln()
+                    self.printer.textln("Thanks!")
+                    self.printer.textln()
+                self.printer.barcode(barcode_data_short, "CODE128", pos="OFF")
+            self.printer.textln()
             self.printer.textln(date)
             self.printer.textln(order_details["order_id"])
-            if not draft:
-                self.printer.barcode(barcode_data_short, "CODE128", pos="OFF")
+
             if reprint:
                 self.printer.set(align="center", font="a", bold=True)
                 self.printer.textln()
