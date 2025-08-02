@@ -2915,7 +2915,7 @@ class PopupManager:
 
         receipt_button = MDRaisedButton(
             text="[size=20][b]Print Receipt[/b][/size]",
-            on_release=self.app.button_handler.on_receipt_button_press,
+            on_release=self.qr_code_receipt_decision_popup,
             pos_hint={"center_x": 0.75, "center_y": 0.5},
             size_hint=(0.45, 1),
         )
@@ -2952,6 +2952,39 @@ class PopupManager:
         self.app.utilities.update_financial_summary()
         self.app.order_layout.clear_widgets()
         self.app.order_manager.delete_order_from_disk(order_details)
+
+    def qr_code_receipt_decision_popup(self, _):
+        qr_code_receipt_decision_popup_layout = BoxLayout(orientation="vertical", spacing=10)
+        qr_code_receipt_decision_popup_layout.add_widget(
+            MDLabel(
+                text=f"[size=30]Happy customer?\n Print a QR Code Receipt[/size]",
+                halign="center", size_hint=(1, 0.4)
+            )
+        )
+
+        qr_receipt_button = MDRaisedButton(text="[size=30][b]\U0001F642 Print QR Code Receipt[/b][/size]", on_release=lambda x: self.app.button_handler.on_receipt_button_press(None, qr=True), font_name="Emoji", size_hint=(1, 0.25))
+        qr_code_receipt_decision_popup_layout.add_widget(qr_receipt_button)
+        qr_code_receipt_decision_popup_layout.add_widget(
+            MDLabel(
+                text=f"[size=30]Otherwise, print a normal receipt[/size]",
+                halign="center", size_hint=(1, 0.4)
+            )
+        )
+
+        normal_receipt_button = MDRaisedButton(text="[size=30]\U0001F610 Print Normal Receipt[/size]", on_release=lambda x: self.app.button_handler.on_receipt_button_press(None), font_name="Emoji", size_hint=(1, 0.25))
+        qr_code_receipt_decision_popup_layout.add_widget(normal_receipt_button)
+
+        self.app.qr_code_receipt_decision_popup = Popup(
+            title="",
+            content=qr_code_receipt_decision_popup_layout,
+            size_hint=(0.2, 0.4),
+            separator_height=0,
+            auto_dismiss=False,
+        )
+        self.app.qr_code_receipt_decision_popup.open()
+        # self.make_change_dismiss_event = Clock.schedule_once(
+        #     self.make_change_popup_timeout, 60
+        # )
 
     def show_make_change_popup(self, change):
         change_layout = BoxLayout(orientation="vertical", spacing=10)

@@ -206,7 +206,8 @@ class ButtonHandler:
     def on_system_button_press(self, instance):
         system_actions = {
             "Reboot System": self.app.popup_manager.reboot_are_you_sure,
-            "Exit the cash register!": lambda: sys.exit(42),
+            # "Exit the cash register!": lambda: sys.exit(42),
+            "Exit the cash register!": self.testfun("036000291452"),
             "Change Theme": self.app.popup_manager.show_theme_change_popup,
         }
 
@@ -214,6 +215,9 @@ class ButtonHandler:
         if action:
             action()
         self.app.popup_manager.system_popup.dismiss()
+
+    def testfun(self, barcode):
+        self.app.barcode_scanner.handle_scanned_barcode(barcode)
 
     def on_button_press(self, instance):
 
@@ -269,14 +273,17 @@ class ButtonHandler:
         self.app.order_layout.clear_widgets()
         self.app.order_manager.delete_order_from_disk(order_details)
 
-    def on_receipt_button_press(self, instance, draft=False):
+    def on_receipt_button_press(self, instance, draft=False, qr=False):
         printer = self.app.receipt_printer
         order_details = self.app.order_manager.get_order_details()
         if draft:
             printer.print_receipt(order_details, draft=True)
         else:
-            printer.print_receipt(order_details)
-
+            if qr:
+                printer.print_receipt(order_details, qr_code=True)
+            else:
+                printer.print_receipt(order_details)
+            self.app.qr_code_receipt_decision_popup.dismiss()
     def on_lock_screen_button_press(self, button_text, instance):
         if button_text == "Reset":
             self.app.entered_pin = ""
