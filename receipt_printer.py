@@ -33,7 +33,7 @@ class ReceiptPrinter:
         return str(base64_bytes.decode('utf-8')).replace('=','')
 
 
-    def print_receipt(self, order_details, reprint=False, draft=False, qr_code=True):
+    def print_receipt(self, order_details, reprint=False, draft=False, qr_code=False):
         logger.warn(order_details)
         if len(order_details['items']) == 0:
             return
