@@ -2912,13 +2912,20 @@ class PopupManager:
             pos_hint={"center_x": 0.25, "center_y": 0.5},
             size_hint=(0.45, 1),
         )
-
-        receipt_button = MDRaisedButton(
-            text="[size=20][b]Print Receipt[/b][/size]",
-            on_release=self.qr_code_receipt_decision_popup,
-            pos_hint={"center_x": 0.75, "center_y": 0.5},
-            size_hint=(0.45, 1),
-        )
+        if self.app.admin:
+            receipt_button = MDRaisedButton(
+                text="[size=20][b]Print Receipt[/b][/size]",
+                on_release=self.qr_code_receipt_decision_popup,
+                pos_hint={"center_x": 0.75, "center_y": 0.5},
+                size_hint=(0.45, 1),
+            )
+        else:
+            receipt_button = MDRaisedButton(
+                text="[size=20][b]Print Receipt[/b][/size]",
+                on_release=self.app.button_handler.on_receipt_button_press,
+                pos_hint={"center_x": 0.75, "center_y": 0.5},
+                size_hint=(0.45, 1),
+            )
 
         card.add_widget(button_layout)
         button_layout.add_widget(done_button)
