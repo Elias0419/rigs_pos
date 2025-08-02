@@ -749,7 +749,7 @@ class DatabaseManager:
 
     def insert_attendance_log_entry(self, name, session_id, clock_in_time, clock_out_time=None):
         if name == "admin":
-            logger.warn("Discarding admin time entry:\n",  session_id, clock_in_time)
+            logger.warning(f"Discarding admin time entry:\nSession ID: {session_id}, Clock-in: {clock_in_time}")
             return
         conn = self._get_connection()
         try:
