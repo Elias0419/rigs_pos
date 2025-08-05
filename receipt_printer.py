@@ -1,6 +1,7 @@
 from datetime import datetime
 from escpos.printer import Usb
 from PIL import Image
+import escpos
 from escpos.config import Config
 import textwrap
 import base64
@@ -171,8 +172,14 @@ class ReceiptPrinter:
             pass
 
 if __name__ == "__main__":
-    printer = ReceiptPrinter()
     text = """
 
     """
-    printer.print_raw_text(text)
+    try:
+        printer = ReceiptPrinter(None, "/home/rigs/rigs_pos/receipt_printer_config.yaml")
+        printer.print_raw_text(text)
+    except (FileNotFoundError, escpos.exceptions.ConfigNotFoundError):
+        print("No config file; printer not initialized")
+
+
+
