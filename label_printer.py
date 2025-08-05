@@ -146,13 +146,15 @@ class LabelPrintingView(BoxLayout):
     def __init__(self, ref, **kwargs):
         if not hasattr(self, "_init"):
             super(LabelPrintingView, self).__init__(**kwargs)
-            self.full_inventory = []
-            self.app = ref
-            self.label_printer = self.app.label_printer
-            self.print_queue_ref = LabelPrintingRow()
-            self.dual_pane_mode = False
+            if ref:
+                print("ref", ref)
+                self.full_inventory = []
+                self.app = ref
+                self.label_printer = self.app.label_printer
+                self.print_queue_ref = LabelPrintingRow()
+                self.dual_pane_mode = False
 
-            self._init = True
+                self._init = True
 
     def detach_from_parent(self):
         if self.parent:
@@ -527,11 +529,14 @@ class LabelPrintingView(BoxLayout):
 
 class LabelPrinter:
     def __init__(self, ref):
-        self.print_queue = []
-        self.app = ref
-        self.print_queue_ref = LabelPrintingRow()
-        self.queue_file_path = "print_queue.json"
-        self.load_queue()
+
+        if ref:
+            self.print_queue = []
+
+            self.app = ref
+            self.print_queue_ref = LabelPrintingRow()
+            self.queue_file_path = "print_queue.json"
+            self.load_queue()
 
     def save_queue(self):
 
@@ -812,6 +817,61 @@ class LabelPrinter:
                 return True, len(self.print_queue) == 0
         return False, False
 
+    def print_raw_text_label(
+        self,
+        text,
+        font_path = "/usr/share/fonts/TTF/Arial.TTF",
+        start_font_size = 40,
+        min_font_size = 10,
+    ):
+        label_w, label_h = 202, 202
+        margin = 4
+        lines = text.splitlines() or [text]
+
+
+        font_size = start_font_size
+        while font_size >= min_font_size:
+            font = ImageFont.truetype(font_path, font_size)
+            line_h = font.getbbox("Ag")[3] - font.getbbox("Ag")[1]
+            total_h = line_h * len(lines)
+            fits_vertically = total_h <= label_h - 2 * margin
+            fits_horizontally = all(
+                (font.getbbox(l)[2] - font.getbbox(l)[0]) <= label_w - 2 * margin
+                for l in lines
+            )
+            if fits_vertically and fits_horizontally:
+                break
+            font_size -= 1
+        else:  # fell below min_font_size
+            font_size = min_font_size
+            font = ImageFont.truetype(font_path, font_size)
+
+        img = Image.new("RGB", (label_w, label_h), "white")
+        draw = ImageDraw.Draw(img)
+        line_h = font.getbbox("Ag")[3] - font.getbbox("Ag")[1]
+        y = (label_h - line_h * len(lines)) // 2
+
+        for l in lines:
+            line_w = font.getbbox(l)[2] - font.getbbox(l)[0]
+            x = (label_w - line_w) // 2
+            draw.text((x, y), l, fill="black", font=font)
+            y += line_h
+
+        qlr = brother_ql.BrotherQLRaster("QL-710W")
+        qlr.exception_on_warning = True
+        convert(qlr=qlr, images=[img], label="23x23", cut=False)
+
+        try:
+            send(
+                instructions=qlr.data,
+                printer_identifier="usb://0x04F9:0x2043",
+                backend_identifier="pyusb",
+            )
+            return True
+        except Exception as e:
+            self.catch_label_printing_errors(e)
+            return False
+
 
 class PrintQueueRow(BoxLayout):
     name = StringProperty()
@@ -864,5 +924,11 @@ class FocusPopup(Popup):
 
 
 if __name__ == "__main__":
-    printer = LabelPrinter()
-    printer.print_barcode_label("123456789012", 9.99, "test.png")
+    text = """
+
+    """
+    try:
+        printer = LabelPrinter(None)
+        printer.print_raw_text_label(text)
+    except Exception as e:
+        print(e)
