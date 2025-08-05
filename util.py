@@ -37,6 +37,7 @@ import sys
 import threading
 import time
 import uuid
+import pwd
 from datetime import datetime, timedelta
 from collections import defaultdict
 
@@ -111,11 +112,12 @@ class Utilities:
         self.font = "images/VarelaRound-Regular.ttf"
         self.screen_brightness = 75
 
-    def is_rigs(self):
-        u = os.getlogin()
-        if u == "rigs":
-            return True
-        return False
+    def is_rigs() -> bool:
+        try:
+            user = pwd.getpwuid(os.getuid()).pw_name
+        except KeyError:
+            return False
+        return user == "rigs"
 
     def adjust_screen_brightness(self, direction):
         if self.screen_brightness < 20:
