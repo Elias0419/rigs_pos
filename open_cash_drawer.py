@@ -1,6 +1,9 @@
 import serial
 import time
 import logging
+import stat
+import os
+
 logger = logging.getLogger('rigs_pos')
 
 def open_cash_drawer(port="/dev/ttyUSB0", baudrate=9600):
