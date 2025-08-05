@@ -112,7 +112,7 @@ class Utilities:
         self.font = "images/VarelaRound-Regular.ttf"
         self.screen_brightness = 75
 
-    def is_rigs() -> bool:
+    def is_rigs(_):
         try:
             user = pwd.getpwuid(os.getuid()).pw_name
         except KeyError:
