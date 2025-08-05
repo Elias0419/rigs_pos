@@ -146,9 +146,22 @@ class ReceiptPrinter:
         except Exception as e:
             self.app.popup_manager.catch_receipt_printer_errors(e, order_details)
             return False
-        # except Exception as e:
-        #     self.app.popup_manager.catch_receipt_printer_errors(e, order_details)
-        #     return False
+
+    def print_raw_text(self, text):
+
+        if not hasattr(self, "printer"):
+            logger.warn("Printer not initialized.")
+            return False
+
+        try:
+            self.printer.set(align="left", font="a", bold=False)
+            for line in text.splitlines():
+                self.printer.textln(line)
+            self.printer.cut()
+            return True
+        except Exception as e:
+            self.app.popup_manager.catch_receipt_printer_errors(e, text)
+            return False
 
 
     def close(self):
@@ -156,3 +169,10 @@ class ReceiptPrinter:
             self.printer.close()
         except:
             pass
+
+if __name__ == "__main__":
+    printer = ReceiptPrinter()
+    text = """
+
+    """
+    printer.print_raw_text(text)
