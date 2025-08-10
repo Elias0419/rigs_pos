@@ -219,7 +219,7 @@ class HistoryView(BoxLayout):
         if self.current_filter == "custom_range":
             if self.rv_data[0]["num_days"]:
                 num_days = self.rv_data[0]["num_days"]
-                average_day = total_amount / num_days
+                average_day = total_with_tax / num_days
                 self.average_label.text = f"Av: {average_day:.2f}"
 
         self.total_amount_label.text = f"[size=20]Total: {total_amount:.2f} + {total_tax:.2f} tax = [b]${total_with_tax:.2f}[/b][/size]"
