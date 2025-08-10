@@ -223,9 +223,9 @@ class HistoryView(BoxLayout):
                 self.average_label.text = f"Av: {average_day:.2f}"
         else:
             self.average_label.text = ""
-        self.total_amount_label.text = f"[size=20]Total: {total_amount:.2f} + {total_tax:.2f} tax = [b]${total_with_tax:.2f}[/b][/size]"
+        self.total_amount_label.text = f"[size=20]Total: {total_amount:.2f} + {total_tax:.2f} tax = \n[b]${total_with_tax:.2f}[/b][/size]"
 
-        self.total_cash_label.text = f"[size=20]Cash: {total_tendered:.2f} - {total_change:.2f} change = [b]${total_cash:.2f}[/b][/size]"
+        self.total_cash_label.text = f"[size=20]Cash: {total_tendered:.2f} - {total_change:.2f} change = \n[b]${total_cash:.2f}[/b][/size]"
         if self.current_filter == "custom_range":
             first = self.rv_data[0]["date_range"][0].strftime("%m/%d/%Y")
             last = self.rv_data[0]["date_range"][-1].strftime("%m/%d/%Y")
