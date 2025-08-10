@@ -141,16 +141,18 @@ class HistoryView(BoxLayout):
             Clock.schedule_once(self.init_filter, 0.1)
 
     def initialize_total_layout(self):
-        blank = BoxLayout()
-        self.totals_layout = GridLayout(orientation="lr-tb", cols=5, size_hint=(1, 0.1))
+        blank = BoxLayout(size_hint_x=0.1)
+        self.totals_layout = GridLayout(orientation="lr-tb", cols=6, size_hint=(1, 0.1))
         self.history_search = TextInput(hint_text="Search by item name")
         self.history_search.bind(text=self.on_search_text_changed)
         self.total_amount_label = MDLabel(text="Total: $0.00")
-        self.current_filter_label = MDLabel(text="Current Filter: today")
+        self.current_filter_label = MDLabel(text="Current Filter: today", size_hint_x=0.8)
+        self.average_label = MDLabel(text="", size_hint_x=0.4)
         self.total_cash_label = MDLabel(text="Total Cash: $0.00")
         self.totals_layout.add_widget(self.history_search)
         self.totals_layout.add_widget(blank)
         self.totals_layout.add_widget(self.current_filter_label)
+        self.totals_layout.add_widget(self.average_label)
         self.totals_layout.add_widget(self.total_cash_label)
         self.totals_layout.add_widget(self.total_amount_label)
 
@@ -175,16 +177,6 @@ class HistoryView(BoxLayout):
             )
         )
 
-        # self.button_layout.add_widget(
-        #     MDRaisedButton(
-        #         text="This Week", size_hint=(1, 1), on_press=self.filter_this_week
-        #     )
-        # )
-        # self.button_layout.add_widget(
-        #     MDRaisedButton(
-        #         text="This Month", size_hint=(1, 1), on_press=self.filter_this_month
-        #     )
-        # )
         self.button_layout.add_widget(
             MDRaisedButton(
                 text="[b][size=20]Specific Day[/size][/b]",
@@ -212,6 +204,7 @@ class HistoryView(BoxLayout):
         self.filter_today()
         self.update_totals()
 
+
     def update_totals(self):
 
         total_amount = sum(float(order["total"]) for order in self.rv_data)
@@ -223,11 +216,21 @@ class HistoryView(BoxLayout):
             float(order["amount_tendered"]) - float(order["change_given"])
             for order in self.rv_data
         )
+        if self.current_filter == "custom_range":
+            if self.rv_data[0]["num_days"]:
+                num_days = self.rv_data[0]["num_days"]
+                average_day = total_amount / num_days
+                self.average_label.text = f"Av: {average_day:.2f}"
 
         self.total_amount_label.text = f"[size=20]Total: {total_amount:.2f} + {total_tax:.2f} tax = [b]${total_with_tax:.2f}[/b][/size]"
 
         self.total_cash_label.text = f"[size=20]Cash: {total_tendered:.2f} - {total_change:.2f} change = [b]${total_cash:.2f}[/b][/size]"
-        self.current_filter_label.text = f"Current Filter: {self.current_filter}"
+        if self.current_filter == "custom_range":
+            first = self.rv_data[0]["date_range"][0].strftime("%m/%d/%Y")
+            last = self.rv_data[0]["date_range"][-1].strftime("%m/%d/%Y")
+            self.current_filter_label.text = f"Range: {first} - {last}"
+        else:
+            self.current_filter_label.text = f"Current Filter: {self.current_filter}"
 
     def show_reporting_popup(self, order_history):
         self.order_history = order_history
@@ -296,18 +299,17 @@ class HistoryView(BoxLayout):
 
     def on_custom_range_selected(self, instance, picker, date_range):
         self.current_filter = "custom_range"
-
         date_set = set(date_range)
-
+        num_days = len(date_set)
         filtered_history = [
             order
             for order in self.order_history
             if datetime.strptime(order[6], "%Y-%m-%d %H:%M:%S.%f").date() in date_set
         ]
-        self.update_rv_data(filtered_history)
+        self.update_rv_data(filtered_history, num_days=num_days, date_range=date_range)
         self.update_totals()
 
-    def update_rv_data(self, filtered_history):
+    def update_rv_data(self, filtered_history, num_days=None, date_range=None):
         try:
             self.rv_data = [
                 {
@@ -322,6 +324,8 @@ class HistoryView(BoxLayout):
                     "amount_tendered": self.format_money(order[8]),
                     "change_given": self.format_money(order[9]),
                     "history_view": self,
+                    "num_days": num_days,
+                    "date_range": date_range,
                 }
                 for order in filtered_history
             ]
