@@ -248,10 +248,8 @@ class HistoryView(BoxLayout):
                     "change_given": self.format_money(order[9]),
                     "history_view": self,
                 }
-                for order in order_history
+                for order in reversed(order_history)
             ]
-
-            self.rv_data.reverse()
             self.ids.history_rv.data = self.rv_data
         except Exception as e:
             logger.warn(f"[HistoryManager] show_reporting_popup\n{e}")
@@ -326,9 +324,8 @@ class HistoryView(BoxLayout):
                     "num_days": num_days,
                     "date_range": date_range,
                 }
-                for order in filtered_history
+                for order in reversed(filtered_history)
             ]
-            self.rv_data.reverse()
             self.ids.history_rv.data = self.rv_data
         except Exception as e:
             logger.warn(f"[HistoryManager]: update_rv_data \n{e}")
