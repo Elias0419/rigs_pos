@@ -68,8 +68,8 @@ class ButtonHandler:
 
     # @debounce(0.3)
     def show_reporting(self):
-        for i in range(25):
-            log_caller_info(depths=i, to_file=True)
+        # for i in range(25):
+        #     log_caller_info(depths=i, to_file=True)
 
         #self.app.db_manager.get_order_history()
         self.app.history_popup.show_hist_reporting_popup()
