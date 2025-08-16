@@ -200,7 +200,7 @@ class HistoryView(BoxLayout):
 
     def init_filter(self, dt):
         self.filter_today()
-        self.update_totals()
+        # self.update_totals()
 
 
     def update_totals(self):
