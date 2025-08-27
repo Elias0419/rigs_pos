@@ -3845,7 +3845,7 @@ class FinancialSummaryWidget(MDFlatButton):
     def open_order_modification_popup(self):
         open_order_modification_popup_md_bg_color = (0.25, 0.25, 0.25, 0.75)
         order_mod_layout = MDBoxLayout(orientation="vertical", spacing=10, padding=10)
-        if float(self.app.order_manager.order_discount) > 0:
+        if float(self.app.order_manager.order_level_discount) > 0:
             discount_order_button = MDFlatButton(
                 text="[b][size=20]Remove Order Discount[/b][/size]",
                 # pos_hint={"center_x": 0.5, "center_y": 1},

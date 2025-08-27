@@ -21,19 +21,84 @@ class OrderManager:
             self.subtotal = 0.0
             self.tax_amount = 0.0
             self.change_given = 0.0
-            self.order_discount = 0.0
             self.amount_tendered = 0.0
             self.tax_rate = tax_rate
             self.payment_method = None
             self._total_with_tax = None
             self.order_id = str(uuid.uuid4())
             self.saved_orders_dir = "saved_orders"
+
+            # refactoring to seperate order and line discounts 8/27/25
+            # !82725
+            self.order_level_discount = 0.0
+            self.line_item_discount_total = 0.0
+            self.total_discount = 0.0
+            self.order_discount = 0.0
+
             self.app = ref
 
             if not os.path.exists(self.saved_orders_dir):
                 os.makedirs(self.saved_orders_dir)
 
             self._init = True
+
+    def _compute_line_discounts(self, item) -> float:
+
+        price = float(item.get("price", 0.0))
+        qty   = int(item.get("quantity", 1))
+        subtotal = price * qty
+
+        total = 0.0
+        for d in item.get("discounts", []):
+            dtype = d.get("type")
+            if dtype == "percent":
+                pct = max(0.0, min(100.0, float(d.get("value", 0.0))))
+                total += price * (pct / 100.0) * qty
+            elif dtype == "amount":
+                val = float(d.get("value", 0.0))
+                if d.get("per_unit", True):
+                    total += val * qty
+                else:
+                    total += val
+
+        return min(total, subtotal)
+
+    def _recompute_line(self, item):
+        price = float(item.get("price", 0.0))
+        qty   = int(item.get("quantity", 1))
+        line_subtotal = price * qty
+        line_discount_total = self._compute_line_discounts(item)
+        line_total = max(line_subtotal - line_discount_total, 0.0)
+
+        item["line_subtotal"] = line_subtotal
+        item["line_discount_total"] = line_discount_total
+        item["total_price"] = line_total
+
+        # !82725 mirror to remain compatible with existing gui
+        item["discount"] = {
+            "amount": f"{line_discount_total:.2f}",
+            "amount_value": float(line_discount_total),
+            "percent": False,
+        }
+        return item
+
+    def recalculate_order_totals(self, remove=False):
+        # !82725 recompute every line first
+        for it in self.items.values():
+            self._recompute_line(it)
+
+        self.subtotal = sum(float(it["line_subtotal"]) for it in self.items.values())
+
+        # sum line item discounts and combine with order level
+        self.line_item_discount_total = sum(float(it.get("line_discount_total", 0.0))
+                                            for it in self.items.values())
+        self.total_discount = float(self.order_level_discount) + float(self.line_item_discount_total)
+
+        self.order_discount = self.total_discount
+
+        self.total = max(self.subtotal - self.total_discount, 0.0)
+        self._update_total_with_tax()
+        return self.total
 
     def _update_total_with_tax(self):
         self.tax_amount = self.total * self.tax_rate
@@ -48,83 +113,89 @@ class OrderManager:
         # print(self.tax_amount)
         return self.tax_amount
 
-    def recalculate_order_totals(self, remove=False):
-        if remove:
-            self.subtotal = sum(
-                float(item["total_price"]) for item in self.items.values()
-            )
+    def _get_discount_value(self, item) -> float:
+        d = item.get("discount") or {}
+        try:
+            return float(d.get("amount_value", d.get("amount", 0.0)))
+        except (TypeError, ValueError):
+            return 0.0
 
-        self.order_discount = sum(
-            float(item.get("discount", {}).get("amount", "0"))
-            for item in self.items.values()
-        )
+    def _set_discount(self, item, amount: float, percent: bool) -> None:
+        # !82725
+        amt = float(amount)
+        item["discount"] = {
+            "amount": f"{amt:.2f}",       # display string for gui
+            "amount_value": amt,          # numeric for calculations
+            "percent": bool(percent),
+        }
 
-        self.total = max(self.subtotal - self.order_discount, 0)
 
-        self.update_tax_amount()
-        self._update_total_with_tax()
 
-    # def get_item_id(self, item_name, item_price):
-    #     if item_name == "Custom Item":
-    #         item_id = str(uuid.uuid4())
-    #         return item_id
-    #     else:
-    #         item_details = self.app.db_manager.get_item_details(name=item_name, price=item_price)
-    #         print(item_details)
-    #         item_id = item_details["item_id"]
-    #
-    #         return item_id
 
     def add_item(self, item_name, item_price, custom_item=False, item_id=None):
-        # if custom_item:
-        #     item_id = item_id
-        # else:
-        #     item_id = self.get_item_id(item_name, item_price)
-
         existing_item = next(
-            (
-                key
-                for key, value in self.items.items()
-                if value["name"] == item_name and value["price"] == item_price
-            ),
+            (key for key, value in self.items.items()
+            if value["name"] == item_name and value["price"] == item_price),
             None,
         )
 
         if existing_item:
             self.items[existing_item]["quantity"] += 1
-            self.items[existing_item]["total_price"] += item_price
         else:
             self.items[item_id] = {
                 "name": item_name,
-                "price": item_price,
+                "price": float(item_price),
                 "quantity": 1,
-                "total_price": item_price,
-                "discount": {"amount": 0, "percent": False},
+                "discounts": [],                # !82725 canonical list
+                "total_price": float(item_price),
+                "discount": {"amount": "0.00", "percent": False},  # mirror
             }
 
-        self.total += item_price
-        self.subtotal += item_price
-        self._update_total_with_tax()
-        # print(self.items)
+        self.recalculate_order_totals()
+
+    ## !82725
+    def add_line_discount(self, item_id, value, percent=False, per_unit=True):
+
+        if item_id in self.items:
+            entry = {"type": "percent" if percent else "amount", "value": float(value)}
+            if not percent:
+                entry["per_unit"] = bool(per_unit)
+            self.items[item_id].setdefault("discounts", []).append(entry)
+            self.recalculate_order_totals()
+
+    def clear_line_discounts(self, item_id):
+        if item_id in self.items:
+            self.items[item_id]["discounts"] = []
+            self.recalculate_order_totals()
+
+    def increment_last_line_discount(self, item_id, delta):
+
+        if item_id in self.items:
+            lst = self.items[item_id].get("discounts", [])
+            if lst:
+                lst[-1]["value"] = float(lst[-1].get("value", 0.0)) + float(delta)
+                self.recalculate_order_totals()
+
+    def decrement_last_line_discount(self, item_id, delta):
+        self.increment_last_line_discount(item_id, -float(delta))
+    ##
+    ##
 
     def remove_item(self, item_name):
-
-        item_to_remove = next(
-            (key for key, value in self.items.items() if value["name"] == item_name),
-            None,
-        )
+        item_to_remove = next((key for key, value in self.items.items()
+                            if value["name"] == item_name), None)
         if item_to_remove:
-
-            item_discount_amount = float(
-                self.items[item_to_remove].get("discount", {}).get("amount", "0")
-            )
-            removed_item_total = (
-                self.items[item_to_remove]["total_price"] - item_discount_amount
-            )
-            self.subtotal -= removed_item_total
             del self.items[item_to_remove]
-            self.recalculate_order_discount()
-            self.recalculate_order_totals(remove=True)
+            self.recalculate_order_totals()
+
+    def adjust_item_quantity(self, item_id, adjustment):
+        if item_id in self.items:
+            item = self.items[item_id]
+            original_quantity = int(item.get("quantity", 1))
+            new_quantity = max(original_quantity + int(adjustment), 1)
+            item["quantity"] = new_quantity
+            self.recalculate_order_totals()
+
 
     def recalculate_order_discount(self):
 
@@ -142,7 +213,10 @@ class OrderManager:
             "tax_rate": self.tax_rate,
             "tax_amount": self.tax_amount,
             "total_with_tax": self._total_with_tax,
-            "discount": self.order_discount,
+            "discount": self.total_discount,
+            "order_level_discount": self.order_level_discount,
+            "line_item_discount_total": self.line_item_discount_total,
+            "total_discount": self.total_discount,
             "payment_method": self.payment_method,
             "amount_tendered": self.amount_tendered,
             "change_given": self.change_given,
@@ -231,45 +305,15 @@ class OrderManager:
 
         return all_order_details
 
-    def adjust_item_quantity(self, item_id, adjustment):
-        if item_id in self.items:
-            item = self.items[item_id]
-            original_quantity = item["quantity"]
-            new_quantity = max(original_quantity + adjustment, 1)
-            discount_data = item.get("discount", {"amount": 0, "percent": False})
-            discount_amount = float(discount_data["amount"])
-            if discount_data["percent"]:
-                per_item_discount = item["price"] * discount_amount / 100
-            else:
-                per_item_discount = discount_amount / original_quantity
-
-            total_discount_for_new_quantity = per_item_discount * new_quantity
-            item["discount"] = {
-                "amount": total_discount_for_new_quantity,
-                "percent": discount_data["percent"],
-            }
-
-            single_item_price = float(item["price"])
-            item["quantity"] = new_quantity
-            item["total_price"] = (
-                single_item_price * new_quantity - total_discount_for_new_quantity
-            )
-
-            self.recalculate_order_totals(remove=True)
 
     def adjust_order_to_target_total(self, target_total_with_tax):
         if target_total_with_tax != "":
+            target_total_with_tax = float(target_total_with_tax)
             adjusted_subtotal = target_total_with_tax / (1 + self.tax_rate)
-            discount = self.subtotal - adjusted_subtotal
-
-            if discount < 0 or discount > self.subtotal:
+            required_order_level = self.subtotal - adjusted_subtotal
+            if required_order_level < 0 or required_order_level > self.subtotal:
                 return False
-
-            self.order_discount = discount
-            self.total = max(self.subtotal - self.order_discount, 0)
-            self.update_tax_amount()
-            self._update_total_with_tax()
-
+            self.set_order_level_discount(required_order_level)
             return True
 
     def add_discount(self, discount_amount, percent=False):
@@ -293,14 +337,12 @@ class OrderManager:
 
     def add_custom_item(self, instance, name="Custom Item", price=0.00):
 
-        # price = self.app.popup_manager.cash_input.text
         item_id = str(uuid.uuid4())
         try:
             price = float(price)
         except Exception as e:
             logger.warn("Exception in add custom item order_manager.py,", e)
             return
-        # try:
         custom_item_name = name
         try:
             self.add_item(custom_item_name, price, custom_item=True, item_id=item_id)
@@ -348,64 +390,21 @@ class OrderManager:
     def create_order_summary_item(self, item_name, quantity, total_price):
         return f"[b]{item_name}[/b] x{quantity} ${total_price:.2f}\n"
 
-    def remove_order_discount(self):
-        if float(self.order_discount) > 0:
-            self.order_discount = 0
-
-            self.subtotal = sum(
-                item["price"] * item["quantity"] - float(item["discount"].get("amount", 0))
-                for item in self.items.values()
-            )
-
-            self.total = max(self.subtotal, 0)
-            self.update_tax_amount()
-            self._update_total_with_tax()
-            self.recalculate_order_discount()
-            self.app.utilities.update_display()
-            self.app.utilities.update_financial_summary()
 
     def remove_single_item_discount(self, item_id):
         if item_id in self.items:
-            item = self.items[item_id]
-            item_price = float(item["price"])
-            item_quantity = int(item["quantity"])
-            item["discount"] = {"amount": 0, "percent": False}
-            item["total_price"] = max(item_price * item_quantity, 0)
-            self.recalculate_order_totals(remove=True)
+            self.clear_line_discounts(item_id)
             self.app.utilities.update_display()
             self.app.utilities.update_financial_summary()
             self.app.popup_manager.item_popup.dismiss()
 
+
+
     def discount_single_item(self, discount_amount, item_id="", percent=False):
         try:
-            logger.warn("discount_single_item %s", item_id)
             if item_id in self.items:
-                item = self.items[item_id]
-
-                item_price = float(item["price"])
-                discount_amount = float(discount_amount)
-                item_quantity = int(item["quantity"])
-
-                if percent:
-                    if discount_amount >= 100:
-                        discount_value = item_price
-                    else:
-                        discount_value = item_price * discount_amount / 100
-                else:
-                    if discount_amount >= item_price * item_quantity:
-                        discount_value = item_price * item_quantity
-                    else:
-                        discount_value = discount_amount
-
-                discount_value = float(discount_value)
-
-                item["discount"] = {"amount": str(discount_value), "percent": percent}
-                item["total_price"] = max(
-                    item_price * item_quantity - discount_value, 0
-                )
-
-                self.recalculate_order_totals()
-
+                # amount and percent are per-unit for scaling.
+                self.add_line_discount(item_id, discount_amount, percent=percent, per_unit=True)
             self.app.utilities.update_display()
             self.app.utilities.update_financial_summary()
             try:
@@ -421,22 +420,26 @@ class OrderManager:
         except:
             pass
 
+    def set_order_level_discount(self, amount):
+        self.order_level_discount = max(0.0, float(amount))
+        self.recalculate_order_totals()
+
+    def add_order_level_discount(self, amount):
+        self.order_level_discount = max(0.0, float(self.order_level_discount) + float(amount))
+        self.recalculate_order_totals()
+
     def discount_entire_order(self, discount_amount, percent=False):
         if discount_amount != "":
             try:
                 discount_amount = float(discount_amount)
-            except ValueError as e:
-                logger.warn(f"Order Manager: discount_entire_order\nexception converting to a float\n{e}")
-
+            except ValueError:
+                return
             if percent:
-                discount_value = self.subtotal * discount_amount / 100
+                add_val = self.subtotal * (discount_amount / 100.0)
             else:
-                discount_value = discount_amount
-
-            discount_value = min(discount_value, self.subtotal)
-
-            self.order_discount += discount_value
-            self.total = max(self.subtotal - self.order_discount, 0)
+                add_val = discount_amount
+            add_val = min(add_val, self.subtotal)
+            self.add_order_level_discount(add_val)
             try:
                 self.update_tax_amount()
                 self._update_total_with_tax()
@@ -457,6 +460,14 @@ class OrderManager:
             except AttributeError:
                 logger.info("[Order Manager]: discount_entire_order\nExpected error popup_manager.custom_discount_order_popup is None")
             self.app.financial_summary.order_mod_popup.dismiss()
+
+    def remove_order_discount(self):
+        if float(self.order_level_discount) > 0:
+            self.order_level_discount = 0.0
+            self.recalculate_order_totals()
+            self.app.utilities.update_display()
+            self.app.utilities.update_financial_summary()
+
 
     def add_adjusted_price_item(self):
         target_amount = self.app.popup_manager.adjust_price_cash_input.text
@@ -479,8 +490,6 @@ class OrderManager:
 
     def adjust_item_quantity_in(self, item_id, item_button, adjustment):
         self.adjust_item_quantity(item_id, adjustment)
-        # self.app.popup_manager.item_popup.dismiss()
-        # self.app.popup_manager.show_item_details_popup(item_id, item_button)
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
 
