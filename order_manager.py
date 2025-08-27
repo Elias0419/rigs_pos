@@ -4,10 +4,13 @@ import os
 from open_cash_drawer import open_cash_drawer
 
 import logging
-logger = logging.getLogger('rigs_pos')
+
+logger = logging.getLogger("rigs_pos")
+
 
 class OrderManager:
     _instance = None
+
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
             cls._instance = super(OrderManager, cls).__new__(cls)
@@ -45,7 +48,7 @@ class OrderManager:
     def _compute_line_discounts(self, item) -> float:
 
         price = float(item.get("price", 0.0))
-        qty   = int(item.get("quantity", 1))
+        qty = int(item.get("quantity", 1))
         subtotal = price * qty
 
         total = 0.0
@@ -65,7 +68,7 @@ class OrderManager:
 
     def _recompute_line(self, item):
         price = float(item.get("price", 0.0))
-        qty   = int(item.get("quantity", 1))
+        qty = int(item.get("quantity", 1))
         line_subtotal = price * qty
         line_discount_total = self._compute_line_discounts(item)
         line_total = max(line_subtotal - line_discount_total, 0.0)
@@ -90,9 +93,12 @@ class OrderManager:
         self.subtotal = sum(float(it["line_subtotal"]) for it in self.items.values())
 
         # sum line item discounts and combine with order level
-        self.line_item_discount_total = sum(float(it.get("line_discount_total", 0.0))
-                                            for it in self.items.values())
-        self.total_discount = float(self.order_level_discount) + float(self.line_item_discount_total)
+        self.line_item_discount_total = sum(
+            float(it.get("line_discount_total", 0.0)) for it in self.items.values()
+        )
+        self.total_discount = float(self.order_level_discount) + float(
+            self.line_item_discount_total
+        )
 
         self.order_discount = self.total_discount
 
@@ -124,18 +130,18 @@ class OrderManager:
         # !82725
         amt = float(amount)
         item["discount"] = {
-            "amount": f"{amt:.2f}",       # display string for gui
-            "amount_value": amt,          # numeric for calculations
+            "amount": f"{amt:.2f}",  # display string for gui
+            "amount_value": amt,  # numeric for calculations
             "percent": bool(percent),
         }
 
-
-
-
     def add_item(self, item_name, item_price, custom_item=False, item_id=None):
         existing_item = next(
-            (key for key, value in self.items.items()
-            if value["name"] == item_name and value["price"] == item_price),
+            (
+                key
+                for key, value in self.items.items()
+                if value["name"] == item_name and value["price"] == item_price
+            ),
             None,
         )
 
@@ -146,7 +152,7 @@ class OrderManager:
                 "name": item_name,
                 "price": float(item_price),
                 "quantity": 1,
-                "discounts": [],                # !82725 canonical list
+                "discounts": [],  # !82725 canonical list
                 "total_price": float(item_price),
                 "discount": {"amount": "0.00", "percent": False},  # mirror
             }
@@ -178,12 +184,15 @@ class OrderManager:
 
     def decrement_last_line_discount(self, item_id, delta):
         self.increment_last_line_discount(item_id, -float(delta))
+
     ##
     ##
 
     def remove_item(self, item_name):
-        item_to_remove = next((key for key, value in self.items.items()
-                            if value["name"] == item_name), None)
+        item_to_remove = next(
+            (key for key, value in self.items.items() if value["name"] == item_name),
+            None,
+        )
         if item_to_remove:
             del self.items[item_to_remove]
             self.recalculate_order_totals()
@@ -195,7 +204,6 @@ class OrderManager:
             new_quantity = max(original_quantity + int(adjustment), 1)
             item["quantity"] = new_quantity
             self.recalculate_order_totals()
-
 
     def recalculate_order_discount(self):
 
@@ -253,7 +261,9 @@ class OrderManager:
         try:
             os.remove(full_path)
         except Exception as e:
-            logger.info(f"[Order Manager] Expected error in delete_order_from_disk\n{e}")
+            logger.info(
+                f"[Order Manager] Expected error in delete_order_from_disk\n{e}"
+            )
 
     def load_order_from_disk(self, order):
         order_id = order["order_id"]
@@ -301,10 +311,11 @@ class OrderManager:
                         }
                         all_order_details.append(order_dict)
                 except Exception as e:
-                    logger.warn(f"[Order Manager] Error reading order file {file_name}\n{e}")
+                    logger.warn(
+                        f"[Order Manager] Error reading order file {file_name}\n{e}"
+                    )
 
         return all_order_details
-
 
     def adjust_order_to_target_total(self, target_total_with_tax):
         if target_total_with_tax != "":
@@ -390,7 +401,6 @@ class OrderManager:
     def create_order_summary_item(self, item_name, quantity, total_price):
         return f"[b]{item_name}[/b] x{quantity} ${total_price:.2f}\n"
 
-
     def remove_single_item_discount(self, item_id):
         if item_id in self.items:
             self.clear_line_discounts(item_id)
@@ -398,13 +408,13 @@ class OrderManager:
             self.app.utilities.update_financial_summary()
             self.app.popup_manager.item_popup.dismiss()
 
-
-
     def discount_single_item(self, discount_amount, item_id="", percent=False):
         try:
             if item_id in self.items:
                 # amount and percent are per-unit for scaling.
-                self.add_line_discount(item_id, discount_amount, percent=percent, per_unit=True)
+                self.add_line_discount(
+                    item_id, discount_amount, percent=percent, per_unit=True
+                )
             self.app.utilities.update_display()
             self.app.utilities.update_financial_summary()
             try:
@@ -425,7 +435,9 @@ class OrderManager:
         self.recalculate_order_totals()
 
     def add_order_level_discount(self, amount):
-        self.order_level_discount = max(0.0, float(self.order_level_discount) + float(amount))
+        self.order_level_discount = max(
+            0.0, float(self.order_level_discount) + float(amount)
+        )
         self.recalculate_order_totals()
 
     def discount_entire_order(self, discount_amount, percent=False):
@@ -446,19 +458,27 @@ class OrderManager:
                 self.app.utilities.update_display()
                 self.app.utilities.update_financial_summary()
             except Exception as e:
-                logger.warn(f"[Order Manager]: discount_entire_order\n exception updating totals\n{e}")
+                logger.warn(
+                    f"[Order Manager]: discount_entire_order\n exception updating totals\n{e}"
+                )
             try:
                 self.app.popup_manager.custom_discount_order_amount_input.text = ""
             except AttributeError:
-                logger.info("[Order Manager]: discount_entire_order\nExpected error popup_manager.custom_discount_order_amount_input.text is None")
+                logger.info(
+                    "[Order Manager]: discount_entire_order\nExpected error popup_manager.custom_discount_order_amount_input.text is None"
+                )
             try:
                 self.app.popup_manager.discount_order_popup.dismiss()
             except AttributeError:
-                logger.info("[Order Manager]: discount_entire_order\nExpected error popup_manager.discount_order_popup is None")
+                logger.info(
+                    "[Order Manager]: discount_entire_order\nExpected error popup_manager.discount_order_popup is None"
+                )
             try:
                 self.app.popup_manager.custom_discount_order_popup.dismiss()
             except AttributeError:
-                logger.info("[Order Manager]: discount_entire_order\nExpected error popup_manager.custom_discount_order_popup is None")
+                logger.info(
+                    "[Order Manager]: discount_entire_order\nExpected error popup_manager.custom_discount_order_popup is None"
+                )
             self.app.financial_summary.order_mod_popup.dismiss()
 
     def remove_order_discount(self):
@@ -467,7 +487,6 @@ class OrderManager:
             self.recalculate_order_totals()
             self.app.utilities.update_display()
             self.app.utilities.update_financial_summary()
-
 
     def add_adjusted_price_item(self):
         target_amount = self.app.popup_manager.adjust_price_cash_input.text
