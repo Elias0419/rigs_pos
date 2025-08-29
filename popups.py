@@ -2523,7 +2523,7 @@ class PopupManager:
                 size_hint_y=None,
                 _min_height=75,
                 _min_width=200,
-                on_press=self.app.button_handler.on_admin_button_press,
+                on_release=self.app.button_handler.on_admin_button_press,
                 md_bg_color=(0.5, 0.5, 0.5, 0.25),
                 _no_ripple_effect=True,
             )
