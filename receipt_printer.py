@@ -114,7 +114,7 @@ class ReceiptPrinter:
                     self.printer.set(align="center", font="a", bold=False)
                     self.printer.textln()
                     # self.printer.textln("Thanks for supporting small business in RI!")
-                    # self.printer.set(align="center", font="a", bold=True)
+                    self.printer.set(align="center", font="a", bold=True)
                     self.printer.textln("Scan to review us on Google!")
                     self.printer.qr(review_url, native=True, size=4)
                     self.printer.set(align="center", font="a", bold=False)
