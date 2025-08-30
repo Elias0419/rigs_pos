@@ -34,7 +34,6 @@ class ReceiptPrinter:
 
 
     def print_receipt(self, order_details, reprint=False, draft=False, qr_code=False):
-        logger.warn(order_details)
         if len(order_details['items']) == 0:
             return
         try:
