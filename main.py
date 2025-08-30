@@ -33,6 +33,7 @@ class CashRegisterApp(MDApp):
     def on_start(self):
         self.utilities.initialize_global_variables()
         self.utilities.load_settings()
+        self.utilities.resume_or_lock()
 
     def build(self):
         self.utilities.instantiate_modules()
