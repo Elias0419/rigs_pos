@@ -38,6 +38,8 @@ import threading
 import time
 import uuid
 import pwd
+import glob
+
 from datetime import datetime, timedelta
 from collections import defaultdict
 
@@ -111,6 +113,49 @@ class Utilities:
         self.popup_manager = PopupManager(None)
         self.font = "images/VarelaRound-Regular.ttf"
         self.screen_brightness = 75
+        self._session_dirs = [
+            "/home/rigs/rigs_pos",
+            "/home/x/work/python/rigs_pos",
+        ]
+
+    def _find_active_session_today(self):
+        today = datetime.now().strftime("%Y-%m-%d")
+        pattern = f"*-{today}-*.json"
+        for base in self._session_dirs:
+            try:
+                for path in sorted(glob.glob(os.path.join(base, pattern)), reverse=True):
+                    fname = os.path.basename(path)
+                    name = fname.split(f"-{today}-")[0]
+                    with open(path, "r") as f:
+                        data = json.load(f)
+                    if data.get("session_id"):
+                        return name, path
+            except Exception:
+                continue
+        return None, None
+
+    def resume_or_lock(self):
+        name, path = self._find_active_session_today()
+
+        if path:
+            self.clock_in_file = path
+            self.app.logged_in_user = {"name": name}
+            self.app.is_lock_screen_displayed = False
+            self.app.is_guard_screen_displayed = False
+            try:
+                self.clock_out_event = Clock.schedule_once(
+                    self.auto_clock_out, self.time_until_end_of_shift()
+                )
+            except Exception:
+                pass
+            toast(f"Active session for {name} continued")
+            self.time_clock.text = f"Logged in as {user_details['name']}\n[u]Tap here to log out[/u]"
+            return
+
+        self.app.logged_in_user = "nobody"
+        self.app.is_lock_screen_displayed = False
+        self.app.is_guard_screen_displayed = False
+        self.trigger_guard_and_lock(trigger=True)
 
     def is_rigs(_):
         try:
@@ -121,11 +166,9 @@ class Utilities:
 
     def adjust_screen_brightness(self, direction):
         if self.screen_brightness < 20:
-            logger.info("Brightness is below minimum, setting to minimum of 20")
             self.set_brightness(20)
             return
         elif self.screen_brightness > 80:
-            logger.info("Brightness is above maximum, setting to maximum of 80")
             self.set_brightness(80)
             return
 
@@ -236,21 +279,6 @@ class Utilities:
     def initialize_barcode_cache(self):
         rows = self.app.db_manager.get_all_items()
         self.app.barcode_cache = BarcodeCache(rows)
-
-    # def initialize_barcode_cache(self):
-    #
-    #     all_items = self.app.db_manager.get_all_items()
-    #     barcode_cache = {}
-    #     # print(len(barcode_cache))
-    #     for item in all_items:
-    #         barcode = item[0]
-    #         if barcode not in barcode_cache:
-    #             barcode_cache[barcode] = {"items": [item], "is_dupe": False}
-    #         else:
-    #             barcode_cache[barcode]["items"].append(item)
-    #             barcode_cache[barcode]["is_dupe"] = True
-    #     # print(len(barcode_cache))
-    #     return barcode_cache
 
     def initialize_inventory_cache(self):
         inventory = self.app.db_manager.get_all_items()
@@ -458,9 +486,7 @@ class Utilities:
         )
 
     def auto_clock_out(self, dt):
-        logger.warn(f"called auto clock out\nclock in file: {self.clock_in_file}")
         if os.path.exists(self.clock_in_file):
-            logger.warn("path exists")
             session_id = self.extract_session_id(self.clock_in_file)
             os.remove(self.clock_in_file)
 
