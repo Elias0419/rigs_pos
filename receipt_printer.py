@@ -45,11 +45,15 @@ class ReceiptPrinter:
         try:
             self.printer.image(logo, (200, -60))
             date = str(datetime.now().replace(microsecond=0))
-            self.printer.set(align="center", font="a", normal_textsize=True)
+            self.printer.set(align="center", font="a", bold=True)
+            self.printer.textln("RIGS SMOKE SHOP")
+            self.printer.set(align="center", font="a", normal_textsize=True, bold=False)
             self.printer.textln()
-            self.printer.textln("402C Main St, Wakefield, RI")
+            self.printer.textln("402C Main Street")
+            self.printer.textln("Wakefield, RI")
             self.printer.textln("401-363-9866")
             self.printer.textln()
+            self.printer.textln("instagram.com/rigs710 | RhodeIslandGlassShop.com")
             self.printer.textln()
 
             max_line_width = 48
@@ -102,7 +106,7 @@ class ReceiptPrinter:
             self.printer.textln()
 
             barcode_data = str(order_details["order_id"])
-            short_uuid = barcode_data[:13]  # test truncation length
+            short_uuid = barcode_data[:13]
             barcode_data_short = "{B" + short_uuid
 
             if not draft:
