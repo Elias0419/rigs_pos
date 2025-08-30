@@ -45,16 +45,16 @@ class ReceiptPrinter:
         try:
             self.printer.image(logo, (200, -60))
             date = str(datetime.now().replace(microsecond=0))
+            self.printer.textln()
             self.printer.set(align="center", font="a", bold=True)
             self.printer.textln("RIGS SMOKE SHOP")
             self.printer.set(align="center", font="a", normal_textsize=True, bold=False)
-            self.printer.textln()
             self.printer.textln("402C Main Street")
             self.printer.textln("Wakefield, RI")
             self.printer.textln("401-363-9866")
             self.printer.textln()
-            self.printer.textln("instagram.com/rigs710 | RhodeIslandGlassShop.com")
-            self.printer.textln()
+            # self.printer.textln("instagram.com/rigs710 | RhodeIslandGlassShop.com")
+            # self.printer.textln()
 
             max_line_width = 48
             self.printer.set(align="left", font="a", bold=False)
