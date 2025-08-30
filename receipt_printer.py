@@ -26,7 +26,6 @@ class ReceiptPrinter:
         success = self.print_receipt(order_details)
         if success:
             self.app.popup_manager.receipt_errors_popup.dismiss()
-    # https://stackoverflow.com/questions/62848693/how-to-build-a-mddropdownmenu-and-its-items-on-pressing-a-button
 
     def uuid_to_decimal_string(self, uuid_str):
         uuid_bytes = uuid_str.replace('-', '').encode()
@@ -99,12 +98,6 @@ class ReceiptPrinter:
                 else:
                     self.printer.textln("Credit Payment")
 
-            # if "split_payments" in locals():
-            #     for payment in split_payments:
-            #         method = payment["method"]
-            #         amount = payment["amount"]
-            #         self.printer.textln(f"{method}: ${amount:.2f}")
-
             self.printer.set(align="center", font="b", bold=False)
             self.printer.textln()
 
@@ -114,20 +107,20 @@ class ReceiptPrinter:
 
             if not draft:
                 if qr_code:
-                    review_url = "https://www.google.com/maps/place/?q=place_id:ChIJCUA3L0i55YkR8eakokMtGpc"
+                    review_url = "https://g.page/r/CfHmpKJDLRqXEBM/review"
                     self.printer.set(align="center", font="a", bold=False)
                     self.printer.textln()
-                    self.printer.textln("Loved our service?")
+                    self.printer.textln("Thanks for supporting small business in RI!")
                     self.printer.set(align="center", font="a", bold=True)
-                    self.printer.textln("Leave us a Google review!")
+                    self.printer.textln("Scan to review us on Google!")
                     self.printer.set(align="center", font="a", bold=False)
                     self.printer.textln("It really helps!")
                     self.printer.qr(review_url, native=True, size=4)
                     self.printer.set(align="center", font="a", bold=False)
-                    self.printer.textln("https://g.page/r/CfHmpKJDLRqXEBM/review")
-                    self.printer.textln()
-                    self.printer.textln("Thanks!")
-                    self.printer.textln()
+                    self.printer.textln("g.page/r/CfHmpKJDLRqXEBM/review")
+                    # self.printer.textln()
+                    # self.printer.textln("Thanks!")
+                    # self.printer.textln()
                 self.printer.barcode(barcode_data_short, "CODE128", pos="OFF")
             self.printer.textln()
             self.printer.textln(date)
