@@ -113,12 +113,14 @@ class ReceiptPrinter:
                     review_url = "https://g.page/r/CfHmpKJDLRqXEBM/review"
                     self.printer.set(align="center", font="a", bold=False)
                     self.printer.textln()
+                    self.printer.textln("Thanks for supporting small business in RI!")
                     self.printer.set(align="center", font="a", bold=True)
                     self.printer.textln("Scan to review us on Google!")
+                    self.printer.set(align="center", font="a", bold=False)
+                    self.printer.textln("It really helps!")
                     self.printer.qr(review_url, native=True, size=4)
                     self.printer.set(align="center", font="a", bold=False)
-                    self.printer.textln("Thanks for supporting small business in RI!")
-                    self.printer.textln()
+                    self.printer.textln("g.page/r/CfHmpKJDLRqXEBM/review")
 
                 self.printer.barcode(barcode_data_short, "CODE128", pos="OFF")
             self.printer.textln()
