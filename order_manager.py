@@ -232,15 +232,18 @@ class OrderManager:
 
     def clear_order(self):
         self.items = {}
-        self.total = 0.0
-        self._total_with_tax = None
-        self.order_id = str(uuid.uuid4())
-        self.order_discount = 0.0
-        self.tax_amount = 0.0
         self.subtotal = 0.0
+        self.total = 0.0
+        self.tax_amount = 0.0
+        self._total_with_tax = None
+        self.order_level_discount = 0.0
+        self.line_item_discount_total = 0.0
+        self.total_discount = 0.0
+        self.order_discount = 0.0
         self.payment_method = None
         self.amount_tendered = 0.0
         self.change_given = 0.0
+        self.order_id = str(uuid.uuid4())
 
     def save_order_to_disk(self):
         if not os.path.exists(self.saved_orders_dir):
