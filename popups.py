@@ -571,39 +571,30 @@ class PopupManager:
                 item_data["cost"] = costs[item_id]["cost"]
         return order_details
 
+
+
     def open_clock_out_popup(self):
         if self.app.logged_in_user == "nobody":
             return
 
-        data = self.app.utilities.load_attendance_data()
-        open_session = None
+        user_name = self.app.logged_in_user["name"]
+        open_session = self.app.utilities.get_open_session_for_user_today(user_name)
 
-        for entry in reversed(data):
-
-            if entry[1] == self.app.logged_in_user["name"] and entry[3] == None:
-                open_session = entry
-                break
-            elif entry[3] is not None:
-                break
         if open_session:
-            clock_in_time = datetime.fromisoformat(open_session[2])
-            clock_out_time = datetime.now()
-            duration = clock_out_time - clock_in_time
-            hours, remainder = divmod(duration.total_seconds(), 3600)
-            minutes = remainder // 60
-            session_info = f"{self.app.logged_in_user['name']}: {clock_in_time.strftime('%H:%M')} - {clock_out_time.strftime('%H:%M')}; {int(hours)}h {int(minutes)}m"
+            session_info = self.app.utilities.render_session_info_line(open_session, user_name, now=datetime.now())
+            message_text = (
+                "I'll add the time entry\n\n"
+                f"[b][size=20]{session_info}[/size][/b]\n\n"
+                "to the time sheet and log you out.\n\n"
+                "Is that what you want to do?\n\n"
+            )
         else:
             session_info = "No open session found."
+            message_text = session_info
 
         layout = MDBoxLayout(orientation="vertical")
         card = MDCard()
-        if open_session:
-            self.clock_out_message = MDLabel(
-                text=f"I'll add the time entry\n\n[b][size=20]{session_info}[/size][/b]\n\nto the time sheet and log you out.\n\nIs that what you want to do?\n\n",
-                halign="center",
-            )
-        else:
-            self.clock_out_message = MDLabel(text=f"{session_info}")
+        self.clock_out_message = MDLabel(text=message_text, halign="center")
         card.add_widget(self.clock_out_message)
         layout.add_widget(card)
 
@@ -621,6 +612,7 @@ class PopupManager:
         button_layout.add_widget(confirm_button)
         button_layout.add_widget(cancel_button)
         layout.add_widget(button_layout)
+
         self.clock_out_popup = Popup(
             content=layout,
             title="Clock Out",

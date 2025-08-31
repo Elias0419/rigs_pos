@@ -123,6 +123,42 @@ class Utilities:
             "/home/x/work/python/rigs_pos",
         ]
 
+    def get_open_session_for_user_today(self, expected_name):
+
+        found_name, session_path = self._find_active_session_today()
+        if found_name != expected_name or not session_path:
+            return None
+
+        try:
+            with open(session_path, "r") as f:
+                data = json.load(f)
+        except Exception as e:
+            logger.error("Failed to load active session file '%s': %s", session_path, e)
+            return None
+
+        if data.get("session_id") and data.get("clock_in") and not data.get("clock_out"):
+            return data
+        return None
+
+    def render_session_info_line(self, session, user_name, now):
+        now = now or datetime.now()
+        try:
+            clock_in_time = datetime.fromisoformat(session["clock_in"])
+        except Exception as e:
+            logger.warning("Invalid clock_in timestamp in session: %s", e)
+            clock_in_time = now
+
+        duration = now - clock_in_time
+        total_seconds = int(duration.total_seconds())
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes = remainder // 60
+
+        return (
+            f"{user_name}: "
+            f"{clock_in_time.strftime('%H:%M')} - {now.strftime('%H:%M')}; "
+            f"{hours}h {minutes}m"
+        )
+
     def _find_active_session_today(self):
         today = datetime.now().strftime("%Y-%m-%d")
         pattern = f"*-{today}-*.json"
@@ -922,7 +958,6 @@ class Utilities:
         calc_icon_container.add_widget(self.app.calc_icon)
 
         save_icon_container = MDBoxLayout(size_hint_y=None, height=100)
-        # _blank = BoxLayout(size_hint_y=0.9)
         self.app.save_icon = MDIconButton(
             icon="content-save",
             pos_hint={"top": 0.90, "right": 0},
@@ -930,7 +965,6 @@ class Utilities:
         )
         save_icon_container.add_widget(self.app.save_icon)
         top_center_container = MDBoxLayout(orientation="vertical", size_hint_y=0.2)
-        # center_container.add_widget(trash_icon_container)
         self.time_clock = MDFlatButton(
             text="",
             size_hint_y=0.2,
@@ -938,23 +972,14 @@ class Utilities:
         )
         time_clock_container = GridLayout(orientation="lr-tb", cols=2)
         _blank2 = MDBoxLayout(size_hint_y=0.8)
-        clock_icon = MDIconButton(
-            icon="clock",
-            pos_hint={"top": 1},
-            on_press=lambda x: self.app.popup_manager.open_clock_out_popup(),
-        )
-
         brightness_plus_container = MDBoxLayout(size_hint_y=None, height=100)
-        # _blank = BoxLayout(size_hint_y=0.9)
         self.app.brightness_plus_icon = MDIconButton(
             icon="plus",
-            # pos_hint={"top": 0.75, "right": 0},
             on_press=lambda x: self.adjust_screen_brightness(direction="up"),
         )
         brightness_plus_container.add_widget(self.app.brightness_plus_icon)
 
         brightness_minus_container = MDBoxLayout(size_hint_y=None, height=100)
-        # _blank = BoxLayout(size_hint_y=0.9)
         self.app.brightness_minus_icon = MDIconButton(
             icon="minus",
             # pos_hint={"top": 0.75, "right": 0},
@@ -963,10 +988,8 @@ class Utilities:
         brightness_minus_container.add_widget(self.app.brightness_minus_icon)
 
         time_clock_container.add_widget(self.time_clock)
-        # time_clock_container.add_widget(clock_icon)
         top_center_container.add_widget(time_clock_container)
         top_center_container.add_widget(_blank2)
-        # self.center_container.add_widget(self.mirror_image)
         self.center_container.add_widget(top_center_container)
         self.center_container.add_widget(_blank)
         self.top_area_layout.add_widget(self.center_container)
