@@ -944,7 +944,7 @@ class Utilities:
         self.app.calc_icon = MDIconButton(
             icon="calculator",
             pos_hint={"top": 0.75, "right": 0},
-            on_press=lambda x:x11_dpms_force_off(), #self.app.calculator.show_calculator_popup(),
+            on_press=lambda x:self.app.calculator.show_calculator_popup(),
         )
         calc_icon_container.add_widget(self.app.calc_icon)
 
