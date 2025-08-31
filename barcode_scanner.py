@@ -7,7 +7,9 @@ import subprocess
 import time
 
 import logging
-logger = logging.getLogger('rigs_pos')
+
+logger = logging.getLogger("rigs_pos")
+
 
 class BarcodeScanner:
     def __init__(self, ref):
@@ -18,13 +20,17 @@ class BarcodeScanner:
             self.idVendor = 0x05E0
             self.idProduct = 0x1200
         else:
-            self.idVendor = 0x28e9
-            self.idProduct = 0x03da
+            self.idVendor = 0x28E9
+            self.idProduct = 0x03DA
 
         self._context_handler = {
-            "inventory"     : lambda bc: self.app.inventory_manager.handle_scanned_barcode(bc),
-            "inventory_item": lambda bc: self.app.inventory_manager.handle_scanned_barcode_item(bc),
-            "label"         : lambda bc: self.app.label_manager.handle_scanned_barcode(bc),
+            "inventory": lambda bc: self.app.inventory_manager.handle_scanned_barcode(
+                bc
+            ),
+            "inventory_item": lambda bc: self.app.inventory_manager.handle_scanned_barcode_item(
+                bc
+            ),
+            "label": lambda bc: self.app.label_manager.handle_scanned_barcode(bc),
         }
 
         try:
@@ -136,7 +142,6 @@ class BarcodeScanner:
                     self.endpoint.wMaxPacketSize,
                     timeout=5000,
                 )
-                # print(f"Raw USB data: {data}")
                 if data[2] != 0:
                     character = conversion_table.get(data[2], [""])[0]
                     if character == "\n":
@@ -146,9 +151,15 @@ class BarcodeScanner:
                             # screen from sleeping during scanning
                             subprocess.run(["xdotool", "key", "Shift_L"])
                         except FileNotFoundError as e:
-                            logger.info("[BarcodeScanner]: Expected error when xdotool is unavailable\n",e)
+                            logger.info(
+                                "[BarcodeScanner]: Expected error when xdotool is unavailable\n",
+                                e,
+                            )
                         except Exception as e:
-                            logger.warn("[BarcodeScanner]: Unexpected error in capture_raw_data\n",e)
+                            logger.warn(
+                                "[BarcodeScanner]: Unexpected error in capture_raw_data\n",
+                                e,
+                            )
                         # print(f"Barcode detected: {self.current_barcode}")
                         self.barcode_ready.set()
 
@@ -160,7 +171,6 @@ class BarcodeScanner:
             except usb.core.USBError as e:
                 if e.errno == 110:
                     continue
-
                 else:
                     raise
 
@@ -174,52 +184,12 @@ class BarcodeScanner:
             self.current_barcode = ""
             self.barcode_ready.clear()
 
-    # def handle_global_barcode_scan(self, barcode):
-    #
-    #     if self.app.current_context == "inventory":
-    #         self.app.inventory_manager.handle_scanned_barcode(barcode)
-    #     elif self.app.current_context == "label":
-    #         self.app.label_manager.handle_scanned_barcode(barcode)
-    #     elif self.app.current_context == "inventory_item":
-    #         self.app.inventory_manager.handle_scanned_barcode_item(barcode)
-    #
-    #     else:
-    #         self.handle_scanned_barcode(barcode)
-
-    def handle_global_barcode_scan(self, barcode: str):
+    def handle_global_barcode_scan(self, barcode):
         handler = self._context_handler.get(self.app.current_context)
         if handler:
             handler(barcode)
         else:
             self.handle_scanned_barcode(barcode)
-
-    # def handle_scanned_barcode(self, barcode):
-    #     # try:
-    #         if "-" in barcode and any(c.isalpha() for c in barcode):
-    #             self.app.history_manager.display_order_details_from_barcode_scan(
-    #                 barcode
-    #             )
-    #             return
-    #
-    #         known_barcodes = self.app.barcode_cache.keys()
-    #
-    #         if barcode in known_barcodes:
-    #             self.handle_known_barcode(barcode)
-    #             return
-    #
-    #         for known_barcode in known_barcodes:
-    #             if (
-    #                 known_barcode[1:] == barcode
-    #                 or known_barcode == barcode[:-4]
-    #                 or known_barcode[1:] == barcode[:-4]
-    #             ):
-    #                 self.handle_known_barcode(known_barcode)
-    #                 return
-    #
-    #         self.app.popup_manager.show_add_or_bypass_popup(barcode)
-    #
-    #     # except Exception as e:
-    #     #     print(f"Exception in handle_scanned_barcode\n{e}")
 
     def handle_scanned_barcode(self, barcode):
         if "-" in barcode and any(c.isalpha() for c in barcode):
@@ -235,7 +205,7 @@ class BarcodeScanner:
 
         self.app.popup_manager.show_add_or_bypass_popup(barcode)
 
-    def _process_canonical_barcode(self, canon: str):
+    def _process_canonical_barcode(self, canon):
         data = self.app.barcode_cache.main[canon]
         if data["is_dupe"]:
             self.app.popup_manager.handle_duplicate_barcodes(canon)
