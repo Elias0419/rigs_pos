@@ -18,6 +18,7 @@ class DatabaseManager:
     def __init__(self, db_path, ref):
         if not hasattr(self, "_init"):
             self.db_path = db_path
+            self.created_new_database = False
             self.ensure_database_exists()
             self.ensure_tables_exist()
             self.app = ref
@@ -35,22 +36,15 @@ class DatabaseManager:
     def ensure_database_exists(self):
         db_directory = os.path.dirname(self.db_path)
         os.makedirs(db_directory, exist_ok=True)
-        if self.test_if_dev_or_prod() == "prod":
-            if not os.path.exists(self.db_path):
-                try:
-                    self.download_database_from_github()
-                except Exception as e:
-                    print(
-                        f"[DatabaseManager]:{e}\nNo database file was found and I could not retrieve a backup from github.\n"
-                        # TODO do something here
-                    )
-                    conn = sqlite3.connect(self.db_path)
-                    conn.close()
+        if not os.path.exists(self.db_path):
+            conn = sqlite3.connect(self.db_path)
+            conn.close()
+            self.created_new_database = True
+            logger.warning("[DatabaseManager] No existing database found. Created a new empty database at %s", self.db_path)
         else:
-            logger.info("[DatabaseManager]\nskipping database download on the dev machine")
+            logger.info("[DatabaseManager] Using existing database at %s", self.db_path)
 
     def ensure_tables_exist(self):
-
         self.create_items_table()
         self.create_order_history_table()
         self.create_modified_orders_table()
@@ -58,12 +52,6 @@ class DatabaseManager:
         self.create_payment_history_table()
         self.create_attendance_log_table()
 
-
-    def download_database_from_github(self):
-        os.chdir("/home/rigs/rigs_pos/db")
-        result = subprocess.run(['git', 'pull'], capture_output=True, text=True)
-        if result.returncode != 0:
-            raise Exception(f"Failed to pull database from GitHub: {result.stderr}")
 
     def create_payment_history_table(self):
         conn = self._get_connection()
