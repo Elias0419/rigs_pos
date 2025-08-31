@@ -147,6 +147,7 @@ class Utilities:
         if path:
             self.clock_in_file = path
             self.app.logged_in_user = {"name": name}
+            self.app.admin = self.is_user_admin(name)
             self.app.is_lock_screen_displayed = False
             self.app.is_guard_screen_displayed = False
             try:
@@ -383,6 +384,22 @@ class Utilities:
             logger.warn(f"[Utilities]: store_user_details\n {e}")
             if os.path.exists(temp_file_path):
                 os.remove(temp_file_path)
+
+    def is_user_admin(self, name):
+        try:
+            with open(self.app.pin_store, "r") as file:
+                users = json.load(file)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            logger.error("Failed to read pin_store: %s", e)
+            return False
+
+        for user in users:
+            if user.get("name") == name:
+                return bool(user.get("admin", False))
+
+        return False
+
+
 
     def validate_pin(self, entered_pin):
         if not os.path.exists(self.app.pin_store):
