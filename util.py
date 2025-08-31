@@ -258,8 +258,11 @@ class Utilities:
         ]
         try:
             subprocess.Popen(command)
-        except subprocess.CalledProcessError:
+        except (subprocess.CalledProcessError, FileNotFoundError) as e:
             logger.warn(f"[Utilities] failed to set brightness\n{e}")
+            toast("Failed to set brightness")
+        except Exception as e:
+            logger.error(f"[Utilities] unexpected error in set_brightness \n{e}")
 
     def check_if_update_was_applied(self):
         try:
@@ -895,19 +898,63 @@ class Utilities:
             self.dual_pane_mode = True
             os.remove(flag_file_path)
 
-    def create_main_layout(self, dual_pane_mode=False):
+    def create_main_layout(self):
+        self.main_layout = self._build_main_layout()
 
-        if dual_pane_mode:
-            dual_pane_layout = GridLayout(orientation="lr-tb", cols=2)
-        self.main_layout = GridLayout(
-            cols=1, spacing=5, orientation="lr-tb", row_default_height=60
+        self.top_area_layout, right_area_layout = self._build_top_area_scaffolding()
+
+        self.clock_layout = self.create_clock_layout()
+        self.top_area_layout.add_widget(self.clock_layout)
+
+        self.center_container = self._build_center_controls()
+        self.top_area_layout.add_widget(self.center_container)
+
+        self.app.order_layout = self._build_order_grid()
+        self._populate_right_area(right_area_layout)
+        self.top_area_layout.add_widget(right_area_layout)
+
+        sidebar = self._build_sidebar()
+        self.top_area_layout.add_widget(sidebar)
+
+        self.main_layout.add_widget(self.top_area_layout)
+
+        button_layout = self._build_button_row()
+        self.main_layout.add_widget(button_layout)
+
+        self._schedule_intervals()
+
+        self.base_layout = self._build_base_layout()
+        self.base_layout.add_widget(self.main_layout)
+
+        return self.base_layout
+
+
+
+    def _build_main_layout(self):
+        return GridLayout(
+            cols=1,
+            spacing=5,
+            orientation="lr-tb",
+            row_default_height=60,
         )
 
-        self.top_area_layout = GridLayout(
-            cols=4, rows=1, orientation="lr-tb", row_default_height=60, size_hint_x=0.92
+    def _build_top_area_scaffolding(self):
+        top_area_layout = GridLayout(
+            cols=4,
+            rows=1,
+            orientation="lr-tb",
+            row_default_height=60,
+            size_hint_x=0.92,
         )
-        right_area_layout = GridLayout(rows=2, orientation="tb-lr", padding=50)
-        self.app.order_layout = GridLayout(
+        right_area_layout = GridLayout(
+            rows=2,
+            orientation="tb-lr",
+            padding=50,
+        )
+        return top_area_layout, right_area_layout
+
+    def _build_order_grid(self):
+        return GridLayout(
             orientation="tb-lr",
             cols=2,
             rows=10,
@@ -916,75 +963,8 @@ class Utilities:
             row_force_default=True,
             size_hint_x=1 / 2,
         )
-        self.clock_layout = self.create_clock_layout()
-        self.top_area_layout.add_widget(self.clock_layout)
 
-        self.center_container = GridLayout(
-            rows=2, orientation="tb-lr", size_hint_y=0.01, size_hint_x=0.4
-        )
-        trash_icon_container = MDBoxLayout(size_hint_y=None, height=100)
-        _blank = BoxLayout(size_hint_y=0.9)
-        self.app.trash_icon = MDIconButton(
-            icon="trash-can",
-            pos_hint={"top": 0.75, "right": 0},
-            on_press=lambda x: self.confirm_clear_order(),
-        )
-        trash_icon_container.add_widget(self.app.trash_icon)
-        print_icon_container = MDBoxLayout(size_hint_y=None, height=100)
-
-        self.app.print_icon = MDIconButton(
-            icon="printer",
-            pos_hint={"top": 0.75, "right": 0},
-            on_press=lambda x: self.print_draft_receipt(),
-        )
-        print_icon_container.add_widget(self.app.print_icon)
-
-        calc_icon_container = MDBoxLayout(size_hint_y=None, height=100)
-
-        self.app.calc_icon = MDIconButton(
-            icon="calculator",
-            pos_hint={"top": 0.75, "right": 0},
-            on_press=lambda x:self.app.calculator.show_calculator_popup(),
-        )
-        calc_icon_container.add_widget(self.app.calc_icon)
-
-        save_icon_container = MDBoxLayout(size_hint_y=None, height=100)
-        self.app.save_icon = MDIconButton(
-            icon="content-save",
-            pos_hint={"top": 0.90, "right": 0},
-            on_press=lambda x: self.app.financial_summary.save_order(),
-        )
-        save_icon_container.add_widget(self.app.save_icon)
-        top_center_container = MDBoxLayout(orientation="vertical", size_hint_y=0.2)
-        self.time_clock = MDFlatButton(
-            text="",
-            size_hint_y=0.2,
-            on_press=lambda x: self.app.popup_manager.open_clock_out_popup(),
-        )
-        time_clock_container = GridLayout(orientation="lr-tb", cols=2)
-        _blank2 = MDBoxLayout(size_hint_y=0.8)
-        brightness_plus_container = MDBoxLayout(size_hint_y=None, height=100)
-        self.app.brightness_plus_icon = MDIconButton(
-            icon="plus",
-            on_press=lambda x: self.adjust_screen_brightness(direction="up"),
-        )
-        brightness_plus_container.add_widget(self.app.brightness_plus_icon)
-
-        brightness_minus_container = MDBoxLayout(size_hint_y=None, height=100)
-        self.app.brightness_minus_icon = MDIconButton(
-            icon="minus",
-            # pos_hint={"top": 0.75, "right": 0},
-            on_press=lambda x: self.adjust_screen_brightness(direction="down"),
-        )
-        brightness_minus_container.add_widget(self.app.brightness_minus_icon)
-
-        time_clock_container.add_widget(self.time_clock)
-        top_center_container.add_widget(time_clock_container)
-        top_center_container.add_widget(_blank2)
-        self.center_container.add_widget(top_center_container)
-        self.center_container.add_widget(_blank)
-        self.top_area_layout.add_widget(self.center_container)
-
+    def _populate_right_area(self, right_area_layout):
         right_area_layout.add_widget(self.app.order_layout)
 
         financial_button = self.create_financial_layout()
@@ -992,15 +972,104 @@ class Utilities:
         financial_layout.add_widget(MDLabel(size_hint_x=0.4))
         financial_layout.add_widget(financial_button)
         right_area_layout.add_widget(financial_layout)
-        self.top_area_layout.add_widget(right_area_layout)
-        sidebar = BoxLayout(orientation="vertical", size_hint_x=0.07)
-        lock_icon = MDIconButton(
-            icon="lock", on_press=lambda x: self.trigger_guard_and_lock(trigger=True)
+
+    def _build_center_controls(self):
+        center_container = GridLayout(
+            rows=2,
+            orientation="tb-lr",
+            size_hint_y=0.01,
+            size_hint_x=0.4,
         )
+
+        top_center_container = MDBoxLayout(orientation="vertical", size_hint_y=0.2)
+
+        self.time_clock = MDFlatButton(
+            text="",
+            size_hint_y=0.2,
+            on_press=lambda x: self.app.popup_manager.open_clock_out_popup(),
+        )
+
+        time_clock_container = GridLayout(orientation="lr-tb", cols=2)
+        time_clock_container.add_widget(self.time_clock)
+
+        _blank2 = MDBoxLayout(size_hint_y=0.8)
+
+        top_center_container.add_widget(time_clock_container)
+        top_center_container.add_widget(_blank2)
+
+        _blank = BoxLayout(size_hint_y=0.9)
+
+        center_container.add_widget(top_center_container)
+        center_container.add_widget(_blank)
+
+        return center_container
+
+    def _build_sidebar(self):
+        sidebar = BoxLayout(orientation="vertical", size_hint_x=0.07)
+
+        # Trash
+        trash_icon_container = MDBoxLayout(size_hint_y=None, height=100)
+        self.app.trash_icon = MDIconButton(
+            icon="trash-can",
+            pos_hint={"top": 0.75, "right": 0},
+            on_press=lambda x: self.confirm_clear_order(),
+        )
+        trash_icon_container.add_widget(self.app.trash_icon)
+
+        # Save
+        save_icon_container = MDBoxLayout(size_hint_y=None, height=100)
+        self.app.save_icon = MDIconButton(
+            icon="content-save",
+            pos_hint={"top": 0.90, "right": 0},
+            on_press=lambda x: self.app.financial_summary.save_order(),
+        )
+        save_icon_container.add_widget(self.app.save_icon)
+
+        # Print
+        print_icon_container = MDBoxLayout(size_hint_y=None, height=100)
+        self.app.print_icon = MDIconButton(
+            icon="printer",
+            pos_hint={"top": 0.75, "right": 0},
+            on_press=lambda x: self.print_draft_receipt(),
+        )
+        print_icon_container.add_widget(self.app.print_icon)
+
+        # Brightness +
+        brightness_plus_container = MDBoxLayout(size_hint_y=None, height=100)
+        self.app.brightness_plus_icon = MDIconButton(
+            icon="plus",
+            on_press=lambda x: self.adjust_screen_brightness(direction="up"),
+        )
+        brightness_plus_container.add_widget(self.app.brightness_plus_icon)
+
+        # Brightness -
+        brightness_minus_container = MDBoxLayout(size_hint_y=None, height=100)
+        self.app.brightness_minus_icon = MDIconButton(
+            icon="minus",
+            on_press=lambda x: self.adjust_screen_brightness(direction="down"),
+        )
+        brightness_minus_container.add_widget(self.app.brightness_minus_icon)
+
+        # Cost overlay
         self.cost_overlay_icon = MDButtonLabel(
             on_press=lambda x: self.app.popup_manager.show_cost_overlay(),
             text="",
             halign="center",
+        )
+
+        # Calculator
+        calc_icon_container = MDBoxLayout(size_hint_y=None, height=100)
+        self.app.calc_icon = MDIconButton(
+            icon="calculator",
+            pos_hint={"top": 0.75, "right": 0},
+            on_press=lambda x: self.app.calculator.show_calculator_popup(),
+        )
+        calc_icon_container.add_widget(self.app.calc_icon)
+
+        # Lock
+        lock_icon = MDIconButton(
+            icon="lock",
+            on_press=lambda x: self.trigger_guard_and_lock(trigger=True),
         )
 
         sidebar.add_widget(trash_icon_container)
@@ -1008,15 +1077,14 @@ class Utilities:
         sidebar.add_widget(print_icon_container)
         sidebar.add_widget(brightness_plus_container)
         sidebar.add_widget(brightness_minus_container)
-
         sidebar.add_widget(self.cost_overlay_icon)
-        sidebar.add_widget(MDBoxLayout())
+        sidebar.add_widget(MDBoxLayout())  # spacer
         sidebar.add_widget(calc_icon_container)
         sidebar.add_widget(lock_icon)
-        # sidebar.add_widget(trash_icon)
-        self.top_area_layout.add_widget(sidebar)
-        self.main_layout.add_widget(self.top_area_layout)
-        # main_layout.add_widget(sidebar)
+
+        return sidebar
+
+    def _build_button_row(self):
         button_layout = GridLayout(
             cols=5,
             spacing=20,
@@ -1026,6 +1094,8 @@ class Utilities:
             orientation="lr-tb",
         )
 
+        _blank3 = MDBoxLayout(size_hint_x=None, width=500)
+
         btn_pay = MDFlatButton(
             text="[b][size=40]PAY[/b][/size]",
             on_press=self.app.button_handler.on_button_press,
@@ -1034,8 +1104,6 @@ class Utilities:
             font_style="H6",
             size_hint_x=None,
             _min_width=225,
-            # _min_height=100,
-            # line_color="white",
         )
 
         btn_custom_item = MDFlatButton(
@@ -1046,8 +1114,6 @@ class Utilities:
             font_style="H6",
             size_hint_x=None,
             _min_width=225,
-            # _min_height=100,
-            # line_color="white",
         )
 
         btn_inventory = MDFlatButton(
@@ -1058,60 +1124,38 @@ class Utilities:
             font_style="H6",
             size_hint_x=None,
             _min_width=225,
-            # _min_height=100,
-            # line_color="white",
         )
 
         btn_tools = MDFlatButton(
             text="[b][size=40]TOOLS[/b][/size]",
             on_press=self.app.button_handler.on_button_press,
-            # on_press=lambda x: self.app.db_manager.retrieve_attendence_log_entries(),
             padding=(8, 8),
             font_style="H1",
             font_name=self.font,
             size_hint_x=None,
             _min_width=225,
-            # _min_height=100,
-            # line_color="white",
         )
-        _blank3 = MDBoxLayout(size_hint_x=None, width=500)
+
         button_layout.add_widget(_blank3)
         button_layout.add_widget(btn_pay)
         button_layout.add_widget(btn_custom_item)
         button_layout.add_widget(btn_inventory)
         button_layout.add_widget(btn_tools)
-        self.main_layout.add_widget(button_layout)
 
+        return button_layout
+
+    def _schedule_intervals(self):
         Clock.schedule_interval(self.check_inactivity, 10)
         Clock.schedule_interval(self.app.barcode_scanner.check_for_scanned_barcode, 0.1)
 
-        self.base_layout = FloatLayout()
+    def _build_base_layout(self):
+        base = FloatLayout()
         try:
             bg_image = Image(source="images/test.jpg", fit_mode="fill")
-            self.base_layout.add_widget(bg_image)
-
+            base.add_widget(bg_image)
         except Exception as e:
-            logger.warn(e)
-            with self.base_layout.canvas.before:
-                Color(0.78, 0.78, 0.78, 1)
-                self.rect = Rectangle(
-                    size=self.base_layout.size, pos=self.base_layout.pos
-                )
-
-            def update_rect(instance, value):
-                instance.rect.size = instance.size
-                instance.rect.pos = instance.pos
-
-            self.base_layout.bind(size=update_rect, pos=update_rect)
-
-        self.base_layout.add_widget(self.main_layout)
-        if dual_pane_mode:
-            blank_layout = self.app.popup_manager.show_lock_screen(dual_pane=True)
-            dual_pane_layout.add_widget(self.base_layout)
-            dual_pane_layout.add_widget(blank_layout)
-            return dual_pane_layout
-        else:
-            return self.base_layout
+            logger.warn("[Utilities] couldn't load background image", e)
+        return base
 
     def create_clock_layout(self):
 
