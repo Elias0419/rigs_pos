@@ -50,7 +50,7 @@ from Xlib.display import Display
 
 _XDISP = Display()
 
-from x11_power import x11_idle_ms, x11_dpms_force_off
+from x11_power import x11_idle_ms, x11_dpms_force_off, x11_backlight_set_percent
 
 
 from datetime import datetime, timedelta
@@ -257,7 +257,8 @@ class Utilities:
             "dev:/dev/i2c-3",
         ]
         try:
-            subprocess.Popen(command)
+            x11_backlight_set_percent(value)
+            # subprocess.Popen(command)
         except (subprocess.CalledProcessError, FileNotFoundError) as e:
             logger.warn(f"[Utilities] failed to set brightness\n{e}")
             toast("Failed to set brightness")
