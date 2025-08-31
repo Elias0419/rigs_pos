@@ -2,22 +2,27 @@ import logging
 
 logging_configured = False
 
+
 def setup_logging():
     global logging_configured
     if not logging_configured:
 
         logger.setLevel(logging.DEBUG)
 
-        fh = logging.FileHandler('rigs_pos.log')
+        fh = logging.FileHandler("rigs_pos.log")
         fh.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)',
-                                      datefmt='%m/%d/%Y %H:%M:%S')
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)",
+            datefmt="%m/%d/%Y %H:%M:%S",
+        )
         fh.setFormatter(formatter)
         logger.addHandler(fh)
 
         ch = logging.StreamHandler()
         ch.setLevel(logging.INFO)
-        formatter_console = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)')
+        formatter_console = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s (%(filename)s:%(lineno)d)"
+        )
         ch.setFormatter(formatter_console)
         logger.addHandler(ch)
 
@@ -26,7 +31,7 @@ def setup_logging():
         logging_configured = True
 
 
-logger = logging.getLogger('rigs_pos')
+logger = logging.getLogger("rigs_pos")
 
 import inspect
 import json
@@ -69,6 +74,7 @@ from order_manager import OrderManager
 from popups import Calculator, FinancialSummaryWidget, PopupManager
 from receipt_printer import ReceiptPrinter
 
+
 def log_caller_info(depth=1):
     stack = inspect.stack()
 
@@ -80,12 +86,11 @@ def log_caller_info(depth=1):
         logger.warn(f"Called from {file_name}, line {line_number}, in {function_name}")
 
 
-
 class BarcodeCache:
 
     def __init__(self, rows):
         self.main = defaultdict(lambda: {"items": []})
-        self.variant: Dict[str, str]  = {}
+        self.variant: Dict[str, str] = {}
 
         for row in rows:
             canon = str(row[0]).strip()
@@ -123,7 +128,9 @@ class Utilities:
         pattern = f"*-{today}-*.json"
         for base in self._session_dirs:
             try:
-                for path in sorted(glob.glob(os.path.join(base, pattern)), reverse=True):
+                for path in sorted(
+                    glob.glob(os.path.join(base, pattern)), reverse=True
+                ):
                     fname = os.path.basename(path)
                     name = fname.split(f"-{today}-")[0]
                     with open(path, "r") as f:
@@ -187,18 +194,23 @@ class Utilities:
 
     def set_brightness(self, value):
         self.screen_brightness = value
-        command = ["sudo", "ddccontrol", "-r", "0x10", "-w", str(value), "dev:/dev/i2c-3"]
+        command = [
+            "sudo",
+            "ddccontrol",
+            "-r",
+            "0x10",
+            "-w",
+            str(value),
+            "dev:/dev/i2c-3",
+        ]
         try:
             subprocess.Popen(command)
         except subprocess.CalledProcessError:
             logger.warn(f"[Utilities] failed to set brightness\n{e}")
 
-
-
-
     def check_if_update_was_applied(self):
         try:
-            os.remove('update_applied')
+            os.remove("update_applied")
             return True
         except FileNotFoundError:
             return False
@@ -207,10 +219,10 @@ class Utilities:
         update_details = []
         try:
 
-            with open('update/update_details', 'r') as f:
+            with open("update/update_details", "r") as f:
                 for line in f:
                     update_details.append(line)
-            os.remove('update/update_details')
+            os.remove("update/update_details")
             return update_details
         except:
             pass
@@ -235,14 +247,18 @@ class Utilities:
 
         try:
             self.initialize_receipt_printer()
-        except: # TODO: Something other than log the error
+        except:  # TODO: Something other than log the error
             logger.info("Receipt Printer was not initialized 1")
         self.app.barcode_scanner = BarcodeScanner(self.app)
         try:
-            self.app.db_manager = DatabaseManager("/home/rigs/rigs_pos/db/inventory.db", self.app)
+            self.app.db_manager = DatabaseManager(
+                "/home/rigs/rigs_pos/db/inventory.db", self.app
+            )
         except:
-            self.app.db_manager = DatabaseManager("/home/x/work/python/rigs_pos/db/inventory.db", self.app)
-        finally: # TODO: Something other than log the error
+            self.app.db_manager = DatabaseManager(
+                "/home/x/work/python/rigs_pos/db/inventory.db", self.app
+            )
+        finally:  # TODO: Something other than log the error
             logger.info("Database was not initialized (in finally block)")
         self.app.financial_summary = FinancialSummaryWidget(self.app)
         self.app.order_manager = OrderManager(self.app)
@@ -267,12 +283,10 @@ class Utilities:
     def initialize_receipt_printer(self):
         try:
             self.app.receipt_printer = ReceiptPrinter(
-
                 self.app, "/home/rigs/rigs_pos/receipt_printer_config.yaml"
             )
         except:
             self.app.receipt_printer = ReceiptPrinter(
-
                 self.app, "/home/x/work/python/rigs_pos/receipt_printer_config.yaml"
             )
 
@@ -422,7 +436,9 @@ class Utilities:
 
         session_id = str(uuid.uuid4())
         today_str = datetime.now().strftime("%Y-%m-%d")
-        prod_file = f"/home/rigs/rigs_pos/{user_details['name']}-{today_str}-{session_id}.json"
+        prod_file = (
+            f"/home/rigs/rigs_pos/{user_details['name']}-{today_str}-{session_id}.json"
+        )
         dev_file = f"/home/x/work/python/rigs_pos/{user_details['name']}-{today_str}-{session_id}.json"
 
         clock_in_successful = False
@@ -439,7 +455,10 @@ class Utilities:
             try:
                 with open(dev_file, "w") as file:
                     json.dump(
-                        {"clock_in": datetime.now().isoformat(), "session_id": session_id},
+                        {
+                            "clock_in": datetime.now().isoformat(),
+                            "session_id": session_id,
+                        },
                         file,
                     )
                 self.clock_in_file = dev_file
@@ -457,10 +476,12 @@ class Utilities:
             clock_in=True,
         )
         log_in_time = self.read_formatted_clock_in_time(self.clock_in_file)
-        self.time_clock.text = f"Logged in as {user_details['name']}\n[u]Tap here to log out[/u]"
+        self.time_clock.text = (
+            f"Logged in as {user_details['name']}\n[u]Tap here to log out[/u]"
+        )
         self.clock_out_event = Clock.schedule_once(
             self.auto_clock_out, self.time_until_end_of_shift()
-    )
+        )
 
     def clock_out(self, timestamp=None, auto=False):
         if hasattr(self, "clock_out_event"):
@@ -495,13 +516,12 @@ class Utilities:
             ) + timedelta(days=1)
             formatted_midnight = midnight.isoformat()
             self.update_attendance_log(
-                #self.app.attendance_log,
+                # self.app.attendance_log,
                 name=self.app.logged_in_user["name"],
                 session_id=session_id,
-                #"auto",
+                # "auto",
                 timestamp=formatted_midnight,
                 clock_out=True,
-
             )
 
         timestamp = datetime.now().isoformat()
@@ -513,13 +533,16 @@ class Utilities:
         self, name, session_id, timestamp=None, clock_in=False, clock_out=False
     ):
         log_caller_info(depth=2)
-        logger.warn(f"update_attendance_log called with: name={name}, session_id={session_id}, timestamp={timestamp}, clock_in={clock_in}, clock_out={clock_out}")
+        logger.warn(
+            f"update_attendance_log called with: name={name}, session_id={session_id}, timestamp={timestamp}, clock_in={clock_in}, clock_out={clock_out}"
+        )
         if timestamp is None:
             timestamp = datetime.now().isoformat()
         if clock_in:
             self.app.db_manager.insert_attendance_log_entry(name, session_id, timestamp)
         elif clock_out:
             self.app.db_manager.update_attendance_log_entry(session_id, timestamp)
+
     # def update_attendance_log(
     #     self, log_file, user_name, action, session_id, auto=False, timestamp=None
     # ):
@@ -683,7 +706,6 @@ class Utilities:
             logger.warn(e)
 
     def create_md_raised_button(
-
         self,
         text,
         on_press_action,
@@ -1173,7 +1195,6 @@ class Utilities:
             # valign="bottom",
             halign="left",
             # pos_hint={"left": 0.1}
-
         )
         clock_container.add_widget(self.app.clock_label)
         line_container = MDBoxLayout(
@@ -1324,12 +1345,12 @@ class Utilities:
 
     def trigger_guard_and_lock(
         self,
-        trigger = False,
-        clock_out = False,
-        auto_clock_out = False,
+        trigger=False,
+        clock_out=False,
+        auto_clock_out=False,
         current_user=None,
-        timestamp = "",
-        auto = False,
+        timestamp="",
+        auto=False,
     ):
         self._handle_clock_out_flag(clock_out)
         self._handle_auto_clock_out(auto_clock_out, timestamp)
@@ -1340,7 +1361,10 @@ class Utilities:
             self._process_trigger_lock_screen()
             return
 
-        if not self.app.is_guard_screen_displayed and not self.app.is_lock_screen_displayed:
+        if (
+            not self.app.is_guard_screen_displayed
+            and not self.app.is_lock_screen_displayed
+        ):
             self._show_both_screens(clock_out, current_user, auto, timestamp)
             return
 
@@ -1352,13 +1376,10 @@ class Utilities:
             self._ensure_lock_screen()
             return
 
-
-
     def _handle_clock_out_flag(self, clock_out):
         if clock_out:
             self.app.is_lock_screen_displayed = False
             self.app.disable_lock_screen = False
-
 
     def _handle_auto_clock_out(self, auto_clock_out, timestamp):
         if not auto_clock_out:
@@ -1369,12 +1390,10 @@ class Utilities:
         self.app.is_guard_screen_displayed = False
         self.clock_out(timestamp=timestamp, auto=True)
 
-
     def _resolve_current_user(self, current_user):
         if current_user is None and self.app.logged_in_user != "nobody":
             return self.app.logged_in_user["name"]
         return current_user
-
 
     def _process_trigger_lock_screen(self):
         self.app.disable_lock_screen = False
@@ -1382,7 +1401,6 @@ class Utilities:
         self.app.is_lock_screen_displayed = False
         self.app.popup_manager.show_lock_screen()
         self.app.is_lock_screen_displayed = True
-
 
     def _show_both_screens(
         self,
@@ -1401,16 +1419,13 @@ class Utilities:
         self.app.is_lock_screen_displayed = True
         self.app.is_guard_screen_displayed = True
 
-
     def _ensure_guard_screen(self):
         self.app.popup_manager.show_guard_screen()
         self.app.is_guard_screen_displayed = True
 
-
     def _ensure_lock_screen(self):
         self.app.popup_manager.show_lock_screen()
         self.app.is_lock_screen_displayed = True
-
 
     def _safe_dismiss(self, popup):
         if popup is None:
