@@ -20,10 +20,13 @@ from kivymd.uix.card import MDCard
 import inspect
 
 import logging
-logger = logging.getLogger('rigs_pos')
+
+logger = logging.getLogger("rigs_pos")
 
 
-def log_caller_info(depths=1, to_file=False, filename="history_manager_dismiss_log.txt"):
+def log_caller_info(
+    depths=1, to_file=False, filename="history_manager_dismiss_log.txt"
+):
     stack = inspect.stack()
     if isinstance(depths, int):
         depths = [depths]
@@ -46,10 +49,11 @@ def log_caller_info(depths=1, to_file=False, filename="history_manager_dismiss_l
 
     if to_file:
 
-        with open(filename, 'a') as f:
+        with open(filename, "a") as f:
             f.writelines(output_lines)
     else:
-        logger.warn(''.join(output_lines))
+        logger.warn("".join(output_lines))
+
 
 class NullableStringProperty(StringProperty):
     def __init__(self, *args, **kwargs):
@@ -72,7 +76,6 @@ class HistoryPopup(Popup):
             super(HistoryPopup, self).__init__(**kwargs)
             self.db_manager = DatabaseManager("db/inventory.db", self)
             # self.history_view = HistoryView()
-
 
     def on_dismiss(self, *args, **kwargs):
         super().on_dismiss(*args, **kwargs)
@@ -142,7 +145,9 @@ class HistoryView(BoxLayout):
         self.history_search = TextInput(hint_text="Search by item name")
         self.history_search.bind(text=self.on_search_text_changed)
         self.total_amount_label = MDLabel(text="Total: $0.00")
-        self.current_filter_label = MDLabel(text="Current Filter: today", size_hint_x=0.8)
+        self.current_filter_label = MDLabel(
+            text="Current Filter: today", size_hint_x=0.8
+        )
         self.average_label = MDLabel(text="", size_hint_x=0.4)
         self.total_cash_label = MDLabel(text="Total Cash: $0.00")
         self.totals_layout.add_widget(self.history_search)
@@ -199,7 +204,6 @@ class HistoryView(BoxLayout):
     def init_filter(self, dt):
         self.filter_today()
         # self.update_totals()
-
 
     def update_totals(self):
 
@@ -493,7 +497,9 @@ class HistoryView(BoxLayout):
                 self.order_not_found_popup(barcode_str)
 
         except Exception as e:
-            logger.warn(f"[HistoryManager] display_order_details_from_barcode_scan\n{e}")
+            logger.warn(
+                f"[HistoryManager] display_order_details_from_barcode_scan\n{e}"
+            )
 
     def order_not_found_popup(self, order):
         not_found_layout = BoxLayout(size_hint=(1, 1))
