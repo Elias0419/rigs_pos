@@ -27,12 +27,6 @@ class DatabaseManager:
     def _get_connection(self):
         return sqlite3.connect(self.db_path)
 
-    def test_if_dev_or_prod(self):
-        if os.path.exists("/home/x/work"):
-            return "dev"
-        else:
-            return "prod"
-
     def ensure_database_exists(self):
         db_directory = os.path.dirname(self.db_path)
         os.makedirs(db_directory, exist_ok=True)
