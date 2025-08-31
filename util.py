@@ -50,7 +50,7 @@ from Xlib.display import Display
 
 _XDISP = Display()
 
-from x11_power import x11_idle_ms, x11_dpms_force_off, x11_backlight_set_percent, x11_backlight_debug_dump
+from x11_power import x11_idle_ms, x11_dpms_force_off, x11_backlight_set_percent
 
 
 from datetime import datetime, timedelta
