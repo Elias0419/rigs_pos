@@ -149,7 +149,7 @@ class Utilities:
             except Exception:
                 pass
             toast(f"Active session for {name} continued")
-            #self.time_clock.text = f"Logged in as {user_details['name']}\n[u]Tap here to log out[/u]"
+            self.time_clock.text = f"Logged in as {name}\n[u]Tap here to log out[/u]"
             return
 
         self.app.logged_in_user = "nobody"
