@@ -228,8 +228,8 @@ class Utilities:
         if self.screen_brightness < 20:
             self.set_brightness(20)
             return
-        elif self.screen_brightness > 80:
-            self.set_brightness(80)
+        elif self.screen_brightness > 100:
+            self.set_brightness(100)
             return
 
         if direction == "down":
@@ -239,10 +239,10 @@ class Utilities:
                 new_value = max(self.screen_brightness - 10, 20)
                 self.set_brightness(new_value)
         elif direction == "up":
-            if self.screen_brightness == 80:
+            if self.screen_brightness == 100:
                 logger.info("Brightness is already at maximum")
             else:
-                new_value = min(self.screen_brightness + 10, 80)
+                new_value = min(self.screen_brightness + 10, 100)
                 self.set_brightness(new_value)
 
     def set_brightness(self, value):
