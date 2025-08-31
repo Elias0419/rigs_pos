@@ -34,113 +34,142 @@ class ReceiptPrinter:
 
 
     def print_receipt(self, order_details, reprint=False, draft=False, qr_code=False):
-        if len(order_details['items']) == 0:
+        if len(order_details.get("items", {})) == 0:
             return
-        try:
-            logo = Image.open("images/rigs_logo_scaled.png")
-        except Exception as e:
-            logger.warn("Error loading logo:", e)
+        logo = self._rcpt_load_logo()
 
         try:
-            self.printer.image(logo, (200, -60))
-            date = str(datetime.now().replace(microsecond=0))
-            self.printer.textln()
-            self.printer.set(align="center", font="a", bold=True)
-            self.printer.textln("RIGS SMOKE SHOP")
-            self.printer.set(align="center", font="a", normal_textsize=True, bold=False)
-            self.printer.textln("402C Main Street")
-            self.printer.textln("Wakefield, RI")
-            self.printer.textln("401-363-9866")
-            self.printer.textln()
-            # self.printer.textln("instagram.com/rigs710 | RhodeIslandGlassShop.com")
-            # self.printer.textln()
-
-            max_line_width = 48
-            self.printer.set(align="left", font="a", bold=False)
-
-            for item in order_details["items"].values():
-                if item["quantity"] > 1:
-                    item_name = f"{item['name']} x{item['quantity']}"
-                else:
-                    item_name = item["name"]
-                price = f"${item['total_price']:.2f}"
-                spaces = " " * (max_line_width - len(item_name) - len(price))
-                item_line = item_name + spaces + price
-
-                self.printer.textln(item_line)
-                if float(item['discount']['amount']) > 0:
-                    discount_amount = float(item['discount']['amount'])
-                    discount_text = f"Discount: -${discount_amount:.2f}"
-                    spaces = " " * (max_line_width - len(discount_text))
-                    self.printer.textln(spaces + discount_text)
-
-                self.printer.textln()
-
-            self.printer.set(align="right", font="a", bold=True)
-            self.printer.textln()
-
-            self.printer.textln(f"Subtotal: ${order_details['subtotal']:.2f}")
-
-            if order_details["discount"] > 0:
-                self.printer.textln(f"Discount: -${order_details['discount']:.2f}")
-
-            self.printer.textln(f"Tax: ${order_details['tax_amount']:.2f}")
-
-            self.printer.textln(f"Total: ${order_details['total_with_tax']:.2f}")
-            if not draft:
-                if order_details["payment_method"] == "Cash":
-                    self.printer.textln(
-                        f"Cash: ${order_details['amount_tendered']:.2f}"
-                    )
-                    self.printer.textln(f"Change: ${order_details['change_given']:.2f}")
-
-                elif order_details["payment_method"] == "Split":
-                    self.printer.textln("Split Payment")
-                elif order_details["payment_method"] == "Debit":
-                    self.printer.textln("Debit Payment")
-                else:
-                    self.printer.textln("Credit Payment")
-
-            self.printer.set(align="center", font="b", bold=False)
-            self.printer.textln()
-
-            barcode_data = str(order_details["order_id"])
-            short_uuid = barcode_data[:13]
-            barcode_data_short = "{B" + short_uuid
-
-            if not draft:
-                if qr_code:
-                    review_url = "https://g.page/r/CfHmpKJDLRqXEBM/review"
-                    self.printer.set(align="center", font="a", bold=False)
-                    self.printer.textln()
-                    self.printer.textln("Thanks for supporting small business in RI!")
-                    self.printer.set(align="center", font="a", bold=True)
-                    self.printer.textln("Scan to review us on Google!")
-                    self.printer.set(align="center", font="a", bold=False)
-                    self.printer.textln("It really helps!")
-                    self.printer.qr(review_url, native=True, size=4)
-                    self.printer.set(align="center", font="a", bold=False)
-                    self.printer.textln("g.page/r/CfHmpKJDLRqXEBM/review")
-
-                self.printer.barcode(barcode_data_short, "CODE128", pos="OFF")
-            self.printer.textln()
-            self.printer.textln(date)
-            self.printer.textln(order_details["order_id"])
-
-            if reprint:
-                self.printer.set(align="center", font="a", bold=True)
-                self.printer.textln()
-                self.printer.textln("Copy")
-            if draft:
-                self.printer.set(align="center", font="a", bold=True)
-                self.printer.textln()
-                self.printer.textln("UNPAID")
-
+            date_str = self._rcpt_print_header(logo)
+            self._rcpt_print_items(order_details)
+            self._rcpt_print_totals(order_details, draft)
+            self._rcpt_print_review_and_barcode(order_details, draft, qr_code)
+            self._rcpt_print_footer(order_details, reprint, draft, date_str)
             self.printer.cut()
             return True
         except Exception as e:
             self.app.popup_manager.catch_receipt_printer_errors(e, order_details)
             return False
+
+
+
+    def _rcpt_load_logo(self):
+        try:
+            return Image.open("images/rigs_logo_scaled.png")
+        except Exception as e:
+            logger.warn("Error loading logo:", e)
+            return None
+
+    def _rcpt_print_header(self, logo):
+
+        self.printer.image(logo, (200, -60))
+
+        date_str = str(datetime.now().replace(microsecond=0))
+
+        self.printer.textln()
+        self.printer.set(align="center", font="a", bold=True)
+        self.printer.textln("RIGS SMOKE SHOP")
+        self.printer.set(align="center", font="a", normal_textsize=True, bold=False)
+        self.printer.textln("402C Main Street")
+        self.printer.textln("Wakefield, RI")
+        self.printer.textln("401-363-9866")
+        self.printer.textln()
+
+        self.printer.set(align="left", font="a", bold=False)
+        return date_str
+
+    def _rcpt_print_items(self, order_details):
+        max_line_width = 48
+
+        for item in order_details["items"].values():
+            if item["quantity"] > 1:
+                item_name = f"{item['name']} x{item['quantity']}"
+            else:
+                item_name = item["name"]
+
+            price = f"${item['total_price']:.2f}"
+            spaces = " " * max(0, max_line_width - len(item_name) - len(price))
+            item_line = item_name + spaces + price
+
+            self.printer.textln(item_line)
+
+            try:
+                disc_amt = float(item.get("discount", {}).get("amount", 0) or 0)
+            except Exception:
+                disc_amt = 0.0
+
+            if disc_amt > 0:
+                discount_text = f"Discount: -${disc_amt:.2f}"
+                spaces = " " * max(0, max_line_width - len(discount_text))
+                self.printer.textln(spaces + discount_text)
+
+            self.printer.textln()
+
+    def _rcpt_print_totals(self, order_details, draft):
+        self.printer.set(align="right", font="a", bold=True)
+        self.printer.textln()
+
+        self.printer.textln(f"Subtotal: ${order_details['subtotal']:.2f}")
+
+        try:
+            order_disc = float(order_details.get("discount", 0) or 0)
+        except Exception:
+            order_disc = 0.0
+        if order_disc > 0:
+            self.printer.textln(f"Discount: -${order_disc:.2f}")
+
+        self.printer.textln(f"Tax: ${order_details['tax_amount']:.2f}")
+        self.printer.textln(f"Total: ${order_details['total_with_tax']:.2f}")
+
+        if not draft:
+            pm = order_details.get("payment_method")
+            if pm == "Cash":
+                self.printer.textln(f"Cash: ${order_details['amount_tendered']:.2f}")
+                self.printer.textln(f"Change: ${order_details['change_given']:.2f}")
+            elif pm == "Split":
+                self.printer.textln("Split Payment")
+            elif pm == "Debit":
+                self.printer.textln("Debit Payment")
+            else:
+                self.printer.textln("Credit Payment")
+
+    def _rcpt_print_review_and_barcode(self, order_details, draft, qr_code):
+        self.printer.set(align="center", font="b", bold=False)
+        self.printer.textln()
+
+        barcode_data = str(order_details["order_id"])
+        short_uuid = barcode_data[:13]
+        barcode_data_short = "{B" + short_uuid
+
+        if not draft:
+            if qr_code:
+                review_url = "https://g.page/r/CfHmpKJDLRqXEBM/review"
+                self.printer.set(align="center", font="a", bold=False)
+                self.printer.textln()
+                self.printer.textln("Thanks for supporting small business in RI!")
+                self.printer.set(align="center", font="a", bold=True)
+                self.printer.textln("Scan to review us on Google!")
+                self.printer.set(align="center", font="a", bold=False)
+                self.printer.textln("It really helps!")
+                self.printer.qr(review_url, native=True, size=4)
+                self.printer.set(align="center", font="a", bold=False)
+                self.printer.textln("g.page/r/CfHmpKJDLRqXEBM/review")
+
+            self.printer.barcode(barcode_data_short, "CODE128", pos="OFF")
+
+    def _rcpt_print_footer(self, order_details, reprint, draft, date_str):
+        self.printer.textln()
+        self.printer.textln(date_str)
+        self.printer.textln(order_details["order_id"])
+
+        if reprint:
+            self.printer.set(align="center", font="a", bold=True)
+            self.printer.textln()
+            self.printer.textln("Copy")
+
+        if draft:
+            self.printer.set(align="center", font="a", bold=True)
+            self.printer.textln()
+            self.printer.textln("UNPAID")
 
     def print_raw_text(self, text):
 
