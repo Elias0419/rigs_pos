@@ -79,7 +79,6 @@ class HistoryPopup(Popup):
 
     def show_hist_reporting_popup(self, instance=None):
         order_history = self.db_manager.get_order_history()
-        # print(order_history)
         history_view = HistoryView()
 
         history_view.show_reporting_popup(order_history)
@@ -87,7 +86,6 @@ class HistoryPopup(Popup):
         self.content = history_view
         self.size_hint = (0.9, 0.9)
         self.title = f"Order History"
-        # Clock.schedule_once(self.open, 0.5)
         self.open()
 
     def dismiss_popup(self):
