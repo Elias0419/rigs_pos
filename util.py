@@ -1324,63 +1324,161 @@ class Utilities:
 
     def trigger_guard_and_lock(
         self,
-        trigger=False,
-        clock_out=False,
-        auto_clock_out=False,
+        trigger = False,
+        clock_out = False,
+        auto_clock_out = False,
         current_user=None,
-        timestamp="",
-        auto=False,
+        timestamp = "",
+        auto = False,
     ):
+        self._handle_clock_out_flag(clock_out)
+        self._handle_auto_clock_out(auto_clock_out, timestamp)
+
+        current_user = self._resolve_current_user(current_user)
+
+        if trigger:
+            self._process_trigger_lock_screen()
+            return
+
+        if not self.app.is_guard_screen_displayed and not self.app.is_lock_screen_displayed:
+            self._show_both_screens(clock_out, current_user, auto, timestamp)
+            return
+
+        if self.app.is_lock_screen_displayed and not self.app.is_guard_screen_displayed:
+            self._ensure_guard_screen()
+            return
+
+        if self.app.is_guard_screen_displayed and not self.app.is_lock_screen_displayed:
+            self._ensure_lock_screen()
+            return
+
+
+
+    def _handle_clock_out_flag(self, clock_out):
         if clock_out:
             self.app.is_lock_screen_displayed = False
             self.app.disable_lock_screen = False
-        if auto_clock_out:
-            try:
-                self.app.popup_manager.lock_popup.dismiss()
-            except:
-                pass
-            try:
-                self.app.popup_manager.guard_popup.dismiss()
-            except:
-                pass
-            self.app.is_lock_screen_displayed = False
-            self.app.is_guard_screen_displayed = False
-            self.clock_out(timestamp=timestamp, auto=True)
-        if current_user is None and self.app.logged_in_user != "nobody":
-            current_user = self.app.logged_in_user["name"]
-        if trigger:
-            self.app.disable_lock_screen = False
-            try:
-                self.app.popup_manager.lock_popup.dismiss()
-            except:
-                pass
-            self.app.is_lock_screen_displayed = False
-            self.app.popup_manager.show_lock_screen()
-            self.app.is_lock_screen_displayed = True
-        elif (
-            not self.app.is_guard_screen_displayed
-            and not self.app.is_lock_screen_displayed
-        ):
-            self.app.popup_manager.show_lock_screen(
-                clock_out=clock_out,
-                current_user=current_user,
-                auto=auto,
-                timestamp=timestamp,
-            )
-            self.app.popup_manager.show_guard_screen()
-            self.app.is_lock_screen_displayed = True
-            self.app.is_guard_screen_displayed = True
-        elif (
-            self.app.is_lock_screen_displayed and not self.app.is_guard_screen_displayed
-        ):
-            self.app.popup_manager.show_guard_screen()
-            self.app.is_guard_screen_displayed = True
 
-        elif (
-            self.app.is_guard_screen_displayed and not self.app.is_lock_screen_displayed
-        ):
-            self.app.popup_manager.show_lock_screen()
-            self.app.is_lock_screen_displayed = True
+
+    def _handle_auto_clock_out(self, auto_clock_out, timestamp):
+        if not auto_clock_out:
+            return
+        self._safe_dismiss(getattr(self.app.popup_manager, "lock_popup", None))
+        self._safe_dismiss(getattr(self.app.popup_manager, "guard_popup", None))
+        self.app.is_lock_screen_displayed = False
+        self.app.is_guard_screen_displayed = False
+        self.clock_out(timestamp=timestamp, auto=True)
+
+
+    def _resolve_current_user(self, current_user):
+        if current_user is None and self.app.logged_in_user != "nobody":
+            return self.app.logged_in_user["name"]
+        return current_user
+
+
+    def _process_trigger_lock_screen(self):
+        self.app.disable_lock_screen = False
+        self._safe_dismiss(getattr(self.app.popup_manager, "lock_popup", None))
+        self.app.is_lock_screen_displayed = False
+        self.app.popup_manager.show_lock_screen()
+        self.app.is_lock_screen_displayed = True
+
+
+    def _show_both_screens(
+        self,
+        clock_out,
+        current_user,
+        auto,
+        timestamp,
+    ):
+        self.app.popup_manager.show_lock_screen(
+            clock_out=clock_out,
+            current_user=current_user,
+            auto=auto,
+            timestamp=timestamp,
+        )
+        self.app.popup_manager.show_guard_screen()
+        self.app.is_lock_screen_displayed = True
+        self.app.is_guard_screen_displayed = True
+
+
+    def _ensure_guard_screen(self):
+        self.app.popup_manager.show_guard_screen()
+        self.app.is_guard_screen_displayed = True
+
+
+    def _ensure_lock_screen(self):
+        self.app.popup_manager.show_lock_screen()
+        self.app.is_lock_screen_displayed = True
+
+
+    def _safe_dismiss(self, popup):
+        if popup is None:
+            return
+        try:
+            popup.dismiss()
+        except Exception:
+            pass
+
+    # def trigger_guard_and_lock(
+    #     self,
+    #     trigger=False,
+    #     clock_out=False,
+    #     auto_clock_out=False,
+    #     current_user=None,
+    #     timestamp="",
+    #     auto=False,
+    # ):
+    #     if clock_out:
+    #         self.app.is_lock_screen_displayed = False
+    #         self.app.disable_lock_screen = False
+    #     if auto_clock_out:
+    #         try:
+    #             self.app.popup_manager.lock_popup.dismiss()
+    #         except:
+    #             pass
+    #         try:
+    #             self.app.popup_manager.guard_popup.dismiss()
+    #         except:
+    #             pass
+    #         self.app.is_lock_screen_displayed = False
+    #         self.app.is_guard_screen_displayed = False
+    #         self.clock_out(timestamp=timestamp, auto=True)
+    #     if current_user is None and self.app.logged_in_user != "nobody":
+    #         current_user = self.app.logged_in_user["name"]
+    #     if trigger:
+    #         self.app.disable_lock_screen = False
+    #         try:
+    #             self.app.popup_manager.lock_popup.dismiss()
+    #         except:
+    #             pass
+    #         self.app.is_lock_screen_displayed = False
+    #         self.app.popup_manager.show_lock_screen()
+    #         self.app.is_lock_screen_displayed = True
+    #     elif (
+    #         not self.app.is_guard_screen_displayed
+    #         and not self.app.is_lock_screen_displayed
+    #     ):
+    #         self.app.popup_manager.show_lock_screen(
+    #             clock_out=clock_out,
+    #             current_user=current_user,
+    #             auto=auto,
+    #             timestamp=timestamp,
+    #         )
+    #         self.app.popup_manager.show_guard_screen()
+    #         self.app.is_lock_screen_displayed = True
+    #         self.app.is_guard_screen_displayed = True
+    #     elif (
+    #         self.app.is_lock_screen_displayed and not self.app.is_guard_screen_displayed
+    #     ):
+    #         self.app.popup_manager.show_guard_screen()
+    #         self.app.is_guard_screen_displayed = True
+    #
+    #     elif (
+    #         self.app.is_guard_screen_displayed and not self.app.is_lock_screen_displayed
+    #     ):
+    #         self.app.popup_manager.show_lock_screen()
+    #         self.app.is_lock_screen_displayed = True
 
     def reboot(self, instance):
         try:
