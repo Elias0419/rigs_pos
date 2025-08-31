@@ -5,8 +5,6 @@ from ctypes import (
 from ctypes.util import find_library
 
 
-
-
 def _load(name, fallback):
     path = find_library(name)
     if not path:
@@ -122,160 +120,132 @@ class XRRPropertyInfo(Structure):
         ("values",    POINTER(c_long)),
     ]
 
+class XRRScreenResources(Structure):
+    _fields_ = [
+        ("timestamp",        c_ulong),
+        ("configTimestamp",  c_ulong),
+        ("ncrtc",            c_int),
+        ("crtcs",            POINTER(c_ulong)),
+        ("noutput",          c_int),
+        ("outputs",          POINTER(c_ulong)),
+        ("nmode",            c_int),
+        ("modes",            c_void_p),
+    ]
+
+class XRROutputInfo(Structure):
+    _fields_ = [
+        ("timestamp",       c_ulong),
+        ("crtc",            c_ulong),
+        ("name",            c_char_p),
+        ("nameLen",         c_int),
+        ("mm_width",        c_ulong),
+        ("mm_height",       c_ulong),
+        ("connection",      c_int),
+        ("subpixel_order",  c_int),
+        ("ncrtc",           c_int),
+        ("crtcs",           POINTER(c_ulong)),
+        ("nclone",          c_int),
+        ("clones",          POINTER(c_ulong)),
+        ("nmode",           c_int),
+        ("npreferred",      c_int),
+        ("modes",           POINTER(c_ulong)),
+    ]
+
+class XRRCrtcGamma(Structure):
+    _fields_ = [
+        ("size",  c_int),
+        ("red",   POINTER(c_ushort)),
+        ("green", POINTER(c_ushort)),
+        ("blue",  POINTER(c_ushort)),
+    ]
+
+libXrandr.XRRGetScreenResourcesCurrent.argtypes = [c_void_p, c_ulong]
+libXrandr.XRRGetScreenResourcesCurrent.restype  = POINTER(XRRScreenResources)
+libXrandr.XRRGetScreenResources.argtypes        = [c_void_p, c_ulong]
+libXrandr.XRRGetScreenResources.restype         = POINTER(XRRScreenResources)
+libXrandr.XRRFreeScreenResources.argtypes       = [POINTER(XRRScreenResources)]
+libXrandr.XRRFreeScreenResources.restype        = None
+
 libXrandr.XRRGetOutputPrimary.argtypes = [c_void_p, c_ulong]
 libXrandr.XRRGetOutputPrimary.restype  = c_ulong
+libXrandr.XRRGetOutputInfo.argtypes    = [c_void_p, POINTER(XRRScreenResources), c_ulong]
+libXrandr.XRRGetOutputInfo.restype     = POINTER(XRROutputInfo)
+libXrandr.XRRFreeOutputInfo.argtypes   = [POINTER(XRROutputInfo)]
+libXrandr.XRRFreeOutputInfo.restype    = None
 
-libXrandr.XRRQueryOutputProperty.argtypes = [c_void_p, c_ulong, c_ulong]
-libXrandr.XRRQueryOutputProperty.restype  = POINTER(XRRPropertyInfo)
+libXrandr.XRRGetCrtcGammaSize.argtypes = [c_void_p, c_ulong]
+libXrandr.XRRGetCrtcGammaSize.restype  = c_int
+libXrandr.XRRAllocGamma.argtypes       = [c_int]
+libXrandr.XRRAllocGamma.restype        = POINTER(XRRCrtcGamma)
+libXrandr.XRRSetCrtcGamma.argtypes     = [c_void_p, c_ulong, POINTER(XRRCrtcGamma)]
+libXrandr.XRRSetCrtcGamma.restype      = None
+libXrandr.XRRFreeGamma.argtypes        = [POINTER(XRRCrtcGamma)]
+libXrandr.XRRFreeGamma.restype         = None
 
-libXrandr.XRRChangeOutputProperty.argtypes = [c_void_p, c_ulong, c_ulong, c_ulong, c_int, c_int, c_void_p, c_int]
-libXrandr.XRRChangeOutputProperty.restype  = None
 
-XA_INTEGER = c_ulong(19)
-PropModeReplace = c_int(0)
 
-def _primary_output(dpy):
+
+def _primary_crtc(dpy: c_void_p) -> c_ulong:
     root = libX11.XDefaultRootWindow(dpy)
-    output = libXrandr.XRRGetOutputPrimary(dpy, root)
-    if output == 0:
-        raise RuntimeError("No primary RandR output")
-    return output
-
-def x11_backlight_range():
-
-    dpy = _open_display()
+    res = libXrandr.XRRGetScreenResourcesCurrent(dpy, root)
+    if not res:
+        res = libXrandr.XRRGetScreenResources(dpy, root)
+    if not res:
+        raise RuntimeError("XRRGetScreenResources failed")
     try:
-        output = _primary_output(dpy)
-        backlight = libX11.XInternAtom(dpy, b"Backlight", 1)  # only_if_exists=True
-        if backlight == 0:
-            raise RuntimeError("Backlight atom not present on primary output")
-        pinfo = libXrandr.XRRQueryOutputProperty(dpy, output, backlight)
-        if not pinfo:
-            raise RuntimeError("XRRQueryOutputProperty failed")
+        out = libXrandr.XRRGetOutputPrimary(dpy, root)
+        if out == 0:
+            raise RuntimeError("Primary RandR output not set")
+        oi = libXrandr.XRRGetOutputInfo(dpy, res, out)
+        if not oi:
+            raise RuntimeError("XRRGetOutputInfo failed")
         try:
-            if not pinfo.contents.range or pinfo.contents.num_values < 2:
-                raise RuntimeError("Backlight property is not a range")
-            minv = int(pinfo.contents.values[0])
-            maxv = int(pinfo.contents.values[1])
-            if maxv <= minv:
-                raise RuntimeError("Backlight range is invalid")
-            return (minv, maxv)
+            crtc = oi.contents.crtc
+            if crtc == 0:
+                raise RuntimeError("Primary output has no active CRTC")
+            return crtc
         finally:
-            libX11.XFree(pinfo)
+            libXrandr.XRRFreeOutputInfo(oi)
     finally:
-        libX11.XCloseDisplay(dpy)
+        libXrandr.XRRFreeScreenResources(res)
 
 def x11_backlight_set_percent(percent):
     if not (0 <= percent <= 100):
         raise ValueError("percent must be within [0, 100]")
-    dpy = _open_display()
-    try:
-        output = _primary_output(dpy)
-        backlight = libX11.XInternAtom(dpy, b"Backlight", 1)  # only_if_exists=True
-        if backlight == 0:
-            raise RuntimeError("Backlight atom not present on primary output")
-
-        pinfo = libXrandr.XRRQueryOutputProperty(dpy, output, backlight)
-        if not pinfo:
-            raise RuntimeError("XRRQueryOutputProperty failed")
-        try:
-            if not pinfo.contents.range or pinfo.contents.num_values < 2:
-                raise RuntimeError("Backlight property is not a range")
-            minv = int(pinfo.contents.values[0])
-            maxv = int(pinfo.contents.values[1])
-            if maxv <= minv:
-                raise RuntimeError("Backlight range is invalid")
-            raw = int(round(minv + (percent / 100.0) * (maxv - minv)))
-        finally:
-            libX11.XFree(pinfo)
-
-        val = c_long(raw)
-        libXrandr.XRRChangeOutputProperty(
-            dpy, output,
-            backlight, XA_INTEGER.value,
-            32, PropModeReplace.value,
-            c_void_p(byref(val).value),
-            1
-        )
-        libX11.XFlush(dpy)
-    finally:
-        libX11.XCloseDisplay(dpy)
-
-#################################################
-#################################################
-#################################################
-
-
-# Prototypes needed for property enumeration and names
-libXrandr.XRRListOutputProperties.argtypes = [c_void_p, c_ulong, POINTER(c_int)]
-libXrandr.XRRListOutputProperties.restype  = POINTER(c_ulong)
-libXrandr.XRRFreeOutputInfo.argtypes       = [c_void_p]
-libX11.XGetAtomName.argtypes               = [c_void_p, c_ulong]
-libX11.XGetAtomName.restype                = c_void_p
-
-def x11_backlight_debug_dump():
 
     dpy = _open_display()
     try:
-        root = libX11.XDefaultRootWindow(dpy)
-        output = libXrandr.XRRGetOutputPrimary(dpy, root)
-        if output == 0:
-            return "Primary RandR output not set."
+        crtc = _primary_crtc(dpy)
+        size = libXrandr.XRRGetCrtcGammaSize(dpy, crtc)
+        if size <= 0:
+            raise RuntimeError("XRRGetCrtcGammaSize returned non-positive size")
 
-        nprop = c_int()
-        props = libXrandr.XRRListOutputProperties(dpy, output, byref(nprop))
-        if not props:
-            return "No RandR output properties found on primary output."
+        gamma = libXrandr.XRRAllocGamma(size)
+        if not gamma:
+            raise RuntimeError("XRRAllocGamma failed")
 
-        lines = []
         try:
-            lines.append(f"Primary output XID: 0x{int(output):x}")
-            lines.append(f"Property count: {nprop.value}")
 
-            backlight_atoms = []
-            for i in range(nprop.value):
-                atom = props[i]
-                name_ptr = libX11.XGetAtomName(dpy, atom)
-                try:
-                    if name_ptr:
-                        name = cast(name_ptr, c_char_p).value.decode("utf-8", errors="replace")
-                    else:
-                        name = f"ATOM_{int(atom)}"
-                finally:
-                    if name_ptr:
-                        libX11.XFree(name_ptr)
+            scale_num = percent
+            scale_den = 100
+            if size == 1:
+                val = (65535 * scale_num) // scale_den
+                gamma.contents.red[0] = gamma.contents.green[0] = gamma.contents.blue[0] = val
+            else:
+                top = size - 1
+                for i in range(size):
+                    base = (i * 65535) // top
+                    val = (base * scale_num) // scale_den
+                    if val < 0:
+                        val = 0
+                    elif val > 65535:
+                        val = 65535
+                    gamma.contents.red[i] = gamma.contents.green[i] = gamma.contents.blue[i] = val
 
-                lines.append(f" - {name}")
-                if name in ("Backlight", "BACKLIGHT"):
-                    backlight_atoms.append((name, atom))
-
-            if not backlight_atoms:
-                lines.append("Backlight property not present on primary output.")
-                return "\n".join(lines)
-
-            for name, atom in backlight_atoms:
-                pinfo = libXrandr.XRRQueryOutputProperty(dpy, output, atom)
-                if not pinfo:
-                    lines.append(f"{name}: failed to query property info.")
-                    continue
-                try:
-                    if pinfo.contents.range and pinfo.contents.num_values >= 2:
-                        minv = int(pinfo.contents.values[0])
-                        maxv = int(pinfo.contents.values[1])
-                        lines.append(f"{name}: range [{minv}, {maxv}]")
-                    else:
-                        lines.append(f"{name}: not a ranged integer property.")
-                finally:
-                    libX11.XFree(pinfo)
-
-            return "\n".join(lines)
-
+            libXrandr.XRRSetCrtcGamma(dpy, crtc, gamma)
+            libX11.XFlush(dpy)
         finally:
-            libX11.XFree(props)
+            libXrandr.XRRFreeGamma(gamma)
     finally:
         libX11.XCloseDisplay(dpy)
 
-###################################
-###################################
-###################################
-###################################

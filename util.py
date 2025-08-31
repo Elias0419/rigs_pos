@@ -247,24 +247,12 @@ class Utilities:
 
     def set_brightness(self, value):
         self.screen_brightness = value
-        command = [
-            "sudo",
-            "ddccontrol",
-            "-r",
-            "0x10",
-            "-w",
-            str(value),
-            "dev:/dev/i2c-3",
-        ]
+
         try:
             x11_backlight_set_percent(value)
-            # subprocess.Popen(command)
-        except (subprocess.CalledProcessError, FileNotFoundError) as e:
-            logger.warn(f"[Utilities] failed to set brightness\n{e}")
-            toast("Failed to set brightness")
         except Exception as e:
-            dbg = x11_backlight_debug_dump()
-            logger.error("Backlight debug:\n%s", dbg)
+            toast("Failed to set brightness")
+
             logger.error(f"[Utilities] unexpected error in set_brightness \n{e}")
 
     def check_if_update_was_applied(self):
