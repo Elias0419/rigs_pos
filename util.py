@@ -45,6 +45,14 @@ import uuid
 import pwd
 import glob
 
+from Xlib import X
+from Xlib.display import Display
+
+_XDISP = Display()
+
+from x11_power import x11_idle_ms, x11_dpms_force_off
+
+
 from datetime import datetime, timedelta
 from collections import defaultdict
 
@@ -122,6 +130,14 @@ class Utilities:
             "/home/rigs/rigs_pos",
             "/home/x/work/python/rigs_pos",
         ]
+
+    def reset_idle_timer(self):
+        try:
+            _XDISP.force_screen_saver(X.ScreenSaverReset)
+            _XDISP.flush()
+        except:
+            raise
+
 
     def get_open_session_for_user_today(self, expected_name):
 
@@ -596,28 +612,6 @@ class Utilities:
         elif clock_out:
             self.app.db_manager.update_attendance_log_entry(session_id, timestamp)
 
-    # def update_attendance_log(
-    #     self, log_file, user_name, action, session_id, auto=False, timestamp=None
-    # ):
-    #     if timestamp is None:
-    #         timestamp = datetime.now().isoformat()
-    #
-    #     entry = {
-    #         "name": user_name,
-    #         "timestamp": timestamp,
-    #         "action": action if not auto else "auto",
-    #         "session_id": session_id,
-    #     }
-    #     if not os.path.exists(log_file):
-    #         with open(log_file, "w") as file:
-    #             json.dump([entry], file, indent=4)
-    #     else:
-    #         with open(log_file, "r+") as file:
-    #             log = json.load(file)
-    #             log.append(entry)
-    #             file.seek(0)
-    #             json.dump(log, file, indent=4)
-
     def delete_session_from_log(self, session_id):
         try:
             with open(self.app.attendance_log, "r+") as file:
@@ -709,9 +703,6 @@ class Utilities:
         self.app.pin_reset_timer.start()
 
     def reset_pin(self, dt=None):
-        # print(
-        #     f"reset pin\n{self.app.entered_pin}\n{self.app.popup_manager.pin_input.text}"
-        # )
 
         def update_ui(dt):
             self.app.entered_pin = ""
@@ -953,7 +944,7 @@ class Utilities:
         self.app.calc_icon = MDIconButton(
             icon="calculator",
             pos_hint={"top": 0.75, "right": 0},
-            on_press=lambda x: self.app.calculator.show_calculator_popup(),
+            on_press=lambda x:x11_dpms_force_off(), #self.app.calculator.show_calculator_popup(),
         )
         calc_icon_container.add_widget(self.app.calc_icon)
 
@@ -1475,66 +1466,6 @@ class Utilities:
         except Exception:
             pass
 
-    # def trigger_guard_and_lock(
-    #     self,
-    #     trigger=False,
-    #     clock_out=False,
-    #     auto_clock_out=False,
-    #     current_user=None,
-    #     timestamp="",
-    #     auto=False,
-    # ):
-    #     if clock_out:
-    #         self.app.is_lock_screen_displayed = False
-    #         self.app.disable_lock_screen = False
-    #     if auto_clock_out:
-    #         try:
-    #             self.app.popup_manager.lock_popup.dismiss()
-    #         except:
-    #             pass
-    #         try:
-    #             self.app.popup_manager.guard_popup.dismiss()
-    #         except:
-    #             pass
-    #         self.app.is_lock_screen_displayed = False
-    #         self.app.is_guard_screen_displayed = False
-    #         self.clock_out(timestamp=timestamp, auto=True)
-    #     if current_user is None and self.app.logged_in_user != "nobody":
-    #         current_user = self.app.logged_in_user["name"]
-    #     if trigger:
-    #         self.app.disable_lock_screen = False
-    #         try:
-    #             self.app.popup_manager.lock_popup.dismiss()
-    #         except:
-    #             pass
-    #         self.app.is_lock_screen_displayed = False
-    #         self.app.popup_manager.show_lock_screen()
-    #         self.app.is_lock_screen_displayed = True
-    #     elif (
-    #         not self.app.is_guard_screen_displayed
-    #         and not self.app.is_lock_screen_displayed
-    #     ):
-    #         self.app.popup_manager.show_lock_screen(
-    #             clock_out=clock_out,
-    #             current_user=current_user,
-    #             auto=auto,
-    #             timestamp=timestamp,
-    #         )
-    #         self.app.popup_manager.show_guard_screen()
-    #         self.app.is_lock_screen_displayed = True
-    #         self.app.is_guard_screen_displayed = True
-    #     elif (
-    #         self.app.is_lock_screen_displayed and not self.app.is_guard_screen_displayed
-    #     ):
-    #         self.app.popup_manager.show_guard_screen()
-    #         self.app.is_guard_screen_displayed = True
-    #
-    #     elif (
-    #         self.app.is_guard_screen_displayed and not self.app.is_lock_screen_displayed
-    #     ):
-    #         self.app.popup_manager.show_lock_screen()
-    #         self.app.is_lock_screen_displayed = True
-
     def reboot(self, instance):
         try:
             subprocess.run(["systemctl", "reboot"])
@@ -1576,16 +1507,13 @@ class Utilities:
 
     def check_inactivity(self, *args):
         try:
-            idle_time = int(subprocess.check_output(["xprintidle"]).strip())
-            # if idle_time > 6000:  # debug
-            if idle_time > 600000:  # 10 minutes
+            idle_time = x11_idle_ms()
+            if idle_time > 600000:      # 10 minutes
                 self.trigger_guard_and_lock()
-            # if idle_time > 660000:  #debug
-            if idle_time > 3600000:  # 1 hour
-                subprocess.run(["xset", "dpms", "force", "off"])
-
+            if idle_time > 3600000:     # 1 hour
+                x11_dpms_force_off()
         except Exception as e:
-            logger.warn(f"Exception in check_inactivity\n{e}")
+            logger.warning("Exception in check_inactivity: %s", e)
 
     def clear_split_numeric_input(self):
         self.app.popup_manager.split_payment_numeric_cash_input.text = ""
