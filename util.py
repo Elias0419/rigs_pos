@@ -50,7 +50,7 @@ from Xlib.display import Display
 
 _XDISP = Display()
 
-from x11_power import x11_idle_ms, x11_dpms_force_off, x11_backlight_set_percent
+from x11_power import x11_idle_ms, x11_dpms_force_off, x11_backlight_set_percent, x11_backlight_debug_dump
 
 
 from datetime import datetime, timedelta
@@ -263,6 +263,8 @@ class Utilities:
             logger.warn(f"[Utilities] failed to set brightness\n{e}")
             toast("Failed to set brightness")
         except Exception as e:
+            dbg = x11_backlight_debug_dump()
+            logger.error("Backlight debug:\n%s", dbg)
             logger.error(f"[Utilities] unexpected error in set_brightness \n{e}")
 
     def check_if_update_was_applied(self):

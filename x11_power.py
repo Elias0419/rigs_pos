@@ -1,8 +1,11 @@
 from ctypes import (
     Structure, CDLL, POINTER, byref,
-    c_int, c_ulong, c_char_p, c_void_p, c_ushort, c_long
+    c_int, c_ulong, c_char_p, c_void_p, c_ushort, c_long, cast
 )
 from ctypes.util import find_library
+
+
+
 
 def _load(name, fallback):
     path = find_library(name)
@@ -197,3 +200,82 @@ def x11_backlight_set_percent(percent):
         libX11.XFlush(dpy)
     finally:
         libX11.XCloseDisplay(dpy)
+
+#################################################
+#################################################
+#################################################
+
+
+# Prototypes needed for property enumeration and names
+libXrandr.XRRListOutputProperties.argtypes = [c_void_p, c_ulong, POINTER(c_int)]
+libXrandr.XRRListOutputProperties.restype  = POINTER(c_ulong)
+libXrandr.XRRFreeOutputInfo.argtypes       = [c_void_p]
+libX11.XGetAtomName.argtypes               = [c_void_p, c_ulong]
+libX11.XGetAtomName.restype                = c_void_p
+
+def x11_backlight_debug_dump():
+
+    dpy = _open_display()
+    try:
+        root = libX11.XDefaultRootWindow(dpy)
+        output = libXrandr.XRRGetOutputPrimary(dpy, root)
+        if output == 0:
+            return "Primary RandR output not set."
+
+        nprop = c_int()
+        props = libXrandr.XRRListOutputProperties(dpy, output, byref(nprop))
+        if not props:
+            return "No RandR output properties found on primary output."
+
+        lines = []
+        try:
+            lines.append(f"Primary output XID: 0x{int(output):x}")
+            lines.append(f"Property count: {nprop.value}")
+
+            backlight_atoms = []
+            for i in range(nprop.value):
+                atom = props[i]
+                name_ptr = libX11.XGetAtomName(dpy, atom)
+                try:
+                    if name_ptr:
+                        name = cast(name_ptr, c_char_p).value.decode("utf-8", errors="replace")
+                    else:
+                        name = f"ATOM_{int(atom)}"
+                finally:
+                    if name_ptr:
+                        libX11.XFree(name_ptr)
+
+                lines.append(f" - {name}")
+                if name in ("Backlight", "BACKLIGHT"):
+                    backlight_atoms.append((name, atom))
+
+            if not backlight_atoms:
+                lines.append("Backlight property not present on primary output.")
+                return "\n".join(lines)
+
+            for name, atom in backlight_atoms:
+                pinfo = libXrandr.XRRQueryOutputProperty(dpy, output, atom)
+                if not pinfo:
+                    lines.append(f"{name}: failed to query property info.")
+                    continue
+                try:
+                    if pinfo.contents.range and pinfo.contents.num_values >= 2:
+                        minv = int(pinfo.contents.values[0])
+                        maxv = int(pinfo.contents.values[1])
+                        lines.append(f"{name}: range [{minv}, {maxv}]")
+                    else:
+                        lines.append(f"{name}: not a ranged integer property.")
+                finally:
+                    libX11.XFree(pinfo)
+
+            return "\n".join(lines)
+
+        finally:
+            libX11.XFree(props)
+    finally:
+        libX11.XCloseDisplay(dpy)
+
+###################################
+###################################
+###################################
+###################################
