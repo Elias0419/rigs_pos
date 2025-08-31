@@ -1158,144 +1158,15 @@ class Utilities:
         return base
 
     def create_clock_layout(self):
+        self.clock_layout = self._clk_build_root()
 
-        self.clock_layout = GridLayout(
-            orientation="tb-lr",
-            rows=6,
-            size_hint_x=0.75,
-            size_hint_y=1,
-            padding=(60, 0, 0, -10),
-        )
-        mirror_image_container = MDBoxLayout(size_hint=(None, 0.1), width=200)
-        self.mirror_image = Image(source="cropped_mirror_snapshot.png")
-        mirror_image_container.add_widget(self.mirror_image)
-        top_container = BoxLayout(orientation="vertical", size_hint_y=0.1, padding=10)
-        saved_orders_container = MDBoxLayout(
-            size_hint_y=1, orientation="vertical", spacing=20, padding=(0, 0, 0, 100)
-        )
-        self.saved_order_title_container = MDBoxLayout(orientation="vertical")
-        self.saved_order_title = MDLabel(
-            text="", adaptive_height=False, size_hint_y=None, height=50
-        )
-        self.saved_order_divider = MDBoxLayout(
-            size_hint_x=0.5, size_hint_y=None, height=1, md_bg_color=(0, 0, 0, 0)
-        )
-        self.saved_order_title_container.add_widget(self.saved_order_title)
-        self.saved_order_title_container.add_widget(self.saved_order_divider)
+        top_container = self._clk_build_top_container()
+        dual_button_container = self._clk_build_dual_button_container()
+        mirror_image_container = self._clk_build_mirror_container()
+        saved_orders_container = self._clk_build_saved_orders_container()
+        clock_container = self._clk_build_clock_container()
+        logo_container = self._clk_build_logo_container()
 
-        self.saved_order_button1 = MDFlatButton(
-            text="",
-            on_press=lambda x: self.do_nothing(),
-            md_bg_color=(0, 0, 0, 0),
-            size_hint=(0.75, None),
-            _min_height=50,
-            _no_ripple_effect=True,
-        )
-        self.saved_order_button1_label = MDLabel(text="", halign="left")
-        self.saved_order_button1.add_widget(self.saved_order_button1_label)
-        self.saved_order_button2 = MDFlatButton(
-            text="",
-            on_press=lambda x: self.do_nothing(),
-            md_bg_color=(0, 0, 0, 0),
-            size_hint=(0.75, None),
-            _min_height=50,
-            _no_ripple_effect=True,
-        )
-        self.saved_order_button2_label = MDLabel(text="", halign="left")
-        self.saved_order_button2.add_widget(self.saved_order_button2_label)
-
-        self.saved_order_button3 = MDFlatButton(
-            text="",
-            on_press=lambda x: self.do_nothing(),
-            md_bg_color=(0, 0, 0, 0),
-            size_hint=(0.75, None),
-            _min_height=50,
-            _no_ripple_effect=True,
-        )
-        self.saved_order_button3_label = MDLabel(text="", halign="left")
-        self.saved_order_button3.add_widget(self.saved_order_button3_label)
-        self.saved_order_button4 = MDFlatButton(
-            text="",
-            on_press=lambda x: self.do_nothing(),
-            md_bg_color=(0, 0, 0, 0),
-            size_hint=(0.75, None),
-            _min_height=50,
-            _no_ripple_effect=True,
-        )
-        self.saved_order_button4_label = MDLabel(text="", halign="left")
-        self.saved_order_button4.add_widget(self.saved_order_button4_label)
-        self.saved_order_button5 = MDFlatButton(
-            text="",
-            on_press=lambda x: self.do_nothing(),
-            md_bg_color=(0, 0, 0, 0),
-            size_hint=(0.75, None),
-            _min_height=50,
-            _no_ripple_effect=True,
-        )
-        self.saved_order_button5_label = MDLabel(text="", halign="left")
-        self.saved_order_button5.add_widget(self.saved_order_button5_label)
-        saved_orders_container.add_widget(self.saved_order_title_container)
-        # saved_orders_container.add_widget(self.saved_order_divider)
-        saved_orders_container.add_widget(self.saved_order_button1)
-        saved_orders_container.add_widget(self.saved_order_button2)
-        saved_orders_container.add_widget(self.saved_order_button3)
-        saved_orders_container.add_widget(self.saved_order_button4)
-        saved_orders_container.add_widget(self.saved_order_button5)
-        logo_container = BoxLayout(size_hint_y=0.2, padding=(-250, 0, 0, -150))
-        logo = ImageButton(source="images/rigs_logo_test.png")
-        logo_container.add_widget(logo)
-
-        register_text = MDLabel(
-            text="Cash Register",
-            size_hint_y=None,
-            font_style="H6",
-            height=50,
-            font_name=self.font,
-            # valign="bottom",
-            # halign="center",
-        )
-        blank_space = MDLabel(
-            text="", size_hint_y=1, height=450, valign="top", halign="center"
-        )
-        clock_container = BoxLayout(size_hint_y=0.2, padding=(-40, 0, 0, -100))
-        self.app.clock_label = MDLabel(
-            # font_name=self.font,
-            text="",
-            size_hint_y=None,
-            # font_style="H6",
-            height=150,
-            size_hint_x=1,
-            color=self.get_text_color(),
-            # markup=True,
-            # valign="bottom",
-            halign="left",
-            # pos_hint={"left": 0.1}
-        )
-        clock_container.add_widget(self.app.clock_label)
-        line_container = MDBoxLayout(
-            orientation="horizontal",
-            height=1,
-            size_hint_y=None,
-        )
-        blue_line = MDBoxLayout(size_hint_x=0.4)
-        blue_line.md_bg_color = (0.56, 0.56, 1, 1)
-        blank_line = MDBoxLayout(size_hint_x=0.2)
-        blank_line.md_bg_color = (0, 0, 0, 0)
-        blank_line2 = MDBoxLayout(size_hint_x=0.2)
-        blank_line2.md_bg_color = (0, 0, 0, 0)
-        line_container.add_widget(blue_line)
-        line_container.add_widget(blank_line)
-
-        line_container.add_widget(blank_line2)
-        dual_button_container = MDBoxLayout(padding=10, size_hint_y=None, height=50)
-        self.dual_button = MDFlatButton(
-            text="",
-            # pos_hint={"right": 1},
-            on_press=lambda x: self.maximize_dual_popup(),
-        )
-        dual_button_container.add_widget(self.dual_button)
-        top_container.add_widget(register_text)
-        top_container.add_widget(line_container)
         self.clock_layout.add_widget(top_container)
         self.clock_layout.add_widget(dual_button_container)
         self.clock_layout.add_widget(mirror_image_container)
@@ -1304,9 +1175,148 @@ class Utilities:
         self.clock_layout.add_widget(clock_container)
         self.clock_layout.add_widget(logo_container)
 
-        Clock.schedule_interval(self.update_clock, 1)
-
+        self._clk_schedule_updates()
         return self.clock_layout
+
+
+
+    def _clk_build_root(self):
+        return GridLayout(
+            orientation="tb-lr",
+            rows=6,
+            size_hint_x=0.75,
+            size_hint_y=1,
+            padding=(60, 0, 0, -10),
+        )
+
+    def _clk_build_mirror_container(self):
+        container = MDBoxLayout(size_hint=(None, 0.1), width=200)
+        self.mirror_image = Image(source="cropped_mirror_snapshot.png")
+        container.add_widget(self.mirror_image)
+        return container
+
+    def _clk_build_top_container(self):
+        top_container = BoxLayout(orientation="vertical", size_hint_y=0.1, padding=10)
+
+        register_text = MDLabel(
+            text="Cash Register",
+            size_hint_y=None,
+            font_style="H6",
+            height=50,
+            font_name=self.font,
+        )
+        line_container = self._clk_build_header_line()
+
+        top_container.add_widget(register_text)
+        top_container.add_widget(line_container)
+        return top_container
+
+    def _clk_build_header_line(self):
+        line_container = MDBoxLayout(
+            orientation="horizontal",
+            height=1,
+            size_hint_y=None,
+        )
+        blue_line = MDBoxLayout(size_hint_x=0.4)
+        blue_line.md_bg_color = (0.56, 0.56, 1, 1)
+
+        blank_line = MDBoxLayout(size_hint_x=0.2)
+        blank_line.md_bg_color = (0, 0, 0, 0)
+
+        blank_line2 = MDBoxLayout(size_hint_x=0.2)
+        blank_line2.md_bg_color = (0, 0, 0, 0)
+
+        line_container.add_widget(blue_line)
+        line_container.add_widget(blank_line)
+        line_container.add_widget(blank_line2)
+        return line_container
+
+    def _clk_build_saved_orders_container(self):
+        container = MDBoxLayout(
+            size_hint_y=1,
+            orientation="vertical",
+            spacing=20,
+            padding=(0, 0, 0, 100),
+        )
+
+        self.saved_order_title_container = MDBoxLayout(orientation="vertical")
+        self.saved_order_title = MDLabel(
+            text="",
+            adaptive_height=False,
+            size_hint_y=None,
+            height=50,
+        )
+        self.saved_order_divider = MDBoxLayout(
+            size_hint_x=0.5,
+            size_hint_y=None,
+            height=1,
+            md_bg_color=(0, 0, 0, 0),
+        )
+
+        self.saved_order_title_container.add_widget(self.saved_order_title)
+        self.saved_order_title_container.add_widget(self.saved_order_divider)
+        container.add_widget(self.saved_order_title_container)
+
+        self.saved_order_button1, self.saved_order_button1_label = self._clk_make_saved_order_button()
+        container.add_widget(self.saved_order_button1)
+
+        self.saved_order_button2, self.saved_order_button2_label = self._clk_make_saved_order_button()
+        container.add_widget(self.saved_order_button2)
+
+        self.saved_order_button3, self.saved_order_button3_label = self._clk_make_saved_order_button()
+        container.add_widget(self.saved_order_button3)
+
+        self.saved_order_button4, self.saved_order_button4_label = self._clk_make_saved_order_button()
+        container.add_widget(self.saved_order_button4)
+
+        self.saved_order_button5, self.saved_order_button5_label = self._clk_make_saved_order_button()
+        container.add_widget(self.saved_order_button5)
+
+        return container
+
+    def _clk_make_saved_order_button(self):
+        btn = MDFlatButton(
+            text="",
+            on_press=lambda x: self.do_nothing(),
+            md_bg_color=(0, 0, 0, 0),
+            size_hint=(0.75, None),
+            _min_height=50,
+            _no_ripple_effect=True,
+        )
+        label = MDLabel(text="", halign="left")
+        btn.add_widget(label)
+        return btn, label
+
+    def _clk_build_clock_container(self):
+        clock_container = BoxLayout(size_hint_y=0.2, padding=(-40, 0, 0, -100))
+        self.app.clock_label = MDLabel(
+            text="",
+            size_hint_y=None,
+            height=150,
+            size_hint_x=1,
+            color=self.get_text_color(),
+            halign="left",
+        )
+        clock_container.add_widget(self.app.clock_label)
+        return clock_container
+
+    def _clk_build_logo_container(self):
+        logo_container = BoxLayout(size_hint_y=0.2, padding=(-250, 0, 0, -150))
+        logo = ImageButton(source="images/rigs_logo_test.png")
+        logo_container.add_widget(logo)
+        return logo_container
+
+    def _clk_build_dual_button_container(self):
+        dual_button_container = MDBoxLayout(padding=10, size_hint_y=None, height=50)
+        self.dual_button = MDFlatButton(
+            text="",
+            on_press=lambda x: self.maximize_dual_popup(),
+        )
+        dual_button_container.add_widget(self.dual_button)
+        return dual_button_container
+
+    def _clk_schedule_updates(self):
+        Clock.schedule_interval(self.update_clock, 1)
 
     def print_draft_receipt(self):
         order_details = self.app.order_manager.get_order_details()
