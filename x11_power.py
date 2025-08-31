@@ -1,7 +1,6 @@
-
 from ctypes import (
     Structure, CDLL, POINTER, byref,
-    c_int, c_ulong, c_char_p, c_void_p, c_ushort
+    c_int, c_ulong, c_char_p, c_void_p, c_ushort, c_long
 )
 from ctypes.util import find_library
 
@@ -14,6 +13,7 @@ def _load(name, fallback):
 libX11  = _load("X11",  "libX11.so.6")
 libXss  = _load("Xss",  "libXss.so.1")
 libXext = _load("Xext", "libXext.so.6")
+libXrandr = _load("Xrandr", "libXrandr.so.2")
 
 libX11.XOpenDisplay.argtypes   = [c_char_p]
 libX11.XOpenDisplay.restype    = c_void_p
@@ -27,8 +27,9 @@ libX11.XCloseDisplay.argtypes = [c_void_p]
 libX11.XCloseDisplay.restype  = c_int
 libX11.XFree.argtypes         = [c_void_p]
 libX11.XFree.restype          = c_int
+libX11.XInternAtom.argtypes   = [c_void_p, c_char_p, c_int]  # only_if_exists
+libX11.XInternAtom.restype    = c_ulong
 
-# XScreenSaver extension
 class XScreenSaverInfo(Structure):
     _fields_ = [
         ("window", c_ulong),
@@ -46,7 +47,7 @@ libXss.XScreenSaverAllocInfo.restype       = POINTER(XScreenSaverInfo)
 libXss.XScreenSaverQueryInfo.argtypes      = [c_void_p, c_ulong, POINTER(XScreenSaverInfo)]
 libXss.XScreenSaverQueryInfo.restype       = c_int
 
-# Levels from <X11/extensions/dpms.h>:
+# DPMS extension
 DPMSModeOn      = c_ushort(0)
 DPMSModeStandby = c_ushort(1)
 DPMSModeSuspend = c_ushort(2)
@@ -104,6 +105,95 @@ def x11_dpms_force_off():
             raise RuntimeError("DPMS not capable")
         if not libXext.DPMSForceLevel(dpy, DPMSModeOff):
             raise RuntimeError("DPMSForceLevel failed")
+        libX11.XFlush(dpy)
+    finally:
+        libX11.XCloseDisplay(dpy)
+
+
+class XRRPropertyInfo(Structure):
+    _fields_ = [
+        ("pending",   c_int),
+        ("range",     c_int),
+        ("immutable", c_int),
+        ("num_values", c_int),
+        ("values",    POINTER(c_long)),
+    ]
+
+libXrandr.XRRGetOutputPrimary.argtypes = [c_void_p, c_ulong]
+libXrandr.XRRGetOutputPrimary.restype  = c_ulong
+
+libXrandr.XRRQueryOutputProperty.argtypes = [c_void_p, c_ulong, c_ulong]
+libXrandr.XRRQueryOutputProperty.restype  = POINTER(XRRPropertyInfo)
+
+libXrandr.XRRChangeOutputProperty.argtypes = [c_void_p, c_ulong, c_ulong, c_ulong, c_int, c_int, c_void_p, c_int]
+libXrandr.XRRChangeOutputProperty.restype  = None
+
+XA_INTEGER = c_ulong(19)
+PropModeReplace = c_int(0)
+
+def _primary_output(dpy):
+    root = libX11.XDefaultRootWindow(dpy)
+    output = libXrandr.XRRGetOutputPrimary(dpy, root)
+    if output == 0:
+        raise RuntimeError("No primary RandR output")
+    return output
+
+def x11_backlight_range():
+
+    dpy = _open_display()
+    try:
+        output = _primary_output(dpy)
+        backlight = libX11.XInternAtom(dpy, b"Backlight", 1)  # only_if_exists=True
+        if backlight == 0:
+            raise RuntimeError("Backlight atom not present on primary output")
+        pinfo = libXrandr.XRRQueryOutputProperty(dpy, output, backlight)
+        if not pinfo:
+            raise RuntimeError("XRRQueryOutputProperty failed")
+        try:
+            if not pinfo.contents.range or pinfo.contents.num_values < 2:
+                raise RuntimeError("Backlight property is not a range")
+            minv = int(pinfo.contents.values[0])
+            maxv = int(pinfo.contents.values[1])
+            if maxv <= minv:
+                raise RuntimeError("Backlight range is invalid")
+            return (minv, maxv)
+        finally:
+            libX11.XFree(pinfo)
+    finally:
+        libX11.XCloseDisplay(dpy)
+
+def x11_backlight_set_percent(percent):
+    if not (0 <= percent <= 100):
+        raise ValueError("percent must be within [0, 100]")
+    dpy = _open_display()
+    try:
+        output = _primary_output(dpy)
+        backlight = libX11.XInternAtom(dpy, b"Backlight", 1)  # only_if_exists=True
+        if backlight == 0:
+            raise RuntimeError("Backlight atom not present on primary output")
+
+        pinfo = libXrandr.XRRQueryOutputProperty(dpy, output, backlight)
+        if not pinfo:
+            raise RuntimeError("XRRQueryOutputProperty failed")
+        try:
+            if not pinfo.contents.range or pinfo.contents.num_values < 2:
+                raise RuntimeError("Backlight property is not a range")
+            minv = int(pinfo.contents.values[0])
+            maxv = int(pinfo.contents.values[1])
+            if maxv <= minv:
+                raise RuntimeError("Backlight range is invalid")
+            raw = int(round(minv + (percent / 100.0) * (maxv - minv)))
+        finally:
+            libX11.XFree(pinfo)
+
+        val = c_long(raw)
+        libXrandr.XRRChangeOutputProperty(
+            dpy, output,
+            backlight, XA_INTEGER.value,
+            32, PropModeReplace.value,
+            c_void_p(byref(val).value),
+            1
+        )
         libX11.XFlush(dpy)
     finally:
         libX11.XCloseDisplay(dpy)
