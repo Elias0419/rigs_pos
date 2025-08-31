@@ -229,7 +229,6 @@ class Utilities:
         return None
 
     def initialize_global_variables(self):
-        # self.app.admin = False
         self.app.pin_store = "pin_store.json"
         self.app.attendance_log = "attendance_log.json"
         self.app.entered_pin = ""
@@ -243,27 +242,29 @@ class Utilities:
         self.app.theme_cls.primary_palette = "Brown"
         self.app.selected_categories = []
 
-    def instantiate_modules(self):
 
+    def register_fonts(self):
+        from kivy.core.text import LabelBase
+        LabelBase.register(
+            name="Emoji",
+            fn_regular="images/seguiemj.ttf"
+        )
+
+
+    def instantiate_modules(self):
+        if self.app.is_rigs:
+            db_path = "/home/rigs/rigs_pos/db/inventory.db"
+        else:
+            db_path = "/home/x/work/python/rigs_pos/db/inventory.db"
         try:
             self.initialize_receipt_printer()
         except:  # TODO: Something other than log the error
             logger.info("Receipt Printer was not initialized 1")
         self.app.barcode_scanner = BarcodeScanner(self.app)
-        try:
-            self.app.db_manager = DatabaseManager(
-                "/home/rigs/rigs_pos/db/inventory.db", self.app
-            )
-        except:
-            self.app.db_manager = DatabaseManager(
-                "/home/x/work/python/rigs_pos/db/inventory.db", self.app
-            )
-        finally:  # TODO: Something other than log the error
-            logger.info("Database was not initialized (in finally block)")
+        self.app.db_manager = DatabaseManager(db_path, self.app)
         self.app.financial_summary = FinancialSummaryWidget(self.app)
         self.app.order_manager = OrderManager(self.app)
         self.app.history_manager = HistoryView(self.app)
-        # self.app.order_history_popup = OrderManager(self.app)
         self.app.history_popup = HistoryPopup()
         self.app.inventory_manager = InventoryManagementView()
         self.app.inventory_row = InventoryManagementRow()
@@ -275,9 +276,8 @@ class Utilities:
         self.app.dist_popup = DistPopup()
         self.app.button_handler = ButtonHandler(self.app)
         self.app.popup_manager = PopupManager(self.app)
-        # self.app.wrapper = Wrapper()
         self.app.categories = self.initialize_categories()
-        self.initialize_barcode_cache()
+        self.app.barcode_cache = self.initialize_barcode_cache()
         self.app.inventory_cache = self.initialize_inventory_cache()
 
     def initialize_receipt_printer(self):
@@ -292,7 +292,7 @@ class Utilities:
 
     def initialize_barcode_cache(self):
         rows = self.app.db_manager.get_all_items()
-        self.app.barcode_cache = BarcodeCache(rows)
+        return BarcodeCache(rows)
 
     def initialize_inventory_cache(self):
         inventory = self.app.db_manager.get_all_items()
