@@ -11,27 +11,27 @@ def _load(name, fallback):
         path = fallback
     return CDLL(path)
 
-libX11  = _load("X11",  "libX11.so.6")
-libXss  = _load("Xss",  "libXss.so.1")
-libXext = _load("Xext", "libXext.so.6")
-libXrandr = _load("Xrandr", "libXrandr.so.2")
+libX11  = _load("X11",  "libX11.so.6")  # x11 base
+libXss  = _load("Xss",  "libXss.so.1")  # screensaver ext
+libXext = _load("Xext", "libXext.so.6")  # dpms ext
+libXrandr = _load("Xrandr", "libXrandr.so.2")  # randr ext
 
-libX11.XOpenDisplay.argtypes   = [c_char_p]
+libX11.XOpenDisplay.argtypes   = [c_char_p]  # open display
 libX11.XOpenDisplay.restype    = c_void_p
-libX11.XDefaultRootWindow.argtypes = [c_void_p]
+libX11.XDefaultRootWindow.argtypes = [c_void_p]  # get root window
 libX11.XDefaultRootWindow.restype  = c_ulong
-libX11.XForceScreenSaver.argtypes  = [c_void_p, c_int]  # 0 == ScreenSaverReset
+libX11.XForceScreenSaver.argtypes  = [c_void_p, c_int]  # reset saver
 libX11.XForceScreenSaver.restype   = c_int
-libX11.XFlush.argtypes        = [c_void_p]
+libX11.XFlush.argtypes        = [c_void_p]  # flush display
 libX11.XFlush.restype         = c_int
-libX11.XCloseDisplay.argtypes = [c_void_p]
+libX11.XCloseDisplay.argtypes = [c_void_p]  # close display
 libX11.XCloseDisplay.restype  = c_int
-libX11.XFree.argtypes         = [c_void_p]
+libX11.XFree.argtypes         = [c_void_p]  # free ptr
 libX11.XFree.restype          = c_int
-libX11.XInternAtom.argtypes   = [c_void_p, c_char_p, c_int]  # only_if_exists
+libX11.XInternAtom.argtypes   = [c_void_p, c_char_p, c_int]  # get atom
 libX11.XInternAtom.restype    = c_ulong
 
-class XScreenSaverInfo(Structure):
+class XScreenSaverInfo(Structure):  # struct for idle info
     _fields_ = [
         ("window", c_ulong),
         ("state", c_int),
@@ -41,24 +41,24 @@ class XScreenSaverInfo(Structure):
         ("eventMask", c_ulong),
     ]
 
-libXss.XScreenSaverQueryExtension.argtypes = [c_void_p, POINTER(c_int), POINTER(c_int)]
+libXss.XScreenSaverQueryExtension.argtypes = [c_void_p, POINTER(c_int), POINTER(c_int)]  # check ext
 libXss.XScreenSaverQueryExtension.restype  = c_int
-libXss.XScreenSaverAllocInfo.argtypes      = []
+libXss.XScreenSaverAllocInfo.argtypes      = []  # alloc info
 libXss.XScreenSaverAllocInfo.restype       = POINTER(XScreenSaverInfo)
-libXss.XScreenSaverQueryInfo.argtypes      = [c_void_p, c_ulong, POINTER(XScreenSaverInfo)]
+libXss.XScreenSaverQueryInfo.argtypes      = [c_void_p, c_ulong, POINTER(XScreenSaverInfo)]  # query info
 libXss.XScreenSaverQueryInfo.restype       = c_int
 
-# DPMS extension
+# dpms modes
 DPMSModeOn      = c_ushort(0)
 DPMSModeStandby = c_ushort(1)
 DPMSModeSuspend = c_ushort(2)
 DPMSModeOff     = c_ushort(3)
 
-libXext.DPMSQueryExtension.argtypes = [c_void_p, POINTER(c_int), POINTER(c_int)]
+libXext.DPMSQueryExtension.argtypes = [c_void_p, POINTER(c_int), POINTER(c_int)]  # check dpms
 libXext.DPMSQueryExtension.restype  = c_int
-libXext.DPMSCapable.argtypes        = [c_void_p]
+libXext.DPMSCapable.argtypes        = [c_void_p]  # dpms capable
 libXext.DPMSCapable.restype         = c_int
-libXext.DPMSForceLevel.argtypes     = [c_void_p, c_ushort]
+libXext.DPMSForceLevel.argtypes     = [c_void_p, c_ushort]  # force level
 libXext.DPMSForceLevel.restype      = c_int
 
 def _open_display():
@@ -87,7 +87,7 @@ def x11_idle_ms():
     finally:
         libX11.XCloseDisplay(dpy)
 
-def x11_reset_idle():
+def x11_reset_idle():  # reset idle timer
     dpy = _open_display()
     try:
         libX11.XForceScreenSaver(dpy, 0)
@@ -95,7 +95,7 @@ def x11_reset_idle():
     finally:
         libX11.XCloseDisplay(dpy)
 
-def x11_dpms_force_off():
+def x11_dpms_force_off():  # force monitor off
     dpy = _open_display()
     try:
         ev = c_int()
@@ -111,7 +111,7 @@ def x11_dpms_force_off():
         libX11.XCloseDisplay(dpy)
 
 
-class XRRPropertyInfo(Structure):
+class XRRPropertyInfo(Structure):  # randr property info
     _fields_ = [
         ("pending",   c_int),
         ("range",     c_int),
@@ -120,7 +120,7 @@ class XRRPropertyInfo(Structure):
         ("values",    POINTER(c_long)),
     ]
 
-class XRRScreenResources(Structure):
+class XRRScreenResources(Structure):  # randr screen res
     _fields_ = [
         ("timestamp",        c_ulong),
         ("configTimestamp",  c_ulong),
@@ -132,7 +132,7 @@ class XRRScreenResources(Structure):
         ("modes",            c_void_p),
     ]
 
-class XRROutputInfo(Structure):
+class XRROutputInfo(Structure):  # randr output info
     _fields_ = [
         ("timestamp",       c_ulong),
         ("crtc",            c_ulong),
@@ -151,7 +151,7 @@ class XRROutputInfo(Structure):
         ("modes",           POINTER(c_ulong)),
     ]
 
-class XRRCrtcGamma(Structure):
+class XRRCrtcGamma(Structure):  # gamma struct
     _fields_ = [
         ("size",  c_int),
         ("red",   POINTER(c_ushort)),
@@ -159,33 +159,32 @@ class XRRCrtcGamma(Structure):
         ("blue",  POINTER(c_ushort)),
     ]
 
-libXrandr.XRRGetScreenResourcesCurrent.argtypes = [c_void_p, c_ulong]
+libXrandr.XRRGetScreenResourcesCurrent.argtypes = [c_void_p, c_ulong]  # get res current
 libXrandr.XRRGetScreenResourcesCurrent.restype  = POINTER(XRRScreenResources)
-libXrandr.XRRGetScreenResources.argtypes        = [c_void_p, c_ulong]
+libXrandr.XRRGetScreenResources.argtypes        = [c_void_p, c_ulong]  # get res
 libXrandr.XRRGetScreenResources.restype         = POINTER(XRRScreenResources)
-libXrandr.XRRFreeScreenResources.argtypes       = [POINTER(XRRScreenResources)]
+libXrandr.XRRFreeScreenResources.argtypes       = [POINTER(XRRScreenResources)]  # free res
 libXrandr.XRRFreeScreenResources.restype        = None
 
-libXrandr.XRRGetOutputPrimary.argtypes = [c_void_p, c_ulong]
+libXrandr.XRRGetOutputPrimary.argtypes = [c_void_p, c_ulong]  # get primary output
 libXrandr.XRRGetOutputPrimary.restype  = c_ulong
-libXrandr.XRRGetOutputInfo.argtypes    = [c_void_p, POINTER(XRRScreenResources), c_ulong]
+libXrandr.XRRGetOutputInfo.argtypes    = [c_void_p, POINTER(XRRScreenResources), c_ulong]  # get output info
 libXrandr.XRRGetOutputInfo.restype     = POINTER(XRROutputInfo)
-libXrandr.XRRFreeOutputInfo.argtypes   = [POINTER(XRROutputInfo)]
+libXrandr.XRRFreeOutputInfo.argtypes   = [POINTER(XRROutputInfo)]  # free output info
 libXrandr.XRRFreeOutputInfo.restype    = None
 
-libXrandr.XRRGetCrtcGammaSize.argtypes = [c_void_p, c_ulong]
+libXrandr.XRRGetCrtcGammaSize.argtypes = [c_void_p, c_ulong]  # gamma size
 libXrandr.XRRGetCrtcGammaSize.restype  = c_int
-libXrandr.XRRAllocGamma.argtypes       = [c_int]
+libXrandr.XRRAllocGamma.argtypes       = [c_int]  # alloc gamma
 libXrandr.XRRAllocGamma.restype        = POINTER(XRRCrtcGamma)
-libXrandr.XRRSetCrtcGamma.argtypes     = [c_void_p, c_ulong, POINTER(XRRCrtcGamma)]
+libXrandr.XRRSetCrtcGamma.argtypes     = [c_void_p, c_ulong, POINTER(XRRCrtcGamma)]  # set gamma
 libXrandr.XRRSetCrtcGamma.restype      = None
-libXrandr.XRRFreeGamma.argtypes        = [POINTER(XRRCrtcGamma)]
+libXrandr.XRRFreeGamma.argtypes        = [POINTER(XRRCrtcGamma)]  # free gamma
 libXrandr.XRRFreeGamma.restype         = None
 
 
 
-
-def _primary_crtc(dpy: c_void_p) -> c_ulong:
+def _primary_crtc(dpy: c_void_p) -> c_ulong:  # get primary crtc
     root = libX11.XDefaultRootWindow(dpy)
     res = libXrandr.XRRGetScreenResourcesCurrent(dpy, root)
     if not res:
@@ -209,7 +208,7 @@ def _primary_crtc(dpy: c_void_p) -> c_ulong:
     finally:
         libXrandr.XRRFreeScreenResources(res)
 
-def x11_backlight_set_percent(percent):
+def x11_backlight_set_percent(percent):  # set backlight percent
     if not (0 <= percent <= 100):
         raise ValueError("percent must be within [0, 100]")
 
@@ -225,7 +224,6 @@ def x11_backlight_set_percent(percent):
             raise RuntimeError("XRRAllocGamma failed")
 
         try:
-
             scale_num = percent
             scale_den = 100
             if size == 1:
@@ -248,4 +246,3 @@ def x11_backlight_set_percent(percent):
             libXrandr.XRRFreeGamma(gamma)
     finally:
         libX11.XCloseDisplay(dpy)
-
