@@ -16,12 +16,20 @@ class BarcodeScanner:
         self.app = ref
         self.current_barcode = ""
 
-        if self.app.utilities.is_rigs():
-            self.idVendor = 0x05E0
-            self.idProduct = 0x1200
+
+        c = [(0x05E0, 0x1200), (0x34EB, 0x1502)]
+        for vid, pid in c:
+            try:
+                self.idVendor, self.idProduct = vid, pid
+                dev = usb.core.find(idVendor=vid, idProduct=pid)
+                if dev is not None:
+                    break
+            except Exception:
+                continue
         else:
-            self.idVendor = 0x28E9
-            self.idProduct = 0x03DA
+            # we should probably fail or notify the user
+            # if no barcode scanner was activated
+            logger.error("No supported USB device found")
 
         self._context_handler = {
             "inventory": lambda bc: self.app.inventory_manager.handle_scanned_barcode(
@@ -147,20 +155,12 @@ class BarcodeScanner:
                     if character == "\n":
                         try:
                             # barcode scans don't reset the inactivity timer
-                            # so we try to send a keypress on scan to prevent the
+                            # so we try to reset idle on scan to prevent the
                             # screen from sleeping during scanning
-                            subprocess.run(["xdotool", "key", "Shift_L"])
-                        except FileNotFoundError as e:
-                            logger.info(
-                                "[BarcodeScanner]: Expected error when xdotool is unavailable\n",
-                                e,
-                            )
+                            self.app.utilities.reset_idle_timer()
                         except Exception as e:
-                            logger.warn(
-                                "[BarcodeScanner]: Unexpected error in capture_raw_data\n",
-                                e,
-                            )
-                        # print(f"Barcode detected: {self.current_barcode}")
+                            logger.warning("[BarcodeScanner]: X11 ForceScreenSaver reset failed: %s", e)
+
                         self.barcode_ready.set()
 
                     else:
