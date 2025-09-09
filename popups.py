@@ -43,6 +43,14 @@ class PopupManager:
     def __init__(self, ref):
         self.app = ref
 
+    def id_scan_popup(self, result):
+        layout = MDBoxLayout()
+        text = MDLabel(text=str(result))
+        layout.add_widget(text)
+        popup = Popup(size_hint=(0.2, 0.2))
+        popup.add_widget(layout)
+        popup.open()
+
 
     def show_update_notification_popup(self, update_details):
         update_details_string = ''
