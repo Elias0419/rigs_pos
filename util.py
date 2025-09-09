@@ -44,6 +44,8 @@ import time
 import uuid
 import pwd
 import glob
+import re
+from datetime import date, datetime
 
 from Xlib import X
 from Xlib.display import Display
@@ -131,13 +133,65 @@ class Utilities:
             "/home/x/work/python/rigs_pos",
         ]
 
+    def is_21(self, raw_bytes: bytes):
+        result = False
+        try:
+            dob = self._extract_dob_from_aamva(raw_bytes)
+            if dob:
+                today = date.today()
+                age = (
+                    today.year
+                    - dob.year
+                    - ((today.month, today.day) < (dob.month, dob.day))
+                )
+                result = age >= 21
+        except Exception as e:
+            print(f"[ID SCAN] DOB parse error: {e!r}")
+
+        try:
+            self.app.popup_manager.id_scan_popup(result)
+        except Exception as e:
+            print(f"[ID SCAN] popup error: {e!r}")
+
+    def _extract_dob_from_aamva(self, raw_bytes: bytes):
+
+        text = raw_bytes.decode("utf-8", "ignore")
+
+        # find DBB
+        m = re.search(r"DBB([^\r\n]+)", text)
+        if not m:
+            return None
+
+        payload = m.group(1)
+        digits = re.sub(r"\D", "", payload)
+        if len(digits) < 8:
+            return None
+
+        dob = None
+        try:
+            if 1900 <= int(digits[:4]) <= 2100:
+                # YYYYMMDD
+                y, mo, d = int(digits[:4]), int(digits[4:6]), int(digits[6:8])
+            else:
+                # MMDDYYYY
+                mo, d, y = int(digits[:2]), int(digits[2:4]), int(digits[4:8])
+            dob = date(y, mo, d)
+        except ValueError:
+            # fallback
+            for fmt in ("%m%d%Y", "%Y%m%d"):
+                try:
+                    dob = datetime.strptime(digits[:8], fmt).date()
+                    break
+                except ValueError:
+                    continue
+        return dob
+
     def reset_idle_timer(self):
         try:
             _XDISP.force_screen_saver(X.ScreenSaverReset)
             _XDISP.flush()
         except:
             raise
-
 
     def get_open_session_for_user_today(self, expected_name):
 
@@ -152,7 +206,11 @@ class Utilities:
             logger.error("Failed to load active session file '%s': %s", session_path, e)
             return None
 
-        if data.get("session_id") and data.get("clock_in") and not data.get("clock_out"):
+        if (
+            data.get("session_id")
+            and data.get("clock_in")
+            and not data.get("clock_out")
+        ):
             return data
         return None
 
@@ -289,14 +347,10 @@ class Utilities:
         self.app.theme_cls.primary_palette = "Brown"
         self.app.selected_categories = []
 
-
     def register_fonts(self):
         from kivy.core.text import LabelBase
-        LabelBase.register(
-            name="Emoji",
-            fn_regular="images/seguiemj.ttf"
-        )
 
+        LabelBase.register(name="Emoji", fn_regular="images/seguiemj.ttf")
 
     def instantiate_modules(self):
         if self.app.is_rigs:
@@ -366,41 +420,7 @@ class Utilities:
 
     def initialize_categories(self):
         categories = [
-            "Cdb",
-            "Rig",
-            "Nails",
-            "Tubes",
-            "Hand Pipes",
-            "Chillum",
-            "Ecig",
-            "Butane",
-            "Torch",
-            "Toro",
-            "Slides H",
-            "Quartz",
-            "Vaporizers",
-            "Lighter",
-            "9mm Thick",
-            "Cleaning",
-            "Edible",
-            "Bubbler",
-            "Sherlock",
-            "Spoon",
-            "Silicone",
-            "Scales",
-            "Slides",
-            "Imported Glass",
-            "Ash Catcher",
-            "Soft Glass",
-            "Vaporizers",
-            "Pendant",
-            "Smoker Accessory",
-            "Ecig Accessories",
-            "Happy Fruit",
-            "Concentrate Accessories",
-            "Conc. Devices, Atomizers",
-            "Erigs And Accessory",
-            "Mods Batteries Kits",
+            "Categories are unused, talk to Owen",
         ]
         return categories
 
@@ -444,8 +464,6 @@ class Utilities:
                 return bool(user.get("admin", False))
 
         return False
-
-
 
     def validate_pin(self, entered_pin):
         if not os.path.exists(self.app.pin_store):
@@ -919,8 +937,6 @@ class Utilities:
 
         return self.base_layout
 
-
-
     def _build_main_layout(self):
         return GridLayout(
             cols=1,
@@ -1169,8 +1185,6 @@ class Utilities:
         self._clk_schedule_updates()
         return self.clock_layout
 
-
-
     def _clk_build_root(self):
         return GridLayout(
             orientation="tb-lr",
@@ -1248,19 +1262,29 @@ class Utilities:
         self.saved_order_title_container.add_widget(self.saved_order_divider)
         container.add_widget(self.saved_order_title_container)
 
-        self.saved_order_button1, self.saved_order_button1_label = self._clk_make_saved_order_button()
+        self.saved_order_button1, self.saved_order_button1_label = (
+            self._clk_make_saved_order_button()
+        )
         container.add_widget(self.saved_order_button1)
 
-        self.saved_order_button2, self.saved_order_button2_label = self._clk_make_saved_order_button()
+        self.saved_order_button2, self.saved_order_button2_label = (
+            self._clk_make_saved_order_button()
+        )
         container.add_widget(self.saved_order_button2)
 
-        self.saved_order_button3, self.saved_order_button3_label = self._clk_make_saved_order_button()
+        self.saved_order_button3, self.saved_order_button3_label = (
+            self._clk_make_saved_order_button()
+        )
         container.add_widget(self.saved_order_button3)
 
-        self.saved_order_button4, self.saved_order_button4_label = self._clk_make_saved_order_button()
+        self.saved_order_button4, self.saved_order_button4_label = (
+            self._clk_make_saved_order_button()
+        )
         container.add_widget(self.saved_order_button4)
 
-        self.saved_order_button5, self.saved_order_button5_label = self._clk_make_saved_order_button()
+        self.saved_order_button5, self.saved_order_button5_label = (
+            self._clk_make_saved_order_button()
+        )
         container.add_widget(self.saved_order_button5)
 
         return container
@@ -1553,9 +1577,9 @@ class Utilities:
     def check_inactivity(self, *args):
         try:
             idle_time = x11_idle_ms()
-            if idle_time > 600000:      # 10 minutes
+            if idle_time > 600000:  # 10 minutes
                 self.trigger_guard_and_lock()
-            if idle_time > 3600000:     # 1 hour
+            if idle_time > 3600000:  # 1 hour
                 x11_dpms_force_off()
         except Exception as e:
             logger.warning("Exception in check_inactivity: %s", e)
