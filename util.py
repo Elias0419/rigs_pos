@@ -45,6 +45,7 @@ import uuid
 import pwd
 import glob
 import re
+from serial import SerialException
 from datetime import date, datetime
 
 from Xlib import X
@@ -133,39 +134,127 @@ class Utilities:
             "/home/x/work/python/rigs_pos",
         ]
 
+    def initialize_global_variables(self):
+        self.app.pin_store = "pin_store.json"
+        self.app.attendance_log = "attendance_log.json"
+        self.app.entered_pin = ""
+        self.app.is_guard_screen_displayed = False
+        self.app.is_lock_screen_displayed = False
+        self.app.disable_lock_screen = False
+        self.app.override_tap_time = 0
+        self.app.click = 0
+        self.app.current_context = "main"
+        self.app.theme_cls.theme_style = "Dark"
+        self.app.theme_cls.primary_palette = "Brown"
+        self.app.selected_categories = []
+
+    def register_fonts(self):
+        from kivy.core.text import LabelBase
+
+        LabelBase.register(name="Emoji", fn_regular="images/seguiemj.ttf")
+
+    def instantiate_modules(self):
+        if self.app.is_rigs:
+            db_path = "/home/rigs/rigs_pos/db/inventory.db"
+        else:
+            db_path = "/home/x/work/python/rigs_pos/db/inventory.db"
+
+        try:
+            self.initialize_receipt_printer()
+        except:  # TODO: Something other than log the error
+            logger.error("Receipt Printer was not initialized 1")
+
+        try:
+            self.app.barcode_scanner = BarcodeScanner(self.app)
+        except SerialException as e:
+            # this probably means the scanner is not plugged in
+            # we should tell the user to double check
+            # and possibly implement a mechanism to re-init
+            # for now (maybe forever), just log it
+            logger.error(e)
+        except Exception:
+            # some other unexpected error
+            logger.error(e)
+
+        self.app.db_manager = DatabaseManager(db_path, self.app)
+        self.app.financial_summary = FinancialSummaryWidget(self.app)
+        self.app.order_manager = OrderManager(self.app)
+        self.app.history_manager = HistoryView(self.app)
+        self.app.history_popup = HistoryPopup()
+        self.app.inventory_manager = InventoryManagementView()
+        self.app.inventory_row = InventoryManagementRow()
+        self.app.label_printer = LabelPrinter(self.app)
+        self.app.label_manager = LabelPrintingView(self.app)
+        self.app.pin_reset_timer = ReusableTimer(5.0, self.reset_pin)
+        self.app.calculator = Calculator()
+        self.app.dist_manager = DistView(self.app)
+        self.app.dist_popup = DistPopup()
+        self.app.button_handler = ButtonHandler(self.app)
+        self.app.popup_manager = PopupManager(self.app)
+        self.app.categories = self.initialize_categories()
+        self.app.barcode_cache = self.initialize_barcode_cache()
+        self.app.inventory_cache = self.initialize_inventory_cache()
+
+    def initialize_receipt_printer(self):
+        try:
+            self.app.receipt_printer = ReceiptPrinter(
+                self.app, "/home/rigs/rigs_pos/receipt_printer_config.yaml"
+            )
+        except:
+            self.app.receipt_printer = ReceiptPrinter(
+                self.app, "/home/x/work/python/rigs_pos/receipt_printer_config.yaml"
+            )
+
+    def initialize_barcode_cache(self):
+        rows = self.app.db_manager.get_all_items()
+        return BarcodeCache(rows)
+
+    def initialize_inventory_cache(self):
+        inventory = self.app.db_manager.get_all_items()
+        return inventory
+
     def is_21(self, raw_bytes: bytes):
+        errors = []
         result = False
-        try:
-            dob = self._extract_dob_from_aamva(raw_bytes)
-            if dob:
-                today = date.today()
-                age = (
-                    today.year
-                    - dob.year
-                    - ((today.month, today.day) < (dob.month, dob.day))
-                )
-                result = age >= 21
-        except Exception as e:
-            print(f"[ID SCAN] DOB parse error: {e!r}")
+
+        if not raw_bytes:
+            errors.append("Empty scan payload")
+        else:
+            try:
+                dob = self._extract_dob_from_aamva(raw_bytes)
+                if dob is None:
+                    errors.append("Could not parse date in any expected format")
+                else:
+                    today = date.today()
+                    age = (
+                        today.year
+                        - dob.year
+                        - ((today.month, today.day) < (dob.month, dob.day))
+                    )
+                    result = age >= 21
+
+            except ValueError as e:
+                errors.append(f"DOB parse error: {str(e)}")
+            except Exception as e:
+                errors.append(f"Unexpected error: {str(e)}")
+                logger.error(f"[ID SCAN] Unexpected error: {e!r}")
 
         try:
-            self.app.popup_manager.id_scan_popup(result)
+            self.app.popup_manager.id_scan_popup(result, errors)
         except Exception as e:
-            print(f"[ID SCAN] popup error: {e!r}")
+            logger.warning(f"[ID SCAN] popup error: {e!r}")
 
-    def _extract_dob_from_aamva(self, raw_bytes: bytes):
 
+    def extract_dob_from_aamva(self, raw_bytes: bytes):
         text = raw_bytes.decode("utf-8", "ignore")
-
         # find DBB
         m = re.search(r"DBB([^\r\n]+)", text)
         if not m:
-            return None
-
+            raise ValueError("DBB field not found in AAMVA data")
         payload = m.group(1)
         digits = re.sub(r"\D", "", payload)
         if len(digits) < 8:
-            return None
+            raise ValueError("Invalid date format: insufficient digits")
 
         dob = None
         try:
@@ -184,6 +273,8 @@ class Utilities:
                     break
                 except ValueError:
                     continue
+        if dob is None:
+            raise ValueError("Could not parse date in any expected format")
         return dob
 
     def reset_idle_timer(self):
@@ -333,71 +424,6 @@ class Utilities:
             pass
         return None
 
-    def initialize_global_variables(self):
-        self.app.pin_store = "pin_store.json"
-        self.app.attendance_log = "attendance_log.json"
-        self.app.entered_pin = ""
-        self.app.is_guard_screen_displayed = False
-        self.app.is_lock_screen_displayed = False
-        self.app.disable_lock_screen = False
-        self.app.override_tap_time = 0
-        self.app.click = 0
-        self.app.current_context = "main"
-        self.app.theme_cls.theme_style = "Dark"
-        self.app.theme_cls.primary_palette = "Brown"
-        self.app.selected_categories = []
-
-    def register_fonts(self):
-        from kivy.core.text import LabelBase
-
-        LabelBase.register(name="Emoji", fn_regular="images/seguiemj.ttf")
-
-    def instantiate_modules(self):
-        if self.app.is_rigs:
-            db_path = "/home/rigs/rigs_pos/db/inventory.db"
-        else:
-            db_path = "/home/x/work/python/rigs_pos/db/inventory.db"
-        try:
-            self.initialize_receipt_printer()
-        except:  # TODO: Something other than log the error
-            logger.info("Receipt Printer was not initialized 1")
-        self.app.barcode_scanner = BarcodeScanner(self.app)
-        self.app.db_manager = DatabaseManager(db_path, self.app)
-        self.app.financial_summary = FinancialSummaryWidget(self.app)
-        self.app.order_manager = OrderManager(self.app)
-        self.app.history_manager = HistoryView(self.app)
-        self.app.history_popup = HistoryPopup()
-        self.app.inventory_manager = InventoryManagementView()
-        self.app.inventory_row = InventoryManagementRow()
-        self.app.label_printer = LabelPrinter(self.app)
-        self.app.label_manager = LabelPrintingView(self.app)
-        self.app.pin_reset_timer = ReusableTimer(5.0, self.reset_pin)
-        self.app.calculator = Calculator()
-        self.app.dist_manager = DistView(self.app)
-        self.app.dist_popup = DistPopup()
-        self.app.button_handler = ButtonHandler(self.app)
-        self.app.popup_manager = PopupManager(self.app)
-        self.app.categories = self.initialize_categories()
-        self.app.barcode_cache = self.initialize_barcode_cache()
-        self.app.inventory_cache = self.initialize_inventory_cache()
-
-    def initialize_receipt_printer(self):
-        try:
-            self.app.receipt_printer = ReceiptPrinter(
-                self.app, "/home/rigs/rigs_pos/receipt_printer_config.yaml"
-            )
-        except:
-            self.app.receipt_printer = ReceiptPrinter(
-                self.app, "/home/x/work/python/rigs_pos/receipt_printer_config.yaml"
-            )
-
-    def initialize_barcode_cache(self):
-        rows = self.app.db_manager.get_all_items()
-        return BarcodeCache(rows)
-
-    def initialize_inventory_cache(self):
-        inventory = self.app.db_manager.get_all_items()
-        return inventory
 
     def update_inventory_cache(self):
         inventory = self.app.db_manager.get_all_items()
@@ -1106,6 +1132,7 @@ class Utilities:
         btn_pay = MDFlatButton(
             text="[b][size=40]PAY[/b][/size]",
             on_press=self.app.button_handler.on_button_press,
+            #on_press=self.test,
             padding=(8, 8),
             font_name=self.font,
             font_style="H6",
@@ -1153,7 +1180,16 @@ class Utilities:
 
     def _schedule_intervals(self):
         Clock.schedule_interval(self.check_inactivity, 10)
-        Clock.schedule_interval(self.app.barcode_scanner.check_for_scanned_barcode, 0.1)
+        # if this fails, the barcode scanner failed to init earlier
+        # we notify the user (or more likely do nothing) further up the stack
+        # so we do nothing with it here but log it
+        try:
+            Clock.schedule_interval(self.app.barcode_scanner.check_for_scanned_barcode, 0.1)
+        except AttributeError as e:
+            logger.warning(f"Expected error in _schedule_intervals when the barcode scanner failed to initialize: {e}")
+        except Exception as e:
+            # catch any other errors
+            logger.error(f"Unexpected error in  _schedule_intervals: {e}")
 
     def _build_base_layout(self):
         base = FloatLayout()
