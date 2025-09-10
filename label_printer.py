@@ -201,22 +201,31 @@ class LabelPrintingView(BoxLayout):
             self.parent.remove_widget(self)
 
     def refresh_and_show_print_queue(self):
+
         try:
             if self.print_queue_popup is not None:
                 self.print_queue_popup.dismiss()
+        except AttributeError as e:
+            logger.info(f"Expected error in refresh_and_show_print_queue {e}")
+        except Exception as e:
+            logger.info(f"Unepected error in refresh_and_show_print_queue {e}")
+
+        if self.dual_pane_mode:
+            self.print_queue_ref.refresh_print_queue_for_embed()
+        else:
             self.show_print_queue()
-        except Exception:
-            logger.info(f"Expected error in refresh_and_show_print_queue")
-        self.print_queue_ref.refresh_print_queue_for_embed()
+
+
 
     def update_print_queue_with_label_text(self, item_name, optional_text):
+
         updated = False
         for item in self.label_printer.print_queue:
             if item["name"] == item_name:
                 item["optional_text"] = optional_text
                 updated = True
                 break
-        if updated:
+        if updated and not self.dual_pane_mode:
             self.refresh_and_show_print_queue()
 
     def clear_search(self):
@@ -329,8 +338,10 @@ class LabelPrintingView(BoxLayout):
             self.app.popup_manager.queue_container.remove_widget(self.app.popup_manager.print_queue_embed)
             self.app.popup_manager.print_queue_embed = self.app.label_manager.show_print_queue(embed=True)
             self.app.popup_manager.queue_container.add_widget(self.app.popup_manager.print_queue_embed)
-        except Exception as e:
+        except AttributeError as e:
             logger.info(f"Expected error in refresh_print_queue_for_embed\n{e}")
+        except Exception as e:
+            logger.error(f"Unexpected error in refresh_print_queue_for_embed\n{e}")
 
     def add_label_text(self, item_str):
         layout = BoxLayout(orientation="vertical", size_hint_y=1)
