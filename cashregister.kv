@@ -6,58 +6,7 @@
     markup: True
 <MDLabel>:
     markup: True
-<InventoryRow>:
 
-    canvas.after:
-        Color:
-            rgba: 0.5, 0.5, 0.5, 1
-        Line:
-            points: self.x, self.y, self.x + self.width, self.y
-            width: 1
-    barcode: root.barcode
-    name: root.name
-    price: root.price
-
-
-    MarkupLabel:
-        id: name
-        text: root.formatted_name
-        halign: 'left'
-
-        text_size: self.size
-
-    Label:
-        id: price
-        text: root.formatted_price
-        size_hint_x: 0.2
-    MDFlatButton:
-        text: "[u]Add to Order[/u]"
-        on_press: root.add_to_order()
-        size_hint_x: 0.2
-<InventoryView>:
-    orientation: 'vertical'
-
-    rv: rv
-    BoxLayout:
-        size_hint_y: None
-        height: '32dp'
-        spacing: 5
-        TextInput:
-            id: inventory_search_input
-            hint_text: 'Search'
-            on_text: root.filter_inventory(self.text)
-
-    RecycleView:
-        id: rv
-        viewclass: 'InventoryRow'
-        RecycleBoxLayout:
-            #spacing: 5
-            default_size: None, dp(48)
-            default_size_hint: 1, None
-            size_hint_y: None
-            height: len(rv.data) * dp(48)
-            #height: self.minimum_height
-            orientation: 'vertical'
 <LabelPrintingRow>:
     canvas.after:
         Color:
@@ -126,86 +75,6 @@
             #height: self.minimum_height
             orientation: 'vertical'
 
-
-<InventoryManagementRow>:
-    canvas.after:
-        Color:
-            rgba: 0.5, 0.5, 0.5, 1
-        Line:
-            points: self.x, self.y, self.x + self.width, self.y
-            width: 1
-    barcode: root.barcode
-    name: root.name
-    price: root.formatted_price
-
-    GridLayout:
-        orientation: 'lr-tb'
-
-        cols: 3
-
-        Label:
-            text_size: self.size
-            halign: "left"
-            size_hint_x: 0.8
-            id: name
-            text: root.name
-
-        Label:
-            halign: "left"
-            size_hint_x: 0.2
-            id: barcode
-            text: root.barcode
-
-        Label:
-            halign: "left"
-            size_hint_x: 0.2
-            id: price
-            text: root.price
-
-
-    Button:
-        text: "Details"
-        size_hint_x: 0.1
-        on_press: root.app.utilities.open_inventory_manager_row(root)
-
-<InventoryManagementView>:
-    orientation: 'vertical'
-    rv: rv
-    BoxLayout:
-        size_hint_y: None
-        height: '48dp'
-        orientation: 'horizontal'
-        spacing: 5
-        size_hint_y: 0.05
-        TextInput:
-            id: inv_search_input
-            size_hint_x: 0.8
-            hint_text: 'Search'
-            on_text: root.filter_inventory(self.text)
-        MDRaisedButton:
-            text: "Clear"
-            size_hint: (0.2,1)
-            #size_hint_x: 0.2
-            on_press: root.clear_search()
-
-        MDRaisedButton:
-            text: "Add Item"
-            size_hint: (0.2,1)
-            #size_hint_x: 0.2
-            on_press: root.open_inventory_manager()
-
-
-
-    RecycleView:
-        id: rv
-        viewclass: 'InventoryManagementRow'
-        RecycleBoxLayout:
-            default_size: None, dp(40)
-            default_size_hint: 1, None
-            size_hint_y: None
-            #height: self.minimum_height
-            height: len(rv.data) * dp(40)
-            orientation: 'vertical'
 
 
 <HistoryRow>:
