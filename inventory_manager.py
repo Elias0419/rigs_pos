@@ -32,7 +32,12 @@ class InventoryManagementView(BoxLayout):
 
             self.database_manager = DatabaseManager("db/inventory.db", None)
             self.full_inventory = self.database_manager.get_all_items()
-            Clock.schedule_once(lambda dt: self.filter_inventory(None), 0.1)
+            try:
+                Clock.schedule_once(lambda dt: self.filter_inventory(None), 0.1)
+            except AttributeError as e:
+                logger.error(f"Failed to filter inventory in InventoryManagementView init: {e}")
+            except Exception as e:
+                logger.error(f"Unexpected error in ")
             self.app = App.get_running_app()
             self._init = True
 
@@ -181,8 +186,10 @@ class InventoryManagementView(BoxLayout):
         else:
 
             filtered_items = self.full_inventory
-
-        self.rv.data = self.generate_data_for_rv(filtered_items)
+        try:
+            self.rv.data = self.generate_data_for_rv(filtered_items)
+        except AttributeError as e:
+            logger.error(f"Error from filter inventory in inventory manager")
 
 
 class InventoryManagementRow(BoxLayout):
