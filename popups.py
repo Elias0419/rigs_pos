@@ -3803,7 +3803,9 @@ class PopupManager:
 
 
 class MarkupButton(Button):
-    pass
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.markup = True
 
 
 class MoneyInput(TextInput):
@@ -3857,10 +3859,10 @@ class FinancialSummaryWidget(MDFlatButton):
 
             self.layout = BoxLayout(orientation="vertical", size_hint=(1, 1))
 
-            self.subtotal_label = MDLabel(markup=True, halign="right")
-            self.discount_label = MDLabel(markup=True, halign="right")
-            self.tax_label = MDLabel(markup=True, halign="right")
-            self.total_label = MDLabel(markup=True, font_style="H5", halign="right")
+            self.subtotal_label = MarkupLabel(halign="right")
+            self.discount_label = MarkupLabel(halign="right")
+            self.tax_label = MarkupLabel(halign="right")
+            self.total_label = MarkupLabel(font_style="H5", halign="right")
             self.blank = BoxLayout(size_hint_y=None, height=20)
             self.layout.add_widget(self.subtotal_label)
             self.layout.add_widget(self.discount_label)
