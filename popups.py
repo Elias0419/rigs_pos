@@ -39,6 +39,10 @@ import logging
 
 logger = logging.getLogger("rigs_pos")
 
+class MarkupLabel(MDLabel):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.markup = True
 
 class PopupManager:
     def __init__(self, ref):
@@ -2714,20 +2718,20 @@ class PopupManager:
 
         totals_container = AnchorLayout(anchor_x="right", size_hint_y=0.1)
         totals_layout = GridLayout(orientation="tb-lr", rows=4)
-        subtotal_label = MDLabel(
+        subtotal_label = MarkupLabel(
             text=f"Subtotal: ${order_details['subtotal']:.2f}", halign="right"
         )
-        tax_label = MDLabel(
+        tax_label = MarkupLabel(
             text=f"Tax: ${order_details['tax_amount']:.2f}", halign="right"
         )
-        total_label = MDLabel(
+        total_label = MarkupLabel(
             text=f"[size=25]Total: [b]${order_details['total_with_tax']:.2f}[/b][/size]",
             halign="right",
         )
 
         totals_layout.add_widget(subtotal_label)
         if order_details["discount"] > 0:
-            discount_label = MDLabel(
+            discount_label = MarkupLabel(
                 text=f"Discount: -${order_details['discount']:.2f}", halign="right"
             )
             totals_layout.add_widget(discount_label)
@@ -3076,7 +3080,7 @@ class PopupManager:
     def show_make_change_popup(self, change):
         change_layout = BoxLayout(orientation="vertical", spacing=10)
         change_layout.add_widget(
-            MDLabel(
+            MarkupLabel(
                 text=f"[size=30]Change to return:\n [b]${change:.2f}[/b][/size]",
                 halign="center",
             )
@@ -3121,7 +3125,7 @@ class PopupManager:
     def split_cash_make_change(self, change, amount):
         split_change_layout = BoxLayout(orientation="vertical", spacing=10)
         split_change_layout.add_widget(
-            MDLabel(text=f"[size=30]Change to return: [b]${change:.2f}[/b][/size]")
+            MarkupLabel(text=f"[size=30]Change to return: [b]${change:.2f}[/b][/size]")
         )
 
         split_done_button = self.app.utilities.create_md_raised_button(
@@ -3796,10 +3800,6 @@ class PopupManager:
             self.handle_duplicate_barcodes_popup.dismiss()
             self.app.utilities.update_display()
             self.app.utilities.update_financial_summary()
-
-
-class MarkupLabel(Label):
-    pass
 
 
 class MarkupButton(Button):

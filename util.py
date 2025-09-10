@@ -97,6 +97,11 @@ def log_caller_info(depth=1):
         logger.warn(f"Called from {file_name}, line {line_number}, in {function_name}")
 
 
+class MarkupLabel(MDLabel):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.markup = True
+
 class BarcodeCache:
 
     def __init__(self, rows):
@@ -857,19 +862,19 @@ class Utilities:
                 orientation="lr-tb", cols=3, rows=2, size_hint=(1, 1)
             )
             item_label_container = BoxLayout(size_hint_x=None, width=550)
-            item_label = MDLabel(text=f"[size=20]{item_display_text}[/size]")
+            item_label = MarkupLabel(text=f"[size=20]{item_display_text}[/size]")
             item_label_container.add_widget(item_label)
 
             spacer = MDLabel(size_hint_x=1)
             # item_layout.add_widget(spacer)
             price_label_container = BoxLayout(size_hint_x=None, width=150)
-            price_label = MDLabel(
+            price_label = MarkupLabel(
                 text=f"[size=20]{price_display_text}[/size]", halign="right"
             )
             price_label_container.add_widget(price_label)
 
             quantity_label_container = BoxLayout(size_hint_x=None, width=50)
-            quantity_label = MDLabel(text=f"[size=20]{quantity_display_text}[/size]")
+            quantity_label = MarkupLabel(text=f"[size=20]{quantity_display_text}[/size]")
             quantity_label_container.add_widget(quantity_label)
 
             item_layout.add_widget(item_label_container)
@@ -1002,7 +1007,7 @@ class Utilities:
 
         financial_button = self.create_financial_layout()
         financial_layout = MDGridLayout(size_hint_y=0.2, orientation="lr-tb", cols=2)
-        financial_layout.add_widget(MDLabel(size_hint_x=0.4))
+        financial_layout.add_widget(MarkupLabel(size_hint_x=0.4))
         financial_layout.add_widget(financial_button)
         right_area_layout.add_widget(financial_layout)
 
@@ -1239,7 +1244,7 @@ class Utilities:
     def _clk_build_top_container(self):
         top_container = BoxLayout(orientation="vertical", size_hint_y=0.1, padding=10)
 
-        register_text = MDLabel(
+        register_text = MarkupLabel(
             text="Cash Register",
             size_hint_y=None,
             font_style="H6",
@@ -1281,7 +1286,7 @@ class Utilities:
         )
 
         self.saved_order_title_container = MDBoxLayout(orientation="vertical")
-        self.saved_order_title = MDLabel(
+        self.saved_order_title = MarkupLabel(
             text="",
             adaptive_height=False,
             size_hint_y=None,
@@ -1340,7 +1345,7 @@ class Utilities:
 
     def _clk_build_clock_container(self):
         clock_container = BoxLayout(size_hint_y=0.2, padding=(-40, 0, 0, -100))
-        self.app.clock_label = MDLabel(
+        self.app.clock_label = MarkupLabel(
             text="",
             size_hint_y=None,
             height=150,
