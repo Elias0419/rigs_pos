@@ -245,7 +245,7 @@ class Utilities:
             logger.warning(f"[ID SCAN] popup error: {e!r}")
 
 
-    def extract_dob_from_aamva(self, raw_bytes: bytes):
+    def _extract_dob_from_aamva(self, raw_bytes: bytes):
         text = raw_bytes.decode("utf-8", "ignore")
         # find DBB
         m = re.search(r"DBB([^\r\n]+)", text)
