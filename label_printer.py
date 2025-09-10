@@ -1,107 +1,127 @@
-import barcode
-import textwrap
 import json
+import logging
+import queue
+import textwrap
+import threading
+from io import BytesIO
+
+import barcode
 from barcode.writer import ImageWriter, SVGWriter
 from barcode.upc import UniversalProductCodeA as upc_a
-from PIL import Image, ImageDraw, ImageFont
 import brother_ql
 from brother_ql.conversion import convert
 from brother_ql.backends.helpers import send
-from kivymd.uix.boxlayout import BoxLayout
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.popup import Popup
-from kivy.uix.label import Label
-from kivy.properties import StringProperty, ListProperty, ObjectProperty
-from kivy.uix.textinput import TextInput
-from kivymd.uix.button import MDFlatButton, MDRaisedButton, MDIconButton
-from kivymd.uix.recycleview import RecycleView
-from kivy.metrics import dp
-from kivy.uix.button import Button
-from kivy.graphics import Rectangle, Color, Line
-from kivy.uix.widget import Widget
-from kivymd.uix.boxlayout import MDBoxLayout
-import threading
-from kivy.uix.image import Image as KImage
-from io import BytesIO
-from kivy.core.image import Image as CoreImage
-from kivy.uix.image import Image as KivyImage
-import queue
-from kivy.clock import Clock
+from PIL import Image, ImageDraw, ImageFont
+
 from kivy.app import App
-from kivy.uix.recycleview import RecycleView
+from kivy.clock import Clock
+from kivy.core.image import Image as CoreImage
+from kivy.graphics import Rectangle, Color, Line
+from kivy.metrics import dp
+from kivy.properties import StringProperty, ListProperty, ObjectProperty
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.image import Image as KImage, Image as KivyImage
+from kivy.uix.label import Label
+from kivy.uix.popup import Popup
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
+from kivy.uix.recycleview import RecycleView
+from kivy.uix.recycleview.views import RecycleDataViewBehavior
+from kivy.uix.textinput import TextInput
+from kivy.uix.widget import Widget
+
+from kivymd.uix.boxlayout import BoxLayout, MDBoxLayout
+from kivymd.uix.button import MDFlatButton, MDRaisedButton, MDIconButton
+from kivymd.uix.label import MDLabel
+from kivymd.uix.recycleview import RecycleView
+
+logger = logging.getLogger("rigs_pos")
+
+def add_bottom_divider(widget, rgba=(0.5, 0.5, 0.5, 1), width=1):
+    with widget.canvas.after:
+        Color(*rgba)
+        widget._divider = Line(points=[widget.x, widget.y, widget.right, widget.y], width=width)
+    widget.bind(pos=lambda *_: _update_divider(widget),
+                size=lambda *_: _update_divider(widget))
+
+def _update_divider(widget):
+    if hasattr(widget, "_divider") and widget._divider is not None:
+        widget._divider.points = [widget.x, widget.y, widget.right, widget.y]
+
+def _left_label(**kw):
+    lb = MDLabel(halign="left", **kw)
+    lb.bind(size=lambda *_: setattr(lb, "text_size", lb.size))
+    return lb
 
 import logging
 logger = logging.getLogger('rigs_pos')
-class LabelPrintingRow(BoxLayout):
-    barcode = StringProperty()
-    name = StringProperty()
-    price = StringProperty()
-    label_printer = ObjectProperty()
+
+class LabelPrintingRow(RecycleDataViewBehavior, BoxLayout):
+    barcode        = StringProperty()
+    name           = StringProperty()
+    price          = StringProperty()
+    label_printer  = ObjectProperty(allownone=True)
 
     def __init__(self, **kwargs):
-        super(LabelPrintingRow, self).__init__(**kwargs)
+        super().__init__(orientation="horizontal", **kwargs)
+        self.size_hint_y = None
+        self.height = dp(56)
         self.app = App.get_running_app()
+
+        row = BoxLayout(orientation="horizontal", size_hint_y=None, height=dp(56), padding=(1,1,1,1))
+        self._name_lbl  = _left_label(size_hint_x=0.7)
+        self._price_lbl = Label(size_hint_x=0.2)
+        add_btn = Button(text="Add to Queue", size_hint_x=0.1)
+        add_btn.bind(on_release=lambda *_: self.add_to_print_queue())
+
+        self.bind(name=self._name_lbl.setter("text"))
+        self.bind(price=self._price_lbl.setter("text"))
+
+        row.add_widget(self._name_lbl)
+        row.add_widget(self._price_lbl)
+        row.add_widget(add_btn)
+        self.add_widget(row)
+
+        add_bottom_divider(self)
+
+    def refresh_view_attrs(self, rv, index, data):
+        return super().refresh_view_attrs(rv, index, data)
 
     def add_to_print_queue(self):
         self.show_label_popup()
 
-    def create_focus_popup(
-        self, title, content, textinput, size_hint, pos_hint={}, separator_height=1
-    ):
+    def create_focus_popup(self, title, content, textinput, size_hint, pos_hint={}, separator_height=1):
         popup = FocusPopup(
-            title=title,
-            content=content,
-            size_hint=size_hint,
-            pos_hint=pos_hint,
-            separator_height=separator_height,
+            title=title, content=content, size_hint=size_hint,
+            pos_hint=pos_hint, separator_height=separator_height,
         )
         popup.focus_on_textinput(textinput)
         return popup
 
     def show_label_popup(self):
         content = BoxLayout(orientation="vertical")
-        quantity_input = TextInput(
-            text="1", size_hint=(1, 0.4), input_filter="int", font_size=25
-        )
+        quantity_input = TextInput(text="1", size_hint=(1, 0.4), input_filter="int", font_size=25)
         label_container = MDBoxLayout(size_hint_y=0.1)
-        label = Label(text=f"Enter quantity for {self.name}")
-        label_container.add_widget(label)
+        label_container.add_widget(Label(text=f"Enter quantity for {self.name}"))
         content.add_widget(label_container)
         content.add_widget(quantity_input)
-        btn_layout = BoxLayout(
-            orientation="horizontal", size_hint=(0.8, 0.4), spacing=10
-        )
+
+        btn_layout = BoxLayout(orientation="horizontal", size_hint=(0.8, 0.4), spacing=10)
         popup = self.create_focus_popup(
-            title="",
-            content=content,
-            textinput=quantity_input,
-            size_hint=(0.4, 0.2),
-            # pos_hint={"top": 1},
-            separator_height=0,
+            title="", content=content, textinput=quantity_input, size_hint=(0.4, 0.2), separator_height=0
         )
 
         add_button = MDRaisedButton(
-            text="Add",
-            size_hint=(0.2, 0.8),
-            on_press=lambda x: self.on_add_button_press(quantity_input, popup),
+            text="Add", size_hint=(0.2, 0.8),
+            on_release=lambda *_: self.on_add_button_press(quantity_input, popup),
         )
-
         btn_layout.add_widget(add_button)
-
-        btn_layout.add_widget(
-            MDRaisedButton(
-                text="Cancel",
-                size_hint=(0.2, 0.8),
-                on_press=lambda x: popup.dismiss(),
-            )
-        )
+        btn_layout.add_widget(MDRaisedButton(text="Cancel", size_hint=(0.2, 0.8), on_release=lambda *_: popup.dismiss()))
         content.add_widget(btn_layout)
 
-        def on_text(instance, value):
-
+        def on_text(_inst, value):
             add_button.disabled = not (value.isdigit() and int(value) > 0)
-
         quantity_input.bind(text=on_text)
 
         popup.open()
@@ -111,16 +131,10 @@ class LabelPrintingRow(BoxLayout):
 
     def refresh_print_queue_for_embed_main_thread(self, *args):
         try:
-            self.app.popup_manager.queue_container.remove_widget(
-                self.app.popup_manager.print_queue_embed
-            )
-            self.app.popup_manager.print_queue_embed = (
-                self.app.label_manager.show_print_queue(embed=True)
-            )
-            self.app.popup_manager.queue_container.add_widget(
-                self.app.popup_manager.print_queue_embed
-            )
-        except Exception as e:
+            self.app.popup_manager.queue_container.remove_widget(self.app.popup_manager.print_queue_embed)
+            self.app.popup_manager.print_queue_embed = self.app.label_manager.show_print_queue(embed=True)
+            self.app.popup_manager.queue_container.add_widget(self.app.popup_manager.print_queue_embed)
+        except AttributeError as e:
             logger.info(f"Expected error in refresh_print_queue_for_embed\n{e}")
 
     def on_add_button_press(self, quantity_input, popup):
@@ -129,11 +143,8 @@ class LabelPrintingRow(BoxLayout):
         popup.dismiss()
 
     def add_quantity_to_queue(self, quantity):
-        if quantity.isdigit() and int(quantity) > 0:
-            self.label_printer.add_to_queue(
-                self.barcode, self.name, self.price, quantity
-            )
-
+        if quantity.isdigit() and int(quantity) > 0 and self.label_printer:
+            self.label_printer.add_to_queue(self.barcode, self.name, self.price, quantity)
 
 class LabelPrintingView(BoxLayout):
     _instance = None
@@ -143,18 +154,47 @@ class LabelPrintingView(BoxLayout):
             cls._instance = super(LabelPrintingView, cls).__new__(cls, *args, **kwargs)
         return cls._instance
 
-    def __init__(self, ref, **kwargs):
-        if not hasattr(self, "_init"):
-            super(LabelPrintingView, self).__init__(**kwargs)
-            if ref:
-                print("ref", ref)
-                self.full_inventory = []
-                self.app = ref
-                self.label_printer = self.app.label_printer
-                self.print_queue_ref = LabelPrintingRow()
-                self.dual_pane_mode = False
+    def __init__(self, ref=None, **kwargs):
+        if getattr(self, "_init", False):
+            return
+        super().__init__(orientation="vertical", **kwargs)
+        self._init = True
 
-                self._init = True
+        self.app = ref or App.get_running_app()
+        self.label_printer = getattr(self.app, "label_printer", None)
+
+        self.full_inventory = []
+        self.dual_pane_mode = False
+        self.print_queue_popup = None
+
+        self.print_queue_ref = self
+
+        top = BoxLayout(size_hint_y=None, height=dp(48), orientation="horizontal", spacing=5)
+        self.label_search_input = TextInput(hint_text='Search', size_hint_x=0.8, multiline=False)
+        self.label_search_input.bind(text=self._on_search_text)
+
+        clear_btn = MDRaisedButton(text="Clear", size_hint=(0.2, 1))
+        clear_btn.bind(on_release=lambda *_: self.clear_search())
+
+        show_btn = MDRaisedButton(text="Show Print Queue", size_hint=(0.2, 1))
+        show_btn.bind(on_release=lambda *_: self.show_print_queue())
+
+        top.add_widget(self.label_search_input)
+        top.add_widget(clear_btn)
+        top.add_widget(show_btn)
+        self.add_widget(top)
+
+        self.rv = RecycleView()
+        lm = RecycleBoxLayout(
+            default_size=(None, dp(56)),
+            default_size_hint=(1, None),
+            size_hint_y=None,
+            orientation='vertical',
+        )
+        lm.bind(minimum_height=lm.setter('height'))
+        self.rv.add_widget(lm)
+        self.rv.viewclass = LabelPrintingRow
+        self.add_widget(self.rv)
 
     def detach_from_parent(self):
         if self.parent:
@@ -165,7 +205,7 @@ class LabelPrintingView(BoxLayout):
             if self.print_queue_popup is not None:
                 self.print_queue_popup.dismiss()
             self.show_print_queue()
-        except Exception as e:
+        except Exception:
             logger.info(f"Expected error in refresh_and_show_print_queue")
         self.print_queue_ref.refresh_print_queue_for_embed()
 
@@ -180,36 +220,33 @@ class LabelPrintingView(BoxLayout):
             self.refresh_and_show_print_queue()
 
     def clear_search(self):
-        self.ids.label_search_input.text = ""
+        self.label_search_input.text = ""
 
     def show_inventory_for_label_printing(self, inventory_items, dual_pane_mode=False):
-
-        self.full_inventory = inventory_items
-        self.ids.label_rv.data = self.generate_data_for_rv(
-            inventory_items, self.dual_pane_mode
-        )
+        self.full_inventory = inventory_items or []
+        self.dual_pane_mode = bool(dual_pane_mode)
+        self.rv.data = self.generate_data_for_rv(self.full_inventory, self.dual_pane_mode)
 
     def remove_from_queue(self, item_name, embed=False):
         removed, is_empty = self.label_printer.remove_from_queue(item_name)
         if removed:
             if is_empty:
                 if embed:
-                    self.print_queue_ref.refresh_print_queue_for_embed()
+                    self.refresh_print_queue_for_embed()
                 else:
                     self.print_queue_popup.dismiss()
-
             else:
                 if embed:
-                    self.print_queue_ref.refresh_print_queue_for_embed()
+                    self.refresh_print_queue_for_embed()
                 else:
                     self.print_queue_popup.dismiss()
                     self.show_print_queue()
 
     def update_search_input(self, barcode):
-        self.ids.label_search_input.text = barcode
+        self.label_search_input.text = barcode
 
     def handle_scanned_barcode(self, barcode):
-        barcode = barcode.strip()
+        barcode = (barcode or "").strip()
         items = self.app.db_manager.get_all_items()
 
         if any(item[0] == barcode for item in items):
@@ -217,90 +254,40 @@ class LabelPrintingView(BoxLayout):
             return
 
         for item in items:
-            if (
-                item[0][1:] == barcode
-                or item[0] == barcode[:-4]
-                or item[0][1:] == barcode[:-4]
-            ):
+            if item[0][1:] == barcode or item[0] == barcode[:-4] or item[0][1:] == barcode[:-4]:
                 Clock.schedule_once(lambda dt: self.update_search_input(item[0]), 0.1)
                 return
 
     def show_print_queue(self, embed=False):
-
         queue_layout = BoxLayout(orientation="vertical", spacing=5, padding=5)
         item_layout = BoxLayout(orientation="vertical", spacing=5, padding=5)
-        for item in self.label_printer.print_queue:
-            if embed:
-                if len(item["name"]) > 30:
-                    name_label = Label(text=f"{item['name'][:27]}...", size_hint_x=0.2)
-                else:
-                    name_label = Label(text=f"{item['name']}", size_hint_x=0.2)
-            else:
-                name_label = Label(text=f"{item['name']}", size_hint_x=0.2)
-            logger.warn(name_label)
-            qty_label = Label(text=f"Qty: {item['quantity']}", size_hint_x=0.05)
-            text_label = Label(
-                text=f"Text: {item['optional_text']}", size_hint_x=0.2, halign="left"
-            )
-            if embed:
-                plus_button = MDIconButton(
-                    icon="plus",
-                    on_press=lambda x, item=item: self.increment_quantity(
-                        item_str=item["name"], embed=True
-                    ),
-                    size_hint_x=0.1,
-                )
-                minus_button = MDIconButton(
-                    icon="minus",
-                    on_press=lambda x, item=item: self.decrement_quantity(
-                        item_str=item["name"], embed=True
-                    ),
-                    size_hint_x=0.1,
-                )
-                rm_button = Button(
-                    text="Remove",
-                    on_press=lambda x, item=item: self.remove_from_queue(
-                        item_name=item["name"], embed=True
-                    ),
-                    size_hint_x=0.1,
-                )
-            else:
-                plus_button = MDIconButton(
-                    icon="plus",
-                    on_press=lambda x, item=item: self.increment_quantity(
-                        item_str=item["name"]
-                    ),
-                    size_hint_x=0.1,
-                )
-                minus_button = MDIconButton(
-                    icon="minus",
-                    on_press=lambda x, item=item: self.decrement_quantity(
-                        item_str=item["name"]
-                    ),
-                    size_hint_x=0.1,
-                )
 
-                rm_button = Button(
-                    text="Remove",
-                    on_press=lambda x, item=item: self.remove_from_queue(
-                        item_name=item["name"]
-                    ),
-                    size_hint_x=0.1,
-                )
-            text_button = Button(
-                text="Add Text",
-                on_press=lambda x, item=item: self.add_label_text(
-                    item_str=item["name"]
-                ),
-                size_hint_x=0.1,
-            )
-            preview_button = Button(
-                text="Preview",
-                on_press=lambda x, item=item: self.label_printer.preview_barcode_label(
-                    name=item["name"]
-                ),
-                size_hint_x=0.1,
-            )
+        for item in self.label_printer.print_queue:
+            name_text = f"{item['name'][:27]}..." if (embed and len(item['name']) > 30) else item['name']
+            name_label = Label(text=name_text, size_hint_x=0.2)
+            qty_label  = Label(text=f"Qty: {item['quantity']}", size_hint_x=0.05)
+            text_label = Label(text=f"Text: {item['optional_text']}", size_hint_x=0.2, halign="left")
+
+            if embed:
+                plus_button  = MDIconButton(icon="plus",  size_hint_x=0.1,
+                    on_release=lambda _b, item=item: self.increment_quantity(item_str=item["name"], embed=True))
+                minus_button = MDIconButton(icon="minus", size_hint_x=0.1,
+                    on_release=lambda _b, item=item: self.decrement_quantity(item_str=item["name"], embed=True))
+                rm_button    = Button(text="Remove", size_hint_x=0.1,
+                    on_release=lambda _b, item=item: self.remove_from_queue(item_name=item["name"], embed=True))
+            else:
+                plus_button  = MDIconButton(icon="plus",  size_hint_x=0.1,
+                    on_release=lambda _b, item=item: self.increment_quantity(item_str=item["name"]))
+                minus_button = MDIconButton(icon="minus", size_hint_x=0.1,
+                    on_release=lambda _b, item=item: self.decrement_quantity(item_str=item["name"]))
+                rm_button    = Button(text="Remove", size_hint_x=0.1,
+                    on_release=lambda _b, item=item: self.remove_from_queue(item_name=item["name"]))
+
+            text_button = Button(text="Add Text", size_hint_x=0.1,
+                on_release=lambda _b, item=item: self.add_label_text(item_str=item["name"]))
+            preview_button = Button(text="Preview", size_hint_x=0.1,
+                on_release=lambda _b, item=item: self.label_printer.preview_barcode_label(name=item["name"]))
+
             item_row = GridLayout(cols=8, spacing=5, size_hint_y=None, height=40)
             item_row.add_widget(name_label)
             item_row.add_widget(qty_label)
@@ -311,98 +298,57 @@ class LabelPrintingView(BoxLayout):
             item_row.add_widget(preview_button)
             item_row.add_widget(rm_button)
             item_layout.add_widget(item_row)
+
             line = MDBoxLayout(orientation="horizontal", size_hint_y=None, height=1)
             line.md_bg_color = (0.56, 0.56, 1, 1)
-
             item_layout.add_widget(line)
 
-        btn_layout = BoxLayout(
-            orientation="horizontal", spacing=5, padding=5, size_hint_y=0.2
-        )
-        btn_layout.add_widget(
-            MDRaisedButton(
-                text=f"[b][size=20]Print Now[/size][/b]",
-                on_press=self.print_now,
-                size_hint=(0.2, 1),
-            )
-        )
+        btn_layout = BoxLayout(orientation="horizontal", spacing=5, padding=5, size_hint_y=0.2)
+        btn_layout.add_widget(MDRaisedButton(text="[b][size=20]Print Now[/size][/b]", on_release=self.print_now, size_hint=(0.2, 1)))
         btn_layout.add_widget(BoxLayout(size_hint_x=0.2))
-        if embed:
-            pass
-        else:
-            btn_layout.add_widget(
-                MDFlatButton(
-                    text="Cancel",
-                    on_press=self.cancel_print,
-                    size_hint=(0.1, 1),
-                    md_bg_color="grey",
-                )
-            )
-        if embed:
-            btn_layout.add_widget(
-                MDFlatButton(
-                    text="Clear Queue",
-                    on_press=lambda x: self.clear_queue(embed=True),
-                    size_hint=(0.1, 1),
-                    md_bg_color="grey",
-                )
-            )
-        else:
-            btn_layout.add_widget(
-                MDFlatButton(
-                    text="Clear Queue",
-                    on_press=lambda x: self.clear_queue(embed=False),
-                    size_hint=(0.1, 1),
-                    md_bg_color="grey",
-                )
-            )
+        if not embed:
+            btn_layout.add_widget(MDFlatButton(text="Cancel", md_bg_color="grey", size_hint=(0.1, 1), on_release=self.cancel_print))
+        btn_layout.add_widget(MDFlatButton(text="Clear Queue", md_bg_color="grey", size_hint=(0.1, 1),
+                                           on_release=lambda _b: self.clear_queue(embed=embed)))
 
         queue_layout.add_widget(item_layout)
         queue_layout.add_widget(btn_layout)
+
         if embed:
             return queue_layout
         else:
-            self.print_queue_popup = Popup(
-                title="Print Queue",
-                content=queue_layout,
-                size_hint=(0.8, 0.6),
-            )
-
+            self.print_queue_popup = Popup(title="Print Queue", content=queue_layout, size_hint=(0.8, 0.6))
             self.print_queue_popup.open()
 
+
+    def refresh_print_queue_for_embed(self):
+        Clock.schedule_once(self._refresh_queue_embed_main_thread, 0.1)
+
+    def _refresh_queue_embed_main_thread(self, *args):
+        try:
+            self.app.popup_manager.queue_container.remove_widget(self.app.popup_manager.print_queue_embed)
+            self.app.popup_manager.print_queue_embed = self.app.label_manager.show_print_queue(embed=True)
+            self.app.popup_manager.queue_container.add_widget(self.app.popup_manager.print_queue_embed)
+        except Exception as e:
+            logger.info(f"Expected error in refresh_print_queue_for_embed\n{e}")
+
     def add_label_text(self, item_str):
-        add_lable_layout = BoxLayout(orientation="vertical", size_hint_y=1)
-        add_label_text_layout = BoxLayout(orientation="vertical", size_hint_y=0.5)
-        name_truncated = item_str[:15]
-        # add_label_text_label = Label(text="15 Characters Max")
-        self.add_label_text_input = TextInput(
-            text=name_truncated, size_hint=(1, 0.1), multiline=False
-        )
-        # add_label_text_layout.add_widget(add_label_text_label)
-        add_label_text_layout.add_widget(self.add_label_text_input)
-        add_label_button_layout = BoxLayout(
-            orientation="horizontal", spacing=5, size_hint=(1, 0.5)
-        )
-        add_label_confirm_button = MDRaisedButton(
-            text="Confirm",
-            on_press=lambda x: self.on_add_label_confirm_button_press(item_str),
-            size_hint=(1, 1),
-        )
-        add_label_cancel_button = MDRaisedButton(
-            text="Cancel",
-            on_press=lambda x: self.add_label_popup.dismiss(),
-            size_hint=(1, 1),
-        )
-        add_label_button_layout.add_widget(add_label_confirm_button)
-        add_label_button_layout.add_widget(add_label_cancel_button)
-        add_lable_layout.add_widget(add_label_text_layout)
-        add_lable_layout.add_widget(add_label_button_layout)
+        layout = BoxLayout(orientation="vertical", size_hint_y=1)
+        text_layout = BoxLayout(orientation="vertical", size_hint_y=0.5)
+        self.add_label_text_input = TextInput(text=item_str[:15], size_hint=(1, 0.1), multiline=False)
+        text_layout.add_widget(self.add_label_text_input)
+
+        btns = BoxLayout(orientation="horizontal", spacing=5, size_hint=(1, 0.5))
+        confirm = MDRaisedButton(text="Confirm", size_hint=(1,1),
+                                 on_release=lambda _b: self.on_add_label_confirm_button_press(item_str))
+        cancel  = MDRaisedButton(text="Cancel", size_hint=(1,1),
+                                 on_release=lambda _b: self.add_label_popup.dismiss())
+        btns.add_widget(confirm); btns.add_widget(cancel)
+
+        layout.add_widget(text_layout); layout.add_widget(btns)
         self.add_label_popup = self.create_focus_popup(
             title="Add Text to Selected Label",
-            content=add_lable_layout,
-            textinput=self.add_label_text_input,
-            # pos_hint={"top": 1},
-            size_hint=(0.4, 0.2),
+            content=layout, textinput=self.add_label_text_input, size_hint=(0.4, 0.2)
         )
         self.add_label_popup.open()
 
@@ -420,23 +366,16 @@ class LabelPrintingView(BoxLayout):
             if item["name"] == item_str:
                 item["quantity"] += 1
                 self.label_printer.save_queue()
-                if embed:
-                    self.print_queue_ref.refresh_print_queue_for_embed()
-                else:
-                    self.refresh_and_show_print_queue()
+                (self.refresh_print_queue_for_embed() if embed else self.refresh_and_show_print_queue())
                 break
 
     def decrement_quantity(self, item_str, embed=False):
         for item in self.label_printer.print_queue:
-            if item["name"] == item_str:
-                if item["quantity"] > 1:
-                    item["quantity"] -= 1
-                    self.label_printer.save_queue()
-                    if embed:
-                        self.print_queue_ref.refresh_print_queue_for_embed()
-                    else:
-                        self.refresh_and_show_print_queue()
-                    break
+            if item["name"] == item_str and item["quantity"] > 1:
+                item["quantity"] -= 1
+                self.label_printer.save_queue()
+                (self.refresh_print_queue_for_embed() if embed else self.refresh_and_show_print_queue())
+                break
 
     def update_print_queue_quantity(self, item_name, new_quantity):
         self.label_printer.update_queue_item_quantity(item_name, new_quantity)
@@ -445,83 +384,52 @@ class LabelPrintingView(BoxLayout):
     def clear_queue(self, embed=False):
         self.label_printer.clear_queue()
         self.label_printer.save_queue()
-        if embed:
-            self.print_queue_ref.refresh_print_queue_for_embed()
-        else:
-            self.print_queue_popup.dismiss()
+        (self.refresh_print_queue_for_embed() if embed else self.print_queue_popup.dismiss())
 
-    def print_now(self, instance):
+    def print_now(self, *_):
         self.label_printer.process_queue()
 
-    def cancel_print(self, instance):
-        self.print_queue_popup.dismiss()
+    def cancel_print(self, *_):
+        if self.print_queue_popup:
+            self.print_queue_popup.dismiss()
 
     def generate_data_for_rv(self, items, dual_pane_mode=False):
         data = []
-        if self.dual_pane_mode:
+        if dual_pane_mode:
             for item in items:
-                if len(str(item[1])) > 80:
-
-                    data.append(
-                        {
-                            "barcode": str(item[0]),
-                            "name": f"{item[1][:77]}...",
-                            "price": (
-                                f"{float(item[2]):.2f}" if item[2] else "Not Found"
-                            ),
-                            "label_printer": self.label_printer,
-                        }
-                    )
-                else:
-
-                    data.append(
-                        {
-                            "barcode": str(item[0]),
-                            "name": item[1],
-                            "price": (
-                                f"{float(item[2]):.2f}" if item[2] else "Not Found"
-                            ),
-                            "label_printer": self.label_printer,
-                        }
-                    )
-            return data
+                name = item[1]
+                name = f"{name[:77]}..." if len(str(name)) > 80 else name
+                data.append({
+                    "barcode": str(item[0]),
+                    "name": name,
+                    "price": f"{float(item[2]):.2f}" if item[2] else "Not Found",
+                    "label_printer": self.label_printer,
+                })
         else:
             for item in items:
-                data.append(
-                    {
-                        "barcode": str(item[0]),
-                        "name": item[1],
-                        "price": f"{float(item[2]):.2f}" if item[2] else "Not Found",
-                        "label_printer": self.label_printer,
-                    }
-                )
-            return data
+                data.append({
+                    "barcode": str(item[0]),
+                    "name": item[1],
+                    "price": f"{float(item[2]):.2f}" if item[2] else "Not Found",
+                    "label_printer": self.label_printer,
+                })
+        return data
 
     def filter_inventory(self, query="", dual_pane_mode=False):
-        filtered_items = (
-            self.full_inventory
-            if not query
-            else [
-                item
-                for item in self.full_inventory
-                if query.lower() in str(item[0]).lower()
-                or query.lower() in item[1].lower()
-            ]
-        )
-        display_data = self.generate_data_for_rv(
-            filtered_items, dual_pane_mode=dual_pane_mode
-        )
-        self.ids.label_rv.data = display_data
+        q = (query or "").lower()
+        filtered = self.full_inventory if not q else [
+            it for it in self.full_inventory
+            if q in str(it[0]).lower() or q in (it[1] or "").lower()
+        ]
+        self.rv.data = self.generate_data_for_rv(filtered, dual_pane_mode=dual_pane_mode)
 
-    def create_focus_popup(
-        self, title, content, textinput, size_hint, pos_hint={}, separator_height=1
-    ):
+    def _on_search_text(self, _inst, value):
+        self.filter_inventory(value, self.dual_pane_mode)
+
+    def create_focus_popup(self, title, content, textinput, size_hint, pos_hint={}, separator_height=1):
         popup = FocusPopup(
-            title=title,
-            content=content,
-            size_hint=size_hint,
-            pos_hint=pos_hint,
-            separator_height=separator_height,
+            title=title, content=content, size_hint=size_hint,
+            pos_hint=pos_hint, separator_height=separator_height,
         )
         popup.focus_on_textinput(textinput)
         return popup
@@ -593,7 +501,15 @@ class LabelPrinter:
         font_path="/usr/share/fonts/TTF/Arial.TTF",
     ):
         font_size = start_font_size
-        font = ImageFont.truetype(font_path, font_size)
+
+        try:
+            font = ImageFont.truetype(font_path, font_size)
+        except OSError:
+                try:
+                    font = ImageFont.truetype("DejaVuSans.ttf", font_size)
+                except OSError:
+                    font = ImageFont.load_default()
+
         text_bbox = draw.textbbox((0, 0), text, font=font)
         text_width = text_bbox[2] - text_bbox[0]
 
@@ -684,13 +600,11 @@ class LabelPrinter:
 
         writer = ImageWriter()
         try:
-            logger.warn(f"we have upc a:\n'{barcode_data}")
             upc = UPC(barcode_data, writer=writer)
         except barcode.errors.NumberOfDigitsError as e:
-            logger.warn(f"we have upc e:\n'{barcode_data}")
             upc = UPC(self.handle_upc_e(barcode_data), writer=writer)
         except barcode.errors.IllegalCharacterError as e:
-            logger.info(f"probably no barcode or something unexpected{barcode_data}")
+            logger.warning(f"probably no barcode or something unexpected\n{barcode_data}")
             self.app.popup_manager.catch_label_printer_missing_barcode()
         barcode_image = upc.render(
             {
@@ -707,7 +621,14 @@ class LabelPrinter:
         draw = ImageDraw.Draw(label_image)
 
         font_size = 33
-        font = ImageFont.truetype("/usr/share/fonts/TTF/Arialbd.TTF", font_size)
+        try:
+            font = ImageFont.truetype("/usr/share/fonts/TTF/Arialbd.TTF", font_size)
+        except OSError:
+                try:
+                    font = ImageFont.truetype("DejaVuSans.ttf", font_size)
+                except OSError:
+                    font = ImageFont.load_default()
+
         text = f"${item_price}"
         text_bbox = draw.textbbox((0, 0), text, font=font)
         text_width = text_bbox[2] - text_bbox[0]
@@ -725,9 +646,14 @@ class LabelPrinter:
             additional_text_font_size = self.calculate_dynamic_font_size(
                 draw, optional_text, max_optional_text_width
             )
-            additional_font = ImageFont.truetype(
-                "/usr/share/fonts/TTF/Arial.TTF", additional_text_font_size
-            )
+            try:
+                additional_font = ImageFont.truetype("/usr/share/fonts/TTF/Arial.TTF", additional_text_font_size)
+            except OSError:
+                    try:
+                        additional_font = ImageFont.truetype("DejaVuSans.ttf", additional_text_font_size)
+                    except OSError:
+                        additional_font = ImageFont.load_default()
+
 
             additional_text_bbox = draw.textbbox(
                 (0, 0), optional_text, font=additional_font
@@ -802,12 +728,16 @@ class LabelPrinter:
             self.print_queue_ref.refresh_print_queue_for_embed()
             try:
                 self.app.label_manager.print_queue_popup.dismiss()
-            except Exception as e:
+            except AttributeError as e:
                 logger.info(f"Expected error dismissing print queue popup\n{e}")
+            except Exception as e:
+                logger.error(f"Unexpected error dismissing print queue popup\n{e}")
             try:
                 self.app.popup_manager.label_errors_popup.dismiss()
-            except Exception as e:
+            except AttributeError as e:
                 logger.info(f"Expected error dismissing error popup:\n {e}")
+            except Exception as e:
+                logger.error(f"Unexpected error dismissing error popup:\n {e}")
 
     def remove_from_queue(self, name):
         for i, item in enumerate(self.print_queue):
