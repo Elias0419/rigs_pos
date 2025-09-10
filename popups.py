@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime
 
 from kivy.clock import Clock
+from kivy.metrics import dp
 from kivy.properties import ColorProperty
 from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.boxlayout import BoxLayout
@@ -29,46 +30,103 @@ from kivymd.uix.label import MDLabel
 from kivymd.uix.menu import MDDropdownMenu
 from kivymd.uix.selectioncontrol import MDCheckbox
 from kivymd.uix.textfield import MDTextField
-
 from PIL import Image as PILImage
 
 from inventory_manager import InventoryManagementView, InventoryView
 from open_cash_drawer import open_cash_drawer
 
 import logging
-logger = logging.getLogger('rigs_pos')
+
+logger = logging.getLogger("rigs_pos")
 
 
 class PopupManager:
     def __init__(self, ref):
         self.app = ref
 
-    def id_scan_popup(self, result):
-        layout = MDBoxLayout()
-        text = MDLabel(text=str(result))
-        layout.add_widget(text)
-        popup = Popup(size_hint=(0.2, 0.2))
-        popup.add_widget(layout)
+    def id_scan_popup(self, result: bool, errors: list[str]):
+        errors = [e for e in (errors or []) if e]
+        has_error = bool(errors)
+
+        is_21 = result
+
+        if is_21:
+            title = "All Set"
+            message = "User is 21+"
+        elif has_error:
+            title = "Error"
+            message = str(errors)
+        else:
+            title = "NOT 21+"
+            message = "User is NOT 21+"
+
+        content = MDCard(
+            orientation="vertical",
+        )
+
+        header = MDBoxLayout(
+            orientation="horizontal",
+        )
+
+        header.add_widget(
+            MDLabel(
+                text=title,
+                font_style="H6",
+                 halign="center",
+            )
+        )
+        content.add_widget(header)
+
+        msg = MDLabel(
+            text=message,
+             halign="center",
+        )
+        content.add_widget(msg)
+
+        buttons = MDBoxLayout(
+            orientation="horizontal",
+        )
+        buttons.add_widget(
+            MDFlatButton(text="DISMISS", on_release=lambda *_: popup.dismiss())
+        )
+        content.add_widget(buttons)
+
+        popup = Popup(
+            title="",
+            auto_dismiss=True,
+            size_hint=(0.25, 0.25),
+        )
+        popup.add_widget(content)
         popup.open()
 
-
     def show_update_notification_popup(self, update_details):
-        update_details_string = ''
+        update_details_string = ""
         for line in update_details:
             update_details_string += line
-        layout=BoxLayout()
-        button = MDFlatButton(text="OK", on_release=self.dismiss_update_notification_popup)
-        text=MDLabel(text=update_details_string, halign="center")
+        layout = BoxLayout()
+        button = MDFlatButton(
+            text="OK", on_release=self.dismiss_update_notification_popup
+        )
+        text = MDLabel(text=update_details_string, halign="center")
         layout.add_widget(text)
         layout.add_widget(button)
-        self.update_notification_popup=Popup(content=layout, size_hint=(0.5,0.5), title="Update Applied", overlay_color=(0,0,0,0), separator_height=0)
+        self.update_notification_popup = Popup(
+            content=layout,
+            size_hint=(0.5, 0.5),
+            title="Update Applied",
+            overlay_color=(0, 0, 0, 0),
+            separator_height=0,
+        )
         self.update_notification_popup.open()
 
     def dismiss_update_notification_popup(self, _):
         try:
             self.update_notification_popup.dismiss()
         except AttributeError as e:
-            logger.info("[PopupManager: Expected error in dismiss_update_notification_popup]\n", e)
+            logger.info(
+                "[PopupManager: Expected error in dismiss_update_notification_popup]\n",
+                e,
+            )
 
     def show_notes_widget(self):
         self.notes_dir = "/home/rigs/rigs_pos/notes"
@@ -579,8 +637,6 @@ class PopupManager:
                 item_data["cost"] = costs[item_id]["cost"]
         return order_details
 
-
-
     def open_clock_out_popup(self):
         if self.app.logged_in_user == "nobody":
             return
@@ -589,7 +645,9 @@ class PopupManager:
         open_session = self.app.utilities.get_open_session_for_user_today(user_name)
 
         if open_session:
-            session_info = self.app.utilities.render_session_info_line(open_session, user_name, now=datetime.now())
+            session_info = self.app.utilities.render_session_info_line(
+                open_session, user_name, now=datetime.now()
+            )
             message_text = (
                 "I'll add the time entry\n\n"
                 f"[b][size=20]{session_info}[/size][/b]\n\n"
@@ -1743,8 +1801,8 @@ class PopupManager:
         #     discounts = [5, 10, 15, 20, 30, 40, 50, 100]
         # else:
         #     discounts = [5, 10, 15]
-        toggle_container.add_widget(self.amount_toggle) # revert
-        discounts = [5, 10, 15, 20, 30, 40, 50, 100] # revert
+        toggle_container.add_widget(self.amount_toggle)  # revert
+        discounts = [5, 10, 15, 20, 30, 40, 50, 100]  # revert
         discount_item_layout = GridLayout(orientation="lr-tb", cols=2, spacing=10)
         for discount in discounts:
             discount_button = MDFlatButton(
@@ -1770,7 +1828,7 @@ class PopupManager:
         )
         # if self.app.admin:
         #     button_layout.add_widget(custom_button)
-        button_layout.add_widget(custom_button) # revert
+        button_layout.add_widget(custom_button)  # revert
         button_layout.add_widget(cancel_button)
         discount_item_popup_layout.add_widget(toggle_container)
         discount_item_popup_layout.add_widget(discount_item_layout)
@@ -1805,12 +1863,11 @@ class PopupManager:
         toggle_container.add_widget(self.percent_toggle)
         toggle_container.add_widget(self.amount_toggle)
 
-
         # if self.app.admin:
         #     discounts = [5, 10, 15, 20, 30, 40, 50, 100]
         # else:
         #     discounts = [5, 10, 15]
-        discounts = [5, 10, 15, 20, 30, 40, 50, 100] # revert
+        discounts = [5, 10, 15, 20, 30, 40, 50, 100]  # revert
         discount_layout = GridLayout(orientation="lr-tb", cols=2, spacing=10)
         for discount in discounts:
             discount_button = MDFlatButton(
@@ -2130,7 +2187,14 @@ class PopupManager:
     def on_inventory_manager_dismiss(self, instance):
         self.app.utilities.reset_to_main_context(instance)
         self.app.inventory_manager.detach_from_parent()
-        self.inventory_management_view.ids.inv_search_input.text = ""
+        try:
+            self.inventory_management_view.ids.inv_search_input.text = ""
+        except AttributeError as e:
+            logger.warning(
+                f"No text attribute to replace in on_inventory_manager_dismiss: {e}"
+            )
+        except Exception as e:
+            logger.error(f"unexpected error in on_inventory_manager_dismiss: {e}")
 
     def show_adjust_price_popup(self):
         self.adjust_price_popup_layout = BoxLayout(
@@ -2259,9 +2323,9 @@ class PopupManager:
     def show_lock_screen(
         self, clock_out=False, current_user=None, auto=False, timestamp=None
     ):
-        #print(clock_out, current_user, auto, timestamp)
-        #if clock_out and current_user is not None:
-            #print("condtion\n\nTEST")
+        # print(clock_out, current_user, auto, timestamp)
+        # if clock_out and current_user is not None:
+        # print("condtion\n\nTEST")
         if self.app.disable_lock_screen:
             self.do_nothing(None)
         else:
@@ -2443,7 +2507,7 @@ class PopupManager:
             content=inventory_view,
             textinput=inventory_view.ids.inventory_search_input,
             size_hint=(0.6, 0.8),
-            #pos_hint={"top": 1},
+            # pos_hint={"top": 1},
             overlay_color=(0, 0, 0, 0),
             separator_height=0,
         )
@@ -2961,24 +3025,40 @@ class PopupManager:
         self.app.order_manager.delete_order_from_disk(order_details)
 
     def qr_code_receipt_decision_popup(self, _):
-        qr_code_receipt_decision_popup_layout = BoxLayout(orientation="vertical", spacing=10)
+        qr_code_receipt_decision_popup_layout = BoxLayout(
+            orientation="vertical", spacing=10
+        )
         qr_code_receipt_decision_popup_layout.add_widget(
             MDLabel(
                 text=f"[size=30]Happy customer?\n Print a QR Code Receipt[/size]",
-                halign="center", size_hint=(1, 0.4)
+                halign="center",
+                size_hint=(1, 0.4),
             )
         )
 
-        qr_receipt_button = MDRaisedButton(text="[size=30][b]\U0001F642 Print QR Code Receipt[/b][/size]", on_release=lambda x: self.app.button_handler.on_receipt_button_press(None, qr=True), font_name="Emoji", size_hint=(1, 0.25))
+        qr_receipt_button = MDRaisedButton(
+            text="[size=30][b]\U0001f642 Print QR Code Receipt[/b][/size]",
+            on_release=lambda x: self.app.button_handler.on_receipt_button_press(
+                None, qr=True
+            ),
+            font_name="Emoji",
+            size_hint=(1, 0.25),
+        )
         qr_code_receipt_decision_popup_layout.add_widget(qr_receipt_button)
         qr_code_receipt_decision_popup_layout.add_widget(
             MDLabel(
                 text=f"[size=30]Otherwise, print a normal receipt[/size]",
-                halign="center", size_hint=(1, 0.4)
+                halign="center",
+                size_hint=(1, 0.4),
             )
         )
 
-        normal_receipt_button = MDRaisedButton(text="[size=30]\U0001F610 Print Normal Receipt[/size]", on_release=lambda x: self.app.button_handler.on_receipt_button_press(None), font_name="Emoji", size_hint=(1, 0.25))
+        normal_receipt_button = MDRaisedButton(
+            text="[size=30]\U0001f610 Print Normal Receipt[/size]",
+            on_release=lambda x: self.app.button_handler.on_receipt_button_press(None),
+            font_name="Emoji",
+            size_hint=(1, 0.25),
+        )
         qr_code_receipt_decision_popup_layout.add_widget(normal_receipt_button)
 
         self.app.qr_code_receipt_decision_popup = Popup(
@@ -3459,7 +3539,6 @@ class PopupManager:
             title="Error",
         )
         self.label_barcode_error_popup.open()
-
 
     def catch_label_printing_errors(self, e):
         if hasattr(self, "label_errors_popup") and self.label_errors_popup._is_open:
