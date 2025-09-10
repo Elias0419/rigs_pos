@@ -9,7 +9,9 @@ import inspect
 import datetime
 
 import logging
-logger = logging.getLogger('rigs_pos')
+
+logger = logging.getLogger("rigs_pos")
+
 
 def log_caller_info(depths=1, to_file=False, filename="caller_info_log.txt"):
     stack = inspect.stack()
@@ -34,10 +36,10 @@ def log_caller_info(depths=1, to_file=False, filename="caller_info_log.txt"):
 
     if to_file:
 
-        with open(filename, 'a') as f:
+        with open(filename, "a") as f:
             f.writelines(output_lines)
     else:
-        print(''.join(output_lines))
+        print("".join(output_lines))
 
 
 def debounce(wait):
@@ -282,7 +284,10 @@ class ButtonHandler:
             try:
                 self.app.qr_code_receipt_decision_popup.dismiss()
             except AttributeError:
-                logger.info("ButtonHandler:on_receipt_button_press\nexpected error dismissing qr popup")
+                logger.info(
+                    "ButtonHandler:on_receipt_button_press\nexpected error dismissing qr popup"
+                )
+
     def on_lock_screen_button_press(self, button_text, instance):
         if button_text == "Reset":
             self.app.entered_pin = ""

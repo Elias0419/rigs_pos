@@ -1,13 +1,11 @@
 from datetime import datetime
-from escpos.printer import Usb
 from PIL import Image
 import escpos
 from escpos.config import Config
-import textwrap
 import base64
-import io
 import logging
-logger = logging.getLogger('rigs_pos')
+
+logger = logging.getLogger("rigs_pos")
 
 
 class ReceiptPrinter:
@@ -28,10 +26,9 @@ class ReceiptPrinter:
             self.app.popup_manager.receipt_errors_popup.dismiss()
 
     def uuid_to_decimal_string(self, uuid_str):
-        uuid_bytes = uuid_str.replace('-', '').encode()
+        uuid_bytes = uuid_str.replace("-", "").encode()
         base64_bytes = base64.b64encode(uuid_bytes)
-        return str(base64_bytes.decode('utf-8')).replace('=','')
-
+        return str(base64_bytes.decode("utf-8")).replace("=", "")
 
     def print_receipt(self, order_details, reprint=False, draft=False, qr_code=False):
         if len(order_details.get("items", {})) == 0:
@@ -49,8 +46,6 @@ class ReceiptPrinter:
         except Exception as e:
             self.app.popup_manager.catch_receipt_printer_errors(e, order_details)
             return False
-
-
 
     def _rcpt_load_logo(self):
         try:
@@ -187,22 +182,21 @@ class ReceiptPrinter:
             self.app.popup_manager.catch_receipt_printer_errors(e, text)
             return False
 
-
     def close(self):
         try:
             self.printer.close()
         except:
             pass
 
+
 if __name__ == "__main__":
     text = """
 
     """
     try:
-        printer = ReceiptPrinter(None, "/home/rigs/rigs_pos/receipt_printer_config.yaml")
+        printer = ReceiptPrinter(
+            None, "/home/rigs/rigs_pos/receipt_printer_config.yaml"
+        )
         printer.print_raw_text(text)
     except (FileNotFoundError, escpos.exceptions.ConfigNotFoundError):
         print("No config file; printer not initialized")
-
-
-

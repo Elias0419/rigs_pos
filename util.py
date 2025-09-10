@@ -76,12 +76,12 @@ from barcode.upc import UniversalProductCodeA as upc_a
 from barcode_scanner import BarcodeScanner
 from button_handlers import ButtonHandler
 from database_manager import DatabaseManager
-from history_manager import HistoryPopup, HistoryView, OrderDetailsPopup
+from history_manager import HistoryPopup, HistoryView
 from inventory_manager import InventoryManagementRow, InventoryManagementView
 from label_printer import LabelPrinter, LabelPrintingView
 from open_cash_drawer import open_cash_drawer
 from order_manager import OrderManager
-from popups import Calculator, FinancialSummaryWidget, PopupManager
+from popups import FinancialSummaryWidget, PopupManager
 from receipt_printer import ReceiptPrinter
 
 
@@ -100,6 +100,7 @@ class MarkupLabel(MDLabel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.markup = True
+
 
 class BarcodeCache:
 
@@ -245,7 +246,6 @@ class Utilities:
             self.app.popup_manager.id_scan_popup(result, errors)
         except Exception as e:
             logger.warning(f"[ID SCAN] popup error: {e!r}")
-
 
     def _extract_dob_from_aamva(self, raw_bytes: bytes):
         text = raw_bytes.decode("utf-8", "ignore")
@@ -425,7 +425,6 @@ class Utilities:
         except:
             pass
         return None
-
 
     def update_inventory_cache(self):
         inventory = self.app.db_manager.get_all_items()
@@ -871,7 +870,9 @@ class Utilities:
             price_label_container.add_widget(price_label)
 
             quantity_label_container = BoxLayout(size_hint_x=None, width=50)
-            quantity_label = MarkupLabel(text=f"[size=20]{quantity_display_text}[/size]")
+            quantity_label = MarkupLabel(
+                text=f"[size=20]{quantity_display_text}[/size]"
+            )
             quantity_label_container.add_widget(quantity_label)
 
             item_layout.add_widget(item_label_container)
@@ -1134,7 +1135,7 @@ class Utilities:
         btn_pay = MDFlatButton(
             text="[b][size=40]PAY[/b][/size]",
             on_press=self.app.button_handler.on_button_press,
-            #on_press=self.test,
+            # on_press=self.test,
             padding=(8, 8),
             font_name=self.font,
             font_style="H6",
@@ -1186,9 +1187,13 @@ class Utilities:
         # we notify the user (or more likely do nothing) further up the stack
         # so we do nothing with it here but log it
         try:
-            Clock.schedule_interval(self.app.barcode_scanner.check_for_scanned_barcode, 0.1)
+            Clock.schedule_interval(
+                self.app.barcode_scanner.check_for_scanned_barcode, 0.1
+            )
         except AttributeError as e:
-            logger.warning(f"Expected error in _schedule_intervals when the barcode scanner failed to initialize: {e}")
+            logger.warning(
+                f"Expected error in _schedule_intervals when the barcode scanner failed to initialize: {e}"
+            )
         except Exception as e:
             # catch any other errors
             logger.error(f"Unexpected error in  _schedule_intervals: {e}")
@@ -1886,6 +1891,7 @@ class Utilities:
             self.update_selected_categories.append(category)
             instance.text = f"{category}\n (Selected)"
 
+
 class ReusableTimer:
     def __init__(self, interval, function, *args, **kwargs):
         self.interval = interval
@@ -1934,6 +1940,7 @@ class ImageButton(ButtonBehavior, Image):
                 self.last_tap_time = current_time
             return True
         return super(ImageButton, self).on_touch_down(touch)
+
     def on_double_tap(self):
         pass
 

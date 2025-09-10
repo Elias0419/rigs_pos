@@ -1,11 +1,9 @@
 import json
 import os
-import time
 import uuid
 from datetime import datetime
 
 from kivy.clock import Clock
-from kivy.metrics import dp
 from kivy.properties import ColorProperty
 from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.boxlayout import BoxLayout
@@ -39,10 +37,12 @@ import logging
 
 logger = logging.getLogger("rigs_pos")
 
+
 class MarkupLabel(MDLabel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.markup = True
+
 
 class PopupManager:
     def __init__(self, ref):
@@ -76,14 +76,14 @@ class PopupManager:
             MDLabel(
                 text=title,
                 font_style="H6",
-                 halign="center",
+                halign="center",
             )
         )
         content.add_widget(header)
 
         msg = MDLabel(
             text=message,
-             halign="center",
+            halign="center",
         )
         content.add_widget(msg)
 

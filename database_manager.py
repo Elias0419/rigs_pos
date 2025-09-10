@@ -3,8 +3,6 @@ from datetime import datetime
 import json
 import uuid
 import os
-import requests
-import subprocess
 import logging
 
 logger = logging.getLogger("rigs_pos")

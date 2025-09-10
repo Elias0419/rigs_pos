@@ -369,7 +369,6 @@ class OrderManager:
             self.app.popup_manager.cash_input.text = ""
         except Exception as e:
             logger.warn(f"[Order Manager]: add_custom_item\n{e}")
-            pass
 
     def finalize_order(self):
         order_details = self.get_order_details()

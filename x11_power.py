@@ -9,7 +9,6 @@ from ctypes import (
     c_void_p,
     c_ushort,
     c_long,
-    cast,
 )
 from ctypes.util import find_library
 

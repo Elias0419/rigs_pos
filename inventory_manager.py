@@ -16,16 +16,16 @@ from kivymd.uix.button import MDRaisedButton, MDFlatButton
 
 
 from database_manager import DatabaseManager
-from order_manager import OrderManager
 import logging
 
-logger = logging.getLogger('rigs_pos')
+logger = logging.getLogger("rigs_pos")
+
 
 class MarkupLabel(Label):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.markup = True
-        self.halign = 'left'
+        self.halign = "left"
         self.bind(size=self._set_text_size)
 
     def _set_text_size(self, *_):
@@ -35,15 +35,17 @@ class MarkupLabel(Label):
 def add_bottom_divider(widget, rgba=(0.5, 0.5, 0.5, 1), width=1):
     with widget.canvas.after:
         Color(*rgba)
-        widget._divider = Line(points=[widget.x, widget.y, widget.right, widget.y], width=width)
-    widget.bind(pos=lambda *_: _update_divider(widget),
-                size=lambda *_: _update_divider(widget))
+        widget._divider = Line(
+            points=[widget.x, widget.y, widget.right, widget.y], width=width
+        )
+    widget.bind(
+        pos=lambda *_: _update_divider(widget), size=lambda *_: _update_divider(widget)
+    )
 
 
 def _update_divider(widget):
     if hasattr(widget, "_divider") and widget._divider is not None:
         widget._divider.points = [widget.x, widget.y, widget.right, widget.y]
-
 
 
 class InventoryRow(RecycleDataViewBehavior, BoxLayout):
@@ -55,7 +57,7 @@ class InventoryRow(RecycleDataViewBehavior, BoxLayout):
     formatted_name = StringProperty("")
 
     def __init__(self, **kwargs):
-        super().__init__(orientation='horizontal', spacing=5, padding=5, **kwargs)
+        super().__init__(orientation="horizontal", spacing=5, padding=5, **kwargs)
         self.app = App.get_running_app()
         self._name_lbl = MarkupLabel()
         self._price_lbl = Label(size_hint_x=0.2)
@@ -79,8 +81,8 @@ class InventoryRow(RecycleDataViewBehavior, BoxLayout):
         self._on_name(self, self.name)
         self._on_price(self, self.price)
         # if the RecycleView passed an order_manager, use it
-        if 'order_manager' in data and data['order_manager'] is not None:
-            self.order_manager = data['order_manager']
+        if "order_manager" in data and data["order_manager"] is not None:
+            self.order_manager = data["order_manager"]
         return res
 
     def _on_name(self, *_):
@@ -118,12 +120,15 @@ class InventoryManagementRow(RecycleDataViewBehavior, BoxLayout):
     formatted_price = StringProperty()
 
     def __init__(self, **kwargs):
-        super().__init__(orientation='horizontal', spacing=5, padding=5, **kwargs)
+        super().__init__(orientation="horizontal", spacing=5, padding=5, **kwargs)
         self.app = App.get_running_app()
 
         grid = GridLayout(cols=3, size_hint_x=0.9)
 
-        self._name_lbl = Label(halign="left");     self._name_lbl.bind(size=lambda *_: setattr(self._name_lbl, "text_size", self._name_lbl.size))
+        self._name_lbl = Label(halign="left")
+        self._name_lbl.bind(
+            size=lambda *_: setattr(self._name_lbl, "text_size", self._name_lbl.size)
+        )
         self._barcode_lbl = Label(halign="left", size_hint_x=0.2)
         self._price_lbl = Label(halign="left", size_hint_x=0.2)
 
@@ -132,7 +137,9 @@ class InventoryManagementRow(RecycleDataViewBehavior, BoxLayout):
         grid.add_widget(self._price_lbl)
 
         details_btn = MDRaisedButton(text="Details", size_hint_x=0.1)
-        details_btn.bind(on_release=lambda *_: self.app.utilities.open_inventory_manager_row(self))
+        details_btn.bind(
+            on_release=lambda *_: self.app.utilities.open_inventory_manager_row(self)
+        )
 
         self.add_widget(grid)
         self.add_widget(details_btn)
@@ -158,20 +165,20 @@ class InventoryManagementRow(RecycleDataViewBehavior, BoxLayout):
             self._price_lbl.text = "Invalid"
 
 
-Factory.register('InventoryRow', cls=InventoryRow)
-Factory.register('InventoryManagementRow', cls=InventoryManagementRow)
-Factory.register('MarkupLabel', cls=MarkupLabel)
+Factory.register("InventoryRow", cls=InventoryRow)
+Factory.register("InventoryManagementRow", cls=InventoryManagementRow)
+Factory.register("MarkupLabel", cls=MarkupLabel)
 
 
 class InventoryView(BoxLayout):
     def __init__(self, order_manager, **kwargs):
-        super().__init__(orientation='vertical', spacing=5, padding=10, **kwargs)
+        super().__init__(orientation="vertical", spacing=5, padding=10, **kwargs)
         self.order_manager = order_manager
         self.full_inventory = []
 
         # Top search bar
         top = BoxLayout(size_hint_y=None, height=dp(32), spacing=5)
-        self.search_input = TextInput(hint_text='Search', multiline=False)
+        self.search_input = TextInput(hint_text="Search", multiline=False)
         self.search_input.bind(text=self.filter_inventory)
         top.add_widget(self.search_input)
         self.add_widget(top)
@@ -183,14 +190,13 @@ class InventoryView(BoxLayout):
             default_size=(None, dp(48)),
             default_size_hint=(1, None),
             size_hint_y=None,
-            orientation='vertical',
+            orientation="vertical",
         )
-        layout.bind(minimum_height=layout.setter('height'))
+        layout.bind(minimum_height=layout.setter("height"))
         self.rv.add_widget(layout)
 
         self.rv.viewclass = InventoryRow
         self.add_widget(self.rv)
-
 
     def show_inventory(self, inventory_items):
         self.full_inventory = inventory_items
@@ -202,8 +208,10 @@ class InventoryView(BoxLayout):
 
     def _generate_data(self, items):
         # items: [(barcode, name, price, ...)]
-        return [{"barcode": str(item[0]), "name": item[1], "price": str(item[2])}
-                for item in items]
+        return [
+            {"barcode": str(item[0]), "name": item[1], "price": str(item[2])}
+            for item in items
+        ]
 
     def filter_inventory(self, _, text):
         query = (text or "").lower().strip()
@@ -222,7 +230,7 @@ class InventoryManagementView(BoxLayout):
     category = StringProperty()
 
     def __init__(self, **kwargs):
-        super().__init__(orientation='vertical', **kwargs)
+        super().__init__(orientation="vertical", **kwargs)
 
         self.app = App.get_running_app()
         self.database_manager = DatabaseManager("db/inventory.db", None)
@@ -230,7 +238,9 @@ class InventoryManagementView(BoxLayout):
 
         # Top controls
         bar = BoxLayout(size_hint_y=None, height=dp(48), spacing=5)
-        self.inv_search_input = TextInput(hint_text='Search', multiline=False, size_hint_x=0.8)
+        self.inv_search_input = TextInput(
+            hint_text="Search", multiline=False, size_hint_x=0.8
+        )
         self.inv_search_input.bind(text=self._on_search_text)
 
         clear_btn = MDRaisedButton(text="Clear", size_hint=(0.2, 1))
@@ -251,18 +261,16 @@ class InventoryManagementView(BoxLayout):
             default_size=(None, dp(48)),
             default_size_hint=(1, None),
             size_hint_y=None,
-            orientation='vertical',
+            orientation="vertical",
         )
-        layout.bind(minimum_height=layout.setter('height'))
+        layout.bind(minimum_height=layout.setter("height"))
         self.rv.add_widget(layout)
 
         self.rv.viewclass = InventoryRow
         self.add_widget(self.rv)
 
-
         # first render
         Clock.schedule_once(lambda dt: self.filter_inventory(None), 0.1)
-
 
     def detach_from_parent(self):
         if self.parent:
@@ -278,7 +286,11 @@ class InventoryManagementView(BoxLayout):
             Clock.schedule_once(lambda dt: self.update_search_input(barcode), 0.1)
             return
         for item in items:
-            if item[0][1:] == barcode or item[0] == barcode[:-4] or item[0][1:] == barcode[:-4]:
+            if (
+                item[0][1:] == barcode
+                or item[0] == barcode[:-4]
+                or item[0][1:] == barcode[:-4]
+            ):
                 Clock.schedule_once(lambda dt: self.update_search_input(item[0]), 0.1)
                 return
         self.app.popup_manager.open_inventory_item_popup(barcode)
@@ -297,9 +309,19 @@ class InventoryManagementView(BoxLayout):
         query = self.inv_search_input.text
         updated_inventory = self.database_manager.get_all_items()
         self.show_inventory_for_manager(updated_inventory)
-        Clock.schedule_once(lambda dt: self.filter_inventory(query if query else None), 0.1)
+        Clock.schedule_once(
+            lambda dt: self.filter_inventory(query if query else None), 0.1
+        )
 
-    def add_item_to_database(self, barcode_input, name_input, price_input, cost_input, sku_input, category_input):
+    def add_item_to_database(
+        self,
+        barcode_input,
+        name_input,
+        price_input,
+        cost_input,
+        sku_input,
+        category_input,
+    ):
         try:
             int(barcode_input.text)
         except ValueError:
@@ -323,12 +345,20 @@ class InventoryManagementView(BoxLayout):
 
     def refresh_label_inventory_for_dual_pane_mode(self):
         try:
-            self.app.popup_manager.view_container.remove_widget(self.app.popup_manager.label_printing_view)
+            self.app.popup_manager.view_container.remove_widget(
+                self.app.popup_manager.label_printing_view
+            )
             inventory = self.app.inventory_cache
-            self.app.popup_manager.label_printing_view.show_inventory_for_label_printing(inventory)
-            self.app.popup_manager.view_container.add_widget(self.app.popup_manager.label_printing_view)
+            self.app.popup_manager.label_printing_view.show_inventory_for_label_printing(
+                inventory
+            )
+            self.app.popup_manager.view_container.add_widget(
+                self.app.popup_manager.label_printing_view
+            )
         except Exception as e:
-            print(f"[Inventory Manager] refresh_label_inventory_for_dual_pane_mode\n{e}")
+            print(
+                f"[Inventory Manager] refresh_label_inventory_for_dual_pane_mode\n{e}"
+            )
 
     def reset_inventory_context(self):
         self.app.current_context = "inventory"

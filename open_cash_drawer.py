@@ -4,7 +4,8 @@ import logging
 import stat
 import os
 
-logger = logging.getLogger('rigs_pos')
+logger = logging.getLogger("rigs_pos")
+
 
 def open_cash_drawer(port="/dev/ttyUSB0", baudrate=9600):
     try:
@@ -21,6 +22,7 @@ def open_cash_drawer(port="/dev/ttyUSB0", baudrate=9600):
             time.sleep(0.1)
     except (serial.SerialException, OSError) as exc:
         logger.warning("[open_cash_drawer] %s", exc, exc_info=True)
+
 
 if __name__ == "__main__":
     open_cash_drawer()
