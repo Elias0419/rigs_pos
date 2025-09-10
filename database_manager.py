@@ -6,7 +6,10 @@ import os
 import requests
 import subprocess
 import logging
-logger = logging.getLogger('rigs_pos')
+
+logger = logging.getLogger("rigs_pos")
+
+
 class DatabaseManager:
     _instance = None
 
@@ -34,7 +37,10 @@ class DatabaseManager:
             conn = sqlite3.connect(self.db_path)
             conn.close()
             self.created_new_database = True
-            logger.warning("[DatabaseManager] No existing database found. Created a new empty database at %s", self.db_path)
+            logger.warning(
+                "[DatabaseManager] No existing database found. Created a new empty database at %s",
+                self.db_path,
+            )
         else:
             logger.info("[DatabaseManager] Using existing database at %s", self.db_path)
 
@@ -45,7 +51,6 @@ class DatabaseManager:
         self.create_dist_table()
         self.create_payment_history_table()
         self.create_attendance_log_table()
-
 
     def create_payment_history_table(self):
         conn = self._get_connection()
@@ -722,24 +727,8 @@ class DatabaseManager:
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM attendance_log WHERE session_id = ?", (session_id,))
-            conn.commit()
-        except sqlite3.Error as e:
-           logger.warn(f"[DatabaseManager]:\n{e}")
-        finally:
-            conn.close()
-
-    def insert_attendance_log_entry(self, name, session_id, clock_in_time, clock_out_time=None):
-        if name == "admin":
-            logger.warning(f"Discarding admin time entry:\nSession ID: {session_id}, Clock-in: {clock_in_time}")
-            return
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
             cursor.execute(
-                """INSERT INTO attendance_log (name, session_id, clock_in, clock_out)
-                VALUES (?, ?, ?, ?)""",
-                (name, session_id, clock_in_time, clock_out_time)
+                "DELETE FROM attendance_log WHERE session_id = ?", (session_id,)
             )
             conn.commit()
         except sqlite3.Error as e:
@@ -747,7 +736,29 @@ class DatabaseManager:
         finally:
             conn.close()
 
-    def retrieve_attendence_log_entries(self): # debug
+    def insert_attendance_log_entry(
+        self, name, session_id, clock_in_time, clock_out_time=None
+    ):
+        if name == "admin":
+            logger.warning(
+                f"Discarding admin time entry:\nSession ID: {session_id}, Clock-in: {clock_in_time}"
+            )
+            return
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """INSERT INTO attendance_log (name, session_id, clock_in, clock_out)
+                VALUES (?, ?, ?, ?)""",
+                (name, session_id, clock_in_time, clock_out_time),
+            )
+            conn.commit()
+        except sqlite3.Error as e:
+            logger.warn(f"[DatabaseManager]:\n{e}")
+        finally:
+            conn.close()
+
+    def retrieve_attendence_log_entries(self):  # debug
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
@@ -759,7 +770,6 @@ class DatabaseManager:
             logger.warn(f"[DatabaseManager]:\n{e}")
         finally:
             conn.close()
-
 
     # def retrieve_attendence_log_entries(self, name, date):
     #     conn = self._get_connection()
@@ -773,7 +783,6 @@ class DatabaseManager:
     #     finally:
     #         conn.close()
 
-
     def update_attendance_log_entry(self, session_id, clock_out_time):
         conn = self._get_connection()
         try:
@@ -782,7 +791,7 @@ class DatabaseManager:
                 """UPDATE attendance_log
                 SET clock_out = ?
                 WHERE session_id = ?""",
-                (clock_out_time, session_id)
+                (clock_out_time, session_id),
             )
             conn.commit()
         except sqlite3.Error as e:
