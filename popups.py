@@ -2188,7 +2188,7 @@ class PopupManager:
         self.app.utilities.reset_to_main_context(instance)
         self.app.inventory_manager.detach_from_parent()
         try:
-            self.inventory_management_view.ids.inv_search_input.text = ""
+            self.inventory_management_view.inv_search_input.text = ""
         except AttributeError as e:
             logger.warning(
                 f"No text attribute to replace in on_inventory_manager_dismiss: {e}"
@@ -2505,7 +2505,7 @@ class PopupManager:
         self.inventory_popup = self.create_focus_popup(
             title="",
             content=inventory_view,
-            textinput=inventory_view.ids.inventory_search_input,
+            textinput=inventory_view.search_input,
             size_hint=(0.6, 0.8),
             # pos_hint={"top": 1},
             overlay_color=(0, 0, 0, 0),
