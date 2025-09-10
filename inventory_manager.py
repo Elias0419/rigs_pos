@@ -37,7 +37,7 @@ class InventoryManagementView(BoxLayout):
             except AttributeError as e:
                 logger.error(f"Failed to filter inventory in InventoryManagementView init: {e}")
             except Exception as e:
-                logger.error(f"Unexpected error in ")
+                logger.error(f"Unexpected error in in InventoryManagementView init: {e}")
             self.app = App.get_running_app()
             self._init = True
 
