@@ -76,7 +76,6 @@ from barcode.upc import UniversalProductCodeA as upc_a
 from barcode_scanner import BarcodeScanner
 from button_handlers import ButtonHandler
 from database_manager import DatabaseManager
-from distributor_manager import DistPopup, DistView
 from history_manager import HistoryPopup, HistoryView, OrderDetailsPopup
 from inventory_manager import InventoryManagementRow, InventoryManagementView
 from label_printer import LabelPrinter, LabelPrintingView
@@ -191,9 +190,7 @@ class Utilities:
         self.app.label_printer = LabelPrinter(self.app)
         self.app.label_manager = LabelPrintingView(self.app)
         self.app.pin_reset_timer = ReusableTimer(5.0, self.reset_pin)
-        self.app.calculator = Calculator()
-        self.app.dist_manager = DistView(self.app)
-        self.app.dist_popup = DistPopup()
+        # self.app.calculator = Calculator()
         self.app.button_handler = ButtonHandler(self.app)
         self.app.popup_manager = PopupManager(self.app)
         self.app.categories = self.initialize_categories()
