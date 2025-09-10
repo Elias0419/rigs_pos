@@ -18,6 +18,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.recycleview import RecycleView
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
+from kivy.uix.textinput import TextInput
 from kivy.factory import Factory
 
 from kivymd.uix.button import MDRaisedButton, MDFlatButton
@@ -458,6 +459,8 @@ class OrderDetailsPopup(Popup):
         self.size_hint = (0.4, 0.8)
         self.receipt_printer = receipt_printer
         self.db_manager = DatabaseManager("db/inventory.db", self)
+        self.history_view = HistoryView()
+        self.history_popup = HistoryPopup()
 
         content_layout = GridLayout(spacing=5, cols=1, rows=3)
         # header
@@ -535,3 +538,112 @@ class OrderDetailsPopup(Popup):
             "timestamp": timestamp, "discount": discount, "payment_method": payment_method,
             "amount_tendered": amount_tendered, "change_given": change_given,
         }
+
+    def open_modify_order_popup(self, order_id):
+        # fetch and parse items
+        order_details = self.db_manager.get_order_by_id(order_id)
+        items_json = order_details[1]
+        try:
+            items = json.loads(items_json)
+        except json.JSONDecodeError:
+            items = []
+
+        modify_order_container = MDBoxLayout(
+            orientation="vertical", size_hint=(1, 1), padding=5, spacing=5
+        )
+        modify_order_layout = GridLayout(rows=max(1, len(items)), padding=5, spacing=5)
+
+        item_name_inputs = []
+        for item in items:
+            ti = TextInput(text=item.get("name", ""), multiline=False, size_hint_y=None, height=50)
+            item_name_inputs.append(ti)
+            modify_order_layout.add_widget(ti)
+
+        def on_confirm(_instance):
+            # apply edits
+            for item, name_input in zip(items, item_name_inputs):
+                item["name"] = name_input.text
+            updated_items_json = json.dumps(items)
+
+            # persist
+            self.db_manager.modify_order(order_id, items=updated_items_json)
+
+            # close popups and refresh history
+            try:
+                self.modify_order_popup.dismiss()
+            except Exception:
+                pass
+            try:
+                self.dismiss()  # close order details
+            except Exception:
+                pass
+            try:
+                self.history_popup.dismiss_popup()
+                Clock.schedule_once(self.history_popup.show_hist_reporting_popup, 0.2)
+            except Exception as e:
+                logger.warning(f"[OrderDetailsPopup] refresh after modify:\n{e}")
+
+        buttons_layout = BoxLayout(orientation="horizontal", size_hint_y=None, height=75, padding=5, spacing=5)
+        confirm_button = MDRaisedButton(text="Confirm Changes", on_release=on_confirm, size_hint=(1, 1))
+        cancel_button  = MDRaisedButton(text="Cancel", on_release=lambda _i: self.modify_order_popup.dismiss(), size_hint=(1, 1))
+        delete_button  = MDFlatButton(text="Delete Order",
+                                    on_release=lambda _i: self.open_delete_order_confirmation_popup(order_id, admin=True),
+                                    size_hint=(0.5, 1))
+        _blank = MDBoxLayout(size_hint=(1, 1))
+
+        buttons_layout.add_widget(confirm_button)
+        buttons_layout.add_widget(cancel_button)
+        buttons_layout.add_widget(_blank)
+        buttons_layout.add_widget(delete_button)
+
+        modify_order_container.add_widget(modify_order_layout)
+        modify_order_container.add_widget(buttons_layout)
+
+        self.modify_order_popup = Popup(
+            size_hint=(0.8, 0.8), content=modify_order_container, title="", separator_height=0
+        )
+        self.modify_order_popup.open()
+
+
+    def open_delete_order_confirmation_popup(self, order_id, admin=False):
+        if not admin:
+            return
+        container = MDBoxLayout(orientation="vertical")
+        layout = MDCard(orientation="vertical")
+        message = MDLabel(
+            text=f"Warning!\nOrder ID {order_id}\nWill Be Permanently Deleted!\nAre you sure?",
+            halign="center",
+        )
+        layout.add_widget(message)
+        btn_layout = MDBoxLayout(orientation="horizontal")
+        confirm_button = MDFlatButton(text="Yes", on_release=lambda _i: self.delete_order(order_id))
+        _blank = MDBoxLayout(size_hint=(1, 0.4))
+        cancel_button = MDFlatButton(text="No!", on_release=lambda _i: self.delete_order_confirmation_popup.dismiss())
+        btn_layout.add_widget(confirm_button)
+        btn_layout.add_widget(_blank)
+        btn_layout.add_widget(cancel_button)
+        container.add_widget(layout)
+        container.add_widget(btn_layout)
+        self.delete_order_confirmation_popup = Popup(size_hint=(0.2, 0.2), content=container, title="", separator_height=0)
+        self.delete_order_confirmation_popup.open()
+
+    def delete_order(self, order_id):
+        self.db_manager.delete_order(order_id)
+        try:
+            self.delete_order_confirmation_popup.dismiss()
+        except Exception:
+            pass
+        try:
+            self.modify_order_popup.dismiss()
+        except Exception:
+            pass
+        try:
+            self.dismiss()
+        except Exception:
+            pass
+        # refresh history
+        try:
+            self.history_popup.dismiss_popup()
+            Clock.schedule_once(self.history_popup.show_hist_reporting_popup, 0.2)
+        except Exception as e:
+            logger.warning(f"[OrderDetailsPopup] refresh after delete:\n{e}")
