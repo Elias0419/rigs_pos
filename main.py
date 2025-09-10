@@ -15,9 +15,9 @@ import logging
 
 logger = logging.getLogger('rigs_pos')
 
-class CashRegisterApp(MDApp):
+class RigsPOS(MDApp):
     def __init__(self, **kwargs):
-        super(CashRegisterApp, self).__init__(**kwargs)
+        super(RigsPOS, self).__init__(**kwargs)
         self.utilities = Utilities(self)
         self.logged_in_user = "nobody"
         self.is_rigs = self.utilities.is_rigs()
@@ -39,7 +39,7 @@ class CashRegisterApp(MDApp):
 
 
 if __name__ == "__main__":
-    app = CashRegisterApp()
+    app = RigsPOS()
     try:
         app.run()
     except KeyboardInterrupt:
