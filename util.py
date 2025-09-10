@@ -1886,120 +1886,6 @@ class Utilities:
             self.update_selected_categories.append(category)
             instance.text = f"{category}\n (Selected)"
 
-    # def launch_tetris(self):
-    #     subprocess.Popen(['/home/rigs/0/bin/python', 'games/tetris.py'])
-
-    # def reboot(self):
-    #     print("reboot")
-    #     sys.exit(43)
-    #     # try:
-    #     #     subprocess.run(["systemctl", "reboot"])
-    #     # except Exception as e:
-    #     #     print(e)
-    #
-    # @eel.expose
-    # @staticmethod
-    # def get_order_history_for_eel():
-    #     db_manager = DatabaseManager("db/inventory.db")
-    #     order_history = db_manager.get_order_history()
-    #     formatted_data = [
-    #         {
-    #             "order_id": order[0],
-    #             "items": order[1],
-    #             "total": order[2],
-    #             "tax": order[3],
-    #             "discount": order[4],
-    #             "total_with_tax": order[5],
-    #             "timestamp": order[6],
-    #             "payment_method": order[7],
-    #             "amount_tendered": order[8],
-    #             "change_given": order[9],
-    #         }
-    #         for order in order_history
-    #     ]
-    #     return formatted_data
-    #
-    # def start_eel(self):
-    #     eel.init("web")
-    #     print("start eel")
-    #     eel.start("index.html")
-    #
-    # def handle_emergency_reboot(self):
-    #     print("handle_emergency_reboot")
-    #     with open("settings.json", "r+") as f:
-    #         settings = json.load(f)
-    #         settings["emergency_reboot"] = False
-    #         f.seek(0)
-    #         json.dump(settings, f)
-    #         f.truncate()
-    #     self.app.popup_manager.unrecoverable_error()
-
-    # def check_inactivity(self, *args):
-    #     try:
-    #         bus = dbus.SessionBus()
-    #         screensaver_proxy = bus.get_object(
-    #             "org.freedesktop.ScreenSaver", "/org/freedesktop/ScreenSaver"
-    #         )
-    #         screensaver_interface = dbus.Interface(
-    #             screensaver_proxy, dbus_interface="org.freedesktop.ScreenSaver"
-    #         )
-    #         idle_time = screensaver_interface.GetSessionIdleTime()
-    #
-    #         hours, remainder = divmod(idle_time, 3600000)
-    #         minutes, seconds = divmod(remainder, 60000)
-    #         seconds //= 1000
-    #
-    #         human_readable_time = f"{hours}h:{minutes}m:{seconds}s"
-    #
-    #         if idle_time > 600000:  # 10 minutes
-    #             # if idle_time > 10000: # 10 secs
-    #
-    #             self.trigger_guard_and_lock(trigger=False)
-    #
-    #     except Exception as e:
-    #         print(f"Exception in check_inactivity\n{e}")
-    #         pass
-    #
-    # old version of main buttons
-    #         # btn_pay = self.create_md_raised_button(
-    #     f"[b][size=40]Pay[/b][/size]",
-    #     self.app.button_handler.on_button_press,
-    #     (8, 8),
-    #     "H6",
-    # )
-    #
-    # btn_custom_item = self.create_md_raised_button(
-    #     f"[b][size=40]Custom[/b][/size]",
-    #     self.app.button_handler.on_button_press,
-    #     (8, 8),
-    #     "H6",
-    # )
-    # btn_inventory = self.create_md_raised_button(
-    #     f"[b][size=40]Search[/b][/size]",
-    #     # lambda x: self.app.popup_manager.maximize_dual_popup(),
-    #     self.app.button_handler.on_button_press,
-    #     # lambda x: self.app.popup_manager.show_lock_screen(),
-    #     (8, 8),
-    #     "H6",
-    # )
-    # btn_tools = self.create_md_raised_button(
-    #     f"[b][size=40]Tools[/b][/size]",
-    #     self.app.button_handler.on_button_press,
-    #     # lambda x: self.app.popup_manager.show_notes_widget(),
-    #     # lambda x: self.app.popup_manager.show_cost_overlay(),
-    #     # lambda x: self.modify_clock_layout_for_dual_pane_mode(),
-    #     # lambda x: self.app.popup_manager.show_dual_inventory_and_label_managers(),
-    #     # lambda x: self.enable_dual_pane_mode(),
-    #     # lambda x: self.store_user_details("noob","1111",False),
-    #     # lambda x: self.app.popup_manager.show_lock_screen(),
-    #     # lambda x: self.popup_manager.show_add_or_bypass_popup("132414144141"),
-    #     # lambda x: sys.exit(42),
-    #     # lambda x: self.app.financial_summary.update_mirror_image(),
-    #     (8, 8),
-    #     "H6",
-    # )
-
-
 class ReusableTimer:
     def __init__(self, interval, function, *args, **kwargs):
         self.interval = interval
@@ -2049,17 +1935,6 @@ class ImageButton(ButtonBehavior, Image):
             return True
         return super(ImageButton, self).on_touch_down(touch)
 
-    def on_double_tap(self, *args):
-        self.launch_tetris()
-
-    def launch_tetris(self):
-        try:
-            subprocess.Popen(
-                ["/home/rigs/0/bin/python", "games/tetris.py", self.app.logged_in_user]
-            )
-        except Exception as e:
-            print(e)
-        # subprocess.Popen(["python", "games/tetris.py", self.app.logged_in_user])
 
 
 class MDButtonLabel(ButtonBehavior, MDLabel):
