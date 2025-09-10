@@ -1934,7 +1934,8 @@ class ImageButton(ButtonBehavior, Image):
                 self.last_tap_time = current_time
             return True
         return super(ImageButton, self).on_touch_down(touch)
-
+    def on_double_tap(self):
+        pass
 
 
 class MDButtonLabel(ButtonBehavior, MDLabel):
