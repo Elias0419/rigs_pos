@@ -204,7 +204,7 @@ class BarcodeScanner:
     def _emit_barcode(self, s: str):
         if self._looks_like_1d_license(s):
             # discard 1d license scans for now
-            logger.info(f"Discarding likely 1D license scan: {barcode}")
+            logger.info(f"Discarding likely 1D license scan: {s}")
             return
         self.current_barcode = s
         self.barcode_ready.set()
