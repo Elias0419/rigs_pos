@@ -1,17 +1,56 @@
 from datetime import datetime
 from PIL import Image
 import escpos
-from escpos.config import Config
 import base64
 import logging
+from escpos.config import Config as _BaseConfig
+from escpos import exceptions, printer
+import yaml
+
+class Config(_BaseConfig):
+    def load(self, config_source=None, *, is_yaml_str: bool = False):
+
+        if is_yaml_str or isinstance(config_source, (bytes, bytearray)):
+            self._reset_config()
+            try:
+                cfg = yaml.safe_load(config_source)
+            except yaml.YAMLError:
+                raise exceptions.ConfigSyntaxError("Error parsing YAML")
+
+            if not isinstance(cfg, dict):
+                raise exceptions.ConfigSyntaxError("Error parsing YAML")
+
+            if "printer" in cfg:
+                pc = dict(cfg["printer"])
+                self._printer_name = pc.pop("type").title()
+                if not self._printer_name or not hasattr(printer, self._printer_name):
+                    raise exceptions.ConfigSyntaxError(
+                        f'Printer type "{self._printer_name}" is invalid'
+                    )
+                self._printer_config = pc
+
+            self._has_loaded = True
+            return
+
+        return super().load(config_source)
 
 logger = logging.getLogger("rigs_pos")
 
+PRINTER_YAML = """
+printer:
+    type: "Usb"
+    model: "TM-T20III"
+    connection: "usb"
+    idVendor: 0x04b8
+    idProduct: 0x0e28
+    media.width:
+        pixel: 612
+"""
 
 class ReceiptPrinter:
-    def __init__(self, ref, config_path):
+    def __init__(self, ref):
         self.config_handler = Config()
-        self.config_handler.load(config_path)
+        self.config_handler.load(PRINTER_YAML.encode('utf-8'))
         self.app = ref
 
         try:
