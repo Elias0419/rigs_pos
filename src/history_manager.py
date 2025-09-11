@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 import csv, json
 
+from rapidfuzz import process, fuzz
+
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.graphics import Color, Line
@@ -24,6 +26,9 @@ from kivymd.uix.pickers import MDDatePicker
 
 
 from database_manager import DatabaseManager
+import logging
+
+logger = logging.getLogger("rigs_pos")
 
 
 def add_bottom_divider(widget, rgba=(0.5, 0.5, 0.5, 1), width=1):
