@@ -857,7 +857,7 @@ class Utilities:
             item_label = MarkupLabel(text=f"[size=20]{item_display_text}[/size]")
             item_label_container.add_widget(item_label)
 
-            spacer = MDLabel(size_hint_x=1)
+            spacer = MarkupLabel(size_hint_x=1)
             # item_layout.add_widget(spacer)
             price_label_container = BoxLayout(size_hint_x=None, width=150)
             price_label = MarkupLabel(
@@ -1337,7 +1337,7 @@ class Utilities:
             _min_height=50,
             _no_ripple_effect=True,
         )
-        label = MDLabel(text="", halign="left")
+        label = MarkupLabel(text="", halign="left")
         btn.add_widget(label)
         return btn, label
 
@@ -1941,7 +1941,7 @@ class ImageButton(ButtonBehavior, Image):
         pass
 
 
-class MDButtonLabel(ButtonBehavior, MDLabel):
+class MDButtonLabel(ButtonBehavior, MarkupLabel):
     def __init__(self, **kwargs):
         self.on_touch_down_callback = kwargs.pop("on_touch_down_callback", None)
         super().__init__(**kwargs)

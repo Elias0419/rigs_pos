@@ -73,7 +73,7 @@ class PopupManager:
         )
 
         header.add_widget(
-            MDLabel(
+            MarkupLabel(
                 text=title,
                 font_style="H6",
                 halign="center",
@@ -81,7 +81,7 @@ class PopupManager:
         )
         content.add_widget(header)
 
-        msg = MDLabel(
+        msg = MarkupLabel(
             text=message,
             halign="center",
         )
@@ -111,7 +111,7 @@ class PopupManager:
         button = MDFlatButton(
             text="OK", on_release=self.dismiss_update_notification_popup
         )
-        text = MDLabel(text=update_details_string, halign="center")
+        text = MarkupLabel(text=update_details_string, halign="center")
         layout.add_widget(text)
         layout.add_widget(button)
         self.update_notification_popup = Popup(
@@ -217,7 +217,7 @@ class PopupManager:
         )
         bottom_layout = MDBoxLayout()
         admin_checkbox = CustomCheckbox(size_hint_x=None, width=50)
-        admin_question = MDLabel(text="Admin only?", size_hint_x=None, width=100)
+        admin_question = MarkupLabel(text="Admin only?", size_hint_x=None, width=100)
         confirm_button = MDFlatButton(
             text="Confirm",
             on_press=lambda x: self.add_to_top_level_notes(
@@ -331,7 +331,7 @@ class PopupManager:
         order_count = self.app.order_manager.get_order_details()
         if len(order_count["items"]) == 0:
             temp_layout = MDBoxLayout(orientation="vertical")
-            temp_message = MDLabel(
+            temp_message = MarkupLabel(
                 text=f'This is a test of the "Advanced Discount" feature.\nThe current order is empty so there is nothing here.\n'
             )
             temp_button = Button(
@@ -359,41 +359,41 @@ class PopupManager:
                 height=50,
             )
 
-            header.add_widget(MDLabel(text="", size_hint_x=0.3))
-            header.add_widget(MDLabel(text="Price", size_hint_x=0.075, halign="center"))
-            header.add_widget(MDLabel(text="Cost", size_hint_x=0.075, halign="center"))
+            header.add_widget(MarkupLabel(text="", size_hint_x=0.3))
+            header.add_widget(MarkupLabel(text="Price", size_hint_x=0.075, halign="center"))
+            header.add_widget(MarkupLabel(text="Cost", size_hint_x=0.075, halign="center"))
             header.add_widget(
-                MDLabel(text="Profit", size_hint_x=0.075, halign="center")
+                MarkupLabel(text="Profit", size_hint_x=0.075, halign="center")
             )
             header.add_widget(
-                MDLabel(text="Quantity", size_hint_x=0.075, halign="center")
+                MarkupLabel(text="Quantity", size_hint_x=0.075, halign="center")
             )
             header.add_widget(
-                MDLabel(text="Total Price", size_hint_x=0.075, halign="center")
+                MarkupLabel(text="Total Price", size_hint_x=0.075, halign="center")
             )
             header.add_widget(
-                MDLabel(text="Total Cost", size_hint_x=0.075, halign="center")
+                MarkupLabel(text="Total Cost", size_hint_x=0.075, halign="center")
             )
             header.add_widget(
-                MDLabel(text="Total Profit", size_hint_x=0.075, halign="center")
+                MarkupLabel(text="Total Profit", size_hint_x=0.075, halign="center")
             )
-            header.add_widget(MDLabel(text="", size_hint_x=None, width=100))
+            header.add_widget(MarkupLabel(text="", size_hint_x=None, width=100))
             header.add_widget(
-                MDLabel(text="Discount", size_hint_x=0.075, halign="center")
+                MarkupLabel(text="Discount", size_hint_x=0.075, halign="center")
             )
-            header.add_widget(MDLabel(text="", size_hint_x=None, width=20))
+            header.add_widget(MarkupLabel(text="", size_hint_x=None, width=20))
             inner_layout.add_widget(header)
 
             footer = MDGridLayout(
                 size_hint_y=0.1, cols=3, orientation="lr-tb", padding=5, spacing=5
             )
-            total_price_label = MDLabel(
+            total_price_label = MarkupLabel(
                 text=f"Total Price: {total_price}", size_hint_x=0.33, halign="center"
             )
-            total_cost_label = MDLabel(
+            total_cost_label = MarkupLabel(
                 text=f"Total Cost: {total_cost}", size_hint_x=0.33, halign="center"
             )
-            total_profit_label = MDLabel(
+            total_profit_label = MarkupLabel(
                 text=f"Total Profit: {total_profit}", size_hint_x=0.33, halign="center"
             )
             footer.add_widget(total_price_label)
@@ -501,29 +501,29 @@ class PopupManager:
                 cost_x_quantity = round(item_cost * item_quantity, 2)
                 profit_x_quantity = round(item_profit * item_quantity, 2)
 
-                name_text = MDLabel(text=item_name, size_hint_x=0.3)
-                price_text = MDLabel(
+                name_text = MarkupLabel(text=item_name, size_hint_x=0.3)
+                price_text = MarkupLabel(
                     text=str(item_price), size_hint_x=0.075, halign="center"
                 )
-                cost_text = MDLabel(
+                cost_text = MarkupLabel(
                     text=str(item_cost), size_hint_x=0.075, halign="center"
                 )
-                profit_text = MDLabel(
+                profit_text = MarkupLabel(
                     text=str(item_profit), size_hint_x=0.075, halign="center"
                 )
-                quantity_text = MDLabel(
+                quantity_text = MarkupLabel(
                     text=str(item_quantity), size_hint_x=0.075, halign="center"
                 )
-                total_price_text = MDLabel(
+                total_price_text = MarkupLabel(
                     text=str(price_x_quantity), size_hint_x=0.075, halign="center"
                 )
-                total_cost_text = MDLabel(
+                total_cost_text = MarkupLabel(
                     text=str(cost_x_quantity), size_hint_x=0.075, halign="center"
                 )
-                total_profit_text = MDLabel(
+                total_profit_text = MarkupLabel(
                     text=str(profit_x_quantity), size_hint_x=0.075, halign="center"
                 )
-                item_discount_text = MDLabel(
+                item_discount_text = MarkupLabel(
                     text="", size_hint_x=0.075, halign="center"
                 )
 
@@ -664,7 +664,7 @@ class PopupManager:
 
         layout = MDBoxLayout(orientation="vertical")
         card = MDCard()
-        self.clock_out_message = MDLabel(text=message_text, halign="center")
+        self.clock_out_message = MarkupLabel(text=message_text, halign="center")
         card.add_widget(self.clock_out_message)
         layout.add_widget(card)
 
@@ -707,17 +707,17 @@ class PopupManager:
             padding=10,
             spacing=10,
         )
-        label1 = MDLabel(text="Cash", halign="center", size_hint_x=None, width=100)
-        label2 = MDLabel(text="DD", halign="center", size_hint_x=None, width=100)
-        label3 = MDLabel(text="Delete", halign="center", size_hint_x=None, width=100)
+        label1 = MarkupLabel(text="Cash", halign="center", size_hint_x=None, width=100)
+        label2 = MarkupLabel(text="DD", halign="center", size_hint_x=None, width=100)
+        label3 = MarkupLabel(text="Delete", halign="center", size_hint_x=None, width=100)
         for i in range(4):
-            globals()[f"_blank{i}"] = MDLabel()
+            globals()[f"_blank{i}"] = MarkupLabel()
             header.add_widget(globals()[f"_blank{i}"])
         header.add_widget(label1)
         header.add_widget(label2)
         header.add_widget(label3)
-        _2blank = MDLabel(size_hint_x=None, width=60)
-        _2blank2 = MDLabel(size_hint_x=None, width=100)
+        _2blank = MarkupLabel(size_hint_x=None, width=60)
+        _2blank2 = MarkupLabel(size_hint_x=None, width=100)
         header.add_widget(_2blank)
         header.add_widget(_2blank2)
         footer = MDBoxLayout(
@@ -743,12 +743,12 @@ class PopupManager:
                     orientation="lr-tb", cols=10, size_hint_y=None, height=40
                 )
 
-                name_label = MDLabel(text=session["name"])
-                date_label = MDLabel(text=session["date"])
-                time_label = MDLabel(
+                name_label = MarkupLabel(text=session["name"])
+                date_label = MarkupLabel(text=session["date"])
+                time_label = MarkupLabel(
                     text=f"{session['clock_in']} - {session['clock_out']}"
                 )
-                hours_label = MDLabel(text=f"{session['hours']}h {session['minutes']}m")
+                hours_label = MarkupLabel(text=f"{session['hours']}h {session['minutes']}m")
 
                 cash_checkbox = CustomCheckbox(
                     size_hint_x=None, width=100, _no_ripple_effect=True
@@ -789,7 +789,7 @@ class PopupManager:
                 h_layout.add_widget(dd_checkbox)
                 h_layout.add_widget(delete_checkbox)
                 h_layout.add_widget(notes_button)
-                h_layout.add_widget(MDLabel(size_hint_x=None, width=20))
+                h_layout.add_widget(MarkupLabel(size_hint_x=None, width=20))
                 h_layout.add_widget(complete_button)
                 layout.add_widget(h_layout)
 
@@ -871,7 +871,7 @@ class PopupManager:
     ):
         layout = MDBoxLayout(orientation="vertical")
         card = MDCard()
-        text = MDLabel(
+        text = MarkupLabel(
             text=f"{name}\n{date}\n{clock_in}-{clock_out}\n\nAdded to the Payment History Database!",
             halign="center",
         )
@@ -916,7 +916,7 @@ class PopupManager:
     ):
         layout = MDBoxLayout(orientation="vertical")
         card = MDCard()
-        text = MDLabel(
+        text = MarkupLabel(
             text=f"I'm going to delete the user session\n{session_id}\n{name}\n{date}\n{clock_in}-{clock_out}\n\nIf you want to save it to the payment history database instead, go back and uncheck 'delete'",
             halign="center",
         )
@@ -928,7 +928,7 @@ class PopupManager:
             size_hint=(1, 1),
             on_press=lambda x: self.delete_session(session_id, name, delete=True),
         )
-        spacer = MDLabel(size_hint_x=None, width=500, size_hint_y=1)
+        spacer = MarkupLabel(size_hint_x=None, width=500, size_hint_y=1)
         cancel_button = MDFlatButton(
             text="Go Back",
             size_hint=(1, 1),
@@ -997,7 +997,7 @@ class PopupManager:
         )
         buttons_container.add_widget(confirm_button)
         buttons_container.add_widget(cancel_button)
-        admin_label = MDLabel(text="Admin?", size_hint_x=0.1)
+        admin_label = MarkupLabel(text="Admin?", size_hint_x=0.1)
         self.admin_checkbox = CustomCheckbox(_no_ripple_effect=True, size_hint_x=0.1)
         checkbox_container.add_widget(admin_label)
         checkbox_container.add_widget(self.admin_checkbox)
@@ -1136,7 +1136,7 @@ class PopupManager:
         container = TouchableMDBoxLayout(
             orientation="horizontal", size_hint_y=None, height=40, checkbox=checkbox
         )
-        label = MDLabel(text=category, size_hint_y=None, height=40)
+        label = MarkupLabel(text=category, size_hint_y=None, height=40)
 
         container.add_widget(checkbox)
         container.add_widget(label)
@@ -1154,7 +1154,7 @@ class PopupManager:
             orientation="horizontal", size_hint_y=None, height=40, checkbox=checkbox
         )
 
-        label = MDLabel(text=category, size_hint_y=None, height=40)
+        label = MarkupLabel(text=category, size_hint_y=None, height=40)
         container.add_widget(checkbox)
         container.add_widget(label)
         return container
@@ -1170,7 +1170,7 @@ class PopupManager:
             orientation="horizontal", size_hint_y=None, height=40, checkbox=checkbox
         )
 
-        label = MDLabel(text=category, size_hint_y=None, height=40)
+        label = MarkupLabel(text=category, size_hint_y=None, height=40)
         container.add_widget(checkbox)
         container.add_widget(label)
         return container
@@ -1292,7 +1292,7 @@ class PopupManager:
     def open_delete_item_popup(self, barcode="", name="", price=0, admin=False):
         if admin:
             layout = MDBoxLayout(orientation="vertical")
-            label = MDLabel(text=f"Permanently Delete\n{name}\nfrom the inventory?")
+            label = MarkupLabel(text=f"Permanently Delete\n{name}\nfrom the inventory?")
             container = MDCard()
             container.add_widget(label)
             layout.add_widget(container)
@@ -1452,7 +1452,7 @@ class PopupManager:
         #     size_hint=(1, 1),
         # )
         #
-        # details_text = MDLabel(
+        # details_text = MarkupLabel(
         #     text=f"[size=20]{item_name}\n\n${original_price} x {item_quantity} = ${item_price:.2f}[/size]",
         #     size_hint=(1, 1),
         #     halign="center",
@@ -1476,7 +1476,7 @@ class PopupManager:
         minus_container.add_widget(minus_button)
 
         # quantity_container = AnchorLayout(anchor_x="center", anchor_y="center")
-        # quantity_label = MDLabel(
+        # quantity_label = MarkupLabel(
         #     text=f"[size=30]{str(item_quantity)}[/size]",
         #     halign="center",
         #     valign="center",
@@ -1576,7 +1576,7 @@ class PopupManager:
 
         item_details = self.app.db_manager.get_item_details(item_id=item_id)
         layout = BoxLayout(orientation="vertical")
-        content = MDLabel(
+        content = MarkupLabel(
             text=f"{item_details['name']}\nPrice: {item_details['price']}\nCost: {item_details['cost']}\n{item_details['sku']}"
         )
         popup = Popup(content=layout, size_hint=(0.2, 0.4))
@@ -2386,7 +2386,7 @@ class PopupManager:
                 # lock_button_layout.add_widget(self.lockscreen_keypad_layout)
                 lock_button_layout_container.add_widget(self.lockscreen_keypad_layout)
                 clock_layout = self.create_clock_layout()
-                self.clock_out_info = MDLabel(text="")
+                self.clock_out_info = MarkupLabel(text="")
                 _blank = MDBoxLayout()
                 _blank2 = MDBoxLayout()
                 _blank3 = MDBoxLayout()
@@ -2448,7 +2448,7 @@ class PopupManager:
         image = Image(source="images/rigs_logo_scaled.png")
         container = MDBoxLayout()
         clock_container = MDBoxLayout(orientation="vertical", padding=100)
-        self.clock_label = MDLabel(
+        self.clock_label = MarkupLabel(
             text="",
             size_hint_y=None,
             font_style="H4",
@@ -2467,7 +2467,7 @@ class PopupManager:
 
     def create_right_side_layout(self):  # not a popup - to utils
 
-        self.pin_input = MDLabel(
+        self.pin_input = MarkupLabel(
             text="",
             size_hint_y=None,
             font_style="H4",
@@ -2699,14 +2699,14 @@ class PopupManager:
         for item_id, item_details in order_details["items"].items():
             item_text = f"{item_details['quantity']}x {item_details['name']}"
             item_price = f"${item_details['total_price']:.2f}"
-            item_label = MDLabel(
+            item_label = MarkupLabel(
                 text=item_text,
                 halign="left",
                 size_hint_x=7 / 8,
                 size_hint_y=None,
                 height=40,
             )
-            price_label = MDLabel(
+            price_label = MarkupLabel(
                 text=item_price,
                 halign="right",
                 size_hint_x=1 / 8,
@@ -2736,7 +2736,7 @@ class PopupManager:
             )
             totals_layout.add_widget(discount_label)
         else:
-            _blank = MDLabel(text="", size_hint_y=None, height=1)
+            _blank = MarkupLabel(text="", size_hint_y=None, height=1)
             totals_layout.add_widget(_blank)
 
         totals_layout.add_widget(tax_label)
@@ -2962,11 +2962,11 @@ class PopupManager:
         )
 
         card.add_widget(
-            MDLabel(text=order_summary, halign="center", theme_text_color="Secondary")
+            MarkupLabel(text=order_summary, halign="center", theme_text_color="Secondary")
         )
 
         card.add_widget(
-            MDLabel(
+            MarkupLabel(
                 text=f"[b]${total_with_tax:.2f} Paid With {order_details['payment_method']}[/b]",
                 halign="center",
                 theme_text_color="Primary",
@@ -3033,7 +3033,7 @@ class PopupManager:
             orientation="vertical", spacing=10
         )
         qr_code_receipt_decision_popup_layout.add_widget(
-            MDLabel(
+            MarkupLabel(
                 text=f"[size=30]Happy customer?\n Print a QR Code Receipt[/size]",
                 halign="center",
                 size_hint=(1, 0.4),
@@ -3050,7 +3050,7 @@ class PopupManager:
         )
         qr_code_receipt_decision_popup_layout.add_widget(qr_receipt_button)
         qr_code_receipt_decision_popup_layout.add_widget(
-            MDLabel(
+            MarkupLabel(
                 text=f"[size=30]Otherwise, print a normal receipt[/size]",
                 halign="center",
                 size_hint=(1, 0.4),
@@ -4071,7 +4071,7 @@ class FinancialSummaryWidget(MDFlatButton):
                 order_str.join(item)
             items = str(order["items"])
             order_id = str(order["order_id"])
-            entry = MDLabel(text=f"{order_id}\n{items}", size_hint_y=0.1)
+            entry = MarkupLabel(text=f"{order_id}\n{items}", size_hint_y=0.1)
             button = Button(
                 text="Open",
                 size_hint_y=0.1,

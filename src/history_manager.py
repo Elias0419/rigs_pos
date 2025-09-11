@@ -30,6 +30,10 @@ import logging
 
 logger = logging.getLogger("rigs_pos")
 
+class MarkupLabel(MDLabel):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.markup = True
 
 def add_bottom_divider(widget, rgba=(0.5, 0.5, 0.5, 1), width=1):
     with widget.canvas.after:
@@ -170,12 +174,12 @@ class HistoryView(BoxLayout):
         self.history_search = self._make_search_input()
         blank = BoxLayout(size_hint_x=0.1)
 
-        self.current_filter_label = MDLabel(
+        self.current_filter_label = MarkupLabel(
             text="Current Filter: today", size_hint_x=0.8, markup=True
         )
-        self.average_label = MDLabel(text="", size_hint_x=0.4, markup=True)
-        self.total_cash_label = MDLabel(text="Total Cash: $0.00", markup=True)
-        self.total_amount_label = MDLabel(text="Total: $0.00", markup=True)
+        self.average_label = MarkupLabel(text="", size_hint_x=0.4, markup=True)
+        self.total_cash_label = MarkupLabel(text="Total Cash: $0.00", markup=True)
+        self.total_amount_label = MarkupLabel(text="Total: $0.00", markup=True)
 
         for w in (
             self.history_search,
@@ -755,7 +759,7 @@ class OrderDetailsPopup(Popup):
             return
         container = MDBoxLayout(orientation="vertical")
         layout = MDCard(orientation="vertical")
-        message = MDLabel(
+        message = MarkupLabel(
             text=f"Warning!\nOrder ID {order_id}\nWill Be Permanently Deleted!\nAre you sure?",
             halign="center",
         )
