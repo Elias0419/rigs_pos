@@ -3,6 +3,7 @@ import time
 import serial
 from kivy.clock import Clock
 import logging
+import re
 
 logger = logging.getLogger("rigs_pos")
 conversion_table = {
@@ -233,4 +234,31 @@ class BarcodeScanner:
 
     def _handle_license_payload(self, raw_bytes: bytes):
         Clock.schedule_once(lambda dt: self.app.utilities.is_21(raw_bytes), 0)
-        # self.app.utilities.is_21(raw_bytes)
+
+    def _looks_like_1d_license(self, s):
+
+        u = s.strip().upper()
+        # early returns
+        # too short or too long
+        if not (10 <= len(u) <= 24): return False
+        # not all numbers and letters
+        if not u.isalnum(): return False
+        # no letters
+        if not any(c.isalpha() for c in u): return False
+        # no numbers
+        if not any(c.isdigit() for c in u): return False
+        # at least 6 consecutive digits
+        if re.search(r"\d{6,}", u) is None: return False
+
+        STATES = {
+            "AL","AK","AZ","AR","CA","CO","CT","DC","DE","FL","GA","HI","IA","ID","IL","IN",
+            "KS","KY","LA","MA","MD","ME","MI","MN","MO","MS","MT","NC","ND","NE","NH","NJ",
+            "NM","NV","NY","OH","OK","OR","PA","PR","RI","SC","SD","TN","TX","UT","VA","VT",
+            "WA","WI","WV"
+        }
+        if not any(abbr in u for abbr in STATES): return False
+
+        if re.search(r"\d{3,}[A-Z]{2}[A-Z0-9]{2,}", u) or re.search(r"[A-Z]{2}\d{5,}", u):
+            return True
+        # default false
+        return False
