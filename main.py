@@ -1,3 +1,6 @@
+import os, sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+
 from kivy.config import Config
 
 Config.set("graphics", "width", "1920")

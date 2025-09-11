@@ -200,13 +200,9 @@ class Utilities:
 
     def initialize_receipt_printer(self):
         try:
-            self.app.receipt_printer = ReceiptPrinter(
-                self.app, "/home/rigs/rigs_pos/receipt_printer_config.yaml"
-            )
-        except:
-            self.app.receipt_printer = ReceiptPrinter(
-                self.app, "/home/x/work/python/rigs_pos/receipt_printer_config.yaml"
-            )
+            self.app.receipt_printer = ReceiptPrinter(self.app)
+        except Exception as e:
+            logger.error(f"\n\nFIXME\n\n{e}")
 
     def initialize_barcode_cache(self):
         rows = self.app.db_manager.get_all_items()
