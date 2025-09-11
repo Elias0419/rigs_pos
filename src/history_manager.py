@@ -127,6 +127,38 @@ class HistoryView(BoxLayout):
 
         Clock.schedule_once(lambda dt: self.filter_today(), 0.01)
 
+
+    def display_order_details_from_barcode_scan(self, barcode):
+        try:
+            barcode_str = str(barcode)
+            order_history = self.app.db_manager.get_order_history()
+
+            order_barcodes = [str(order[0]) for order in order_history]
+
+            best_match, score, *_ = process.extractOne(
+                barcode_str, order_barcodes, scorer=fuzz.partial_ratio, score_cutoff=80
+            )
+
+            if best_match:
+                specific_order = next(
+                    (order for order in order_history if str(order[0]) == best_match),
+                    None,
+                )
+
+                if specific_order:
+                    popup = OrderDetailsPopup(specific_order, self.receipt_printer)
+                    popup.open()
+                else:
+                    self.order_not_found_popup(barcode_str)  # needs testing
+            else:
+                self.order_not_found_popup(barcode_str)
+
+        except Exception as e:
+            logger.warn(
+                f"[HistoryManager] display_order_details_from_barcode_scan\n{e}"
+            )
+
+
     def _build_totals_bar(self):
         self.totals_layout = GridLayout(cols=6, size_hint=(1, 0.1))
         self.history_search = _left_label()  # placeholder for sizing
