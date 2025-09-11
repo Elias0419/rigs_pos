@@ -250,7 +250,6 @@ class DatabaseManager:
         category=None,
         taxable=True,
     ):
-        # print("db update_item", "barcode", barcode, "item_id", item_id, "name", name, "price", price, "cost", cost, "sku", sku, "category", category, "taxable", taxable)
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
@@ -320,7 +319,6 @@ class DatabaseManager:
         return items
 
     def get_item_details(self, item_id="", name="", price=0.0, barcode="", dupe=False):
-        # print(f"called get with\nbarcode {barcode}\nname {name}\nitem_id {item_id}")
         conn = None
         try:
             conn = self._get_connection()
@@ -328,26 +326,21 @@ class DatabaseManager:
 
             item_details = None
             if dupe:
-                # print(f"TEST dupe\nname {name}\nprice {price}")
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable FROM items WHERE name = ? AND price = ?"
                 cursor.execute(query, (name, price))
                 if cursor.rowcount == 0:
-                    # print(f"TEST2 dupe\nname {name}\nprice {price}")
                     query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable FROM items WHERE name = ?"
                     cursor.execute(query, (name,))
 
             elif item_id:
-                # print("if item_id")
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable FROM items WHERE item_id = ?"
                 cursor.execute(query, (item_id,))
+
             elif barcode:
-                # print("elif barcode:")
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable FROM items WHERE barcode = ?"
                 cursor.execute(query, (barcode,))
 
             elif name and price:
-                # print("elif name and price:")
-                # print("name and price")
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable FROM items WHERE name = ? AND price = ?"
                 cursor.execute(query, (name, price))
                 if cursor.rowcount == 0:
@@ -356,13 +349,10 @@ class DatabaseManager:
                     cursor.execute(query, (name,))
 
             elif name:
-                # print("elif name")
                 query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable FROM items WHERE name = ?"
                 cursor.execute(query, (name,))
 
             else:
-                # print("else")
-                # print("[DatabaseManager]: get_item_details requires either item_id, barcode, or both name and price.")
                 return None
 
             item = cursor.fetchone()
@@ -380,18 +370,11 @@ class DatabaseManager:
                     "taxable": item[8],
                 }
 
-                # if item_id or barcode: # TODO
-                #     item_details['parent_barcode'] = item[6]
-                # else:
-                #     item_details['item_id'] = item[6]
-                #     item_details['parent_barcode'] = item[7]
-
         except Exception as e:
             logger.warn(f"[DatabaseManager]: get_item_details\n {e}")
         finally:
             if conn:
                 conn.close()
-        # print(item_details)
         return item_details
 
     def delete_item(self, item_id):
@@ -414,12 +397,6 @@ class DatabaseManager:
         finally:
             conn.close()
 
-    # def debug_print(self, order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given):
-    #     variables = locals()  # Captures all the local variables in the function as a dictionary
-    #
-    #     for var_name, value in variables.items():
-    #         print(f"{var_name}: Value = {value}, Type = {type(value)}")
-
     def add_order_history(
         self,
         order_id,
@@ -433,7 +410,7 @@ class DatabaseManager:
         amount_tendered,
         change_given,
     ):
-        # self.debug_print(order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given)
+
         self.create_order_history_table()
         conn = self._get_connection()
 
@@ -482,7 +459,6 @@ class DatabaseManager:
         return True
 
     def delete_order(self, order_id):
-        # print("[DatabaseManager]: Delete order", order_id)
         if self._save_current_order_state(order_id, "deleted"):
             conn = self._get_connection()
             try:
@@ -603,16 +579,13 @@ class DatabaseManager:
                 logger.warn(f"[DatabaseManager] add_item_to_database:\n{e}")
 
     def get_all_items(self):
-        # print(f"db manager get all\n\n\n\n")
         conn = self._get_connection()
-        # print(f"{conn}\n\n\n\n")
         cursor = conn.cursor()
         try:
             cursor.execute(
                 "SELECT barcode, name, price, cost, sku, category, item_id, parent_barcode, taxable FROM items"
             )
             items = cursor.fetchall()
-        #  print(len(items))
         except sqlite3.Error as e:
             logger.warn(f"[DatabaseManager]:\n{e}")
             items = []
@@ -769,18 +742,6 @@ class DatabaseManager:
         finally:
             conn.close()
 
-    # def retrieve_attendence_log_entries(self, name, date):
-    #     conn = self._get_connection()
-    #     try:
-    #         cursor = conn.cursor()
-    #         cursor.execute("SELECT * FROM attendance_log WHERE name = ? AND date = ?", (name, date))
-    #         results = cursor.fetchall()
-    #         return results
-    #     except sqlite3.Error as e:
-    #         print(f"[DatabaseManager]:\n{e}")
-    #     finally:
-    #         conn.close()
-
     def update_attendance_log_entry(self, session_id, clock_out_time):
         conn = self._get_connection()
         try:
@@ -797,8 +758,3 @@ class DatabaseManager:
         finally:
             conn.close()
 
-
-if __name__ == "__main__":
-    db = DatabaseManager("db/inventory.db", None)
-    res = db.get_all_items()
-    logger.warn(res)
