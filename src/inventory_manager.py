@@ -266,7 +266,7 @@ class InventoryManagementView(BoxLayout):
         layout.bind(minimum_height=layout.setter("height"))
         self.rv.add_widget(layout)
 
-        self.rv.viewclass = InventoryRow
+        self.rv.viewclass = InventoryManagementRow
         self.add_widget(self.rv)
 
         # first render
