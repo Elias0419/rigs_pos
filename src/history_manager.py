@@ -392,7 +392,7 @@ class HistoryView(BoxLayout):
         self.update_totals()
 
     def show_custom_range_popup(self):
-        picker = MDDatePicker(mode="range")
+        picker = MDDatePicker(mode="range", min_year=2024)
         picker.bind(on_save=self.on_custom_range_selected)
         picker.open()
 
