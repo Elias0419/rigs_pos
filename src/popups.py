@@ -1,7 +1,7 @@
 import json
 import os
 import uuid
-from datetime import datetime
+from datetime import datetime, date
 
 from kivy.clock import Clock
 from kivy.properties import ColorProperty
@@ -44,11 +44,24 @@ class MarkupLabel(MDLabel):
         self.markup = True
 
 
+def cutoff_21(today=None):
+
+    today = today or date.today()
+    try:
+        return today.replace(year=today.year - 21)
+    except ValueError:
+        return today.replace(month=2, day=28, year=today.year - 21)
+
+
+def format_mmddyyyy(d: date) -> str:
+    return d.strftime("%m/%d/%Y")
+
+
 class PopupManager:
     def __init__(self, ref):
         self.app = ref
 
-    def id_scan_popup(self, result: bool, errors: list[str]):
+    def id_scan_popup(self, result, errors):
         errors = [e for e in (errors or []) if e]
         has_error = bool(errors)
 
@@ -62,7 +75,10 @@ class PopupManager:
             message = str(errors)
         else:
             title = "NOT 21+"
-            message = "User is NOT 21+"
+            cutoff = cutoff_21()
+            message = (
+                f"User is NOT 21+\nMust be born on or before {format_mmddyyyy(cutoff)}"
+            )
 
         content = MDCard(
             orientation="vertical",
@@ -87,6 +103,12 @@ class PopupManager:
         )
         content.add_widget(msg)
 
+        popup = Popup(
+            title="",
+            auto_dismiss=True,
+            size_hint=(0.25, 0.25),
+        )
+
         buttons = MDBoxLayout(
             orientation="horizontal",
         )
@@ -95,11 +117,6 @@ class PopupManager:
         )
         content.add_widget(buttons)
 
-        popup = Popup(
-            title="",
-            auto_dismiss=True,
-            size_hint=(0.25, 0.25),
-        )
         popup.add_widget(content)
         popup.open()
 
@@ -360,8 +377,12 @@ class PopupManager:
             )
 
             header.add_widget(MarkupLabel(text="", size_hint_x=0.3))
-            header.add_widget(MarkupLabel(text="Price", size_hint_x=0.075, halign="center"))
-            header.add_widget(MarkupLabel(text="Cost", size_hint_x=0.075, halign="center"))
+            header.add_widget(
+                MarkupLabel(text="Price", size_hint_x=0.075, halign="center")
+            )
+            header.add_widget(
+                MarkupLabel(text="Cost", size_hint_x=0.075, halign="center")
+            )
             header.add_widget(
                 MarkupLabel(text="Profit", size_hint_x=0.075, halign="center")
             )
@@ -709,7 +730,9 @@ class PopupManager:
         )
         label1 = MarkupLabel(text="Cash", halign="center", size_hint_x=None, width=100)
         label2 = MarkupLabel(text="DD", halign="center", size_hint_x=None, width=100)
-        label3 = MarkupLabel(text="Delete", halign="center", size_hint_x=None, width=100)
+        label3 = MarkupLabel(
+            text="Delete", halign="center", size_hint_x=None, width=100
+        )
         for i in range(4):
             globals()[f"_blank{i}"] = MarkupLabel()
             header.add_widget(globals()[f"_blank{i}"])
@@ -748,7 +771,9 @@ class PopupManager:
                 time_label = MarkupLabel(
                     text=f"{session['clock_in']} - {session['clock_out']}"
                 )
-                hours_label = MarkupLabel(text=f"{session['hours']}h {session['minutes']}m")
+                hours_label = MarkupLabel(
+                    text=f"{session['hours']}h {session['minutes']}m"
+                )
 
                 cash_checkbox = CustomCheckbox(
                     size_hint_x=None, width=100, _no_ripple_effect=True
@@ -2962,7 +2987,9 @@ class PopupManager:
         )
 
         card.add_widget(
-            MarkupLabel(text=order_summary, halign="center", theme_text_color="Secondary")
+            MarkupLabel(
+                text=order_summary, halign="center", theme_text_color="Secondary"
+            )
         )
 
         card.add_widget(
