@@ -159,9 +159,9 @@ class ReceiptPrinter:
         total_tax = 0.0
 
         self.printer.textln()
-        self.printer.set(align="left", font="b", bold=True)
+        self.printer.set(align="left", font="a", bold=True)
         self.printer.textln(line_left_right("RI PAPER TAX", f"@ ${per_paper_rate:.3f}/leaf"))
-        self.printer.set(align="left", font="b", bold=False)
+        self.printer.set(align="left", font="a", bold=False)
 
         for entry in entries:
             qty = int(entry.get("quantity") or 0)
@@ -180,7 +180,7 @@ class ReceiptPrinter:
             self.printer.textln(line_left_right(left, right))
 
         if total_tax > 0.0:
-            self.printer.set(align="left", font="b", bold=True)
+            self.printer.set(align="left", font="a", bold=True)
             self.printer.textln(line_left_right("RI PAPER TAX TOTAL", f"${total_tax:.2f}"))
             self.printer.set(align="right", font="a", bold=True)
 
@@ -212,7 +212,7 @@ class ReceiptPrinter:
         return date_str
 
     def _rcpt_print_items(self, order_details):
-        self.printer.set(align="left", font="b", bold=False)
+        self.printer.set(align="left", font="a", bold=False)
 
         for item in order_details["items"].values():
             qty = int(item.get("quantity") or 0)
@@ -220,12 +220,12 @@ class ReceiptPrinter:
             total_price = float(item.get("total_price") or 0.0)
 
             # First line: item name (+ qty) in bold, price right
-            self.printer.set(align="left", font="b", bold=True)
+            self.printer.set(align="left", font="a", bold=True)
             label = f"{name} x{qty}" if qty > 1 else name
             self.printer.textln(self._fmt_line(label, f"${total_price:.2f}"))
 
             # Optional second line(s): per-item discount etc. not bold
-            self.printer.set(align="left", font="b", bold=False)
+            self.printer.set(align="left", font="a", bold=False)
             try:
                 disc_amt = float(item.get("discount", {}).get("amount", 0) or 0)
             except Exception:
@@ -250,25 +250,25 @@ class ReceiptPrinter:
             order_disc = 0.0
 
         self.printer.textln("")
-        self.printer.set(align="left", font="b", bold=True)
+        self.printer.set(align="left", font="a", bold=True)
         self.printer.textln(self._fmt_line("Subtotal", f"${display_subtotal:.2f}"))
 
         if order_disc > 0:
-            self.printer.set(align="left", font="b", bold=False)
+            self.printer.set(align="left", font="a", bold=False)
             self.printer.textln(self._fmt_line("Discount", f"-${order_disc:.2f}"))
 
         if paper_excise > 0:
-            self.printer.set(align="left", font="b", bold=True)
+            self.printer.set(align="left", font="a", bold=True)
             self.printer.textln(self._fmt_line("RI ROLLING PAPER TAX", f"${paper_excise:.2f}"))
 
-        self.printer.set(align="left", font="b", bold=False)
+        self.printer.set(align="left", font="a", bold=False)
         self.printer.textln(self._fmt_line("7% RI Sales Tax", f"${tax_amount:.2f}"))
 
-        self.printer.set(align="left", font="b", bold=True)
+        self.printer.set(align="left", font="a", bold=True)
         self.printer.textln(self._fmt_line("Total", f"${total_with_tax:.2f}"))
 
         if not draft:
-            self.printer.set(align="left", font="b", bold=False)
+            self.printer.set(align="left", font="a", bold=False)
             pm = order_details.get("payment_method")
             if pm == "Cash":
                 self.printer.textln(self._fmt_line("Cash", f"${float(order_details.get('amount_tendered') or 0.0):.2f}"))
@@ -281,7 +281,7 @@ class ReceiptPrinter:
                 self.printer.textln("Credit Payment")
 
     def _rcpt_print_review_and_barcode(self, order_details, draft, qr_code):
-        self.printer.set(align="center", font="b", bold=False)
+        self.printer.set(align="center", font="a", bold=False)
         self.printer.textln()
 
         barcode_data = str(order_details["order_id"])
