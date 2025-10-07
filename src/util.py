@@ -1765,8 +1765,20 @@ class Utilities:
         cost_input,
         sku_input,
         category_input,
+        is_rolling_papers,
+        papers_per_pack,
         popup,
     ):
+        papers_text = (papers_per_pack or "").strip()
+        if bool(is_rolling_papers):
+            if not papers_text:
+                self.app.popup_manager.show_missing_papers_count_warning()
+                return
+            try:
+                int(papers_text)
+            except ValueError:
+                self.app.popup_manager.show_missing_papers_count_warning()
+                return
         self.app.inventory_row.update_item_in_database(
             barcode_input,
             name_input,
@@ -1774,6 +1786,8 @@ class Utilities:
             cost_input,
             sku_input,
             category_input,
+            is_rolling_papers,
+            papers_text,
         )
         self.update_inventory_cache()
         self.app.inventory_manager.refresh_inventory()
@@ -1789,6 +1803,8 @@ class Utilities:
         category_input,
         popup,
         query=None,
+        is_rolling_papers_checkbox=None,
+        papers_per_pack_input=None,
     ):
         try:
             int(barcode_input.text)
@@ -1799,6 +1815,26 @@ class Utilities:
 
         if len(name_input.text) > 0:
 
+            is_rolling_papers = (
+                bool(is_rolling_papers_checkbox.active)
+                if is_rolling_papers_checkbox is not None
+                else False
+            )
+
+            papers_text = ""
+            if papers_per_pack_input is not None:
+                papers_text = (papers_per_pack_input.text or "").strip()
+
+            if is_rolling_papers:
+                if not papers_text:
+                    self.app.popup_manager.show_missing_papers_count_warning()
+                    return
+                try:
+                    int(papers_text)
+                except ValueError:
+                    self.app.popup_manager.show_missing_papers_count_warning()
+                    return
+
             self.app.inventory_manager.add_item_to_database(
                 barcode_input,
                 name_input,
@@ -1806,6 +1842,8 @@ class Utilities:
                 cost_input,
                 sku_input,
                 category_input,
+                is_rolling_papers,
+                papers_text,
             )
             self.app.inventory_manager.refresh_inventory(query=query)
             self.app.popup_manager.inventory_item_popup.dismiss()

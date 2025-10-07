@@ -1,7 +1,7 @@
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.metrics import dp
-from kivy.properties import StringProperty, ObjectProperty
+from kivy.properties import StringProperty, ObjectProperty, BooleanProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
@@ -118,6 +118,8 @@ class InventoryManagementRow(RecycleDataViewBehavior, BoxLayout):
     sku = StringProperty()
     category = StringProperty()
     formatted_price = StringProperty()
+    is_rolling_papers = BooleanProperty(False)
+    papers_per_pack = StringProperty("")
 
     def __init__(self, **kwargs):
         super().__init__(orientation="horizontal", spacing=5, padding=5, **kwargs)
@@ -154,6 +156,9 @@ class InventoryManagementRow(RecycleDataViewBehavior, BoxLayout):
     def refresh_view_attrs(self, rv, index, data):
         res = super().refresh_view_attrs(rv, index, data)
         self._on_price(self, self.price)
+        if data:
+            self.is_rolling_papers = bool(data.get("is_rolling_papers", False))
+            self.papers_per_pack = str(data.get("papers_per_pack", "") or "")
         return res
 
     def _on_price(self, *_):
@@ -163,6 +168,89 @@ class InventoryManagementRow(RecycleDataViewBehavior, BoxLayout):
         except Exception:
             self.formatted_price = "Invalid"
             self._price_lbl.text = "Invalid"
+
+    def update_item_in_database(
+        self,
+        barcode,
+        name,
+        price,
+        cost,
+        sku,
+        category,
+        is_rolling_papers,
+        papers_per_pack,
+    ):
+        barcode = (barcode or "").strip()
+        if not barcode:
+            logger.warning("[InventoryManagementRow] Cannot update item without barcode")
+            return False
+
+        item_details = self.app.db_manager.get_item_details(barcode=barcode)
+        if not item_details:
+            logger.warning(
+                "[InventoryManagementRow] No matching item found for barcode %s",
+                barcode,
+            )
+            return False
+
+        try:
+            price_value = float(price) if price not in (None, "") else 0.0
+        except ValueError:
+            logger.warning(
+                "[InventoryManagementRow] Invalid price '%s' provided for barcode %s",
+                price,
+                barcode,
+            )
+            return False
+
+        try:
+            cost_value = float(cost) if cost not in (None, "") else 0.0
+        except ValueError:
+            logger.warning(
+                "[InventoryManagementRow] Invalid cost '%s' provided for barcode %s",
+                cost,
+                barcode,
+            )
+            return False
+
+        papers_per_pack_value = None
+        if papers_per_pack not in (None, ""):
+            try:
+                papers_per_pack_value = int(papers_per_pack)
+            except ValueError:
+                logger.warning(
+                    "[InventoryManagementRow] Invalid papers_per_pack '%s' provided for barcode %s",
+                    papers_per_pack,
+                    barcode,
+                )
+                return False
+
+        success = self.app.db_manager.update_item(
+            item_details["item_id"],
+            barcode,
+            name,
+            price_value,
+            cost_value,
+            sku,
+            category,
+            taxable=item_details.get("taxable", True),
+            is_rolling_papers=bool(is_rolling_papers),
+            papers_per_pack=papers_per_pack_value,
+        )
+
+        if success:
+            self.barcode = barcode
+            self.name = name
+            self.price = str(price_value)
+            self.cost = str(cost_value)
+            self.sku = sku or ""
+            self.category = category or ""
+            self.is_rolling_papers = bool(is_rolling_papers)
+            self.papers_per_pack = (
+                str(papers_per_pack_value) if papers_per_pack_value is not None else ""
+            )
+
+        return success
 
 
 Factory.register("InventoryRow", cls=InventoryRow)
@@ -228,6 +316,8 @@ class InventoryManagementView(BoxLayout):
     cost = StringProperty()
     sku = StringProperty()
     category = StringProperty()
+    is_rolling_papers = BooleanProperty(False)
+    papers_per_pack = StringProperty("")
 
     def __init__(self, **kwargs):
         super().__init__(orientation="vertical", **kwargs)
@@ -321,6 +411,8 @@ class InventoryManagementView(BoxLayout):
         cost_input,
         sku_input,
         category_input,
+        is_rolling_papers=False,
+        papers_per_pack=None,
     ):
         try:
             int(barcode_input.text)
@@ -328,6 +420,17 @@ class InventoryManagementView(BoxLayout):
             logger.warning("[Inventory Manager] add_item_to_database no barcode")
             self.app.popup_manager.catch_label_printer_missing_barcode()
             return
+        papers_per_pack_value = None
+        if papers_per_pack not in (None, ""):
+            try:
+                papers_per_pack_value = int(papers_per_pack)
+            except ValueError:
+                logger.warning(
+                    "[Inventory Manager] Invalid papers_per_pack '%s' provided",
+                    papers_per_pack,
+                )
+                self.app.popup_manager.show_missing_papers_count_warning()
+                return
         if name_input:
             try:
                 self.database_manager.add_item(
@@ -337,6 +440,11 @@ class InventoryManagementView(BoxLayout):
                     cost_input.text,
                     sku_input.text,
                     category_input.text,
+                    is_rolling_papers=is_rolling_papers,
+                    papers_per_pack=papers_per_pack_value,
+                )
+                self.papers_per_pack = (
+                    str(papers_per_pack_value) if papers_per_pack_value is not None else ""
                 )
                 self.app.utilities.update_inventory_cache()
                 self.refresh_label_inventory_for_dual_pane_mode()
@@ -382,6 +490,8 @@ class InventoryManagementView(BoxLayout):
                 "cost": str(item[3]),
                 "sku": str(item[4]),
                 "category": str(item[5]),
+                "is_rolling_papers": bool(item[9]) if len(item) > 9 else False,
+                "papers_per_pack": str(item[10]) if len(item) > 10 and item[10] is not None else "",
             }
             for item in items
         ]

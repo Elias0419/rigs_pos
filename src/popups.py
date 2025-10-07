@@ -1207,6 +1207,13 @@ class PopupManager:
     def inventory_item_popup_row(self, instance):
 
         content = BoxLayout(orientation="vertical", size_hint_y=1, padding=10)
+        item_details = self.app.db_manager.get_item_details(barcode=instance.barcode)
+        rolling_papers_default = (
+            item_details.get("is_rolling_papers") if item_details else False
+        )
+        papers_per_pack_default = (
+            item_details.get("papers_per_pack") if item_details else None
+        )
         name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2)
         name_input = TextInput(text=instance.name, font_size=20)
         name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
@@ -1250,6 +1257,25 @@ class PopupManager:
         content.add_widget(sku_layout)
         content.add_widget(category_layout)
 
+        rolling_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2)
+        rolling_checkbox = MDCheckbox(active=bool(rolling_papers_default))
+        rolling_layout.add_widget(Label(text="Rolling Papers", size_hint_x=0.2))
+        rolling_layout.add_widget(rolling_checkbox)
+        papers_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2)
+        papers_input = TextInput(
+            text=str(papers_per_pack_default or ""),
+            input_filter="int",
+            font_size=20,
+            disabled=not rolling_checkbox.active,
+        )
+        rolling_checkbox.bind(
+            active=lambda instance, value: setattr(papers_input, "disabled", not value)
+        )
+        papers_layout.add_widget(Label(text="Papers per Pack", size_hint_x=0.2))
+        papers_layout.add_widget(papers_input)
+        content.add_widget(rolling_layout)
+        content.add_widget(papers_layout)
+
         button_layout = BoxLayout(
             orientation="horizontal",
             size_hint_y=None,
@@ -1269,6 +1295,8 @@ class PopupManager:
                 cost_input.text,
                 sku_input.text,
                 self.add_to_db_category_input_row.text,
+                rolling_checkbox.active,
+                papers_input.text,
                 self.inventory_item_update_popup,
             ),
         )
@@ -1385,12 +1413,30 @@ class PopupManager:
         category_layout.add_widget(Label(text="Categories", size_hint_x=0.2))
         category_layout.add_widget(self.add_to_db_category_input)
 
+        rolling_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        rolling_checkbox = MDCheckbox()
+        rolling_layout.add_widget(Label(text="Rolling Papers", size_hint_x=0.2))
+        rolling_layout.add_widget(rolling_checkbox)
+
+        papers_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        papers_input = TextInput(
+            input_filter="int",
+            disabled=not rolling_checkbox.active,
+        )
+        rolling_checkbox.bind(
+            active=lambda instance, value: setattr(papers_input, "disabled", not value)
+        )
+        papers_layout.add_widget(Label(text="Papers per Pack", size_hint_x=0.2))
+        papers_layout.add_widget(papers_input)
+
         content.add_widget(name_layout)
         content.add_widget(barcode_layout)
         content.add_widget(price_layout)
         content.add_widget(cost_layout)
         content.add_widget(sku_layout)
         content.add_widget(category_layout)
+        content.add_widget(rolling_layout)
+        content.add_widget(papers_layout)
 
         button_layout = BoxLayout(
             orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
@@ -1406,6 +1452,8 @@ class PopupManager:
                     cost_input.text,
                     sku_input.text,
                     self.add_to_db_category_input.text,
+                    rolling_checkbox.active,
+                    papers_input.text,
                 ),
             )
         )
@@ -3571,6 +3619,27 @@ class PopupManager:
         )
         self.label_barcode_error_popup.open()
 
+    def show_missing_papers_count_warning(self):
+        layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
+        message = Label(
+            text="Enter the number of papers in the pack before saving.",
+            halign="center",
+        )
+        layout.add_widget(message)
+        button = MDRaisedButton(
+            text="OK",
+            size_hint=(1, None),
+            height="48dp",
+            on_press=lambda _: self.missing_papers_warning.dismiss(),
+        )
+        layout.add_widget(button)
+        self.missing_papers_warning = Popup(
+            title="Rolling Papers",
+            content=layout,
+            size_hint=(0.35, 0.25),
+        )
+        self.missing_papers_warning.open()
+
     def catch_label_printing_errors(self, e):
         if hasattr(self, "label_errors_popup") and self.label_errors_popup._is_open:
             self.label_errors_popup.dismiss()
@@ -3702,12 +3771,34 @@ class PopupManager:
 
         category_layout.add_widget(self.add_to_db_category_input_inv)
 
+        rolling_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        rolling_checkbox = MDCheckbox(
+            active=bool(getattr(self.app.inventory_manager, "is_rolling_papers", False))
+        )
+        rolling_layout.add_widget(Label(text="Rolling Papers", size_hint_x=0.2))
+        rolling_layout.add_widget(rolling_checkbox)
+
+        papers_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        papers_input = TextInput(
+            text=str(getattr(self.app.inventory_manager, "papers_per_pack", "") or ""),
+            input_filter="int",
+            font_size=20,
+            disabled=not rolling_checkbox.active,
+        )
+        rolling_checkbox.bind(
+            active=lambda instance, value: setattr(papers_input, "disabled", not value)
+        )
+        papers_layout.add_widget(Label(text="Papers per Pack", size_hint_x=0.2))
+        papers_layout.add_widget(papers_input)
+
         content.add_widget(name_layout)
         content.add_widget(barcode_layout)
         content.add_widget(price_layout)
         content.add_widget(cost_layout)
         content.add_widget(sku_layout)
         content.add_widget(category_layout)
+        content.add_widget(rolling_layout)
+        content.add_widget(papers_layout)
 
         button_layout = BoxLayout(
             orientation="horizontal",
@@ -3730,6 +3821,8 @@ class PopupManager:
                     self.add_to_db_category_input_inv,
                     self.inventory_item_popup,
                     query=query,
+                    is_rolling_papers_checkbox=rolling_checkbox,
+                    papers_per_pack_input=papers_input,
                 ),
             )
         )

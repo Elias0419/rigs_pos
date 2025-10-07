@@ -44,6 +44,7 @@ class DatabaseManager:
 
     def ensure_tables_exist(self):
         self.create_items_table()
+        self._ensure_items_schema()
         self.create_order_history_table()
         self.create_modified_orders_table()
         self.create_dist_table()
@@ -108,6 +109,8 @@ class DatabaseManager:
                                 parent_barcode TEXT,
                                 item_id TEXT,
                                 taxable BOOLEAN DEFAULT TRUE,
+                                is_rolling_papers BOOLEAN NOT NULL DEFAULT FALSE,
+                                papers_per_pack INTEGER,
                                 PRIMARY KEY (barcode, sku),
                                 FOREIGN KEY(parent_barcode) REFERENCES items(barcode)
                             )"""
@@ -115,6 +118,27 @@ class DatabaseManager:
             conn.commit()
         except sqlite3.Error as e:
             logger.warn(f"[DatabaseManager]:\n{e}")
+        finally:
+            conn.close()
+
+    def _ensure_items_schema(self):
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA table_info(items)")
+            columns = [row[1] for row in cursor.fetchall()]
+            if "is_rolling_papers" not in columns:
+                cursor.execute(
+                    "ALTER TABLE items ADD COLUMN is_rolling_papers BOOLEAN NOT NULL DEFAULT FALSE"
+                )
+                conn.commit()
+            if "papers_per_pack" not in columns:
+                cursor.execute(
+                    "ALTER TABLE items ADD COLUMN papers_per_pack INTEGER"
+                )
+                conn.commit()
+        except sqlite3.Error as e:
+            logger.warn(f"[DatabaseManager] Failed to ensure items schema:\n{e}")
         finally:
             conn.close()
 
@@ -199,14 +223,26 @@ class DatabaseManager:
         category=None,
         parent_barcode=None,
         taxable=True,
+        is_rolling_papers=False,
+        papers_per_pack=None,
     ):
         item_id = uuid.uuid4()
         self.create_items_table()
         conn = self._get_connection()
         try:
+            taxable = bool(taxable)
+            is_rolling_papers = bool(is_rolling_papers)
+            try:
+                papers_per_pack_value = (
+                    int(papers_per_pack)
+                    if papers_per_pack not in (None, "")
+                    else None
+                )
+            except (TypeError, ValueError):
+                papers_per_pack_value = None
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO items (barcode, name, price, cost, sku, category, item_id, parent_barcode, taxable) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO items (barcode, name, price, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, papers_per_pack) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     barcode,
                     name,
@@ -217,6 +253,8 @@ class DatabaseManager:
                     str(item_id),
                     parent_barcode,
                     taxable,
+                    is_rolling_papers,
+                    papers_per_pack_value,
                 ),
             )
             conn.commit()
@@ -230,6 +268,8 @@ class DatabaseManager:
                 "item_id": str(item_id),
                 "parent_barcode": parent_barcode,
                 "taxable": taxable,
+                "is_rolling_papers": is_rolling_papers,
+                "papers_per_pack": papers_per_pack_value,
             }
             self.app.utilities.update_barcode_cache(item_details)
         except sqlite3.IntegrityError as e:
@@ -249,29 +289,53 @@ class DatabaseManager:
         sku=None,
         category=None,
         taxable=True,
+        is_rolling_papers=False,
+        papers_per_pack=None,
     ):
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
             update_query = """UPDATE items
-                            SET barcode=?, name=?, price=?, cost=?, sku=?, category=?, taxable=?
+                            SET barcode=?, name=?, price=?, cost=?, sku=?, category=?, taxable=?, is_rolling_papers=?, papers_per_pack=?
                             WHERE item_id=?"""
+            try:
+                papers_per_pack_value = (
+                    int(papers_per_pack)
+                    if papers_per_pack not in (None, "")
+                    else None
+                )
+            except (TypeError, ValueError):
+                papers_per_pack_value = None
             cursor.execute(
                 update_query,
-                (barcode, name, price, cost, sku, category, taxable, item_id),
+                (
+                    barcode,
+                    name,
+                    price,
+                    cost,
+                    sku,
+                    category,
+                    bool(taxable),
+                    bool(is_rolling_papers),
+                    papers_per_pack_value,
+                    item_id,
+                ),
             )
             if cursor.rowcount == 0:
 
                 return False
             conn.commit()
             item_details = {
+                "barcode": barcode,
                 "item_id": item_id,
                 "name": name,
                 "price": price,
                 "cost": cost,
                 "sku": sku,
                 "category": category,
-                "taxable": taxable,
+                "taxable": bool(taxable),
+                "is_rolling_papers": bool(is_rolling_papers),
+                "papers_per_pack": papers_per_pack_value,
             }
             self.app.utilities.update_barcode_cache(item_details)
         except Exception as e:
@@ -284,7 +348,7 @@ class DatabaseManager:
     def handle_duplicate_barcodes(self, barcode):
 
         query = """
-                SELECT barcode, name, price, cost, sku, category, item_id, parent_barcode, taxable
+                SELECT barcode, name, price, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, papers_per_pack
                 FROM items
                 WHERE barcode = ?
                """
@@ -307,7 +371,9 @@ class DatabaseManager:
                     "category": row[5],
                     "item_id": row[6],
                     "parent_barcode": row[7],
-                    "taxable": row[8],
+                    "taxable": bool(row[8]),
+                    "is_rolling_papers": bool(row[9]),
+                    "papers_per_pack": row[10],
                 }
                 items.append(item_details)
 
@@ -326,30 +392,30 @@ class DatabaseManager:
 
             item_details = None
             if dupe:
-                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable FROM items WHERE name = ? AND price = ?"
+                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, papers_per_pack FROM items WHERE name = ? AND price = ?"
                 cursor.execute(query, (name, price))
                 if cursor.rowcount == 0:
-                    query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable FROM items WHERE name = ?"
+                    query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, papers_per_pack FROM items WHERE name = ?"
                     cursor.execute(query, (name,))
 
             elif item_id:
-                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable FROM items WHERE item_id = ?"
+                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, papers_per_pack FROM items WHERE item_id = ?"
                 cursor.execute(query, (item_id,))
 
             elif barcode:
-                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable FROM items WHERE barcode = ?"
+                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, papers_per_pack FROM items WHERE barcode = ?"
                 cursor.execute(query, (barcode,))
 
             elif name and price:
-                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable FROM items WHERE name = ? AND price = ?"
+                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, papers_per_pack FROM items WHERE name = ? AND price = ?"
                 cursor.execute(query, (name, price))
                 if cursor.rowcount == 0:
 
-                    query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable FROM items WHERE name = ?"
+                    query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, papers_per_pack FROM items WHERE name = ?"
                     cursor.execute(query, (name,))
 
             elif name:
-                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable FROM items WHERE name = ?"
+                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, papers_per_pack FROM items WHERE name = ?"
                 cursor.execute(query, (name,))
 
             else:
@@ -367,7 +433,9 @@ class DatabaseManager:
                     "category": item[5],
                     "item_id": item[6],
                     "parent_barcode": item[7],
-                    "taxable": item[8],
+                    "taxable": bool(item[8]),
+                    "is_rolling_papers": bool(item[9]),
+                    "papers_per_pack": item[10],
                 }
 
         except Exception as e:
@@ -568,12 +636,29 @@ class DatabaseManager:
         )
 
     def add_item_to_database(
-        self, barcode, name, price, cost=0.0, sku=None, categories=None
+        self,
+        barcode,
+        name,
+        price,
+        cost=0.0,
+        sku=None,
+        categories=None,
+        is_rolling_papers=False,
+        papers_per_pack=None,
     ):
         logger.warn("add to db")
         if barcode and name and price:
             try:
-                self.add_item(barcode, name, price, cost, sku, categories)
+                self.add_item(
+                    barcode,
+                    name,
+                    price,
+                    cost,
+                    sku,
+                    categories,
+                    is_rolling_papers=is_rolling_papers,
+                    papers_per_pack=papers_per_pack,
+                )
                 self.app.popup_manager.add_to_db_popup.dismiss()
             except Exception as e:
                 logger.warn(f"[DatabaseManager] add_item_to_database:\n{e}")
@@ -583,7 +668,7 @@ class DatabaseManager:
         cursor = conn.cursor()
         try:
             cursor.execute(
-                "SELECT barcode, name, price, cost, sku, category, item_id, parent_barcode, taxable FROM items"
+                "SELECT barcode, name, price, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, papers_per_pack FROM items"
             )
             items = cursor.fetchall()
         except sqlite3.Error as e:
