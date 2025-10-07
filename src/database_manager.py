@@ -133,9 +133,7 @@ class DatabaseManager:
                 )
                 conn.commit()
             if "papers_per_pack" not in columns:
-                cursor.execute(
-                    "ALTER TABLE items ADD COLUMN papers_per_pack INTEGER"
-                )
+                cursor.execute("ALTER TABLE items ADD COLUMN papers_per_pack INTEGER")
                 conn.commit()
         except sqlite3.Error as e:
             logger.warn(f"[DatabaseManager] Failed to ensure items schema:\n{e}")
@@ -234,9 +232,7 @@ class DatabaseManager:
             is_rolling_papers = bool(is_rolling_papers)
             try:
                 papers_per_pack_value = (
-                    int(papers_per_pack)
-                    if papers_per_pack not in (None, "")
-                    else None
+                    int(papers_per_pack) if papers_per_pack not in (None, "") else None
                 )
             except (TypeError, ValueError):
                 papers_per_pack_value = None
@@ -300,9 +296,7 @@ class DatabaseManager:
                             WHERE item_id=?"""
             try:
                 papers_per_pack_value = (
-                    int(papers_per_pack)
-                    if papers_per_pack not in (None, "")
-                    else None
+                    int(papers_per_pack) if papers_per_pack not in (None, "") else None
                 )
             except (TypeError, ValueError):
                 papers_per_pack_value = None
@@ -842,4 +836,3 @@ class DatabaseManager:
             logger.warn(f"[DatabaseManager]:\n{e}")
         finally:
             conn.close()
-

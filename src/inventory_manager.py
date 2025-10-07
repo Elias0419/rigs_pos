@@ -182,7 +182,9 @@ class InventoryManagementRow(RecycleDataViewBehavior, BoxLayout):
     ):
         barcode = (barcode or "").strip()
         if not barcode:
-            logger.warning("[InventoryManagementRow] Cannot update item without barcode")
+            logger.warning(
+                "[InventoryManagementRow] Cannot update item without barcode"
+            )
             return False
 
         item_details = self.app.db_manager.get_item_details(barcode=barcode)
@@ -444,7 +446,9 @@ class InventoryManagementView(BoxLayout):
                     papers_per_pack=papers_per_pack_value,
                 )
                 self.papers_per_pack = (
-                    str(papers_per_pack_value) if papers_per_pack_value is not None else ""
+                    str(papers_per_pack_value)
+                    if papers_per_pack_value is not None
+                    else ""
                 )
                 self.app.utilities.update_inventory_cache()
                 self.refresh_label_inventory_for_dual_pane_mode()
@@ -491,7 +495,9 @@ class InventoryManagementView(BoxLayout):
                 "sku": str(item[4]),
                 "category": str(item[5]),
                 "is_rolling_papers": bool(item[9]) if len(item) > 9 else False,
-                "papers_per_pack": str(item[10]) if len(item) > 10 and item[10] is not None else "",
+                "papers_per_pack": (
+                    str(item[10]) if len(item) > 10 and item[10] is not None else ""
+                ),
             }
             for item in items
         ]

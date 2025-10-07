@@ -7,6 +7,7 @@ from escpos.config import Config as _BaseConfig
 from escpos import exceptions, printer
 import yaml
 
+
 class Config(_BaseConfig):
     def load(self, config_source=None, *, is_yaml_str: bool = False):
 
@@ -34,6 +35,7 @@ class Config(_BaseConfig):
 
         return super().load(config_source)
 
+
 logger = logging.getLogger("rigs_pos")
 
 PRINTER_YAML = """
@@ -48,10 +50,11 @@ printer:
 """
 WIDTH = 48
 
+
 class ReceiptPrinter:
     def __init__(self, ref):
         self.config_handler = Config()
-        self.config_handler.load(PRINTER_YAML.encode('utf-8'))
+        self.config_handler.load(PRINTER_YAML.encode("utf-8"))
         self.app = ref
 
         try:
@@ -148,6 +151,7 @@ class ReceiptPrinter:
             return
 
         WIDTH = 48
+
         def line_left_right(left: str, right: str) -> str:
             left = (left or "")[:WIDTH]  # safety
             right = (right or "")[:WIDTH]
@@ -160,7 +164,9 @@ class ReceiptPrinter:
 
         self.printer.textln()
         self.printer.set(align="left", font="a", bold=True)
-        self.printer.textln(line_left_right("RI PAPER TAX", f"@ ${per_paper_rate:.3f}/leaf"))
+        self.printer.textln(
+            line_left_right("RI PAPER TAX", f"@ ${per_paper_rate:.3f}/leaf")
+        )
         self.printer.set(align="left", font="a", bold=False)
 
         for entry in entries:
@@ -181,10 +187,10 @@ class ReceiptPrinter:
 
         if total_tax > 0.0:
             self.printer.set(align="left", font="a", bold=True)
-            self.printer.textln(line_left_right("RI PAPER TAX TOTAL", f"${total_tax:.2f}"))
+            self.printer.textln(
+                line_left_right("RI PAPER TAX TOTAL", f"${total_tax:.2f}")
+            )
             self.printer.set(align="right", font="a", bold=True)
-
-
 
     def _rcpt_load_logo(self):
         try:
@@ -261,7 +267,9 @@ class ReceiptPrinter:
 
         if paper_excise > 0:
             self.printer.set(align="left", font="a", bold=True)
-            self.printer.textln(self._fmt_line("RI ROLLING PAPER TAX", f"${paper_excise:.2f}"))
+            self.printer.textln(
+                self._fmt_line("RI ROLLING PAPER TAX", f"${paper_excise:.2f}")
+            )
 
         self.printer.set(align="left", font="a", bold=False)
         self.printer.textln(self._fmt_line("7% RI Sales Tax", f"${tax_amount:.2f}"))
@@ -273,8 +281,18 @@ class ReceiptPrinter:
             self.printer.set(align="left", font="a", bold=False)
             pm = order_details.get("payment_method")
             if pm == "Cash":
-                self.printer.textln(self._fmt_line("Cash", f"${float(order_details.get('amount_tendered') or 0.0):.2f}"))
-                self.printer.textln(self._fmt_line("Change", f"${float(order_details.get('change_given') or 0.0):.2f}"))
+                self.printer.textln(
+                    self._fmt_line(
+                        "Cash",
+                        f"${float(order_details.get('amount_tendered') or 0.0):.2f}",
+                    )
+                )
+                self.printer.textln(
+                    self._fmt_line(
+                        "Change",
+                        f"${float(order_details.get('change_given') or 0.0):.2f}",
+                    )
+                )
             elif pm == "Split":
                 self.printer.textln("Split Payment")
             elif pm == "Debit":

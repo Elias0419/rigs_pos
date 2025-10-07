@@ -30,10 +30,12 @@ import logging
 
 logger = logging.getLogger("rigs_pos")
 
+
 class MarkupLabel(MDLabel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.markup = True
+
 
 def add_bottom_divider(widget, rgba=(0.5, 0.5, 0.5, 1), width=1):
     with widget.canvas.after:
@@ -136,7 +138,6 @@ class HistoryView(BoxLayout):
 
         Clock.schedule_once(lambda dt: self.filter_today(), 0.01)
 
-
     def display_order_details_from_barcode_scan(self, barcode):
         try:
             barcode_str = str(barcode)
@@ -166,7 +167,6 @@ class HistoryView(BoxLayout):
             logger.warn(
                 f"[HistoryManager] display_order_details_from_barcode_scan\n{e}"
             )
-
 
     def _build_totals_bar(self):
         self.totals_layout = GridLayout(cols=6, size_hint=(1, 0.1))

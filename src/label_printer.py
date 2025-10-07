@@ -34,10 +34,12 @@ from kivymd.uix.recycleview import RecycleView
 
 logger = logging.getLogger("rigs_pos")
 
+
 class MarkupLabel(MDLabel):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.markup = True
+
 
 def add_bottom_divider(widget, rgba=(0.5, 0.5, 0.5, 1), width=1):
     with widget.canvas.after:

@@ -243,55 +243,168 @@ class BarcodeScanner:
         u = s.strip().upper()
         # early returns
         # too short or too long
-        if not (10 <= len(u) <= 24): return False
+        if not (10 <= len(u) <= 24):
+            return False
         # not all numbers and letters
-        if not u.isalnum(): return False
+        if not u.isalnum():
+            return False
         # no letters
-        if not any(c.isalpha() for c in u): return False
+        if not any(c.isalpha() for c in u):
+            return False
         # no numbers
-        if not any(c.isdigit() for c in u): return False
+        if not any(c.isdigit() for c in u):
+            return False
         # at least 6 consecutive digits
-        if re.search(r"\d{6,}", u) is None: return False
+        if re.search(r"\d{6,}", u) is None:
+            return False
 
         STATES = {
-            "AL","AK","AZ","AR","CA","CO","CT","DC","DE","FL","GA","HI","IA","ID","IL","IN",
-            "KS","KY","LA","MA","MD","ME","MI","MN","MO","MS","MT","NC","ND","NE","NH","NJ",
-            "NM","NV","NY","OH","OK","OR","PA","PR","RI","SC","SD","TN","TX","UT","VA","VT",
-            "WA","WI","WV"
+            "AL",
+            "AK",
+            "AZ",
+            "AR",
+            "CA",
+            "CO",
+            "CT",
+            "DC",
+            "DE",
+            "FL",
+            "GA",
+            "HI",
+            "IA",
+            "ID",
+            "IL",
+            "IN",
+            "KS",
+            "KY",
+            "LA",
+            "MA",
+            "MD",
+            "ME",
+            "MI",
+            "MN",
+            "MO",
+            "MS",
+            "MT",
+            "NC",
+            "ND",
+            "NE",
+            "NH",
+            "NJ",
+            "NM",
+            "NV",
+            "NY",
+            "OH",
+            "OK",
+            "OR",
+            "PA",
+            "PR",
+            "RI",
+            "SC",
+            "SD",
+            "TN",
+            "TX",
+            "UT",
+            "VA",
+            "VT",
+            "WA",
+            "WI",
+            "WV",
         }
-        if not any(abbr in u for abbr in STATES): return False
+        if not any(abbr in u for abbr in STATES):
+            return False
 
-        if re.search(r"\d{3,}[A-Z]{2}[A-Z0-9]{2,}", u) or re.search(r"[A-Z]{2}\d{5,}", u):
+        if re.search(r"\d{3,}[A-Z]{2}[A-Z0-9]{2,}", u) or re.search(
+            r"[A-Z]{2}\d{5,}", u
+        ):
             return True
         # default false
         return False
-if __name__=="__main__":
+
+
+if __name__ == "__main__":
     # b= BarcodeScanner("02260142RIK4SL01")
     def _looks_like_1d_license(s):
 
         u = s.strip().upper()
         # early returns
         # too short or too long
-        if not (10 <= len(u) <= 24): return False
+        if not (10 <= len(u) <= 24):
+            return False
         # not all numbers and letters
-        if not u.isalnum(): return False
+        if not u.isalnum():
+            return False
         # no letters
-        if not any(c.isalpha() for c in u): return False
+        if not any(c.isalpha() for c in u):
+            return False
         # no numbers
-        if not any(c.isdigit() for c in u): return False
+        if not any(c.isdigit() for c in u):
+            return False
         # at least 6 consecutive digits
-        if re.search(r"\d{6,}", u) is None: return False
+        if re.search(r"\d{6,}", u) is None:
+            return False
 
         STATES = {
-            "AL","AK","AZ","AR","CA","CO","CT","DC","DE","FL","GA","HI","IA","ID","IL","IN",
-            "KS","KY","LA","MA","MD","ME","MI","MN","MO","MS","MT","NC","ND","NE","NH","NJ",
-            "NM","NV","NY","OH","OK","OR","PA","PR","RI","SC","SD","TN","TX","UT","VA","VT",
-            "WA","WI","WV"
+            "AL",
+            "AK",
+            "AZ",
+            "AR",
+            "CA",
+            "CO",
+            "CT",
+            "DC",
+            "DE",
+            "FL",
+            "GA",
+            "HI",
+            "IA",
+            "ID",
+            "IL",
+            "IN",
+            "KS",
+            "KY",
+            "LA",
+            "MA",
+            "MD",
+            "ME",
+            "MI",
+            "MN",
+            "MO",
+            "MS",
+            "MT",
+            "NC",
+            "ND",
+            "NE",
+            "NH",
+            "NJ",
+            "NM",
+            "NV",
+            "NY",
+            "OH",
+            "OK",
+            "OR",
+            "PA",
+            "PR",
+            "RI",
+            "SC",
+            "SD",
+            "TN",
+            "TX",
+            "UT",
+            "VA",
+            "VT",
+            "WA",
+            "WI",
+            "WV",
         }
-        if not any(abbr in u for abbr in STATES): return False
+        if not any(abbr in u for abbr in STATES):
+            return False
 
-        if re.search(r"\d{3,}[A-Z]{2}[A-Z0-9]{2,}", u) or re.search(r"[A-Z]{2}\d{5,}", u):
+        if re.search(r"\d{3,}[A-Z]{2}[A-Z0-9]{2,}", u) or re.search(
+            r"[A-Z]{2}\d{5,}", u
+        ):
             return True
         # default false
         return False
+
     print(_looks_like_1d_license("02260142RIK4SL01"))
