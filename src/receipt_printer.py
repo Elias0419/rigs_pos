@@ -131,45 +131,43 @@ class ReceiptPrinter:
         if not entries:
             return
 
+        WIDTH = 48
+        def line_left_right(left: str, right: str) -> str:
+            left = (left or "")[:WIDTH]  # safety
+            right = (right or "")[:WIDTH]
+            pad = max(1, WIDTH - len(left) - len(right))
+            return left + (" " * pad) + right
+
+        per_paper_rate = float(entries[0].get("per_paper_tax", 0.0) or 0.0)
+
         total_tax = 0.0
-        total_papers = 0
-        per_paper_rate = entries[0].get("per_paper_tax", 0.0)
 
         self.printer.textln()
-        self.printer.set(align="left", font="a", bold=False)
-        self.printer.textln(
-            f"Rhode Island taxes rolling papers like cigarettes, at ${per_paper_rate:.3f} per paper."
-        )
+        self.printer.set(align="left", font="b", bold=True)
+        self.printer.textln(line_left_right("RI PAPER TAX", f"@ ${per_paper_rate:.3f}/leaf"))
+        self.printer.set(align="left", font="b", bold=False)
 
         for entry in entries:
-            quantity = entry.get("quantity", 0) or 0
-            if quantity <= 0:
+            qty = int(entry.get("quantity") or 0)
+            if qty <= 0:
                 continue
 
-            per_pack_tax = entry.get("_total_paper_tax_per_pack", 0.0) or 0.0
-            paper_count = entry.get("paper_count", 0) or 0
-            item_name = entry.get("item_name") or "Rolling Papers"
+            name = (entry.get("item_name") or "Rolling Papers").strip()
+            papers = int(entry.get("paper_count") or 0)
+            per_pack_tax = float(entry.get("_total_paper_tax_per_pack", 0.0) or 0.0)
 
-            total_for_item = per_pack_tax * quantity
-            total_tax += total_for_item
-            total_papers += paper_count * quantity
+            item_tax = per_pack_tax * qty
+            total_tax += item_tax
 
-            if quantity > 1:
-                self.printer.textln(
-                    f"{item_name}: {quantity} pack(s) × {paper_count} papers included ${total_for_item:.2f} in RI rolling paper excise tax."
-                )
-            else:
-                self.printer.textln(
-                    f"{item_name}: {paper_count} papers included ${per_pack_tax:.2f} in RI rolling paper excise tax."
-                )
+            left = f"{name} x{qty} ({papers}/pack)"
+            right = f"${item_tax:.2f}"
+            self.printer.textln(line_left_right(left, right))
 
-        if total_tax > 0 and total_papers > 0:
-            self.printer.textln(
-                f"In total, ${total_tax:.2f} of this purchase covered RI rolling paper tax on {total_papers} papers."
-            )
+        if total_tax > 0.0:
+            self.printer.set(align="left", font="b", bold=True)
+            self.printer.textln(line_left_right("RI PAPER TAX TOTAL", f"${total_tax:.2f}"))
+            self.printer.set(align="right", font="a", bold=True)
 
-        self.printer.textln()
-        self.printer.set(align="right", font="a", bold=True)
 
 
     def _rcpt_load_logo(self):
@@ -240,7 +238,7 @@ class ReceiptPrinter:
         self.printer.textln(f"Tax: ${order_details['tax_amount']:.2f}")
         self.printer.textln(f"Total: ${order_details['total_with_tax']:.2f}")
 
-        self._rcpt_print_rolling_paper_tax(order_details)
+
 
         if not draft:
             pm = order_details.get("payment_method")
@@ -253,6 +251,7 @@ class ReceiptPrinter:
                 self.printer.textln("Debit Payment")
             else:
                 self.printer.textln("Credit Payment")
+            self._rcpt_print_rolling_paper_tax(order_details)
 
     def _rcpt_print_review_and_barcode(self, order_details, draft, qr_code):
         self.printer.set(align="center", font="b", bold=False)
@@ -267,11 +266,11 @@ class ReceiptPrinter:
                 review_url = "https://g.page/r/CfHmpKJDLRqXEBM/review"
                 self.printer.set(align="center", font="a", bold=False)
                 self.printer.textln()
-                self.printer.textln("Thanks for supporting small business in RI!")
+                self.printer.textln("Thanks for shopping at RIGS!")
                 self.printer.set(align="center", font="a", bold=True)
-                self.printer.textln("Scan to review us on Google!")
-                self.printer.set(align="center", font="a", bold=False)
-                self.printer.textln("It really helps!")
+                self.printer.textln("Scan the QR Code to review us on Google!")
+                # self.printer.set(align="center", font="a", bold=False)
+                # self.printer.textln("It really helps!")
                 self.printer.qr(review_url, native=True, size=4)
                 self.printer.set(align="center", font="a", bold=False)
                 self.printer.textln("g.page/r/CfHmpKJDLRqXEBM/review")
