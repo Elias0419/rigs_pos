@@ -207,6 +207,8 @@ class ReceiptPrinter:
         self.printer.textln("Wakefield, RI")
         self.printer.textln("401-363-9866")
         self.printer.textln()
+        self.printer.textln()
+        self.printer.textln()
 
         self.printer.set(align="left", font="a", bold=False)
         return date_str
