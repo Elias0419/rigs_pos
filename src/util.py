@@ -282,6 +282,26 @@ class Utilities:
         except:
             raise
 
+    def build_paper_tax_summary(self, paper_count, *, per_paper_tax=0.225):
+
+        try:
+            normalized_count = int(paper_count)
+        except (TypeError, ValueError):
+            normalized_count = 0
+
+        try:
+            normalized_rate = float(per_paper_tax)
+        except (TypeError, ValueError):
+            normalized_rate = 0.0
+
+        total_tax = normalized_count * normalized_rate
+
+        return {
+            "paper_count": normalized_count,
+            "per_paper_tax": normalized_rate,
+            "_total_paper_tax_per_pack": total_tax,
+        }
+
     def get_open_session_for_user_today(self, expected_name):
 
         found_name, session_path = self._find_active_session_today()

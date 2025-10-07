@@ -86,6 +86,92 @@ class ReceiptPrinter:
             self.app.popup_manager.catch_receipt_printer_errors(e, order_details)
             return False
 
+    def _collect_rolling_paper_tax_entries(self, order_details):
+        entries = []
+        items = order_details.get("items", {}) or {}
+
+        for item_id, item in items.items():
+            if not item_id:
+                continue
+
+            try:
+                quantity = int(item.get("quantity", 1) or 0)
+            except (TypeError, ValueError):
+                quantity = 0
+            if quantity <= 0:
+                continue
+
+            try:
+                lookup_id = str(item_id)
+            except Exception:
+                lookup_id = item_id
+
+            try:
+                details = self.app.db_manager.get_item_details(item_id=lookup_id)
+            except Exception:
+                details = None
+
+            if not details or not details.get("is_rolling_papers"):
+                continue
+
+            papers_per_pack = details.get("papers_per_pack")
+            summary = self.app.utilities.build_paper_tax_summary(papers_per_pack)
+
+            if summary["paper_count"] <= 0 or summary["_total_paper_tax_per_pack"] <= 0:
+                continue
+
+            summary["quantity"] = quantity
+            summary["item_name"] = details.get("name") or item.get("name")
+            entries.append(summary)
+
+        return entries
+
+    def _rcpt_print_rolling_paper_tax(self, order_details):
+        entries = self._collect_rolling_paper_tax_entries(order_details)
+        if not entries:
+            return
+
+        total_tax = 0.0
+        total_papers = 0
+        per_paper_rate = entries[0].get("per_paper_tax", 0.0)
+
+        self.printer.textln()
+        self.printer.set(align="left", font="a", bold=False)
+        self.printer.textln(
+            f"Rhode Island taxes rolling papers like cigarettes, at ${per_paper_rate:.3f} per paper."
+        )
+
+        for entry in entries:
+            quantity = entry.get("quantity", 0) or 0
+            if quantity <= 0:
+                continue
+
+            per_pack_tax = entry.get("_total_paper_tax_per_pack", 0.0) or 0.0
+            paper_count = entry.get("paper_count", 0) or 0
+            item_name = entry.get("item_name") or "Rolling Papers"
+
+            total_for_item = per_pack_tax * quantity
+            total_tax += total_for_item
+            total_papers += paper_count * quantity
+
+            if quantity > 1:
+                self.printer.textln(
+                    f"{item_name}: {quantity} pack(s) × {paper_count} papers included ${total_for_item:.2f} in RI rolling paper excise tax."
+                )
+            else:
+                self.printer.textln(
+                    f"{item_name}: {paper_count} papers included ${per_pack_tax:.2f} in RI rolling paper excise tax."
+                )
+
+        if total_tax > 0 and total_papers > 0:
+            self.printer.textln(
+                f"In total, ${total_tax:.2f} of this purchase covered RI rolling paper tax on {total_papers} papers."
+            )
+
+        self.printer.textln()
+        self.printer.set(align="right", font="a", bold=True)
+
+
     def _rcpt_load_logo(self):
         try:
             return Image.open("images/rigs_logo_scaled.png")
@@ -153,6 +239,8 @@ class ReceiptPrinter:
 
         self.printer.textln(f"Tax: ${order_details['tax_amount']:.2f}")
         self.printer.textln(f"Total: ${order_details['total_with_tax']:.2f}")
+
+        self._rcpt_print_rolling_paper_tax(order_details)
 
         if not draft:
             pm = order_details.get("payment_method")
