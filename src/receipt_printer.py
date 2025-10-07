@@ -46,6 +46,7 @@ printer:
     media.width:
         pixel: 612
 """
+WIDTH = 48
 
 class ReceiptPrinter:
     def __init__(self, ref):
@@ -85,6 +86,21 @@ class ReceiptPrinter:
         except Exception as e:
             self.app.popup_manager.catch_receipt_printer_errors(e, order_details)
             return False
+
+    def _fmt_line(self, left: str, right: str, width: int = WIDTH) -> str:
+        left = (left or "").strip()
+        right = (right or "").strip()
+        pad = max(1, width - len(left) - len(right))
+        return f"{left}{' ' * pad}{right}"
+
+    def _calc_paper_tax_total(self, order_details) -> float:
+        total = 0.0
+        for e in self._collect_rolling_paper_tax_entries(order_details):
+            qty = int(e.get("quantity") or 0)
+            per_pack_tax = float(e.get("_total_paper_tax_per_pack", 0.0) or 0.0)
+            if qty > 0 and per_pack_tax > 0.0:
+                total += per_pack_tax * qty
+        return round(total, 2)
 
     def _collect_rolling_paper_tax_entries(self, order_details):
         entries = []
@@ -196,62 +212,73 @@ class ReceiptPrinter:
         return date_str
 
     def _rcpt_print_items(self, order_details):
-        max_line_width = 48
+        self.printer.set(align="left", font="b", bold=False)
 
         for item in order_details["items"].values():
-            if item["quantity"] > 1:
-                item_name = f"{item['name']} x{item['quantity']}"
-            else:
-                item_name = item["name"]
+            qty = int(item.get("quantity") or 0)
+            name = (item.get("name") or "").strip()
+            total_price = float(item.get("total_price") or 0.0)
 
-            price = f"${item['total_price']:.2f}"
-            spaces = " " * max(0, max_line_width - len(item_name) - len(price))
-            item_line = item_name + spaces + price
+            # First line: item name (+ qty) in bold, price right
+            self.printer.set(align="left", font="b", bold=True)
+            label = f"{name} x{qty}" if qty > 1 else name
+            self.printer.textln(self._fmt_line(label, f"${total_price:.2f}"))
 
-            self.printer.textln(item_line)
-
+            # Optional second line(s): per-item discount etc. not bold
+            self.printer.set(align="left", font="b", bold=False)
             try:
                 disc_amt = float(item.get("discount", {}).get("amount", 0) or 0)
             except Exception:
                 disc_amt = 0.0
-
             if disc_amt > 0:
-                discount_text = f"Discount: -${disc_amt:.2f}"
-                spaces = " " * max(0, max_line_width - len(discount_text))
-                self.printer.textln(spaces + discount_text)
+                self.printer.textln(self._fmt_line("  Discount", f"-${disc_amt:.2f}"))
 
-            self.printer.textln()
+            # Spacer between items
+            self.printer.textln("")
 
     def _rcpt_print_totals(self, order_details, draft):
-        self.printer.set(align="right", font="a", bold=True)
-        self.printer.textln()
+        orig_subtotal = float(order_details.get("subtotal") or 0.0)
+        tax_amount = float(order_details.get("tax_amount") or 0.0)
+        total_with_tax = float(order_details.get("total_with_tax") or 0.0)
 
-        self.printer.textln(f"Subtotal: ${order_details['subtotal']:.2f}")
+        paper_excise = self._calc_paper_tax_total(order_details)
+        display_subtotal = max(0.0, round(orig_subtotal - paper_excise, 2))
 
         try:
             order_disc = float(order_details.get("discount", 0) or 0)
         except Exception:
             order_disc = 0.0
+
+        self.printer.textln("")
+        self.printer.set(align="left", font="b", bold=True)
+        self.printer.textln(self._fmt_line("Subtotal", f"${display_subtotal:.2f}"))
+
         if order_disc > 0:
-            self.printer.textln(f"Discount: -${order_disc:.2f}")
+            self.printer.set(align="left", font="b", bold=False)
+            self.printer.textln(self._fmt_line("Discount", f"-${order_disc:.2f}"))
 
-        self.printer.textln(f"Tax: ${order_details['tax_amount']:.2f}")
-        self.printer.textln(f"Total: ${order_details['total_with_tax']:.2f}")
+        if paper_excise > 0:
+            self.printer.set(align="left", font="b", bold=True)
+            self.printer.textln(self._fmt_line("RI ROLLING PAPER TAX", f"${paper_excise:.2f}"))
 
+        self.printer.set(align="left", font="b", bold=False)
+        self.printer.textln(self._fmt_line("7% RI Sales Tax", f"${tax_amount:.2f}"))
 
+        self.printer.set(align="left", font="b", bold=True)
+        self.printer.textln(self._fmt_line("Total", f"${total_with_tax:.2f}"))
 
         if not draft:
+            self.printer.set(align="left", font="b", bold=False)
             pm = order_details.get("payment_method")
             if pm == "Cash":
-                self.printer.textln(f"Cash: ${order_details['amount_tendered']:.2f}")
-                self.printer.textln(f"Change: ${order_details['change_given']:.2f}")
+                self.printer.textln(self._fmt_line("Cash", f"${float(order_details.get('amount_tendered') or 0.0):.2f}"))
+                self.printer.textln(self._fmt_line("Change", f"${float(order_details.get('change_given') or 0.0):.2f}"))
             elif pm == "Split":
                 self.printer.textln("Split Payment")
             elif pm == "Debit":
                 self.printer.textln("Debit Payment")
             else:
                 self.printer.textln("Credit Payment")
-            self._rcpt_print_rolling_paper_tax(order_details)
 
     def _rcpt_print_review_and_barcode(self, order_details, draft, qr_code):
         self.printer.set(align="center", font="b", bold=False)
