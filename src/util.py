@@ -83,33 +83,7 @@ from open_cash_drawer import open_cash_drawer
 from order_manager import OrderManager
 from popups import FinancialSummaryWidget, PopupManager
 from receipt_printer import ReceiptPrinter
-from idc import id21_check, summarize_for_popup
 
-
-def is_21(raw_bytes, app=None):
-    dec = id21_check(raw_bytes)
-    summary = summarize_for_popup(dec)
-
-    if dec.hard_fail:
-        log.warning("ID hard-fail\n%s", summary)
-        if app and hasattr(app, "popup_manager"):
-            # show a blocking review popup
-            app.popup_manager.show_error(summary)
-        return False
-
-    if dec.needs_review:
-        log.info("ID needs review\n%s", summary)
-        if app and hasattr(app, "popup_manager"):
-            app.popup_manager.show_warning(summary)
-        return True
-
-    log.info("ID 21+ verified\n%s", summary)
-    if app and hasattr(app, "popup_manager"):
-        try:
-            app.popup_manager.show_info("21+ verified")
-        except Exception:
-            pass
-    return True
 
 
 def log_caller_info(depth=1):

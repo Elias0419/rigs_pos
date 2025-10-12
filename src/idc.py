@@ -213,7 +213,7 @@ def _state_abbr_from_fields(f: dict[str,str]) -> str | None:
     # sometimes DCG holds country, DAJ should be state
     return None
 
-def id21_check(raw: bytes, today: date = None | None) -> Decision:
+def id21_check(raw: bytes, today: date = None) -> Decision:
     today = today or date.today()
     p = parse_aamva(raw)
 

@@ -61,63 +61,100 @@ class PopupManager:
     def __init__(self, ref):
         self.app = ref
 
-    def id_scan_popup(self, result, errors):
-        errors = [e for e in (errors or []) if e]
-        has_error = bool(errors)
+    def show_error(self, summary: str) -> None:
+        Clock.schedule_once(lambda dt: self._open_review_popup(
+            title="ID Check Failed",
+            summary=summary,
+            primary_btn=("OK", None),   # just acknowledge
+            secondary_btn=None,
+            auto_dismiss=False
+        ), 0)
 
-        is_21 = result
+    def show_warning(self, summary: str) -> None:
 
-        if is_21:
-            title = "All Set"
-            message = "User is 21+"
-        elif has_error:
-            title = "Error"
-            message = str(errors)
-        else:
-            title = "NOT 21+"
-            cutoff = cutoff_21()
-            message = (
-                f"User is NOT 21+\nMust be born on or before {format_mmddyyyy(cutoff)}"
-            )
+        Clock.schedule_once(lambda dt: self._open_review_popup(
+            title="ID Needs Review",
+            summary=summary,
+            primary_btn=("Proceed", None),
+            secondary_btn=("Cancel", None),
+            auto_dismiss=False
+        ), 0)
 
-        content = MDCard(
-            orientation="vertical",
+    def show_info(self, message: str) -> None:
+            Clock.schedule_once(lambda dt: self._open_review_popup(
+            title="All set",
+            summary=message,
+            primary_btn=("OK", None),   # just acknowledge
+            secondary_btn=None,
+            auto_dismiss=False
+        ), 0)
+
+
+    def _open_review_popup(
+        self,
+        title: str,
+        summary: str,
+        primary_btn: tuple,
+        secondary_btn: tuple,
+        auto_dismiss: bool
+    ) -> None:
+        # Root content
+        root = MDBoxLayout(orientation="vertical", padding=12, spacing=12)
+
+        # Header bar
+        header = MDBoxLayout(orientation="horizontal", size_hint_y=None, height="36dp", padding=(8, 6))
+
+        header.add_widget(MDLabel(text=title, bold=True, theme_text_color="Custom", text_color=self._fg_col))
+        root.add_widget(header)
+
+        #  summary
+        sv = ScrollView(size_hint=(1, 1))
+        ti = TextInput(
+            text=summary,
+            readonly=True,
+            font_name="",
+            font_size="15sp",
+            background_color=(0, 0, 0, 0),
+            foreground_color=(1, 1, 1, 1),
+            cursor_color=(1, 1, 1, 1),
+            size_hint_y=None
         )
+        ti.bind(minimum_height=ti.setter("height"))
+        sv.add_widget(ti)
+        root.add_widget(sv)
 
-        header = MDBoxLayout(
-            orientation="horizontal",
-        )
+        # Buttons
+        btn_row = MDBoxLayout(orientation="horizontal", spacing=8, size_hint_y=None, height="48dp")
+        def _mk_btn(spec, raised=False):
+            if spec is None:
+                return None
+            txt, cb = spec
+            w = MDRaisedButton(text=txt) if raised else MDFlatButton(text=txt)
+            def _on_press(_w):
+                if cb:
+                    try:
+                        cb()
+                    except Exception:
+                        pass
+                popup.dismiss()
+            w.bind(on_press=_on_press)
+            return w
 
-        header.add_widget(
-            MarkupLabel(
-                text=title,
-                font_style="H6",
-                halign="center",
-            )
-        )
-        content.add_widget(header)
 
-        msg = MarkupLabel(
-            text=message,
-            halign="center",
-        )
-        content.add_widget(msg)
+        left = _mk_btn(secondary_btn, raised=False)
+        right = _mk_btn(primary_btn, raised=True)
+        # Spacer
+        btn_row.add_widget(BoxLayout())
+        if left: btn_row.add_widget(left)
+        if right: btn_row.add_widget(right)
+        root.add_widget(btn_row)
 
         popup = Popup(
             title="",
-            auto_dismiss=True,
-            size_hint=(0.25, 0.25),
+            content=root,
+            size_hint=(0.7, 0.75),
+            auto_dismiss=auto_dismiss,
         )
-
-        buttons = MDBoxLayout(
-            orientation="horizontal",
-        )
-        buttons.add_widget(
-            MDFlatButton(text="DISMISS", on_release=lambda *_: popup.dismiss())
-        )
-        content.add_widget(buttons)
-
-        popup.add_widget(content)
         popup.open()
 
     def show_update_notification_popup(self, update_details):
