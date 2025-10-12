@@ -112,7 +112,6 @@ class PopupManager:
         ti = TextInput(
             text=summary,
             readonly=True,
-            font_name="",
             font_size="15sp",
             background_color=(0, 0, 0, 0),
             foreground_color=(1, 1, 1, 1),
