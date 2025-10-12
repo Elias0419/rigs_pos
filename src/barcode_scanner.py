@@ -4,6 +4,7 @@ import serial
 from kivy.clock import Clock
 import logging
 import re
+from util import is_21
 
 logger = logging.getLogger("rigs_pos")
 conversion_table = {
@@ -236,7 +237,7 @@ class BarcodeScanner:
         return False
 
     def _handle_license_payload(self, raw_bytes: bytes):
-        Clock.schedule_once(lambda dt: self.app.utilities.is_21(raw_bytes), 0)
+        Clock.schedule_once(lambda dt: is_21(raw_bytes), 0)
 
     def _looks_like_1d_license(self, s):
 
