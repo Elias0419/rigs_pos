@@ -331,16 +331,16 @@ class BarcodeScanner:
 
         if dec.hard_fail:
             logger.warning("ID scan fail\n%s", summary)
-            app.popup_manager.show_error(summary)
+            self.app.popup_manager.show_error(summary)
             return False
 
         if dec.needs_review:
             logger.info("ID needs review\n%s", summary)
-            app.popup_manager.show_warning(summary)
+            self.app.popup_manager.show_warning(summary)
             return True
 
         logger.info("ID 21+ verified\n%s", summary)
-        app.popup_manager.show_info(summary)
+        self.app.popup_manager.show_info(summary)
         return True
 
 
