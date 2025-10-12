@@ -12,19 +12,18 @@ def is_21(raw_bytes, app=None):
     summary = summarize_for_popup(dec)
 
     if dec.hard_fail:
-        log.warning("ID hard-fail\n%s", summary)
+        logger.warning("ID hard-fail\n%s", summary)
         if app and hasattr(app, "popup_manager"):
-            # show a blocking review popup
             app.popup_manager.show_error(summary)
         return False
 
     if dec.needs_review:
-        log.info("ID needs review\n%s", summary)
+        logger.info("ID needs review\n%s", summary)
         if app and hasattr(app, "popup_manager"):
             app.popup_manager.show_warning(summary)
         return True
 
-    log.info("ID 21+ verified\n%s", summary)
+    logger.info("ID 21+ verified\n%s", summary)
     if app and hasattr(app, "popup_manager"):
         try:
             app.popup_manager.show_info("21+ verified")
