@@ -104,7 +104,7 @@ class PopupManager:
         # Header bar
         header = MDBoxLayout(orientation="horizontal", size_hint_y=None, height="36dp", padding=(8, 6))
 
-        header.add_widget(MDLabel(text=title, bold=True, theme_text_color="Custom", text_color=self._fg_col))
+        header.add_widget(MDLabel(text=title, bold=True))
         root.add_widget(header)
 
         #  summary
