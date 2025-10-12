@@ -80,10 +80,10 @@ class PopupManager:
             auto_dismiss=False
         ), 0)
 
-    def show_info(self, message: str) -> None:
+    def show_info(self, summary: str) -> None:
             Clock.schedule_once(lambda dt: self._open_review_popup(
             title="All set",
-            summary=message,
+            summary=summary,
             primary_btn=("OK", None),   # just acknowledge
             secondary_btn=None,
             auto_dismiss=False

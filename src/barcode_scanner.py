@@ -7,29 +7,6 @@ import re
 from idc import id21_check, summarize_for_popup
 
 
-def is_21(raw_bytes, app=None):
-    dec = id21_check(raw_bytes)
-    summary = summarize_for_popup(dec)
-
-    if dec.hard_fail:
-        logger.warning("ID hard-fail\n%s", summary)
-        if app and hasattr(app, "popup_manager"):
-            app.popup_manager.show_error(summary)
-        return False
-
-    if dec.needs_review:
-        logger.info("ID needs review\n%s", summary)
-        if app and hasattr(app, "popup_manager"):
-            app.popup_manager.show_warning(summary)
-        return True
-
-    logger.info("ID 21+ verified\n%s", summary)
-    if app and hasattr(app, "popup_manager"):
-        try:
-            app.popup_manager.show_info("21+ verified")
-        except Exception:
-            pass
-    return True
 
 logger = logging.getLogger("rigs_pos")
 conversion_table = {
@@ -262,7 +239,7 @@ class BarcodeScanner:
         return False
 
     def _handle_license_payload(self, raw_bytes: bytes):
-        Clock.schedule_once(lambda dt: is_21(raw_bytes), 0)
+        Clock.schedule_once(lambda dt: self.is_21(raw_bytes), 0)
 
     def _looks_like_1d_license(self, s):
 
@@ -346,6 +323,25 @@ class BarcodeScanner:
             return True
         # default false
         return False
+
+
+    def is_21(self, raw_bytes, app=None):
+        dec = id21_check(raw_bytes)
+        summary = summarize_for_popup(dec)
+
+        if dec.hard_fail:
+            logger.warning("ID scan fail\n%s", summary)
+            app.popup_manager.show_error(summary)
+            return False
+
+        if dec.needs_review:
+            logger.info("ID needs review\n%s", summary)
+            app.popup_manager.show_warning(summary)
+            return True
+
+        logger.info("ID 21+ verified\n%s", summary)
+        app.popup_manager.show_info(summary)
+        return True
 
 
 if __name__ == "__main__":
