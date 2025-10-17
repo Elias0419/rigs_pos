@@ -83,7 +83,7 @@ from open_cash_drawer import open_cash_drawer
 from order_manager import OrderManager
 from popups import FinancialSummaryWidget, PopupManager
 from receipt_printer import ReceiptPrinter
-
+from cameras.open_camview import open_or_raise_camview
 
 
 def log_caller_info(depth=1):
@@ -1162,7 +1162,8 @@ class Utilities:
 
         btn_custom_item = MDFlatButton(
             text="[b][size=40]CUSTOM[/b][/size]",
-            on_press=self.app.button_handler.on_button_press,
+            #on_press=self.app.button_handler.on_button_press,
+            on_press= lambda x: open_or_raise_camview,
             padding=(8, 8),
             font_name=self.font,
             font_style="H6",
