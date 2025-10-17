@@ -1,4 +1,5 @@
 import os, json, socket, subprocess, time
+import logging
 logger = logging.getLogger("rigs_pos")
 
 SOCK_PATH = "/tmp/camview.sock"
