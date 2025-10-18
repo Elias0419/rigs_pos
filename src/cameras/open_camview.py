@@ -18,7 +18,7 @@ def open_or_raise_camview():
 
     try:
         subprocess.Popen(
-            ["/home/rigs/0/bin/python3", "camview.py"],
+            ["/home/rigs/0/bin/python3", "/home/rigs/rigs_pos/src/cameras/camview.py"],
             env=dict(os.environ, DISPLAY=os.environ.get("DISPLAY", ":0")),
             start_new_session=True,
         )
