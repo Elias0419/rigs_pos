@@ -14,15 +14,16 @@ def open_or_raise_camview():
         _send_cmd({"cmd": "raise"})
         return
     except Exception as e:
-        logger.warn(e)
         pass
 
-
-    subprocess.Popen(
-        ["/home/rigs/0/bin/python3", "camview.py"],
-        env=dict(os.environ, DISPLAY=os.environ.get("DISPLAY", ":0")),
-        start_new_session=True,
-    )
+    try:
+        subprocess.Popen(
+            ["/home/rigs/0/bin/python3", "camview.py"],
+            env=dict(os.environ, DISPLAY=os.environ.get("DISPLAY", ":0")),
+            start_new_session=True,
+        )
+    except FileNotFoundError:
+        return
 
     for _ in range(20):
         time.sleep(0.1)
@@ -30,5 +31,4 @@ def open_or_raise_camview():
             _send_cmd({"cmd": "raise"})
             break
         except Exception as e:
-            logger.warn(e)
             continue
