@@ -14,16 +14,7 @@ LATENCY_MS = 100
 USE_TCP = True
 FREEZE_SECS = 3.0           # restart if no buffers for this long
 RESTART_MIN_GAP = 2.0       # throttle restarts
-NO_CAMERA = Camera(
-    name="(no cameras configured)",
-    host="",
-    port=0,
-    username="",
-    password="",
-    stream="",
-    params="",
-    preview=False,
-)
+
 
 @dataclass
 class Camera:
@@ -36,6 +27,16 @@ class Camera:
     params: str = ""
     preview: bool = True
 
+NO_CAMERA = Camera(
+    name="(no cameras configured)",
+    host="",
+    port=0,
+    username="",
+    password="",
+    stream="",
+    params="",
+    preview=False,
+)
 
 def load_cameras(path: str = "cameras.yaml") -> List[Camera]:
     return [
