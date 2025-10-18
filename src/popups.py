@@ -62,33 +62,41 @@ class PopupManager:
         self.app = ref
 
     def show_error(self, summary: str) -> None:
-        Clock.schedule_once(lambda dt: self._open_review_popup(
-            title="ID Check Failed",
-            summary=summary,
-            primary_btn=("OK", None),   # just acknowledge
-            secondary_btn=None,
-            auto_dismiss=False
-        ), 0)
+        Clock.schedule_once(
+            lambda dt: self._open_review_popup(
+                title="ID Check Failed",
+                summary=summary,
+                primary_btn=("OK", None),  # just acknowledge
+                secondary_btn=None,
+                auto_dismiss=False,
+            ),
+            0,
+        )
 
     def show_warning(self, summary: str) -> None:
 
-        Clock.schedule_once(lambda dt: self._open_review_popup(
-            title="ID Needs Review",
-            summary=summary,
-            primary_btn=("Proceed", None),
-            secondary_btn=("Cancel", None),
-            auto_dismiss=False
-        ), 0)
+        Clock.schedule_once(
+            lambda dt: self._open_review_popup(
+                title="ID Needs Review",
+                summary=summary,
+                primary_btn=("Proceed", None),
+                secondary_btn=("Cancel", None),
+                auto_dismiss=False,
+            ),
+            0,
+        )
 
     def show_info(self, summary: str) -> None:
-            Clock.schedule_once(lambda dt: self._open_review_popup(
-            title="All set",
-            summary=summary,
-            primary_btn=("OK", None),   # just acknowledge
-            secondary_btn=None,
-            auto_dismiss=False
-        ), 0)
-
+        Clock.schedule_once(
+            lambda dt: self._open_review_popup(
+                title="All set",
+                summary=summary,
+                primary_btn=("OK", None),  # just acknowledge
+                secondary_btn=None,
+                auto_dismiss=False,
+            ),
+            0,
+        )
 
     def _open_review_popup(
         self,
@@ -96,13 +104,15 @@ class PopupManager:
         summary: str,
         primary_btn: tuple,
         secondary_btn: tuple,
-        auto_dismiss: bool
+        auto_dismiss: bool,
     ) -> None:
         # Root content
         root = MDBoxLayout(orientation="vertical", padding=12, spacing=12)
 
         # Header bar
-        header = MDBoxLayout(orientation="horizontal", size_hint_y=None, height="36dp", padding=(8, 6))
+        header = MDBoxLayout(
+            orientation="horizontal", size_hint_y=None, height="36dp", padding=(8, 6)
+        )
 
         header.add_widget(MDLabel(text=title, bold=True))
         root.add_widget(header)
@@ -116,19 +126,23 @@ class PopupManager:
             background_color=(0, 0, 0, 0),
             foreground_color=(1, 1, 1, 1),
             cursor_color=(1, 1, 1, 1),
-            size_hint_y=None
+            size_hint_y=None,
         )
         ti.bind(minimum_height=ti.setter("height"))
         sv.add_widget(ti)
         root.add_widget(sv)
 
         # Buttons
-        btn_row = MDBoxLayout(orientation="horizontal", spacing=8, size_hint_y=None, height="48dp")
+        btn_row = MDBoxLayout(
+            orientation="horizontal", spacing=8, size_hint_y=None, height="48dp"
+        )
+
         def _mk_btn(spec, raised=False):
             if spec is None:
                 return None
             txt, cb = spec
             w = MDRaisedButton(text=txt) if raised else MDFlatButton(text=txt)
+
             def _on_press(_w):
                 if cb:
                     try:
@@ -136,16 +150,18 @@ class PopupManager:
                     except Exception:
                         pass
                 popup.dismiss()
+
             w.bind(on_press=_on_press)
             return w
-
 
         left = _mk_btn(secondary_btn, raised=False)
         right = _mk_btn(primary_btn, raised=True)
         # Spacer
         btn_row.add_widget(BoxLayout())
-        if left: btn_row.add_widget(left)
-        if right: btn_row.add_widget(right)
+        if left:
+            btn_row.add_widget(left)
+        if right:
+            btn_row.add_widget(right)
         root.add_widget(btn_row)
 
         popup = Popup(

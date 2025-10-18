@@ -7,7 +7,6 @@ import re
 from idc import id21_check, summarize_for_popup
 
 
-
 logger = logging.getLogger("rigs_pos")
 conversion_table = {
     0: ["", ""],
@@ -323,7 +322,6 @@ class BarcodeScanner:
             return True
         # default false
         return False
-
 
     def is_21(self, raw_bytes, app=None):
         dec = id21_check(raw_bytes)

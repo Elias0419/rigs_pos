@@ -80,24 +80,69 @@ IIN = {
 }
 
 US_ABBR = {
-    "Alabama":"AL","Alaska":"AK","Arizona":"AZ","Arkansas":"AR","California":"CA",
-    "Colorado":"CO","Connecticut":"CT","Delaware":"DE","District of Columbia":"DC",
-    "Florida":"FL","Georgia":"GA","Hawaii":"HI","Idaho":"ID","Illinois":"IL",
-    "Indiana":"IN","Iowa":"IA","Kansas":"KS","Kentucky":"KY","Louisiana":"LA",
-    "Maine":"ME","Maryland":"MD","Massachusetts":"MA","Michigan":"MI","Minnesota":"MN",
-    "Mississippi":"MS","Missouri":"MO","Montana":"MT","Nebraska":"NE","Nevada":"NV",
-    "New Hampshire":"NH","New Jersey":"NJ","New Mexico":"NM","New York":"NY",
-    "North Carolina":"NC","North Dakota":"ND","Ohio":"OH","Oklahoma":"OK","Oregon":"OR",
-    "Pennsylvania":"PA","Rhode Island":"RI","South Carolina":"SC","South Dakota":"SD",
-    "Tennessee":"TN","Texas":"TX","Utah":"UT","Vermont":"VT","Virginia":"VA",
-    "Washington":"WA","West Virginia":"WV","Wisconsin":"WI","Wyoming":"WY",
-    "Puerto Rico":"PR","Guam":"GU","U.S. Virgin Islands":"VI"
+    "Alabama": "AL",
+    "Alaska": "AK",
+    "Arizona": "AZ",
+    "Arkansas": "AR",
+    "California": "CA",
+    "Colorado": "CO",
+    "Connecticut": "CT",
+    "Delaware": "DE",
+    "District of Columbia": "DC",
+    "Florida": "FL",
+    "Georgia": "GA",
+    "Hawaii": "HI",
+    "Idaho": "ID",
+    "Illinois": "IL",
+    "Indiana": "IN",
+    "Iowa": "IA",
+    "Kansas": "KS",
+    "Kentucky": "KY",
+    "Louisiana": "LA",
+    "Maine": "ME",
+    "Maryland": "MD",
+    "Massachusetts": "MA",
+    "Michigan": "MI",
+    "Minnesota": "MN",
+    "Mississippi": "MS",
+    "Missouri": "MO",
+    "Montana": "MT",
+    "Nebraska": "NE",
+    "Nevada": "NV",
+    "New Hampshire": "NH",
+    "New Jersey": "NJ",
+    "New Mexico": "NM",
+    "New York": "NY",
+    "North Carolina": "NC",
+    "North Dakota": "ND",
+    "Ohio": "OH",
+    "Oklahoma": "OK",
+    "Oregon": "OR",
+    "Pennsylvania": "PA",
+    "Rhode Island": "RI",
+    "South Carolina": "SC",
+    "South Dakota": "SD",
+    "Tennessee": "TN",
+    "Texas": "TX",
+    "Utah": "UT",
+    "Vermont": "VT",
+    "Virginia": "VA",
+    "Washington": "WA",
+    "West Virginia": "WV",
+    "Wisconsin": "WI",
+    "Wyoming": "WY",
+    "Puerto Rico": "PR",
+    "Guam": "GU",
+    "U.S. Virgin Islands": "VI",
 }
 
-HEADER_RE = re.compile(r"(?:@)?ANSI\s*(?P<iin>\d{6})(?P<aamva>\d{2})(?P<jur>\d{2})(?P<cnt>\d{2})?")
+HEADER_RE = re.compile(
+    r"(?:@)?ANSI\s*(?P<iin>\d{6})(?P<aamva>\d{2})(?P<jur>\d{2})(?P<cnt>\d{2})?"
+)
 SUBFILE_START_RE = re.compile(r"(DL|ID)(?=[A-Z]{3})")
 
 MANDATORY = ("DAQ", "DCS", "DBB")  # license#, last name, DOB
+
 
 @dataclass
 class Parsed:
@@ -110,6 +155,7 @@ class Parsed:
     jur_version: int | None = None
     fields: dict[str, str] = field(default_factory=dict)
 
+
 @dataclass
 class Decision:
     approved_21: bool
@@ -119,11 +165,13 @@ class Decision:
     inconsistencies: list[str] = field(default_factory=list)
     parsed: Parsed = field(default_factory=lambda: Parsed(ok=False))
 
+
 def _normalize(raw: bytes) -> str:
     t = raw.decode("utf-8", "ignore")
     if "ANSI" not in t.upper():
         t = raw.decode("latin-1", "ignore")
     return t.replace("\r\n", "\n").replace("\r", "\n").replace("\x00", "")
+
 
 def _parse_header(text: str) -> tuple[dict[str, int] | None, int, list[str]]:
     m = HEADER_RE.search(text[:256])
@@ -141,12 +189,15 @@ def _parse_header(text: str) -> tuple[dict[str, int] | None, int, list[str]]:
     if mm:
         cursor += mm.start()
     errs = []
-    if not (0 <= hdr["aamva"] <= 99): errs.append("AAMVA version out of range")
-    if not (0 <= hdr["jur"] <= 99): errs.append("Jurisdiction version out of range")
+    if not (0 <= hdr["aamva"] <= 99):
+        errs.append("AAMVA version out of range")
+    if not (0 <= hdr["jur"] <= 99):
+        errs.append("Jurisdiction version out of range")
     return hdr, cursor, errs
 
+
 def _parse_fields(text: str, start_idx: int) -> dict[str, str]:
-    body = text[start_idx:].replace("\x1E", "\n")
+    body = text[start_idx:].replace("\x1e", "\n")
     out: dict[str, str] = {}
     for part in (p for p in re.split(r"\n+", body) if p):
         if len(part) >= 5 and part[:2].isalpha() and part[2:5].isalpha():
@@ -157,6 +208,7 @@ def _parse_fields(text: str, start_idx: int) -> dict[str, str]:
         if len(part) >= 3 and part[:3].isalpha():
             out.setdefault(part[:3], part[3:].strip())
     return out
+
 
 def parse_aamva(raw: bytes) -> Parsed:
     text = _normalize(raw)
@@ -185,6 +237,7 @@ def parse_aamva(raw: bytes) -> Parsed:
     p.ok = len(p.errors) == 0
     return p
 
+
 def _parse_date_ymd8(s: str) -> date | None:
     digits = re.sub(r"\D", "", s or "")
     if len(digits) != 8:
@@ -200,18 +253,21 @@ def _parse_date_ymd8(s: str) -> date | None:
         except ValueError:
             return None
 
+
 def _compute_age(dob: date, today: date) -> int:
     years = today.year - dob.year
     if (today.month, today.day) < (dob.month, dob.day):
         years -= 1
     return years
 
-def _state_abbr_from_fields(f: dict[str,str]) -> str | None:
+
+def _state_abbr_from_fields(f: dict[str, str]) -> str | None:
     abbr = (f.get("DAJ") or "").strip().upper()  # state
     if abbr:
         return abbr
     # sometimes DCG holds country, DAJ should be state
     return None
+
 
 def id21_check(raw: bytes, today: date = None) -> Decision:
     today = today or date.today()
@@ -239,7 +295,9 @@ def id21_check(raw: bytes, today: date = None) -> Decision:
         issuer_abbr = US_ABBR.get(issuer_full)
         state_abbr = _state_abbr_from_fields(p.fields)
         if issuer_abbr and state_abbr and issuer_abbr != state_abbr:
-            inconsistencies.append(f"State mismatch: IIN={issuer_abbr}, DAJ={state_abbr}")
+            inconsistencies.append(
+                f"State mismatch: IIN={issuer_abbr}, DAJ={state_abbr}"
+            )
 
     # Missing fields
     for k in ("DAQ", "DCS"):
@@ -249,21 +307,23 @@ def id21_check(raw: bytes, today: date = None) -> Decision:
     if p.iin and p.iin not in IIN:
         inconsistencies.append("Unknown IIN")
 
-
-    approved = (age is not None and age >= 21)
+    approved = age is not None and age >= 21
     needs_review = approved and (len(inconsistencies) > 0 or not p.ok)
 
     return Decision(approved, needs_review, False, age, inconsistencies, p)
 
+
 def summarize_for_popup(dec: Decision) -> str:
     f = dec.parsed.fields
-    name = f.get("DAC","") + " " + f.get("DCS","")
+    name = f.get("DAC", "") + " " + f.get("DCS", "")
     name = " ".join(name.split())
     issuer = f"{dec.parsed.issuer or 'Unknown'} ({dec.parsed.iin or 'n/a'})"
-    dob = f.get("DBB","")
-    exp = f.get("DBA","")
-    lic = f.get("DAQ","")
-    addr = ", ".join(x for x in [f.get("DAG",""), f.get("DAI",""), f.get("DAJ","")] if x)
+    dob = f.get("DBB", "")
+    exp = f.get("DBA", "")
+    lic = f.get("DAQ", "")
+    addr = ", ".join(
+        x for x in [f.get("DAG", ""), f.get("DAI", ""), f.get("DAJ", "")] if x
+    )
     lines = [
         f"Name: {name or 'n/a'}",
         f"License #: {lic or 'n/a'}",

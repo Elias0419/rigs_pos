@@ -1,12 +1,18 @@
 import os, json, socket, subprocess, time
 import logging
+
 logger = logging.getLogger("rigs_pos")
 
 SOCK_PATH = "/tmp/camview.sock"
 
+
 def _send_cmd(cmd: dict, timeout=0.25):
-    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM); s.settimeout(timeout)
-    s.connect(SOCK_PATH); s.sendall(json.dumps(cmd).encode("utf-8")); s.close()
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    s.settimeout(timeout)
+    s.connect(SOCK_PATH)
+    s.sendall(json.dumps(cmd).encode("utf-8"))
+    s.close()
+
 
 def open_or_raise_camview():
     # try to raise existing instance

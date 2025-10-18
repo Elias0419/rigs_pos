@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import List, Optional, Callable
 import yaml
 import gi
+
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gst", "1.0")
 gi.require_version("GstVideo", "1.0")
@@ -12,8 +13,8 @@ from gi.repository import Gtk, Gst, Gdk, GLib
 SOCK_PATH = "/tmp/camview.sock"
 LATENCY_MS = 100
 USE_TCP = True
-FREEZE_SECS = 3.0           # restart if no buffers for this long
-RESTART_MIN_GAP = 2.0       # throttle restarts
+FREEZE_SECS = 3.0  # restart if no buffers for this long
+RESTART_MIN_GAP = 2.0  # throttle restarts
 
 
 @dataclass
@@ -27,6 +28,7 @@ class Camera:
     params: str = ""
     preview: bool = True
 
+
 NO_CAMERA = Camera(
     name="(no cameras configured)",
     host="",
@@ -38,16 +40,10 @@ NO_CAMERA = Camera(
     preview=False,
 )
 
-def load_cameras(path: str = "cameras.yaml") -> List[Camera]:
-    return [
-        Camera(name="Front", host="192.168.1.225", port=554,
-               username="rigs_cameras", password="{nE713N?=IfA", stream="stream2"),
-        Camera(name="Side", host="192.168.1.226", port=554,
-               username="rigs_cameras", password="{nE713N?=IfA", stream="stream2"),
-    ]
 
 def is_no_camera(cam: Camera) -> bool:
     return cam.port == 0 or cam.host == ""
+
 
 def load_cameras(path: str = "cameras.yaml") -> List[Camera]:
 
@@ -64,25 +60,30 @@ def load_cameras(path: str = "cameras.yaml") -> List[Camera]:
     cams: List[Camera] = []
     for i, it in enumerate(items):
         try:
-            cams.append(Camera(
-                name=str(it["name"]),
-                host=str(it["host"]),
-                port=int(it.get("port", 554)),
-                username=str(it.get("username", "admin")),
-                password=str(it.get("password", "password")),
-                stream=str(it.get("stream", "stream1")),
-                params=str(it.get("params", "")),
-                preview=bool(it.get("preview", True)),
-            ))
+            cams.append(
+                Camera(
+                    name=str(it["name"]),
+                    host=str(it["host"]),
+                    port=int(it.get("port", 554)),
+                    username=str(it.get("username", "admin")),
+                    password=str(it.get("password", "password")),
+                    stream=str(it.get("stream", "stream1")),
+                    params=str(it.get("params", "")),
+                    preview=bool(it.get("preview", True)),
+                )
+            )
         except KeyError as ke:
             print(f"[camview] camera {i}: missing required field {ke}", file=sys.stderr)
         except Exception as e:
             print(f"[camview] camera {i}: {e}", file=sys.stderr)
 
     return cams or [NO_CAMERA]
+
+
 def _clear_container(box: Gtk.Container):
     for child in list(box.get_children()):
         box.remove(child)
+
 
 def _send_cmd(cmd: dict, timeout=0.25) -> bool:
     try:
@@ -94,17 +95,20 @@ def _send_cmd(cmd: dict, timeout=0.25) -> bool:
     except Exception:
         return False
 
+
 class StreamTile(Gtk.Box):
     def __init__(self, cam: Camera, on_click: Optional[Callable[[str], None]] = None):
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self.cam = cam
         self.on_click = on_click
 
-        self.set_hexpand(True); self.set_vexpand(True)
+        self.set_hexpand(True)
+        self.set_vexpand(True)
 
         self.name_lbl = Gtk.Label(label=cam.name)
         self.name_lbl.set_halign(Gtk.Align.START)
-        self.name_lbl.set_margin_start(8); self.name_lbl.set_margin_top(6)
+        self.name_lbl.set_margin_start(8)
+        self.name_lbl.set_margin_top(6)
         self.pack_start(self.name_lbl, False, False, 0)
 
         self.username = cam.username
@@ -148,8 +152,6 @@ class StreamTile(Gtk.Box):
 
         self._create_pipeline()
 
-
-
     def _create_pipeline(self):
         self._destroy_pipeline()
 
@@ -164,7 +166,18 @@ class StreamTile(Gtk.Box):
         self.q = Gst.ElementFactory.make("queue", "q")
         self.sink = Gst.ElementFactory.make("gtksink", "vsink")
 
-        if not all([self.pipeline, self.src, self.depay, self.parse, self.dec, self.cvt, self.q, self.sink]):
+        if not all(
+            [
+                self.pipeline,
+                self.src,
+                self.depay,
+                self.parse,
+                self.dec,
+                self.cvt,
+                self.q,
+                self.sink,
+            ]
+        ):
             raise RuntimeError("Failed to create GStreamer elements")
 
         # Properties
@@ -176,7 +189,15 @@ class StreamTile(Gtk.Box):
         self.sink.set_property("sync", False)
 
         # Add to pipeline
-        for e in (self.src, self.depay, self.parse, self.dec, self.cvt, self.q, self.sink):
+        for e in (
+            self.src,
+            self.depay,
+            self.parse,
+            self.dec,
+            self.cvt,
+            self.q,
+            self.sink,
+        ):
             self.pipeline.add(e)
 
         # Link static chain
@@ -192,7 +213,8 @@ class StreamTile(Gtk.Box):
 
         # Widget
         self.video_widget = self.sink.get_property("widget")
-        self.video_widget.set_hexpand(True); self.video_widget.set_vexpand(True)
+        self.video_widget.set_hexpand(True)
+        self.video_widget.set_vexpand(True)
         self._attach_widget_to_target()
 
         # Bus
@@ -224,7 +246,9 @@ class StreamTile(Gtk.Box):
             pass
         self.bus_watch_active = False
         self.bus = None
-        self.src = self.depay = self.parse = self.dec = self.cvt = self.q = self.sink = None
+        self.src = self.depay = self.parse = self.dec = self.cvt = self.q = (
+            self.sink
+        ) = None
         if self.video_widget:
             parent = self.video_widget.get_parent()
             if parent:
@@ -298,7 +322,6 @@ class StreamTile(Gtk.Box):
             self._restarting = False
         return False
 
-
     def reparent_to(self, container: Gtk.Container):
         self._embed_target = container
         self._attach_widget_to_target()
@@ -335,10 +358,12 @@ class StreamTile(Gtk.Box):
                 self._schedule_restart("freeze")
                 time.sleep(FREEZE_SECS)
 
-
-
     def _on_button_press(self, _widget, event):
-        if event.type == Gdk.EventType.BUTTON_PRESS and event.button == 1 and self.on_click:
+        if (
+            event.type == Gdk.EventType.BUTTON_PRESS
+            and event.button == 1
+            and self.on_click
+        ):
             self.on_click(self.cam.name)
             return True
         return False
@@ -372,7 +397,9 @@ class Viewer(Gtk.Window):
         # Grid page
         grid_page = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         grid_toolbar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        grid_toolbar.set_margin_start(6); grid_toolbar.set_margin_top(6); grid_toolbar.set_margin_bottom(6)
+        grid_toolbar.set_margin_start(6)
+        grid_toolbar.set_margin_top(6)
+        grid_toolbar.set_margin_bottom(6)
         ret_btn_grid = Gtk.Button(label="⟵ Return to POS")
         ret_btn_grid.connect("clicked", lambda _b: Gtk.main_quit())
         grid_toolbar.pack_start(ret_btn_grid, False, False, 0)
@@ -397,7 +424,9 @@ class Viewer(Gtk.Window):
         self.stack.add_titled(self.detail_box, "detail", "Detail")
 
         toolbar = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=6)
-        toolbar.set_margin_start(6); toolbar.set_margin_top(6); toolbar.set_margin_bottom(6)
+        toolbar.set_margin_start(6)
+        toolbar.set_margin_top(6)
+        toolbar.set_margin_bottom(6)
         back_btn = Gtk.Button(label="← Back to Grid")
         back_btn.connect("clicked", lambda _b: self.show_grid())
 
@@ -408,17 +437,19 @@ class Viewer(Gtk.Window):
         self.detail_box.pack_start(toolbar, False, False, 0)
 
         self.detail_video = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        self.detail_video.set_hexpand(True); self.detail_video.set_vexpand(True)
+        self.detail_video.set_hexpand(True)
+        self.detail_video.set_vexpand(True)
         self.detail_box.pack_start(self.detail_video, True, True, 0)
 
         # IPC server
-        if os.path.exists(SOCK_PATH): os.unlink(SOCK_PATH)
+        if os.path.exists(SOCK_PATH):
+            os.unlink(SOCK_PATH)
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sock.bind(SOCK_PATH)
         os.chmod(SOCK_PATH, 0o666)
         self.sock.listen(1)
-        t = threading.Thread(target=self._ipc_loop, daemon=True); t.start()
-
+        t = threading.Thread(target=self._ipc_loop, daemon=True)
+        t.start()
 
     def _ipc_loop(self):
         while True:
@@ -441,7 +472,6 @@ class Viewer(Gtk.Window):
 
     def _on_tile_clicked(self, name: str):
         self.show_focus(name)
-
 
     def show_grid(self):
         if self.focused_tile:
@@ -481,7 +511,6 @@ class Viewer(Gtk.Window):
     def present_self(self):
         try:
             self.present()
-            # Fallback for bare X (no WM): force size to monitor
             scr = self.get_screen()
             mon = scr.get_primary_monitor()
             geo = scr.get_monitor_geometry(mon)
@@ -490,7 +519,6 @@ class Viewer(Gtk.Window):
             self.set_keep_above(True)
         except Exception:
             pass
-
 
 
 def main():
@@ -504,8 +532,10 @@ def main():
         try:  # stale socket from crashed instance
             _send_cmd({"cmd": "ping"})
         except Exception:
-            try: os.unlink(SOCK_PATH)
-            except Exception: pass
+            try:
+                os.unlink(SOCK_PATH)
+            except Exception:
+                pass
 
     cams = load_cameras()
     win = Viewer(cams)

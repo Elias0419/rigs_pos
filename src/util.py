@@ -1162,8 +1162,8 @@ class Utilities:
 
         btn_custom_item = MDFlatButton(
             text="[b][size=40]CUSTOM[/b][/size]",
-            #on_press=self.app.button_handler.on_button_press,
-            on_press= lambda x: open_or_raise_camview(),
+            # on_press=self.app.button_handler.on_button_press,
+            on_press=lambda x: open_or_raise_camview(),
             padding=(8, 8),
             font_name=self.font,
             font_style="H6",
