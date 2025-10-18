@@ -1,15 +1,16 @@
 import sys
 import re
-from open_cash_drawer import open_cash_drawer
-from kivy.clock import Clock
-from datetime import datetime, timedelta
 import time
 import inspect
-
 import datetime
+from datetime import timedelta
+
+from kivy.clock import Clock
+
+from open_cash_drawer import open_cash_drawer
+from cameras.open_camview import open_or_raise_camview
 
 import logging
-
 logger = logging.getLogger("rigs_pos")
 
 
@@ -116,12 +117,19 @@ class ButtonHandler:
             "Dual Pane": self.show_dual_pane_mode,
             "Admin": self.show_admin_popup,
             "Notes": self.show_notes_popup,
+            "Cameras": self.open_cameras,
         }
         for action_text, action in tool_actions.items():
             if action_text in instance.text:
                 action()
                 break
         self.app.popup_manager.tools_popup.dismiss()
+
+    def open_cameras(self):
+        try:
+            open_or_raise_camview()
+        except Exception as e: # FIXME
+            logger.warn(f"ButtonHandler.open_cameras broad execption catch FIXME\n{e}")
 
     def on_admin_button_press(self, instance):
         admin_actions = {

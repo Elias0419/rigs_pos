@@ -2659,6 +2659,7 @@ class PopupManager:
         if self.app.admin:
             tool_buttons.insert(0, "Admin")
             tool_buttons.insert(1, "System")
+            tool_buttons.insert(2, "Cameras")
 
         for index, tool in enumerate(tool_buttons):
 
