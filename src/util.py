@@ -166,8 +166,8 @@ class Utilities:
 
         try:
             self.initialize_receipt_printer()
-        except:  # TODO: Something other than log the error
-            logger.error("Receipt Printer was not initialized 1")
+        except Exception as e:  # TODO: Something other than log the error
+            logger.error("Receipt Printer was not initialized 1 {e}")
 
         try:
             self.app.barcode_scanner = BarcodeScanner(self.app)
@@ -177,7 +177,7 @@ class Utilities:
             # and possibly implement a mechanism to re-init
             # for now (maybe forever), just log it
             logger.error(e)
-        except Exception:
+        except Exception as e:
             # some other unexpected error
             logger.error(e)
 
