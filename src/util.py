@@ -191,7 +191,6 @@ class Utilities:
         self.app.label_printer = LabelPrinter(self.app)
         self.app.label_manager = LabelPrintingView(self.app)
         self.app.pin_reset_timer = ReusableTimer(5.0, self.reset_pin)
-        # self.app.calculator = Calculator()
         self.app.button_handler = ButtonHandler(self.app)
         self.app.popup_manager = PopupManager(self.app)
         self.app.categories = self.initialize_categories()
@@ -1131,7 +1130,7 @@ class Utilities:
         sidebar.add_widget(brightness_minus_container)
         sidebar.add_widget(self.cost_overlay_icon)
         sidebar.add_widget(MDBoxLayout())  # spacer
-        sidebar.add_widget(calc_icon_container)
+        #sidebar.add_widget(calc_icon_container)
         sidebar.add_widget(lock_icon)
 
         return sidebar
