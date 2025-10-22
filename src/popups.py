@@ -2294,7 +2294,7 @@ class PopupManager:
                 self.inventory_management_view
             )
 
-        self.inventory_management_view = InventoryManagementView()
+        self.inventory_management_view = self.app.inventory_manager
         inventory = self.app.db_manager.get_all_items()
         self.inventory_management_view.show_inventory_for_manager(inventory)
 
