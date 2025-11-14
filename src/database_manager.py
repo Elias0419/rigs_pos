@@ -52,7 +52,6 @@ class DatabaseManager:
         self.create_dist_table()
         self.create_payment_history_table()
         self.create_attendance_log_table()
-        self.migrate_order_items_from_history()
 
     def create_payment_history_table(self):
         conn = self._get_connection()
@@ -741,31 +740,6 @@ class DatabaseManager:
             return True
         else:
             return False
-
-    def migrate_order_items_from_history(self, clear_existing=False):
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("SELECT order_id, items, timestamp FROM order_history")
-            rows = cursor.fetchall()
-        finally:
-            conn.close()
-
-        if clear_existing:
-            conn_clear = self._get_connection()
-            try:
-                cur_clear = conn_clear.cursor()
-                cur_clear.execute("DELETE FROM order_items")
-                conn_clear.commit()
-            finally:
-                conn_clear.close()
-
-        for order_id, items_json, ts in rows:
-            if not items_json:
-                continue
-            items = json.loads(items_json)
-            items_list = self._normalize_items_object_to_list(items)
-            self._insert_order_items_from_list(order_id, items_list, ts)
 
     def get_order_by_id(self, order_id):
 
