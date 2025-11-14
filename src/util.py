@@ -159,10 +159,11 @@ class Utilities:
         LabelBase.register(name="Emoji", fn_regular="images/seguiemj.ttf")
 
     def instantiate_modules(self):
-        if self.app.is_rigs:
-            db_path = "/home/rigs/rigs_pos/db/inventory.db"
+        if self.is_not_rigs:
+            db_path = "/home/x/work/rigs/rigs_pos/db/inventory.db"
         else:
-            db_path = "/home/x/work/python/rigs_pos/db/inventory.db"
+            db_path = "/home/rigs/rigs_pos/db/inventory.db"
+
 
         try:
             self.initialize_receipt_printer()
@@ -383,12 +384,17 @@ class Utilities:
         self.app.is_guard_screen_displayed = False
         self.trigger_guard_and_lock(trigger=True)
 
-    def is_rigs(_):
+    def is_not_rigs(_):
         try:
-            user = pwd.getpwuid(os.getuid()).pw_name
-        except KeyError:
-            return False
-        return user == "rigs"
+            if pwd.getpwuid(os.getuid()).pw_name == "rigs":
+                return False
+            elif pwd.getpwuid(os.getuid()).pw_name == "x":
+                return True
+            else:
+                return True
+        except:
+            return True
+
 
     def adjust_screen_brightness(self, direction):
         if self.screen_brightness < 20:
