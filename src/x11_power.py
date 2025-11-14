@@ -19,28 +19,6 @@ def _load(name, fallback):
         path = fallback
     return CDLL(path)
 
-
-libX11 = _load("X11", "libX11.so.6")  # x11 base
-libXss = _load("Xss", "libXss.so.1")  # screensaver ext
-libXext = _load("Xext", "libXext.so.6")  # dpms ext
-libXrandr = _load("Xrandr", "libXrandr.so.2")  # randr ext
-
-libX11.XOpenDisplay.argtypes = [c_char_p]  # open display
-libX11.XOpenDisplay.restype = c_void_p
-libX11.XDefaultRootWindow.argtypes = [c_void_p]  # get root window
-libX11.XDefaultRootWindow.restype = c_ulong
-libX11.XForceScreenSaver.argtypes = [c_void_p, c_int]  # reset saver
-libX11.XForceScreenSaver.restype = c_int
-libX11.XFlush.argtypes = [c_void_p]  # flush display
-libX11.XFlush.restype = c_int
-libX11.XCloseDisplay.argtypes = [c_void_p]  # close display
-libX11.XCloseDisplay.restype = c_int
-libX11.XFree.argtypes = [c_void_p]  # free ptr
-libX11.XFree.restype = c_int
-libX11.XInternAtom.argtypes = [c_void_p, c_char_p, c_int]  # get atom
-libX11.XInternAtom.restype = c_ulong
-
-
 class XScreenSaverInfo(Structure):  # struct for idle info
     _fields_ = [
         ("window", c_ulong),
@@ -50,40 +28,6 @@ class XScreenSaverInfo(Structure):  # struct for idle info
         ("idle", c_ulong),
         ("eventMask", c_ulong),
     ]
-
-
-libXss.XScreenSaverQueryExtension.argtypes = [
-    c_void_p,
-    POINTER(c_int),
-    POINTER(c_int),
-]  # check ext
-libXss.XScreenSaverQueryExtension.restype = c_int
-libXss.XScreenSaverAllocInfo.argtypes = []  # alloc info
-libXss.XScreenSaverAllocInfo.restype = POINTER(XScreenSaverInfo)
-libXss.XScreenSaverQueryInfo.argtypes = [
-    c_void_p,
-    c_ulong,
-    POINTER(XScreenSaverInfo),
-]  # query info
-libXss.XScreenSaverQueryInfo.restype = c_int
-
-# dpms modes
-DPMSModeOn = c_ushort(0)
-DPMSModeStandby = c_ushort(1)
-DPMSModeSuspend = c_ushort(2)
-DPMSModeOff = c_ushort(3)
-
-libXext.DPMSQueryExtension.argtypes = [
-    c_void_p,
-    POINTER(c_int),
-    POINTER(c_int),
-]  # check dpms
-libXext.DPMSQueryExtension.restype = c_int
-libXext.DPMSCapable.argtypes = [c_void_p]  # dpms capable
-libXext.DPMSCapable.restype = c_int
-libXext.DPMSForceLevel.argtypes = [c_void_p, c_ushort]  # force level
-libXext.DPMSForceLevel.restype = c_int
-
 
 class XRRPropertyInfo(Structure):  # randr property info
     _fields_ = [
@@ -137,6 +81,64 @@ class XRRCrtcGamma(Structure):  # gamma struct
     ]
 
 
+libX11 = _load("X11", "libX11.so.6")  # x11 base
+libXss = _load("Xss", "libXss.so.1")  # screensaver ext
+libXext = _load("Xext", "libXext.so.6")  # dpms ext
+libXrandr = _load("Xrandr", "libXrandr.so.2")  # randr ext
+
+# libX11
+libX11.XOpenDisplay.argtypes = [c_char_p]  # open display
+libX11.XOpenDisplay.restype = c_void_p
+libX11.XDefaultRootWindow.argtypes = [c_void_p]  # get root window
+libX11.XDefaultRootWindow.restype = c_ulong
+libX11.XForceScreenSaver.argtypes = [c_void_p, c_int]  # reset saver
+libX11.XForceScreenSaver.restype = c_int
+libX11.XFlush.argtypes = [c_void_p]  # flush display
+libX11.XFlush.restype = c_int
+libX11.XCloseDisplay.argtypes = [c_void_p]  # close display
+libX11.XCloseDisplay.restype = c_int
+libX11.XFree.argtypes = [c_void_p]  # free ptr
+libX11.XFree.restype = c_int
+libX11.XInternAtom.argtypes = [c_void_p, c_char_p, c_int]  # get atom
+libX11.XInternAtom.restype = c_ulong
+
+# libXss
+libXss.XScreenSaverQueryExtension.argtypes = [
+    c_void_p,
+    POINTER(c_int),
+    POINTER(c_int),
+]  # check ext
+
+libXss.XScreenSaverQueryExtension.restype = c_int
+libXss.XScreenSaverAllocInfo.argtypes = []  # alloc info
+libXss.XScreenSaverAllocInfo.restype = POINTER(XScreenSaverInfo)
+libXss.XScreenSaverQueryInfo.argtypes = [
+    c_void_p,
+    c_ulong,
+    POINTER(XScreenSaverInfo),
+]  # query info
+
+libXss.XScreenSaverQueryInfo.restype = c_int
+
+# dpms modes
+DPMSModeOn = c_ushort(0)
+DPMSModeStandby = c_ushort(1)
+DPMSModeSuspend = c_ushort(2)
+DPMSModeOff = c_ushort(3)
+
+# libXext
+libXext.DPMSQueryExtension.argtypes = [
+    c_void_p,
+    POINTER(c_int),
+    POINTER(c_int),
+]  # check dpms
+libXext.DPMSQueryExtension.restype = c_int
+libXext.DPMSCapable.argtypes = [c_void_p]  # dpms capable
+libXext.DPMSCapable.restype = c_int
+libXext.DPMSForceLevel.argtypes = [c_void_p, c_ushort]  # force level
+libXext.DPMSForceLevel.restype = c_int
+
+# libXrandr
 libXrandr.XRRGetScreenResourcesCurrent.argtypes = [c_void_p, c_ulong]  # get res current
 libXrandr.XRRGetScreenResourcesCurrent.restype = POINTER(XRRScreenResources)
 libXrandr.XRRGetScreenResources.argtypes = [c_void_p, c_ulong]  # get res
