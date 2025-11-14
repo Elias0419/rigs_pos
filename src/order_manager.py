@@ -7,6 +7,8 @@ import logging
 
 logger = logging.getLogger("rigs_pos")
 
+class OrderException(Exception):
+    pass
 
 class OrderManager:
     _instance = None
@@ -349,7 +351,11 @@ class OrderManager:
         self.amount_tendered = amount_tendered if amount_tendered is not None else 0.0
         self.change_given = change if change is not None else 0.0
 
-    def add_custom_item(self, instance, name="Custom Item", price=0.00):
+    def add_custom_item(self, name, price):
+        if not name:
+            raise OrderException("Name is missing")
+        if not price:
+            raise OrderException("Price is missing")
 
         item_id = str(uuid.uuid4())
         try:
@@ -357,9 +363,8 @@ class OrderManager:
         except Exception as e:
             logger.warn("Exception in add custom item order_manager.py,", e)
             return
-        custom_item_name = name
         try:
-            self.add_item(custom_item_name, price, custom_item=True, item_id=item_id)
+            self.add_item(name, price, custom_item=True, item_id=item_id)
         except Exception as e:
             logger.warn("Exception in add custom item order_manager.py,", e)
         try:

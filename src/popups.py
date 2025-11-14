@@ -30,6 +30,7 @@ from kivymd.uix.selectioncontrol import MDCheckbox
 from kivymd.uix.textfield import MDTextField
 from PIL import Image as PILImage
 
+from order_manager import OrderException
 from inventory_manager import InventoryManagementView, InventoryView
 from open_cash_drawer import open_cash_drawer
 
@@ -2751,7 +2752,7 @@ class PopupManager:
             height=50,
         )
         self.custom_item_name_input = TextInput(
-            text="Custom Item",
+            text="",
             hint_text="Enter Name",
             multiline=False,
             font_size=30,
@@ -2786,8 +2787,8 @@ class PopupManager:
 
         confirm_button = self.app.utilities.create_md_raised_button(
             "[size=20][b]Confirm[/b][/size]",
-            lambda x: self.app.order_manager.add_custom_item(
-                x, name=self.custom_item_name_input.text, price=self.cash_input.text
+            lambda x: self.order_manager_custom_item_guard(
+                name=self.custom_item_name_input.text, price=self.cash_input.text
             ),
             (0.8, 0.8),
         )
@@ -2812,6 +2813,23 @@ class PopupManager:
         )
         self.custom_item_popup.focus_on_textinput(self.cash_input)
         self.custom_item_popup.open()
+
+    def order_manager_custom_item_guard(self, name=None, price=None):
+        try:
+            self.app.order_manager.add_custom_item(name, price)
+        except OrderException:
+            # name or price are missing
+            self.open_order_manager_custom_item_warning()
+
+    def open_order_manager_custom_item_warning(self):
+        popup = Popup(size_hint=(0.2,0.2), title="", separator_height=0)
+        layout = BoxLayout()
+        text = "Price and Name are required"
+        text = MDLabel(text=text)
+        layout.add_widget(text)
+        popup.add_widget(layout)
+        popup.open()
+
 
     def show_order_popup(self, order_summary):
 
