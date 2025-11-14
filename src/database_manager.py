@@ -18,7 +18,9 @@ class DatabaseManager:
 
     def __init__(self, db_path, ref):
         if not hasattr(self, "_init"):
+
             self.db_path = db_path
+
             self.created_new_database = False
             self.ensure_database_exists()
             self.ensure_tables_exist()
@@ -44,12 +46,13 @@ class DatabaseManager:
 
     def ensure_tables_exist(self):
         self.create_items_table()
-        self._ensure_items_schema()
         self.create_order_history_table()
+        self.create_order_items_table()
         self.create_modified_orders_table()
         self.create_dist_table()
         self.create_payment_history_table()
         self.create_attendance_log_table()
+        self.migrate_order_items_from_history()
 
     def create_payment_history_table(self):
         conn = self._get_connection()
@@ -121,25 +124,6 @@ class DatabaseManager:
         finally:
             conn.close()
 
-    def _ensure_items_schema(self):
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("PRAGMA table_info(items)")
-            columns = [row[1] for row in cursor.fetchall()]
-            if "is_rolling_papers" not in columns:
-                cursor.execute(
-                    "ALTER TABLE items ADD COLUMN is_rolling_papers BOOLEAN NOT NULL DEFAULT FALSE"
-                )
-                conn.commit()
-            if "papers_per_pack" not in columns:
-                cursor.execute("ALTER TABLE items ADD COLUMN papers_per_pack INTEGER")
-                conn.commit()
-        except sqlite3.Error as e:
-            logger.warn(f"[DatabaseManager] Failed to ensure items schema:\n{e}")
-        finally:
-            conn.close()
-
     def create_order_history_table(self):
         conn = self._get_connection()
         try:
@@ -157,6 +141,50 @@ class DatabaseManager:
                                 change_given REAL,
                                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                             )"""
+            )
+            conn.commit()
+        except sqlite3.Error as e:
+            logger.warn(f"[DatabaseManager]:\n{e}")
+        finally:
+            conn.close()
+
+    def create_order_items_table(self):
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS order_items (
+                    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+                    order_id         TEXT NOT NULL,
+                    item_id          TEXT,
+                    barcode          TEXT,
+                    name             TEXT NOT NULL,
+                    category         TEXT,
+                    qty              REAL NOT NULL,
+                    unit_price       REAL NOT NULL,
+                    line_subtotal    REAL NOT NULL,
+                    unit_cost        REAL,
+                    line_cost        REAL,
+                    taxable          INTEGER,
+                    is_rolling_papers INTEGER,
+                    papers_per_pack  INTEGER,
+                    order_timestamp  TEXT,
+                    FOREIGN KEY(order_id) REFERENCES order_history(order_id)
+                )
+                """
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_order_items_name ON order_items(name)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_order_items_category ON order_items(category)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_order_items_timestamp ON order_items(order_timestamp)"
             )
             conn.commit()
         except sqlite3.Error as e:
@@ -355,7 +383,6 @@ class DatabaseManager:
             rows = cursor.fetchall()
 
             for row in rows:
-                # print(row)
                 item_details = {
                     "barcode": row[0],
                     "name": row[1],
@@ -538,7 +565,153 @@ class DatabaseManager:
         else:
             return False
 
+    def _normalize_items_object_to_list(self, items_obj):
+        if isinstance(items_obj, list):
+            return items_obj
+        if isinstance(items_obj, dict):
+            items_list = []
+            for item_name, item_details in items_obj.items():
+                if isinstance(item_details, dict):
+                    item = {"name": item_name}
+                    item.update(item_details)
+                    items_list.append(item)
+                else:
+                    raise TypeError(
+                        f"Expected dict for item details in items dict, got {type(item_details)}"
+                    )
+            return items_list
+        raise TypeError(
+            f"Expected list or dict for items object, got {type(items_obj)}"
+        )
+
+    def _insert_order_items_from_list(self, order_id, items_list, order_timestamp):
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            insert_sql = """
+                INSERT INTO order_items (
+                    order_id,
+                    item_id,
+                    barcode,
+                    name,
+                    category,
+                    qty,
+                    unit_price,
+                    line_subtotal,
+                    unit_cost,
+                    line_cost,
+                    taxable,
+                    is_rolling_papers,
+                    papers_per_pack,
+                    order_timestamp
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+            for item in items_list:
+                if not isinstance(item, dict):
+                    raise TypeError(
+                        f"Expected dict item when inserting order_items, got {type(item)}"
+                    )
+
+                name = item.get("name")
+                if not name:
+                    raise ValueError(
+                        f"Missing name in item when inserting order_items: {item}"
+                    )
+
+                if "quantity" in item:
+                    qty = float(item["quantity"])
+                elif "qty" in item:
+                    qty = float(item["qty"])
+                else:
+                    raise KeyError(
+                        f"Missing quantity/qty in item when inserting order_items: {item}"
+                    )
+
+                if "price" in item:
+                    unit_price = float(item["price"])
+                elif "unit_price" in item:
+                    unit_price = float(item["unit_price"])
+                else:
+                    raise KeyError(
+                        f"Missing price/unit_price in item when inserting order_items: {item}"
+                    )
+
+                line_subtotal = qty * unit_price
+
+                unit_cost = item.get("cost")
+                line_cost = None
+                if unit_cost is not None:
+                    unit_cost = float(unit_cost)
+                    line_cost = qty * unit_cost
+
+                taxable = item.get("taxable")
+                if taxable is not None:
+                    taxable = int(bool(taxable))
+
+                is_rolling = item.get("is_rolling_papers")
+                if is_rolling is not None:
+                    is_rolling = int(bool(is_rolling))
+
+                papers_per_pack = item.get("papers_per_pack")
+
+                cursor.execute(
+                    insert_sql,
+                    (
+                        order_id,
+                        item.get("item_id"),
+                        item.get("barcode"),
+                        name,
+                        item.get("category"),
+                        qty,
+                        unit_price,
+                        line_subtotal,
+                        unit_cost,
+                        line_cost,
+                        taxable,
+                        is_rolling,
+                        papers_per_pack,
+                        order_timestamp,
+                    ),
+                )
+
+            conn.commit()
+        finally:
+            conn.close()
+
+    def _rewrite_order_items_for_order(self, order_id, items_obj):
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM order_items WHERE order_id = ?", (order_id,))
+            conn.commit()
+        finally:
+            conn.close()
+
+        items_list = self._normalize_items_object_to_list(items_obj)
+
+        conn2 = self._get_connection()
+        try:
+            cursor2 = conn2.cursor()
+            cursor2.execute(
+                "SELECT timestamp FROM order_history WHERE order_id = ?", (order_id,)
+            )
+            row = cursor2.fetchone()
+            if row is None:
+                raise ValueError(
+                    f"Order {order_id} not found in order_history when rewriting order_items"
+                )
+            order_timestamp = row[0]
+        finally:
+            conn2.close()
+
+        self._insert_order_items_from_list(order_id, items_list, order_timestamp)
+
     def modify_order(self, order_id, **kwargs):
+        original_items_obj = None
+        if "items" in kwargs and isinstance(kwargs["items"], (list, dict)):
+            original_items_obj = kwargs["items"]
+
         if self._save_current_order_state(order_id, "modified"):
             conn = self._get_connection()
             try:
@@ -556,6 +729,10 @@ class DatabaseManager:
                     f"UPDATE order_history SET {set_clause} WHERE order_id = ?", values
                 )
                 conn.commit()
+
+                if original_items_obj is not None:
+                    self._rewrite_order_items_for_order(order_id, original_items_obj)
+
             except sqlite3.Error as e:
                 logger.warn(f"[DatabaseManager]:\n{e}")
                 return False
@@ -564,6 +741,31 @@ class DatabaseManager:
             return True
         else:
             return False
+
+    def migrate_order_items_from_history(self, clear_existing=False):
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT order_id, items, timestamp FROM order_history")
+            rows = cursor.fetchall()
+        finally:
+            conn.close()
+
+        if clear_existing:
+            conn_clear = self._get_connection()
+            try:
+                cur_clear = conn_clear.cursor()
+                cur_clear.execute("DELETE FROM order_items")
+                conn_clear.commit()
+            finally:
+                conn_clear.close()
+
+        for order_id, items_json, ts in rows:
+            if not items_json:
+                continue
+            items = json.loads(items_json)
+            items_list = self._normalize_items_object_to_list(items)
+            self._insert_order_items_from_list(order_id, items_list, ts)
 
     def get_order_by_id(self, order_id):
 
@@ -603,9 +805,61 @@ class DatabaseManager:
             "SELECT order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given FROM order_history"
         )
         order_history = cursor.fetchall()
-        # print(order_history)
         conn.close()
         return order_history
+
+    def get_order_items(self, order_id):
+        conn = self._get_connection()
+        conn.row_factory = sqlite3.Row
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT
+                    id,
+                    order_id,
+                    item_id,
+                    barcode,
+                    name,
+                    category,
+                    qty,
+                    unit_price,
+                    line_subtotal,
+                    unit_cost,
+                    line_cost,
+                    taxable,
+                    is_rolling_papers,
+                    papers_per_pack,
+                    order_timestamp
+                FROM order_items
+                WHERE order_id = ?
+                ORDER BY id
+                """,
+                (order_id,),
+            )
+            rows = cursor.fetchall()
+            return [
+                {
+                    "id": row["id"],
+                    "order_id": row["order_id"],
+                    "item_id": row["item_id"],
+                    "barcode": row["barcode"],
+                    "name": row["name"],
+                    "category": row["category"],
+                    "qty": row["qty"],
+                    "unit_price": row["unit_price"],
+                    "line_subtotal": row["line_subtotal"],
+                    "unit_cost": row["unit_cost"],
+                    "line_cost": row["line_cost"],
+                    "taxable": bool(row["taxable"]) if row["taxable"] is not None else None,
+                    "is_rolling_papers": bool(row["is_rolling_papers"]) if row["is_rolling_papers"] is not None else None,
+                    "papers_per_pack": row["papers_per_pack"],
+                    "order_timestamp": row["order_timestamp"],
+                }
+                for row in rows
+            ]
+        finally:
+            conn.close()
 
     def send_order_to_history_database(self, order_details, order_manager, db_manager):
         tax = order_details["total_with_tax"] - order_details["total"]
@@ -616,7 +870,7 @@ class DatabaseManager:
             for item_name, item_details in order_details["items"].items()
         ]
 
-        self.add_order_history(
+        success = self.add_order_history(
             order_details["order_id"],
             json.dumps(items_for_db),
             order_details["total"],
@@ -627,6 +881,16 @@ class DatabaseManager:
             order_details["payment_method"],
             order_details["amount_tendered"],
             order_details["change_given"],
+        )
+
+        if not success:
+            logger.warn(
+                f"[DatabaseManager] Failed to insert order_history for order_id={order_details['order_id']}"
+            )
+            return
+
+        self._insert_order_items_from_list(
+            order_details["order_id"], items_for_db, timestamp
         )
 
     def add_item_to_database(
