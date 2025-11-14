@@ -1,8 +1,6 @@
 from datetime import datetime, timedelta
 import csv, json
 
-from rapidfuzz import process, fuzz
-
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.graphics import Color, Line
@@ -140,26 +138,18 @@ class HistoryView(BoxLayout):
 
     def display_order_details_from_barcode_scan(self, barcode):
         try:
-            barcode_str = str(barcode)
+            barcode_str = str(barcode).strip()
             order_history = self.app.db_manager.get_order_history()
 
-            order_barcodes = [str(order[0]) for order in order_history]
-
-            best_match, score, *_ = process.extractOne(
-                barcode_str, order_barcodes, scorer=fuzz.partial_ratio, score_cutoff=80
+            # Match on exact order_id string
+            specific_order = next(
+                (order for order in order_history if str(order[0]) == barcode_str),
+                None,
             )
 
-            if best_match:
-                specific_order = next(
-                    (order for order in order_history if str(order[0]) == best_match),
-                    None,
-                )
-
-                if specific_order:
-                    popup = OrderDetailsPopup(specific_order, self.receipt_printer)
-                    popup.open()
-                else:
-                    self.order_not_found_popup(barcode_str)  # needs testing
+            if specific_order:
+                popup = OrderDetailsPopup(specific_order, self.receipt_printer)
+                popup.open()
             else:
                 self.order_not_found_popup(barcode_str)
 
