@@ -57,6 +57,35 @@ def cutoff_21(today=None):
 def format_mmddyyyy(d: date) -> str:
     return d.strftime("%m/%d/%Y")
 
+def title_case_letters(text):
+    result = []
+    new_word = True
+    for ch in text:
+        if ch.isalpha():
+            if new_word:
+                result.append(ch.upper())
+            else:
+                result.append(ch.lower())
+            new_word = False
+        else:
+            result.append(ch)
+            new_word = not ch.isalnum()
+    return "".join(result)
+
+
+class TitleCaseTextInput(TextInput):
+    def insert_text(self, substring, from_undo=False):
+        s = self.text
+        ci = self.cursor_index()
+        new = s[:ci] + substring + s[ci:]
+        new_tc = title_case_letters(new)
+
+        self.text = new_tc
+        new_ci = ci + len(substring)
+        if new_ci > len(new_tc):
+            new_ci = len(new_tc)
+        self.cursor = self.get_cursor_from_index(new_ci)
+
 
 class PopupManager:
     def __init__(self, ref):
@@ -2751,7 +2780,7 @@ class PopupManager:
             size_hint_y=None,
             height=50,
         )
-        self.custom_item_name_input = TextInput(
+        self.custom_item_name_input = TitleCaseTextInput(
             text="",
             hint_text="Enter Name",
             multiline=False,
@@ -2818,7 +2847,6 @@ class PopupManager:
             separator_height=0,
         )
 
-        # Focus the item name first
         self.custom_item_popup.focus_on_textinput(self.custom_item_name_input)
         self.custom_item_popup.open()
 
