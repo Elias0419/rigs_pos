@@ -26,7 +26,7 @@ class RigsPOS(MDApp):
         super(RigsPOS, self).__init__(**kwargs)
         self.utilities = Utilities(self)
         self.logged_in_user = "nobody"
-        self.admin = self.utilities.is_not_rigs()
+        self.admin = self.utilities.is_not_rigs
 
     def on_start(self):
         self.utilities.initialize_global_variables()
