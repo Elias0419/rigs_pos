@@ -2759,6 +2759,12 @@ class PopupManager:
             size_hint_y=None,
             height=50,
         )
+
+        self.custom_item_name_input.write_tab = False
+        self.cash_input.write_tab = False
+        self.custom_item_name_input.focus_next = self.cash_input
+        self.cash_input.focus_previous = self.custom_item_name_input
+
         self.custom_item_popup_layout.add_widget(self.custom_item_name_input)
         self.custom_item_popup_layout.add_widget(self.cash_input)
 
@@ -2811,8 +2817,12 @@ class PopupManager:
             overlay_color=(0, 0, 0, 0),
             separator_height=0,
         )
-        self.custom_item_popup.focus_on_textinput(self.cash_input)
+
+        # Focus the item name first
+        self.custom_item_popup.focus_on_textinput(self.custom_item_name_input)
         self.custom_item_popup.open()
+
+
 
     def order_manager_custom_item_guard(self, name=None, price=None):
         try:
