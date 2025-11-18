@@ -384,15 +384,11 @@ class Utilities:
         self.app.is_guard_screen_displayed = False
         self.trigger_guard_and_lock(trigger=True)
 
+    @property
     def is_not_rigs(_):
         try:
-            if pwd.getpwuid(os.getuid()).pw_name == "rigs":
-                return False
-            elif pwd.getpwuid(os.getuid()).pw_name == "x":
-                return True
-            else:
-                return True
-        except:
+            return pwd.getpwuid(os.getuid()).pw_name != "rigs"
+        except Exception:
             return True
 
 
