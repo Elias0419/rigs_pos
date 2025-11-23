@@ -14,6 +14,7 @@ from kivy.uix.recycleview import RecycleView
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.uix.textinput import TextInput
+from kivy.uix.scrollview import ScrollView
 from kivy.factory import Factory
 
 from kivymd.uix.button import MDRaisedButton, MDFlatButton
@@ -547,41 +548,37 @@ class OrderDetailsPopup(Popup):
     def __init__(self, order, receipt_printer, **kwargs):
         super().__init__(**kwargs)
         self.title = f"Order Details - {order[0]}"
-        self.size_hint = (0.4, 0.8)
+        self.size_hint = (0.9, 0.85)
         self.receipt_printer = receipt_printer
         self.db_manager = DatabaseManager("db/inventory.db", self)
         self.history_view = HistoryView()
         self.history_popup = HistoryPopup()
 
-        content_layout = GridLayout(spacing=5, cols=1, rows=3)
-        # header
-        hv = HistoryView()
-        f = self.format_order_details(order, hv)
-        top_layout = Label(halign="center", size_hint_y=0.1, text=f"\n{f['Timestamp']}")
-        # body
-        items_split = (f["Items"] or "").split(",")
-        formatted_items = "\n".join(items_split)
-        middle_layout = Label(halign="center", text=formatted_items)
-        if f["Payment Method"] == "Cash":
-            bottom_txt = (
-                f"Subtotal: {f['Total']}\nDiscount: {f['Discount']}\nTax: {f['Tax']}"
-                f"\nTotal: {f['Total with Tax']}\n\nPaid with {f['Payment Method']}"
-                f"\nAmount Tendered: {f['Amount Tendered']}\nChange Given: {f['Change Given']}"
-            )
-        else:
-            bottom_txt = (
-                f"Subtotal: {f['Total']}\nDiscount: {f['Discount']}\nTax: {f['Tax']}"
-                f"\nTotal: {f['Total with Tax']}\n\nPaid with {f['Payment Method']}"
-            )
+        content_layout = MDBoxLayout(
+            orientation="vertical", spacing=10, padding=10
+        )
 
-        bottom_layout = Label(halign="center", text=bottom_txt)
+        details = self.format_order_details(order, self.history_view)
+        order_items = self.db_manager.get_order_items(order[0])
 
-        card = MDCard(orientation="vertical")
-        card.add_widget(middle_layout)
-        card.add_widget(bottom_layout)
+        header = MDBoxLayout(orientation="vertical", size_hint_y=None, height=dp(60))
+        header.add_widget(
+            MarkupLabel(
+                halign="center",
+                text=f"[b]Order {details['Order ID']}[/b]",
+            )
+        )
+        header.add_widget(
+            MarkupLabel(
+                halign="center", text=f"{details['Timestamp']} - {details['Payment Method']}"
+            )
+        )
+
+        items_section = self.build_items_section(order_items, order[1])
+        summary = self.build_summary_section(details)
 
         # footer buttons
-        btns = BoxLayout(size_hint=(1, 0.1), height=dp(50), spacing=5)
+        btns = BoxLayout(size_hint=(1, None), height=dp(50), spacing=5)
         btns.add_widget(
             MDRaisedButton(
                 text="Print Receipt", on_release=lambda *_: self.print_receipt(order)
@@ -598,8 +595,9 @@ class OrderDetailsPopup(Popup):
             MDRaisedButton(text="Close", on_release=lambda *_: self.dismiss())
         )
 
-        content_layout.add_widget(top_layout)
-        content_layout.add_widget(card)
+        content_layout.add_widget(header)
+        content_layout.add_widget(items_section)
+        content_layout.add_widget(summary)
         content_layout.add_widget(btns)
         self.content = content_layout
 
@@ -661,6 +659,122 @@ class OrderDetailsPopup(Popup):
             "amount_tendered": amount_tendered,
             "change_given": change_given,
         }
+
+    def build_items_section(self, order_items, fallback_items_json):
+        items = order_items or self._parse_items_fallback(fallback_items_json)
+        title = MarkupLabel(text="[b]Items[/b]", size_hint_y=None, height=dp(30))
+
+        if not items:
+            container = MDBoxLayout(orientation="vertical")
+            container.add_widget(title)
+            container.add_widget(
+                MarkupLabel(text="No item details available", halign="center")
+            )
+            return container
+
+        scroll = ScrollView(size_hint=(1, 0.6))
+        table = GridLayout(
+            cols=9,
+            spacing=5,
+            padding=5,
+            size_hint_y=None,
+        )
+        table.bind(minimum_height=table.setter("height"))
+
+        headers = [
+            "Name",
+            "Qty",
+            "Unit Price",
+            "Line Subtotal",
+            "Unit Cost",
+            "Line Cost",
+            "Barcode",
+            "Category",
+            "Rolling Papers",
+        ]
+
+        for head in headers:
+            table.add_widget(self._table_label(f"[b]{head}[/b]", bold=True))
+
+        for item in items:
+            table.add_widget(self._table_label(item.get("name", "")))
+            table.add_widget(self._table_label(self._format_quantity(item)))
+            table.add_widget(self._table_label(self.history_view.format_money(item.get("unit_price", 0))))
+            table.add_widget(
+                self._table_label(
+                    self.history_view.format_money(item.get("line_subtotal") or item.get("subtotal", 0))
+                )
+            )
+            table.add_widget(
+                self._table_label(self.history_view.format_money(item.get("unit_cost") or item.get("cost", 0)))
+            )
+            table.add_widget(
+                self._table_label(
+                    self.history_view.format_money(item.get("line_cost") or item.get("total_cost", 0))
+                )
+            )
+            table.add_widget(self._table_label(str(item.get("barcode", ""))))
+            table.add_widget(self._table_label(item.get("category", "")))
+            table.add_widget(self._table_label(self._format_papers(item)))
+
+        scroll.add_widget(table)
+        container = MDBoxLayout(orientation="vertical")
+        container.add_widget(title)
+        container.add_widget(scroll)
+        return container
+
+    def build_summary_section(self, details):
+        summary = GridLayout(cols=7, rows=1, spacing=5, padding=5, size_hint=(1, None), height=dp(120))
+
+        summary.add_widget(self._table_label(f"Subtotal: {details['Total']}", bold=True))
+        summary.add_widget(self._table_label(f"Discount: {details['Discount']}", bold=True))
+        summary.add_widget(self._table_label(f"Tax: {details['Tax']}", bold=True))
+        summary.add_widget(self._table_label(f"Total: {details['Total with Tax']}", bold=True))
+        summary.add_widget(
+            self._table_label(f"Amount Tendered: {details['Amount Tendered']}")
+        )
+        summary.add_widget(self._table_label(f"Change Given: {details['Change Given']}"))
+        summary.add_widget(self._table_label(f"Payment Method: {details['Payment Method']}"))
+
+        return summary
+
+    def _table_label(self, text, bold=False):
+        lbl = MarkupLabel(
+            text=text if bold else f"{text}",
+            halign="center",
+            valign="middle",
+            size_hint_y=None,
+            height=dp(30),
+        )
+        lbl.bind(size=lambda *_: setattr(lbl, "text_size", lbl.size))
+        return lbl
+
+    def _format_quantity(self, item):
+        qty = item.get("qty") or item.get("quantity") or 0
+        return f"{qty:g}"
+
+    def _format_bool(self, value):
+        if value is None:
+            return ""
+        return "Yes" if bool(value) else "No"
+
+    def _format_papers(self, item):
+        is_papers = item.get("is_rolling_papers")
+        if is_papers is None:
+            return ""
+        per_pack = item.get("papers_per_pack")
+        suffix = f" ({per_pack} per pack)" if per_pack else ""
+        return f"{self._format_bool(is_papers)}{suffix}"
+
+    def _parse_items_fallback(self, items_json):
+        try:
+            parsed = json.loads(items_json)
+            if isinstance(parsed, dict):
+                parsed = [parsed]
+            return parsed
+        except Exception as e:
+            logger.warning(f"[OrderDetailsPopup] failed to parse items fallback\n{e}")
+            return []
 
     def open_modify_order_popup(self, order_id):
         # fetch and parse items
