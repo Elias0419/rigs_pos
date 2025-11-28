@@ -846,11 +846,6 @@ class DatabaseManager:
         return bool(value)
 
     def _merge_inventory_details(self, order_item, inventory_lookup):
-        """
-        Enrich an order_item row with data from the inventory table when
-        the original order row is missing details (e.g., cost, barcode, or
-        rolling-paper metadata).
-        """
 
         lookup_key = (
             order_item.get("item_id"),

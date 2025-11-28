@@ -2373,11 +2373,34 @@ class PopupManager:
         self.adjust_price_popup = self.create_focus_popup(
             title="Adjust Payment",
             content=self.adjust_price_popup_layout,
-            size_hint=(0.2, 0.4),
+            size_hint=(0.3, 0.6),
             on_dismiss=lambda x: setattr(self.adjust_price_cash_input, "text", ""),
             textinput=self.adjust_price_cash_input,
         )
 
+
+
+        rounding_layout = BoxLayout(orientation="vertical", spacing=5)
+        rounding_layout.add_widget(
+            Label(text="Round down to nearest:", size_hint_y=None, height=30, font_size=18)
+        )
+
+        rounding_buttons = GridLayout(cols=2, spacing=5)
+        for amount in [1, 5, 10, 20]:
+            rounding_buttons.add_widget(
+                self.app.utilities.create_md_raised_button(
+                    f"${amount}",
+                    lambda x, d=amount: self.app.order_manager.round_down_payment_adjustment(d),
+                    size_hint=(1,1),
+                )
+            )
+
+        rounding_layout.add_widget(rounding_buttons)
+
+        self.adjust_price_popup_layout.add_widget(rounding_layout)
+        self.adjust_price_popup_layout.add_widget(
+            Label(text="Or:", size_hint_y=None, height=30, font_size=18)
+        )
         self.adjust_price_popup_layout.add_widget(self.adjust_price_cash_input)
 
         keypad_layout = GridLayout(cols=3, spacing=10)

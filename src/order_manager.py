@@ -1,6 +1,7 @@
 import uuid
 import json
 import os
+import math
 from open_cash_drawer import open_cash_drawer
 
 import logging
@@ -332,6 +333,43 @@ class OrderManager:
             self.set_order_level_discount(required_order_level)
             return True
 
+    def _finalize_adjust_price(self):
+        self.app.utilities.update_display()
+        self.app.utilities.update_financial_summary()
+        try:
+            self.app.popup_manager.adjust_price_popup.dismiss()
+        except AttributeError:
+            logger.info("[Order Manager]: adjust price popup already dismissed")
+
+        try:
+            self.app.financial_summary.order_mod_popup.dismiss()
+        except AttributeError:
+            logger.info("[Order Manager]: order mod popup already dismissed")
+
+    def round_down_payment_adjustment(self, denomination):
+        try:
+            denomination = float(denomination)
+        except (TypeError, ValueError):
+            logger.warn("[Order Manager]: invalid denomination for round down")
+            return False
+
+        if denomination <= 0:
+            logger.warn("[Order Manager]: denomination must be positive for round down")
+            return False
+
+        current_total = self.calculate_total_with_tax()
+        target_total = math.floor(current_total / denomination) * denomination
+
+        if target_total <= 0:
+            logger.warn("[Order Manager]: target total not positive after round down")
+            return False
+
+        if not self.adjust_order_to_target_total(target_total):
+            return False
+
+        self._finalize_adjust_price()
+        return True
+
     def add_discount(self, discount_amount, percent=False):
         discount_amount = float(discount_amount)
         if percent:
@@ -502,11 +540,8 @@ class OrderManager:
         except ValueError as e:
             logger.warn(e)
 
-        self.adjust_order_to_target_total(target_amount)
-        self.app.utilities.update_display()
-        self.app.utilities.update_financial_summary()
-        self.app.popup_manager.adjust_price_popup.dismiss()
-        self.app.financial_summary.order_mod_popup.dismiss()
+        if self.adjust_order_to_target_total(target_amount):
+            self._finalize_adjust_price()
 
     def remove_item_in(self, item_name, item_price):
         self.remove_item(item_name)
