@@ -142,7 +142,6 @@ class HistoryView(BoxLayout):
             barcode_str = str(barcode).strip()
             order_history = self.app.db_manager.get_order_history()
 
-            # Match on exact order_id string
             specific_order = next(
                 (order for order in order_history if str(order[0]) == barcode_str),
                 None,
@@ -158,6 +157,18 @@ class HistoryView(BoxLayout):
             logger.warn(
                 f"[HistoryManager] display_order_details_from_barcode_scan\n{e}"
             )
+
+    def order_not_found_popup(self, order):
+        not_found_layout = BoxLayout(size_hint=(1, 1))
+        not_found_label = Label(text=f"Order {order} Not Found")
+        not_found_button = MDRaisedButton(
+            text="Dismiss", on_press=lambda x: self.not_found_popup.dismiss()
+        )
+        not_found_layout.add_widget(not_found_label)
+        not_found_layout.add_widget(not_found_button)
+        self.not_found_popup = Popup(content=not_found_layout, size_hint=(0.4, 0.4))
+
+        self.not_found_popup.open()
 
     def _build_totals_bar(self):
         self.totals_layout = GridLayout(cols=6, size_hint=(1, 0.1))
@@ -417,7 +428,6 @@ class HistoryView(BoxLayout):
         if specific:
             self.clear_widgets()
             try:
-                # Optional: render a single HistoryRow fullscreen
                 row = HistoryRow()
                 row.order_id = str(specific[0])
                 row.items = self.format_items(specific[1])
