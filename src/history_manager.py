@@ -143,7 +143,7 @@ class HistoryView(BoxLayout):
             order_history = self.app.db_manager.get_order_history()
 
             specific_order = next(
-                (order for order in order_history if str(order[0]) == barcode_str),
+                (order for order in order_history if str(order[0][:13]) == barcode_str),
                 None,
             )
 
