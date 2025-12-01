@@ -2,12 +2,13 @@ import json
 import logging
 import threading
 from io import BytesIO
+from typing import Dict
 
 import barcode
 from barcode.writer import ImageWriter
 import brother_ql
-from brother_ql.conversion import convert
 from brother_ql.backends.helpers import send
+from brother_ql.conversion import convert
 from PIL import Image, ImageDraw, ImageFont
 
 from kivy.app import App
@@ -15,7 +16,7 @@ from kivy.clock import Clock
 from kivy.core.image import Image as CoreImage
 from kivy.graphics import Color, Line
 from kivy.metrics import dp
-from kivy.properties import StringProperty, ObjectProperty
+from kivy.properties import ObjectProperty, StringProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
 from kivy.uix.gridlayout import GridLayout
@@ -26,13 +27,23 @@ from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.uix.recycleview import RecycleView
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.uix.textinput import TextInput
+from kivy.uix.togglebutton import ToggleButton
 
 from kivymd.uix.boxlayout import BoxLayout, MDBoxLayout
-from kivymd.uix.button import MDFlatButton, MDRaisedButton, MDIconButton
+from kivymd.uix.button import MDFlatButton, MDIconButton, MDRaisedButton
 from kivymd.uix.label import MDLabel
 from kivymd.uix.recycleview import RecycleView
 
 logger = logging.getLogger("rigs_pos")
+
+
+PRINTER_MODEL = "QL-710W"
+PRINTER_IDENTIFIER = "usb://0x04F9:0x2043"
+PRINTER_BACKEND = "pyusb"
+CONTINUOUS_LABEL_NAME = "29"  # DK-2210 29mm continuous tape
+CONTINUOUS_LABEL_WIDTH = 306  # 300dpi printable width for DK-2210
+LEGACY_LABEL_NAME = "23x23"
+LEGACY_SIZE = (202, 202)
 
 
 class MarkupLabel(MDLabel):
@@ -61,11 +72,6 @@ def _left_label(**kw):
     lb = MarkupLabel(halign="left", **kw)
     lb.bind(size=lambda *_: setattr(lb, "text_size", lb.size))
     return lb
-
-
-import logging
-
-logger = logging.getLogger("rigs_pos")
 
 
 class LabelPrintingRow(RecycleDataViewBehavior, BoxLayout):
@@ -121,23 +127,85 @@ class LabelPrintingRow(RecycleDataViewBehavior, BoxLayout):
         return popup
 
     def show_label_popup(self):
-        content = BoxLayout(orientation="vertical")
+        content = BoxLayout(orientation="vertical", padding=5, spacing=5)
+
         quantity_input = TextInput(
-            text="1", size_hint=(1, 0.4), input_filter="int", font_size=25
+            text="1", size_hint=(1, None), height=dp(40), input_filter="int", font_size=20
         )
-        label_container = MDBoxLayout(size_hint_y=0.1)
-        label_container.add_widget(Label(text=f"Enter quantity for {self.name}"))
-        content.add_widget(label_container)
+        content.add_widget(Label(text=f"Enter quantity for {self.name}", size_hint_y=None, height=dp(24)))
         content.add_widget(quantity_input)
 
+        type_row = MDBoxLayout(orientation="horizontal", spacing=5, size_hint_y=None, height=dp(40))
+        self.label_type = "small"
+        for label_type, text in [
+            ("small", "Small (default)"),
+            ("medium", "Medium"),
+            ("large", "Large"),
+            ("legacy23", "Legacy 23x23"),
+        ]:
+            btn = ToggleButton(text=text, group="label_size", state="down" if label_type == "small" else "normal")
+            btn.bind(on_release=lambda inst, lt=label_type: self._on_label_type_selected(lt))
+            type_row.add_widget(btn)
+        content.add_widget(type_row)
+
+        form_layout = MDBoxLayout(orientation="vertical", spacing=5)
+        self.price_input = TextInput(
+            text=f"{float(self.price):.2f}" if self.price not in ("Not Found", "") else "",
+            hint_text="Price (e.g. 9.99)",
+            multiline=False,
+            size_hint_y=None,
+            height=dp(40),
+        )
+        self.small_text_input = TextInput(
+            text=self.name[:30],
+            hint_text="One line of text",
+            multiline=False,
+            size_hint_y=None,
+            height=dp(40),
+        )
+        self.medium_name_input = TextInput(
+            text=self.name[:60],
+            hint_text="Title (shows on medium & large)",
+            multiline=False,
+            size_hint_y=None,
+            height=dp(40),
+        )
+        self.medium_line1_input = TextInput(hint_text="Line 1", multiline=False, size_hint_y=None, height=dp(36))
+        self.medium_line2_input = TextInput(hint_text="Line 2", multiline=False, size_hint_y=None, height=dp(36))
+        self.medium_line3_input = TextInput(hint_text="Line 3", multiline=False, size_hint_y=None, height=dp(36))
+        self.large_body_input = TextInput(
+            hint_text="Description for large label",
+            multiline=True,
+            size_hint_y=None,
+            height=dp(120),
+        )
+        self.legacy_optional_text = TextInput(
+            hint_text="Optional text for legacy label",
+            multiline=False,
+            size_hint_y=None,
+            height=dp(40),
+        )
+
+        form_layout.add_widget(self.price_input)
+        form_layout.add_widget(self.small_text_input)
+        form_layout.add_widget(self.medium_name_input)
+        form_layout.add_widget(self.medium_line1_input)
+        form_layout.add_widget(self.medium_line2_input)
+        form_layout.add_widget(self.medium_line3_input)
+        form_layout.add_widget(self.large_body_input)
+        form_layout.add_widget(self.legacy_optional_text)
+        content.add_widget(form_layout)
+
+        self._update_form_visibility("small")
+
         btn_layout = BoxLayout(
-            orientation="horizontal", size_hint=(0.8, 0.4), spacing=10
+            orientation="horizontal", size_hint=(1, None), height=dp(48), spacing=10
         )
         popup = self.create_focus_popup(
             title="",
             content=content,
             textinput=quantity_input,
-            size_hint=(0.4, 0.2),
+            size_hint=(0.7, 0.8),
             separator_height=0,
         )
 
@@ -163,6 +231,47 @@ class LabelPrintingRow(RecycleDataViewBehavior, BoxLayout):
 
         popup.open()
 
+    def _on_label_type_selected(self, label_type: str):
+        self.label_type = label_type
+        self._update_form_visibility(label_type)
+
+    def _update_form_visibility(self, label_type: str):
+        widgets = [
+            self.price_input,
+            self.small_text_input,
+            self.medium_name_input,
+            self.medium_line1_input,
+            self.medium_line2_input,
+            self.medium_line3_input,
+            self.large_body_input,
+            self.legacy_optional_text,
+        ]
+        for w in widgets:
+            w.opacity = 0
+            w.disabled = True
+            w.height = 0
+
+        def show(widget):
+            widget.opacity = 1
+            widget.disabled = False
+            widget.height = dp(40) if widget is not self.large_body_input else dp(120)
+
+        show(self.price_input)
+        if label_type == "small":
+            show(self.small_text_input)
+        elif label_type == "medium":
+            show(self.medium_name_input)
+            show(self.medium_line1_input)
+            show(self.medium_line2_input)
+            show(self.medium_line3_input)
+        elif label_type == "large":
+            show(self.medium_name_input)
+            self.large_body_input.height = dp(120)
+            self.large_body_input.opacity = 1
+            self.large_body_input.disabled = False
+        elif label_type == "legacy23":
+            show(self.legacy_optional_text)
+
     def refresh_print_queue_for_embed(self):
         Clock.schedule_once(self.refresh_print_queue_for_embed_main_thread, 0.1)
 
@@ -187,8 +296,37 @@ class LabelPrintingRow(RecycleDataViewBehavior, BoxLayout):
 
     def add_quantity_to_queue(self, quantity):
         if quantity.isdigit() and int(quantity) > 0 and self.label_printer:
+            content: Dict[str, str] = {}
+            price_text = self.price_input.text.strip()
+            if price_text and not price_text.startswith("$"):
+                price_text = f"${price_text}"
+
+            if self.label_type == "small":
+                content = {
+                    "info_text": self.small_text_input.text.strip(),
+                }
+            elif self.label_type == "medium":
+                content = {
+                    "title": self.medium_name_input.text.strip() or self.name,
+                    "line1": self.medium_line1_input.text.strip(),
+                    "line2": self.medium_line2_input.text.strip(),
+                    "line3": self.medium_line3_input.text.strip(),
+                }
+            elif self.label_type == "large":
+                content = {
+                    "title": self.medium_name_input.text.strip() or self.name,
+                    "body": self.large_body_input.text.strip(),
+                }
+            elif self.label_type == "legacy23":
+                content = {"optional_text": self.legacy_optional_text.text.strip()}
+
             self.label_printer.add_to_queue(
-                self.barcode, self.name, self.price, quantity
+                barcode=self.barcode,
+                name=self.name,
+                price=price_text or self.price,
+                quantity=quantity,
+                label_type=self.label_type,
+                content=content,
             )
 
 
@@ -208,6 +346,8 @@ class LabelPrintingView(BoxLayout):
 
         self.app = ref or App.get_running_app()
         self.label_printer = getattr(self.app, "label_printer", None)
+        if self.label_printer:
+            self.label_printer.print_queue_ref = self
 
         self.full_inventory = []
         self.dual_pane_mode = False
@@ -269,8 +409,9 @@ class LabelPrintingView(BoxLayout):
 
         updated = False
         for item in self.label_printer.print_queue:
-            if item["name"] == item_name:
+            if item["name"] == item_name and item.get("label_type", "legacy23") == "legacy23":
                 item["optional_text"] = optional_text
+                item.setdefault("content", {})["optional_text"] = optional_text
                 updated = True
                 break
         if updated and not self.dual_pane_mode:
@@ -333,9 +474,8 @@ class LabelPrintingView(BoxLayout):
             )
             name_label = Label(text=name_text, size_hint_x=0.2)
             qty_label = Label(text=f"Qty: {item['quantity']}", size_hint_x=0.05)
-            text_label = Label(
-                text=f"Text: {item['optional_text']}", size_hint_x=0.2, halign="left"
-            )
+            summary = self.label_printer.describe_queue_item(item)
+            text_label = Label(text=summary, size_hint_x=0.35, halign="left")
 
             if embed:
                 plus_button = MDIconButton(
@@ -382,13 +522,16 @@ class LabelPrintingView(BoxLayout):
                     ),
                 )
 
-            text_button = Button(
-                text="Add Text",
-                size_hint_x=0.1,
-                on_release=lambda _b, item=item: self.add_label_text(
-                    item_str=item["name"]
-                ),
-            )
+            if item.get("label_type", "legacy23") == "legacy23":
+                text_button = Button(
+                    text="Add Text",
+                    size_hint_x=0.1,
+                    on_release=lambda _b, item=item: self.add_label_text(
+                        item_str=item["name"]
+                    ),
+                )
+            else:
+                text_button = BoxLayout(size_hint_x=0.1)
             preview_button = Button(
                 text="Preview",
                 size_hint_x=0.1,
@@ -472,10 +615,18 @@ class LabelPrintingView(BoxLayout):
             logger.error(f"Unexpected error in refresh_print_queue_for_embed\n{e}")
 
     def add_label_text(self, item_str):
+        target_item = next(
+            (i for i in self.label_printer.print_queue if i.get("name") == item_str),
+            None,
+        )
+        if not target_item or target_item.get("label_type", "legacy23") != "legacy23":
+            return
         layout = BoxLayout(orientation="vertical", size_hint_y=1)
         text_layout = BoxLayout(orientation="vertical", size_hint_y=0.5)
         self.add_label_text_input = TextInput(
-            text=item_str[:15], size_hint=(1, 0.1), multiline=False
+            text=target_item.get("optional_text", "")[:30],
+            size_hint=(1, 0.1),
+            multiline=False,
         )
         text_layout.add_widget(self.add_label_text_input)
 
@@ -507,7 +658,9 @@ class LabelPrintingView(BoxLayout):
         self.add_label_popup.dismiss()
         for item in self.label_printer.print_queue:
             if item_str == item["name"]:
-                item["optional_text"] = self.add_label_text_input.text
+                optional_text = self.add_label_text_input.text
+                item["optional_text"] = optional_text
+                item.setdefault("content", {})["optional_text"] = optional_text
                 self.label_printer.save_queue()
                 self.refresh_and_show_print_queue()
                 break
@@ -615,18 +768,16 @@ class LabelPrintingView(BoxLayout):
 
 
 class LabelPrinter:
-    def __init__(self, ref):
+    def __init__(self, ref=None):
+        self.app = ref
+        self.print_queue: list[dict] = []
+        self.queue_file_path = "print_queue.json"
+        self.print_queue_ref = None
 
         if ref:
-            self.print_queue = []
-
-            self.app = ref
-            self.print_queue_ref = LabelPrintingRow()
-            self.queue_file_path = "print_queue.json"
             self.load_queue()
 
     def save_queue(self):
-
         try:
             with open(self.queue_file_path, "w") as file:
                 json.dump(self.print_queue, file)
@@ -634,27 +785,39 @@ class LabelPrinter:
             logger.warn(f"Error saving print queue: {e}")
 
     def load_queue(self):
-
         try:
             with open(self.queue_file_path, "r") as file:
                 self.print_queue = json.load(file)
         except FileNotFoundError:
-
             self.print_queue = []
         except Exception as e:
             logger.warn(f"Error loading print queue: {e}")
 
-    def add_to_queue(self, barcode, name, price, quantity):
+        for item in self.print_queue:
+            item.setdefault("label_type", "legacy23")
+            item.setdefault("content", {})
+            if item.get("label_type") == "legacy23":
+                item.setdefault("optional_text", item.get("content", {}).get("optional_text", ""))
+
+    def _format_price(self, price_text: str) -> str:
+        if not price_text:
+            return ""
+        price_text = price_text.strip()
+        return price_text if price_text.startswith("$") else f"${price_text}"
+
+    def add_to_queue(self, barcode, name, price, quantity, label_type="small", content=None):
         try:
-            self.print_queue.append(
-                {
-                    "barcode": barcode,
-                    "name": name,
-                    "price": price,
-                    "quantity": int(quantity),
-                    "optional_text": "",
-                }
-            )
+            item = {
+                "barcode": barcode,
+                "name": name,
+                "price": self._format_price(price),
+                "quantity": int(quantity),
+                "label_type": label_type,
+                "content": content or {},
+            }
+            if label_type == "legacy23":
+                item["optional_text"] = item["content"].get("optional_text", "")
+            self.print_queue.append(item)
             self.save_queue()
         except Exception as e:
             logger.warn(
@@ -671,6 +834,20 @@ class LabelPrinter:
     def clear_queue(self):
         self.print_queue.clear()
         self.save_queue()
+
+    def describe_queue_item(self, item: dict) -> str:
+        label_type = item.get("label_type", "legacy23")
+        content = item.get("content", {})
+        if label_type == "small":
+            return f"Small: {content.get('info_text', '')[:30]}"
+        if label_type == "medium":
+            return "Medium: " + ", ".join(
+                filter(None, [content.get("title"), content.get("line1"), content.get("line2"), content.get("line3")])
+            )[:40]
+        if label_type == "large":
+            body = content.get("body", "")
+            return f"Large: {body[:40]}" if body else "Large label"
+        return f"Legacy text: {item.get('optional_text', '')[:40]}"
 
     def calculate_dynamic_font_size(
         self,
@@ -702,34 +879,439 @@ class LabelPrinter:
 
         return font_size
 
-    def preview_barcode_label(self, name):
-        for i in self.print_queue:
-            if i["name"] == name:
+    def handle_upc_e(self, barcode_data):
+        logger.warn(f"inside handle_upc_e:\n'{barcode_data}")
+        padding = 12 - len(barcode_data)
+        upc = barcode_data + "0" * padding
+        logger.warn(upc)
+        return upc
+
+    @staticmethod
+    def _load_font(size: int) -> ImageFont.FreeTypeFont:
+        font_paths = [
+            "/usr/share/fonts/TTF/Arialbd.TTF",
+            "/usr/share/fonts/TTF/Arial.TTF",
+            "DejaVuSans-Bold.ttf",
+            "DejaVuSans.ttf",
+        ]
+        for path in font_paths:
+            try:
+                return ImageFont.truetype(path, size)
+            except OSError:
+                continue
+        return ImageFont.load_default()
+
+    def _make_barcode_image(self, code: str, module_height: float = 15.0) -> Image.Image:
+        upc_cls = barcode.get_barcode_class("upc")
+        try:
+            upc = upc_cls(code, writer=ImageWriter())
+        except barcode.errors.NumberOfDigitsError:
+            upc = upc_cls(self.handle_upc_e(code), writer=ImageWriter())
+        writer_options = {
+            "write_text": False,
+            "module_width": 0.20,
+            "module_height": module_height,
+            "quiet_zone": 1.0,
+            "dpi": 300,
+        }
+        img = upc.render(writer_options=writer_options)
+        if img.mode != "RGB":
+            img = img.convert("RGB")
+        return img
+
+    def _render_small_label(self, barcode_data: str, price_text: str, info_text: str) -> Image.Image:
+        margin_top = 8
+        margin_bottom = 8
+        gap_barcode_price = 4
+        gap_price_info = 4
+
+        barcode_img = self._make_barcode_image(barcode_data)
+        bw, bh = barcode_img.size
+        max_barcode_width = CONTINUOUS_LABEL_WIDTH - 2 * margin_top
+        if bw > max_barcode_width:
+            scale = max_barcode_width / float(bw)
+            new_size = (int(bw * scale), int(bh * scale))
+            barcode_img = barcode_img.resize(new_size, resample=Image.LANCZOS)
+            bw, bh = barcode_img.size
+
+        price_font = self._load_font(26)
+        info_font = self._load_font(18)
+        tmp_img = Image.new("RGB", (1, 1), "white")
+        tmp_draw = ImageDraw.Draw(tmp_img)
+
+        price_bbox = tmp_draw.textbbox((0, 0), price_text, font=price_font)
+        price_height = price_bbox[3] - price_bbox[1]
+
+        info_bbox = tmp_draw.textbbox((0, 0), info_text, font=info_font)
+        info_height = info_bbox[3] - info_bbox[1]
+
+        label_height = (
+            margin_top
+            + bh
+            + gap_barcode_price
+            + price_height
+            + gap_price_info
+            + info_height
+            + margin_bottom
+        )
+
+        label_img = Image.new("RGB", (CONTINUOUS_LABEL_WIDTH, label_height), "white")
+        draw = ImageDraw.Draw(label_img)
+
+        barcode_x = (CONTINUOUS_LABEL_WIDTH - bw) // 2
+        barcode_y = margin_top
+        label_img.paste(barcode_img, (barcode_x, barcode_y))
+
+        price_y = barcode_y + bh + gap_barcode_price
+        price_width = price_bbox[2] - price_bbox[0]
+        price_x = (CONTINUOUS_LABEL_WIDTH - price_width) // 2
+        draw.text((price_x, price_y), price_text, fill="black", font=price_font)
+
+        info_y = price_y + price_height + gap_price_info
+        info_width = info_bbox[2] - info_bbox[0]
+        info_x = (CONTINUOUS_LABEL_WIDTH - info_width) // 2
+        draw.text((info_x, info_y), info_text, fill="black", font=info_font)
+        return label_img
+
+    def _render_medium_label(
+        self,
+        barcode_data: str,
+        title: str,
+        price_text: str,
+        extra_lines: list[str],
+    ) -> Image.Image:
+        margin_top = 8
+        margin_bottom = 8
+        gap_between_lines = 4
+        gap_before_barcode = 6
+
+        barcode_img = self._make_barcode_image(barcode_data)
+        bw, bh = barcode_img.size
+        max_barcode_width = CONTINUOUS_LABEL_WIDTH - 2 * margin_top
+        if bw > max_barcode_width:
+            scale = max_barcode_width / float(bw)
+            new_size = (int(bw * scale), int(bh * scale))
+            barcode_img = barcode_img.resize(new_size, resample=Image.LANCZOS)
+            bw, bh = barcode_img.size
+
+        name_font = self._load_font(20)
+        price_font = self._load_font(26)
+        extra_font = self._load_font(16)
+
+        tmp_img = Image.new("RGB", (1, 1), "white")
+        tmp_draw = ImageDraw.Draw(tmp_img)
+
+        def measure(text: str, font: ImageFont.FreeTypeFont) -> tuple[int, int]:
+            bbox = tmp_draw.textbbox((0, 0), text, font=font)
+            return bbox[2] - bbox[0], bbox[3] - bbox[1]
+
+        name_w, name_h = measure(title, name_font)
+        price_w, price_h = measure(price_text, price_font)
+        measured_extras = [measure(t, extra_font) for t in extra_lines]
+        extra_heights = [h for _, h in measured_extras]
+
+        label_height = (
+            margin_top
+            + name_h
+            + gap_between_lines
+            + price_h
+            + sum(extra_heights)
+            + gap_between_lines * (len(extra_heights) + 1)
+            + gap_before_barcode
+            + bh
+            + margin_bottom
+        )
+
+        label_img = Image.new("RGB", (CONTINUOUS_LABEL_WIDTH, label_height), "white")
+        draw = ImageDraw.Draw(label_img)
+
+        def draw_centered(text: str, y: int, font: ImageFont.FreeTypeFont) -> int:
+            bbox = draw.textbbox((0, 0), text, font=font)
+            text_w = bbox[2] - bbox[0]
+            text_h = bbox[3] - bbox[1]
+            x = (CONTINUOUS_LABEL_WIDTH - text_w) // 2
+            draw.text((x, y), text, fill="black", font=font)
+            return y + text_h
+
+        y = margin_top
+        y = draw_centered(title, y, name_font)
+        y += gap_between_lines
+        y = draw_centered(price_text, y, price_font)
+        for line, (_, h) in zip(extra_lines, measured_extras):
+            y += gap_between_lines
+            y = draw_centered(line, y, extra_font)
+
+        y += gap_before_barcode
+        barcode_x = (CONTINUOUS_LABEL_WIDTH - bw) // 2
+        barcode_y = label_height - margin_bottom - bh
+        label_img.paste(barcode_img, (barcode_x, barcode_y))
+        return label_img
+
+    def _render_large_label(
+        self, barcode_data: str, title: str, price_text: str, body: str
+    ) -> Image.Image:
+        margin_x = 8
+        margin_y = 8
+        col_gap = 10
+        col_inner_margin_x = 4
+        line_gap = 4
+
+        name_font = self._load_font(24)
+        price_font = self._load_font(28)
+        body_font = self._load_font(16)
+
+        barcode_img = self._make_barcode_image(barcode_data, module_height=20.0)
+        barcode_img = barcode_img.rotate(90, expand=True)
+        bw, bh = barcode_img.size
+
+        max_barcode_height = CONTINUOUS_LABEL_WIDTH - 2 * margin_y
+        if bh > max_barcode_height:
+            scale = max_barcode_height / float(bh)
+            new_size = (int(bw * scale), int(bh * scale))
+            barcode_img = barcode_img.resize(new_size, resample=Image.LANCZOS)
+            bw, bh = barcode_img.size
+
+        barcode_col_width = bw + 2 * col_inner_margin_x
+
+        tmp_img = Image.new("RGB", (1, 1), "white")
+        tmp_draw = ImageDraw.Draw(tmp_img)
+
+        def measure(text: str, font: ImageFont.FreeTypeFont) -> tuple[int, int]:
+            bbox = tmp_draw.textbbox((0, 0), text, font=font)
+            return bbox[2] - bbox[0], bbox[3] - bbox[1]
+
+        name_w, name_h = measure(title, name_font)
+        price_w, price_h = measure(price_text, price_font)
+        available_height = CONTINUOUS_LABEL_WIDTH - 2 * margin_y
+
+        BASE_MIN_TEXT_WIDTH = 300
+        MAX_TEXT_WIDTH = 900
+        STEP = 10
+
+        min_width = max(BASE_MIN_TEXT_WIDTH, name_w, price_w)
+        text_col_width = min_width
+        best_lines: list[str] = []
+        best_line_heights: list[int] = []
+
+        while text_col_width <= MAX_TEXT_WIDTH:
+            lines = self._wrap_text(tmp_draw, body, body_font, text_col_width)
+            line_heights: list[int] = []
+            total_body_height = 0
+            for line in lines:
+                _, lh = measure(line, body_font)
+                line_heights.append(lh)
+                total_body_height += lh
+            if lines:
+                total_body_height += line_gap * (len(lines) - 1)
+
+            text_block_height = (
+                name_h
+                + line_gap
+                + price_h
+                + (line_gap if lines else 0)
+                + total_body_height
+            )
+
+            if text_block_height <= available_height:
+                best_lines = lines
+                best_line_heights = line_heights
+                break
+
+            text_col_width += STEP
+
+        if not best_lines:
+            text_col_width = max(min_width, MAX_TEXT_WIDTH)
+            best_lines = self._wrap_text(tmp_draw, body, body_font, text_col_width)
+            best_line_heights = [measure(line, body_font)[1] for line in best_lines]
+            total_body_height = sum(best_line_heights)
+            if best_lines:
+                total_body_height += line_gap * (len(best_line_heights) - 1)
+            text_block_height = (
+                name_h
+                + line_gap
+                + price_h
+                + (line_gap if best_lines else 0)
+                + total_body_height
+            )
+        else:
+            total_body_height = sum(best_line_heights)
+            if best_lines:
+                total_body_height += line_gap * (len(best_line_heights) - 1)
+            text_block_height = (
+                name_h
+                + line_gap
+                + price_h
+                + (line_gap if best_lines else 0)
+                + total_body_height
+            )
+
+        logical_width = (
+            margin_x + barcode_col_width + col_gap + text_col_width + margin_x
+        )
+
+        logical_img = Image.new("RGB", (logical_width, CONTINUOUS_LABEL_WIDTH), "white")
+        draw = ImageDraw.Draw(logical_img)
+
+        barcode_x = margin_x + col_inner_margin_x
+        available_height = CONTINUOUS_LABEL_WIDTH - 2 * margin_y
+        barcode_y = margin_y + (available_height - bh) // 2
+        logical_img.paste(barcode_img, (barcode_x, barcode_y))
+
+        text_x = margin_x + barcode_col_width + col_gap
+        text_block_y_start = margin_y + (available_height - text_block_height) // 2
+        y = text_block_y_start
+
+        name_bbox = draw.textbbox((0, 0), title, font=name_font)
+        name_draw_w = name_bbox[2] - name_bbox[0]
+        name_x = text_x + (text_col_width - name_draw_w) // 2
+        draw.text((name_x, y), title, fill="black", font=name_font)
+        y += name_h + line_gap
+
+        price_bbox = draw.textbbox((0, 0), price_text, font=price_font)
+        price_draw_w = price_bbox[2] - price_bbox[0]
+        price_x = text_x + (text_col_width - price_draw_w) // 2
+        draw.text((price_x, y), price_text, fill="black", font=price_font)
+        y += price_h
+
+        if best_lines:
+            y += line_gap
+
+        for line, lh in zip(best_lines, best_line_heights):
+            draw.text((text_x, y), line, fill="black", font=body_font)
+            y += lh + line_gap
+
+        return logical_img.rotate(270, expand=True)
+
+    def _render_legacy_label(
+        self, barcode_data: str, price_text: str, optional_text: str
+    ) -> Image.Image:
+        label_width, label_height = LEGACY_SIZE
+        barcode_y_position = 35
+
+        barcode_image = self._make_barcode_image(barcode_data, module_height=10)
+
+        label_image = Image.new("RGB", (label_width, label_height), "white")
+        draw = ImageDraw.Draw(label_image)
+
+        font_size = 33
+        try:
+            font = ImageFont.truetype("/usr/share/fonts/TTF/Arialbd.TTF", font_size)
+        except OSError:
+            try:
+                font = ImageFont.truetype("DejaVuSans.ttf", font_size)
+            except OSError:
+                font = ImageFont.load_default()
+
+        text = self._format_price(price_text) or price_text
+        text_bbox = draw.textbbox((0, 0), text, font=font)
+        text_width = text_bbox[2] - text_bbox[0]
+        x_text = (label_width - text_width) / 2
+        draw.text((x_text, 0), text, fill="black", font=font)
+
+        barcode_width, barcode_height = barcode_image.size
+        barcode_position = ((label_width - barcode_width) // 2, barcode_y_position)
+        label_image.paste(barcode_image, barcode_position)
+
+        if optional_text:
+            max_optional_text_width = label_width
+            additional_text_font_size = self.calculate_dynamic_font_size(
+                draw, optional_text, max_optional_text_width
+            )
+            try:
+                additional_font = ImageFont.truetype(
+                    "/usr/share/fonts/TTF/Arial.TTF", additional_text_font_size
+                )
+            except OSError:
                 try:
-                    logger.warn(int(i["barcode"]))
-                except ValueError as e:
-                    logger.warn("probably no barcode")
+                    additional_font = ImageFont.truetype(
+                        "DejaVuSans.ttf", additional_text_font_size
+                    )
+                except OSError:
+                    additional_font = ImageFont.load_default()
+
+            additional_text_bbox = draw.textbbox(
+                (0, 0), optional_text, font=additional_font
+            )
+            additional_text_width = additional_text_bbox[2] - additional_text_bbox[0]
+            x_additional_text = (label_width - additional_text_width) / 2
+            additional_text_y_position = barcode_y_position + barcode_height
+            draw.text(
+                (x_additional_text, additional_text_y_position),
+                optional_text,
+                fill="black",
+                font=additional_font,
+            )
+        return label_image
+
+    def _wrap_text(
+        self,
+        draw: ImageDraw.ImageDraw,
+        text: str,
+        font: ImageFont.FreeTypeFont,
+        max_width: int,
+    ) -> list[str]:
+        words = text.split()
+        if not words:
+            return []
+        lines: list[str] = []
+        line = words[0]
+        for word in words[1:]:
+            test = f"{line} {word}"
+            bbox = draw.textbbox((0, 0), test, font=font)
+            w = bbox[2] - bbox[0]
+            if w <= max_width:
+                line = test
+            else:
+                lines.append(line)
+                line = word
+        lines.append(line)
+        return lines
+
+    def _render_label(self, item: dict) -> tuple[Image.Image, str, bool, int]:
+        label_type = item.get("label_type", "legacy23")
+        content = item.get("content", {})
+        price_text = self._format_price(item.get("price", ""))
+        if label_type == "small":
+            info_text = content.get("info_text", "") or item.get("name", "")
+            image = self._render_small_label(item["barcode"], price_text, info_text)
+            return image, CONTINUOUS_LABEL_NAME, True, 0
+        if label_type == "medium":
+            title = content.get("title", item.get("name", ""))
+            lines = [content.get("line1", ""), content.get("line2", ""), content.get("line3", "")]
+            lines = [line for line in lines if line]
+            image = self._render_medium_label(item["barcode"], title, price_text, lines)
+            return image, CONTINUOUS_LABEL_NAME, True, 0
+        if label_type == "large":
+            title = content.get("title", item.get("name", ""))
+            body = content.get("body", "")
+            image = self._render_large_label(item["barcode"], title, price_text, body)
+            return image, CONTINUOUS_LABEL_NAME, True, 0
+        optional_text = content.get("optional_text") or item.get("optional_text", "")
+        image = self._render_legacy_label(item["barcode"], price_text, optional_text)
+        return image, LEGACY_LABEL_NAME, False, 0
+
+    def _send_to_printer(self, image: Image.Image, label_name: str, cut: bool, rotate: int):
+        qlr = brother_ql.BrotherQLRaster(PRINTER_MODEL)
+        qlr.exception_on_warning = True
+        convert(qlr=qlr, images=[image], label=label_name, cut=cut, rotate=rotate)
+        send(
+            instructions=qlr.data,
+            printer_identifier=PRINTER_IDENTIFIER,
+            backend_identifier=PRINTER_BACKEND,
+        )
+
+    def preview_barcode_label(self, name):
+        for item in self.print_queue:
+            if item["name"] == name:
+                try:
+                    image, label_name, cut, rotate = self._render_label(item)
+                except Exception:
                     self.app.popup_manager.catch_label_printer_missing_barcode()
-                    break
-                if len(i["optional_text"]) > 0:
-                    label_image = self.print_barcode_label(
-                        i["barcode"],
-                        i["price"],
-                        optional_text=i["optional_text"],
-                        include_text=True,
-                        preview=True,
-                    )
-                    self.open_preview_popup(label_image)
-                    break
-                else:
-                    label_image = self.print_barcode_label(
-                        i["barcode"], i["price"], preview=True
-                    )
-                    self.open_preview_popup(label_image)
-                    break
+                    return
+                self.open_preview_popup(image)
+                break
 
     def open_preview_popup(self, label_image):
-
         blank_image = Image.open("images/blank_label.png")
         label_image = label_image.convert("RGBA")
         blank_image = blank_image.convert("RGBA")
@@ -759,136 +1341,15 @@ class LabelPrinter:
 
         self.preview_popup.open()
 
-    def debug_dimensions(self, barcode_image):
-        logger.warn("Barcode size:", barcode_image.size)
-        logger.warn("Label size: (202, 202)")
-        logger.warn(
-            "Barcode position on label:", ((202 - barcode_image.size[0]) // 2, 35)
-        )
-
-    def print_barcode_label(
-        self,
-        barcode_data,
-        item_price,
-        save_path=None,
-        include_text=False,
-        optional_text="",
-        preview=False,
-    ):
-        logger.warn(type(barcode_data))
-        label_width, label_height = 202, 202
-        barcode_y_position = 35
-
-        UPC = barcode.get_barcode_class("upc")
-
-        writer = ImageWriter()
-        try:
-            upc = UPC(barcode_data, writer=writer)
-        except barcode.errors.NumberOfDigitsError as e:
-            upc = UPC(self.handle_upc_e(barcode_data), writer=writer)
-        except barcode.errors.IllegalCharacterError as e:
-            logger.warning(
-                f"probably no barcode or something unexpected\n{barcode_data}"
-            )
-            self.app.popup_manager.catch_label_printer_missing_barcode()
-        barcode_image = upc.render(
-            {
-                "module_width": 0.17,
-                "module_height": 10 if not include_text else 8,
-                # "font_size": 2,
-                "dpi": 300,
-                "write_text": False,
-                "quiet_zone": 0,
-            }
-        )
-
-        label_image = Image.new("RGB", (label_width, label_height), "white")
-        draw = ImageDraw.Draw(label_image)
-
-        font_size = 33
-        try:
-            font = ImageFont.truetype("/usr/share/fonts/TTF/Arialbd.TTF", font_size)
-        except OSError:
-            try:
-                font = ImageFont.truetype("DejaVuSans.ttf", font_size)
-            except OSError:
-                font = ImageFont.load_default()
-
-        text = f"${item_price}"
-        text_bbox = draw.textbbox((0, 0), text, font=font)
-        text_width = text_bbox[2] - text_bbox[0]
-        x_text = (label_width - text_width) / 2
-        draw.text((x_text, 0), text, fill="black", font=font)
-
-        barcode_width, barcode_height = barcode_image.size
-
-        barcode_position = ((label_width - barcode_width) // 2, barcode_y_position)
-
-        label_image.paste(barcode_image, barcode_position)
-
-        if include_text and optional_text:
-            max_optional_text_width = label_width
-            additional_text_font_size = self.calculate_dynamic_font_size(
-                draw, optional_text, max_optional_text_width
-            )
-            try:
-                additional_font = ImageFont.truetype(
-                    "/usr/share/fonts/TTF/Arial.TTF", additional_text_font_size
-                )
-            except OSError:
-                try:
-                    additional_font = ImageFont.truetype(
-                        "DejaVuSans.ttf", additional_text_font_size
-                    )
-                except OSError:
-                    additional_font = ImageFont.load_default()
-
-            additional_text_bbox = draw.textbbox(
-                (0, 0), optional_text, font=additional_font
-            )
-            additional_text_width = additional_text_bbox[2] - additional_text_bbox[0]
-            x_additional_text = (label_width - additional_text_width) / 2
-            additional_text_y_position = barcode_y_position + barcode_height  # + 10
-            draw.text(
-                (x_additional_text, additional_text_y_position),
-                optional_text,
-                fill="black",
-                font=additional_font,
-            )
-        if preview:
-            return label_image
-        else:
-            qlr = brother_ql.BrotherQLRaster("QL-710W")
-            qlr.exception_on_warning = True
-            convert(qlr=qlr, images=[label_image], label="23x23", cut=False)
-            try:
-                send(
-                    instructions=qlr.data,
-                    printer_identifier="usb://0x04F9:0x2043",
-                    backend_identifier="pyusb",
-                )
-                return True
-            except Exception as e:
-                self.catch_label_printing_errors(e)
-                return False
-
     def catch_label_printing_errors(self, e):
         Clock.schedule_once(
             lambda dt: self.app.popup_manager.catch_label_printing_errors(e), 0
         )
 
-    def handle_upc_e(self, barcode_data):
-        logger.warn(f"inside handle_upc_e:\n'{barcode_data}")
-        padding = 12 - len(barcode_data)
-        upc = barcode_data + "0" * padding
-        logger.warn(upc)
-        return upc
-
     def process_queue(self):
         print_thread = threading.Thread(
             target=self._process_print_queue_thread, daemon=True
         )
-
         print_thread.start()
 
     def _process_print_queue_thread(self):
@@ -896,15 +1357,11 @@ class LabelPrinter:
         for item in self.print_queue:
             item_quantity = item.get("quantity", 1)
             for _ in range(item_quantity):
-                success = self.print_barcode_label(
-                    barcode_data=item["barcode"],
-                    item_price=item["price"],
-                    include_text="optional_text" in item
-                    and item["optional_text"] != "",
-                    optional_text=item.get("optional_text", ""),
-                )
-                if not success:
-
+                try:
+                    image, label_name, cut, rotate = self._render_label(item)
+                    self._send_to_printer(image, label_name, cut, rotate)
+                except Exception as e:
+                    self.catch_label_printing_errors(e)
                     self.print_success = False
                     break
             if not self.print_success:
@@ -913,19 +1370,19 @@ class LabelPrinter:
         if self.print_success:
             self.print_queue.clear()
             self.save_queue()
-            self.print_queue_ref.refresh_print_queue_for_embed()
+            try:
+                if self.print_queue_ref:
+                    self.print_queue_ref.refresh_print_queue_for_embed()
+            except Exception as e:
+                logger.info(f"Error refreshing print queue embed: {e}")
             try:
                 self.app.label_manager.print_queue_popup.dismiss()
-            except AttributeError as e:
-                logger.info(f"Expected error dismissing print queue popup\n{e}")
-            except Exception as e:
-                logger.error(f"Unexpected error dismissing print queue popup\n{e}")
+            except AttributeError:
+                pass
             try:
                 self.app.popup_manager.label_errors_popup.dismiss()
-            except AttributeError as e:
-                logger.info(f"Expected error dismissing error popup:\n {e}")
-            except Exception as e:
-                logger.error(f"Unexpected error dismissing error popup:\n {e}")
+            except AttributeError:
+                pass
 
     def remove_from_queue(self, name):
         for i, item in enumerate(self.print_queue):
@@ -942,7 +1399,7 @@ class LabelPrinter:
         start_font_size=40,
         min_font_size=10,
     ):
-        label_w, label_h = 202, 202
+        label_w, label_h = LEGACY_SIZE
         margin = 4
         lines = text.splitlines() or [text]
 
@@ -974,15 +1431,15 @@ class LabelPrinter:
             draw.text((x, y), l, fill="black", font=font)
             y += line_h
 
-        qlr = brother_ql.BrotherQLRaster("QL-710W")
+        qlr = brother_ql.BrotherQLRaster(PRINTER_MODEL)
         qlr.exception_on_warning = True
-        convert(qlr=qlr, images=[img], label="23x23", cut=False)
+        convert(qlr=qlr, images=[img], label=LEGACY_LABEL_NAME, cut=False)
 
         try:
             send(
                 instructions=qlr.data,
-                printer_identifier="usb://0x04F9:0x2043",
-                backend_identifier="pyusb",
+                printer_identifier=PRINTER_IDENTIFIER,
+                backend_identifier=PRINTER_BACKEND,
             )
             return True
         except Exception as e:
