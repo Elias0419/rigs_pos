@@ -208,7 +208,7 @@ class ReceiptPrinter:
         self.printer.textln()
         self.printer.set(align="center", font="a", bold=True)
         self.printer.textln("RIGS SMOKE SHOP")
-        self.printer.set(align="center", font="a", normal_textsize=True, bold=False)
+        self.printer.set(align="center", font="a", bold=False)
         self.printer.textln("402C Main Street")
         self.printer.textln("Wakefield, RI")
         self.printer.textln("401-363-9866")
