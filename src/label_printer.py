@@ -44,6 +44,8 @@ CONTINUOUS_LABEL_NAME = "29"  # DK-2210 29mm continuous tape
 CONTINUOUS_LABEL_WIDTH = 306  # 300dpi printable width for DK-2210
 LEGACY_LABEL_NAME = "23x23"
 LEGACY_SIZE = (202, 202)
+SMALL_MEDIUM_CHAR_LIMIT = 18
+LARGE_TITLE_CHAR_LIMIT = 50
 
 
 class MarkupLabel(MDLabel):
@@ -137,6 +139,7 @@ class LabelPrintingRow(RecycleDataViewBehavior, BoxLayout):
 
         type_row = MDBoxLayout(orientation="horizontal", spacing=5, size_hint_y=None, height=dp(40))
         self.label_type = "small"
+        self.title_max_length = LARGE_TITLE_CHAR_LIMIT
         for label_type, text in [
             ("small", "Small (default)"),
             ("medium", "Medium"),
@@ -155,36 +158,53 @@ class LabelPrintingRow(RecycleDataViewBehavior, BoxLayout):
             multiline=False,
             size_hint_y=None,
             height=dp(40),
+            write_tab=False,
         )
         self.small_text_input = TextInput(
-            text=self.name[:30],
+            text=self.name[:SMALL_MEDIUM_CHAR_LIMIT],
             hint_text="One line of text",
             multiline=False,
             size_hint_y=None,
             height=dp(40),
+            write_tab=False,
         )
         self.medium_name_input = TextInput(
-            text=self.name[:60],
+            text=self.name[:LARGE_TITLE_CHAR_LIMIT],
             hint_text="Title (shows on medium & large)",
             multiline=False,
             size_hint_y=None,
             height=dp(40),
+            write_tab=False,
         )
-        self.medium_line1_input = TextInput(hint_text="Line 1", multiline=False, size_hint_y=None, height=dp(36))
-        self.medium_line2_input = TextInput(hint_text="Line 2", multiline=False, size_hint_y=None, height=dp(36))
-        self.medium_line3_input = TextInput(hint_text="Line 3", multiline=False, size_hint_y=None, height=dp(36))
+        self.medium_line1_input = TextInput(
+            hint_text="Line 1", multiline=False, size_hint_y=None, height=dp(36), write_tab=False
+        )
+        self.medium_line2_input = TextInput(
+            hint_text="Line 2", multiline=False, size_hint_y=None, height=dp(36), write_tab=False
+        )
+        self.medium_line3_input = TextInput(
+            hint_text="Line 3", multiline=False, size_hint_y=None, height=dp(36), write_tab=False
+        )
         self.large_body_input = TextInput(
             hint_text="Description for large label",
             multiline=True,
             size_hint_y=None,
             height=dp(120),
+            write_tab=False,
         )
         self.legacy_optional_text = TextInput(
             hint_text="Optional text for legacy label",
             multiline=False,
             size_hint_y=None,
             height=dp(40),
+            write_tab=False,
         )
+
+        self._bind_length_limit(self.small_text_input, lambda: SMALL_MEDIUM_CHAR_LIMIT)
+        self._bind_length_limit(self.medium_name_input, lambda: self.title_max_length)
+        self._bind_length_limit(self.medium_line1_input, lambda: SMALL_MEDIUM_CHAR_LIMIT)
+        self._bind_length_limit(self.medium_line2_input, lambda: SMALL_MEDIUM_CHAR_LIMIT)
+        self._bind_length_limit(self.medium_line3_input, lambda: SMALL_MEDIUM_CHAR_LIMIT)
 
         form_layout.add_widget(self.price_input)
         form_layout.add_widget(self.small_text_input)
@@ -235,6 +255,27 @@ class LabelPrintingRow(RecycleDataViewBehavior, BoxLayout):
         self.label_type = label_type
         self._update_form_visibility(label_type)
 
+    def _set_title_limit_for_label(self, label_type: str):
+        if label_type == "large":
+            self.title_max_length = LARGE_TITLE_CHAR_LIMIT
+        elif label_type == "medium":
+            self.title_max_length = SMALL_MEDIUM_CHAR_LIMIT
+        else:
+            self.title_max_length = LARGE_TITLE_CHAR_LIMIT
+        self._enforce_title_limit()
+
+    def _enforce_title_limit(self):
+        if len(self.medium_name_input.text) > self.title_max_length:
+            self.medium_name_input.text = self.medium_name_input.text[: self.title_max_length]
+
+    def _bind_length_limit(self, text_input: TextInput, get_limit):
+        def enforce_length(instance, value):
+            limit = get_limit()
+            if len(value) > limit:
+                instance.text = value[:limit]
+
+        text_input.bind(text=enforce_length)
+
     def _update_form_visibility(self, label_type: str):
         widgets = [
             self.price_input,
@@ -256,6 +297,7 @@ class LabelPrintingRow(RecycleDataViewBehavior, BoxLayout):
             widget.disabled = False
             widget.height = dp(40) if widget is not self.large_body_input else dp(120)
 
+        self._set_title_limit_for_label(label_type)
         show(self.price_input)
         if label_type == "small":
             show(self.small_text_input)
@@ -925,6 +967,8 @@ class LabelPrinter:
         gap_barcode_price = 4
         gap_price_info = 4
 
+        info_text = info_text or ""
+
         barcode_img = self._make_barcode_image(barcode_data)
         bw, bh = barcode_img.size
         max_barcode_width = CONTINUOUS_LABEL_WIDTH - 2 * margin_top
@@ -941,19 +985,22 @@ class LabelPrinter:
 
         price_bbox = tmp_draw.textbbox((0, 0), price_text, font=price_font)
         price_height = price_bbox[3] - price_bbox[1]
-
-        info_bbox = tmp_draw.textbbox((0, 0), info_text, font=info_font)
-        info_height = info_bbox[3] - info_bbox[1]
+        if info_text:
+            info_bbox = tmp_draw.textbbox((0, 0), info_text, font=info_font)
+            info_height = info_bbox[3] - info_bbox[1]
+        else:
+            info_height = 0
 
         label_height = (
             margin_top
             + bh
             + gap_barcode_price
             + price_height
-            + gap_price_info
-            + info_height
             + margin_bottom
         )
+
+        if info_text:
+            label_height += gap_price_info + info_height
 
         label_img = Image.new("RGB", (CONTINUOUS_LABEL_WIDTH, label_height), "white")
         draw = ImageDraw.Draw(label_img)
@@ -967,10 +1014,12 @@ class LabelPrinter:
         price_x = (CONTINUOUS_LABEL_WIDTH - price_width) // 2
         draw.text((price_x, price_y), price_text, fill="black", font=price_font)
 
-        info_y = price_y + price_height + gap_price_info
-        info_width = info_bbox[2] - info_bbox[0]
-        info_x = (CONTINUOUS_LABEL_WIDTH - info_width) // 2
-        draw.text((info_x, info_y), info_text, fill="black", font=info_font)
+        if info_text:
+            info_y = price_y + price_height + gap_price_info
+            info_bbox = draw.textbbox((0, 0), info_text, font=info_font)
+            info_width = info_bbox[2] - info_bbox[0]
+            info_x = (CONTINUOUS_LABEL_WIDTH - info_width) // 2
+            draw.text((info_x, info_y), info_text, fill="black", font=info_font)
         return label_img
 
     def _render_medium_label(
@@ -1272,7 +1321,7 @@ class LabelPrinter:
         content = item.get("content", {})
         price_text = self._format_price(item.get("price", ""))
         if label_type == "small":
-            info_text = content.get("info_text", "") or item.get("name", "")
+            info_text = content.get("info_text", "")
             image = self._render_small_label(item["barcode"], price_text, info_text)
             return image, CONTINUOUS_LABEL_NAME, True, 0
         if label_type == "medium":
