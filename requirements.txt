@@ -1,7 +1,7 @@
 appdirs==1.4.4
 argcomplete==3.6.3
 attrs==25.4.0
-brother-ql==0.9.4
+brother_ql @ git+https://github.com/Elias0419/brother_ql.git@master
 certifi==2025.11.12
 charset-normalizer==3.4.4
 click==8.3.0
