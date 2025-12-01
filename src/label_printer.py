@@ -934,8 +934,8 @@ class LabelPrinter:
             barcode_img = barcode_img.resize(new_size, resample=Image.LANCZOS)
             bw, bh = barcode_img.size
 
-        price_font = self._load_font(26)
-        info_font = self._load_font(18)
+        price_font = self._load_font(36)
+        info_font = self._load_font(28)
         tmp_img = Image.new("RGB", (1, 1), "white")
         tmp_draw = ImageDraw.Draw(tmp_img)
 
@@ -994,9 +994,9 @@ class LabelPrinter:
             barcode_img = barcode_img.resize(new_size, resample=Image.LANCZOS)
             bw, bh = barcode_img.size
 
-        name_font = self._load_font(20)
-        price_font = self._load_font(26)
-        extra_font = self._load_font(16)
+        name_font = self._load_font(30)
+        price_font = self._load_font(36)
+        extra_font = self._load_font(26)
 
         tmp_img = Image.new("RGB", (1, 1), "white")
         tmp_draw = ImageDraw.Draw(tmp_img)
@@ -1056,9 +1056,9 @@ class LabelPrinter:
         col_inner_margin_x = 4
         line_gap = 4
 
-        name_font = self._load_font(24)
-        price_font = self._load_font(28)
-        body_font = self._load_font(16)
+        name_font = self._load_font(34)
+        price_font = self._load_font(38)
+        body_font = self._load_font(26)
 
         barcode_img = self._make_barcode_image(barcode_data, module_height=20.0)
         barcode_img = barcode_img.rotate(90, expand=True)
