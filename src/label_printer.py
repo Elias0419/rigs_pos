@@ -844,8 +844,19 @@ class LabelPrinter:
     def _format_price(self, price_text: str) -> str:
         if not price_text:
             return ""
+
         price_text = price_text.strip()
-        return price_text if price_text.startswith("$") else f"${price_text}"
+
+        if not price_text.startswith("$"):
+            price_text = f"${price_text}"
+
+        # drop the cents
+        m = re.fullmatch(r"\$([0-9][0-9,]*)\.00", price_text)
+        if m:
+            return f"${m.group(1)}"
+
+        return price_text
+
 
     def add_to_queue(self, barcode, name, price, quantity, label_type="small", content=None):
         try:
