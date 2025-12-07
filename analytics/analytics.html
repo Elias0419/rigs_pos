@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RIGS Order Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 13px;
+            background: #fff;
+            color: #000;
+            line-height: 1.4;
+        }
+        
+        header {
+            background: #f0f0f0;
+            border-bottom: 1px solid #999;
+            padding: 8px 12px;
+        }
+        
+        header h1 {
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        header .subtitle {
+            font-size: 11px;
+            color: #666;
+        }
+        
+        main {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 12px;
+        }
+        
+        .filters-panel {
+            background: #f5f5f5;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 12px;
+        }
+        
+        .filters-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #ccc;
+        }
+        
+        .filters-header h2 {
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 8px;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        
+        .filter-group label {
+            font-size: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        input, select {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            background: #fff;
+            border: 1px solid #999;
+            padding: 4px 6px;
+        }
+        
+        input:focus, select:focus {
+            outline: 2px solid #000;
+            outline-offset: -2px;
+        }
+        
+        button {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+            padding: 4px 10px;
+            border: 1px solid #666;
+            background: #e0e0e0;
+            cursor: pointer;
+        }
+        
+        button:hover { background: #d0d0d0; }
+        
+        button.primary {
+            background: #000;
+            color: #fff;
+            border-color: #000;
+        }
+        
+        button.primary:hover { background: #333; }
+        
+        .btn-group {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        
+        .toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .toggle-btn .indicator {
+            width: 8px;
+            height: 8px;
+            background: #999;
+        }
+        
+        .toggle-btn.active {
+            background: #c00;
+            color: #fff;
+            border-color: #900;
+        }
+        
+        .toggle-btn.active .indicator {
+            background: #fff;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .stat-card {
+            background: #f5f5f5;
+            border: 1px solid #ccc;
+            padding: 8px 10px;
+        }
+        
+        .stat-card .label {
+            font-size: 10px;
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 2px;
+        }
+        
+        .stat-card .value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .stat-card .value.positive { color: #060; }
+        .stat-card .value.warning { color: #960; }
+        .stat-card .value.negative { color: #900; }
+        
+        .stat-card .subtext {
+            font-size: 11px;
+            color: #666;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .chart-card {
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+        
+        .chart-card.full-width { grid-column: 1 / -1; }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #ccc;
+        }
+        
+        .chart-header h3 {
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .chart-controls { display: flex; gap: 4px; }
+        .chart-controls button { font-size: 11px; padding: 2px 6px; }
+        .chart-controls button.active { background: #000; color: #fff; }
+        
+        .chart-container { position: relative; height: 280px; }
+        
+        .data-table-container {
+            background: #fff;
+            border: 1px solid #ccc;
+        }
+        
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            background: #f0f0f0;
+            border-bottom: 1px solid #ccc;
+        }
+        
+        .table-header h3 {
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .table-tabs { display: flex; gap: 2px; }
+        .table-tabs button { font-size: 11px; padding: 3px 8px; }
+        .table-tabs button.active { background: #000; color: #fff; }
+        
+        .table-scroll {
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        
+        th {
+            font-size: 11px;
+            font-weight: bold;
+            background: #e8e8e8;
+            padding: 6px 8px;
+            text-align: left;
+            border: 1px solid #ccc;
+            position: sticky;
+            top: 0;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        th:hover { background: #ddd; }
+        th.sorted { background: #ccc; }
+        th.sorted::after { content: ' ▼'; }
+        th.sorted.asc::after { content: ' ▲'; }
+        
+        td {
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+        }
+        
+        tr:nth-child(even) td { background: #fafafa; }
+        tr:hover td { background: #ffffcc; }
+        
+        td.numeric { text-align: right; font-family: Consolas, monospace; }
+        td.positive { color: #060; }
+        td.negative { color: #900; }
+        
+        .badge {
+            display: inline-block;
+            font-size: 10px;
+            padding: 1px 4px;
+            border: 1px solid #999;
+            background: #eee;
+        }
+        
+        .badge.cash { background: #cfc; border-color: #090; }
+        .badge.card { background: #ccf; border-color: #009; }
+        .badge.debit { background: #fec; border-color: #960; }
+        
+        .loading {
+            padding: 20px;
+            text-align: center;
+            color: #666;
+        }
+        
+        .empty-state {
+            padding: 20px;
+            text-align: center;
+            color: #666;
+        }
+        
+        .error-banner {
+            background: #fcc;
+            border: 1px solid #c00;
+            color: #900;
+            padding: 6px 10px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+        
+        .data-warning {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            background: #ffc;
+            border: 1px solid #990;
+            font-size: 11px;
+            color: #660;
+            margin-bottom: 8px;
+        }
+        
+        .null-value { color: #999; }
+        
+        .truncate {
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .filters-grid { grid-template-columns: 1fr 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>RIGS ORDER ANALYTICS</h1>
+    </header>
+    
+    <main>
+        <div class="filters-panel">
+            <div class="filters-header">
+                <h2>Filters</h2>
+                <div class="btn-group">
+                    <button onclick="applyFilters()" class="primary">Apply Filters</button>
+                    <button onclick="resetFilters()">Reset</button>
+                    <button class="toggle-btn" id="keystoneToggle" onclick="toggleKeystone()">
+                        <span class="indicator"></span>
+                        Guess Missing Cost
+                    </button>
+                    <button onclick="exportData('orders')">Export Orders CSV</button>
+                    <button onclick="exportData('items')">Export Items CSV</button>
+                </div>
+            </div>
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label>Start Date</label>
+                    <input type="date" id="startDate">
+                </div>
+                <div class="filter-group">
+                    <label>End Date</label>
+                    <input type="date" id="endDate">
+                </div>
+                <div class="filter-group">
+                    <label>Keyword Search</label>
+                    <input type="text" id="keyword" placeholder="Item name...">
+                </div>
+                <div class="filter-group">
+                    <label>Category</label>
+                    <select id="category">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Payment Method</label>
+                    <select id="paymentMethod">
+                        <option value="">All Methods</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Min Total ($)</label>
+                    <input type="number" id="minTotal" placeholder="0.00" step="0.01">
+                </div>
+                <div class="filter-group">
+                    <label>Max Total ($)</label>
+                    <input type="number" id="maxTotal" placeholder="999.99" step="0.01">
+                </div>
+                <div class="filter-group">
+                    <label>Min Price ($)</label>
+                    <input type="number" id="minPrice" placeholder="0.00" step="0.01">
+                </div>
+                <div class="filter-group">
+                    <label>Max Price ($)</label>
+                    <input type="number" id="maxPrice" placeholder="999.99" step="0.01">
+                </div>
+                <div class="filter-group">
+                    <label>Min Qty</label>
+                    <input type="number" id="minQty" placeholder="1" step="1">
+                </div>
+                <div class="filter-group">
+                    <label>Max Qty</label>
+                    <input type="number" id="maxQty" placeholder="100" step="1">
+                </div>
+            </div>
+        </div>
+        
+        <div id="dataWarning" class="data-warning" style="display: none;">
+            <span>⚠</span>
+            <span id="warningText"></span>
+        </div>
+        
+        <div id="errorBanner" class="error-banner" style="display: none;"></div>
+        
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card"><div class="loading">Loading stats</div></div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="chart-card full-width">
+                <div class="chart-header">
+                    <h3>Revenue Over Time</h3>
+                    <div class="chart-controls">
+                        <button class="active" onclick="setGranularity('day', this)">Day</button>
+                        <button onclick="setGranularity('week', this)">Week</button>
+                        <button onclick="setGranularity('month', this)">Month</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Revenue by Category</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Payment Methods</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="paymentChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Sales by Hour</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="hourlyChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h3>Sales by Day of Week</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="dailyChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chart-card" style="margin-bottom: 1.5rem;">
+            <div class="chart-header">
+                <h3>Top Selling Items</h3>
+                <div class="chart-controls">
+                    <button class="active" onclick="setTopItemsSort('revenue', this)">By Revenue</button>
+                    <button onclick="setTopItemsSort('qty', this)">By Qty</button>
+                    <button onclick="setTopItemsSort('orders', this)">By Orders</button>
+                    <button onclick="setTopItemsSort('profit', this)">By Profit</button>
+                </div>
+            </div>
+            <div class="chart-container" style="height: 400px;">
+                <canvas id="topItemsChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="data-table-container">
+            <div class="table-header">
+                <h3>Data Browser</h3>
+                <div class="table-tabs">
+                    <button class="active" onclick="showTable('orders', this)">Orders</button>
+                    <button onclick="showTable('items', this)">Line Items</button>
+                    <button onclick="showTable('topItems', this)">Top Items Summary</button>
+                </div>
+            </div>
+            <div class="table-scroll">
+                <table id="dataTable">
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    
+    <script>
+        const API_BASE = '';
+        let currentGranularity = 'day';
+        let currentTopItemsSort = 'revenue';
+        let currentTableView = 'orders';
+        let currentSortColumn = null;
+        let currentSortAsc = false;
+        let guessKeystone = false;
+        
+        let cachedOrders = [];
+        let cachedItems = [];
+        let cachedTopItems = [];
+        let cachedStats = null;
+        
+        const charts = {};
+        
+        function getFilters() {
+            return {
+                start_date: document.getElementById('startDate').value || undefined,
+                end_date: document.getElementById('endDate').value || undefined,
+                keyword: document.getElementById('keyword').value || undefined,
+                category: document.getElementById('category').value || undefined,
+                payment_method: document.getElementById('paymentMethod').value || undefined,
+                min_total: document.getElementById('minTotal').value || undefined,
+                max_total: document.getElementById('maxTotal').value || undefined,
+                min_price: document.getElementById('minPrice').value || undefined,
+                max_price: document.getElementById('maxPrice').value || undefined,
+                min_qty: document.getElementById('minQty').value || undefined,
+                max_qty: document.getElementById('maxQty').value || undefined,
+                guess_keystone: guessKeystone ? 'true' : undefined,
+            };
+        }
+        
+        function toggleKeystone() {
+            guessKeystone = !guessKeystone;
+            const btn = document.getElementById('keystoneToggle');
+            btn.classList.toggle('active', guessKeystone);
+            applyFilters();
+        }
+        
+        function buildQueryString(params) {
+            const filtered = Object.entries(params).filter(([_, v]) => v !== undefined && v !== '');
+            return filtered.length ? '?' + filtered.map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&') : '';
+        }
+        
+        async function fetchJSON(endpoint, extraParams = {}) {
+            const filters = { ...getFilters(), ...extraParams };
+            const url = API_BASE + endpoint + buildQueryString(filters);
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.json();
+            } catch (err) {
+                showError(`Failed to fetch ${endpoint}: ${err.message}`);
+                return null;
+            }
+        }
+        
+        function showError(msg) {
+            const banner = document.getElementById('errorBanner');
+            banner.textContent = msg;
+            banner.style.display = 'block';
+            setTimeout(() => banner.style.display = 'none', 5000);
+        }
+        
+        function showDataWarning(msg) {
+            const warning = document.getElementById('dataWarning');
+            document.getElementById('warningText').textContent = msg;
+            warning.style.display = msg ? 'flex' : 'none';
+        }
+        
+        function formatCurrency(val) {
+            if (val === null || val === undefined) return '<span class="null-value">—</span>';
+            return '$' + Number(val).toFixed(2);
+        }
+        
+        function formatNumber(val, decimals = 0) {
+            if (val === null || val === undefined) return '<span class="null-value">—</span>';
+            return Number(val).toFixed(decimals);
+        }
+        
+        function formatPercent(val) {
+            if (val === null || val === undefined) return '<span class="null-value">—</span>';
+            return Number(val).toFixed(1) + '%';
+        }
+        
+        function formatDate(val) {
+            if (!val) return '<span class="null-value">—</span>';
+            try {
+                const d = new Date(val);
+                return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            } catch {
+                return val;
+            }
+        }
+        
+        function paymentBadge(method) {
+            if (!method) return '<span class="badge">unknown</span>';
+            const m = method.toLowerCase();
+            let cls = '';
+            if (m.includes('cash')) cls = 'cash';
+            else if (m.includes('card') || m.includes('credit')) cls = 'card';
+            else if (m.includes('debit')) cls = 'debit';
+            return `<span class="badge ${cls}">${method}</span>`;
+        }
+        
+        async function loadDropdowns() {
+            const [categories, methods] = await Promise.all([
+                fetchJSON('/api/categories'),
+                fetchJSON('/api/payment_methods')
+            ]);
+            
+            const catSelect = document.getElementById('category');
+            if (categories) {
+                categories.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    opt.textContent = c;
+                    catSelect.appendChild(opt);
+                });
+            }
+            
+            const pmSelect = document.getElementById('paymentMethod');
+            if (methods) {
+                methods.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m;
+                    opt.textContent = m;
+                    pmSelect.appendChild(opt);
+                });
+            }
+        }
+        
+        async function loadStats() {
+            const stats = await fetchJSON('/api/stats/summary');
+            if (!stats) return;
+            cachedStats = stats;
+            
+            let warningMsg = '';
+            if (stats.cost_data_backfilled > 0 || stats.cost_data_keystone > 0 || stats.cost_data_missing > 0) {
+                const parts = [];
+                if (stats.cost_data_backfilled > 0) {
+                    parts.push(`${stats.cost_data_backfilled} from inventory`);
+                }
+                if (stats.cost_data_keystone > 0) {
+                    parts.push(`${stats.cost_data_keystone} keystone guessed`);
+                }
+                if (stats.cost_data_missing > 0) {
+                    const total = stats.cost_data_available + stats.cost_data_missing;
+                    const pct = ((stats.cost_data_missing / total) * 100).toFixed(0);
+                    parts.push(`${stats.cost_data_missing} (${pct}%) still missing`);
+                }
+                warningMsg = 'Cost data: ' + parts.join(' · ');
+            }
+            showDataWarning(warningMsg);
+            
+            const grid = document.getElementById('statsGrid');
+            grid.innerHTML = `
+                <div class="stat-card">
+                    <div class="label">Total Orders</div>
+                    <div class="value">${formatNumber(stats.total_orders)}</div>
+                    <div class="subtext">${formatNumber(stats.daily_avg_orders, 1)} avg/day</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Total Revenue</div>
+                    <div class="value positive">${formatCurrency(stats.total_revenue)}</div>
+                    <div class="subtext">${formatCurrency(stats.daily_avg_revenue)} avg/day</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Avg Order Value</div>
+                    <div class="value">${formatCurrency(stats.avg_order_value)}</div>
+                    <div class="subtext">${formatNumber(stats.avg_items_per_order, 1)} items/order</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Units Sold</div>
+                    <div class="value">${formatNumber(stats.total_units)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Tax Collected</div>
+                    <div class="value">${formatCurrency(stats.total_tax)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Discounts Given</div>
+                    <div class="value ${stats.total_discount > 0 ? 'warning' : ''}">${formatCurrency(stats.total_discount)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Gross Profit</div>
+                    <div class="value ${stats.gross_profit > 0 ? 'positive' : stats.gross_profit === null ? '' : 'negative'}">
+                        ${stats.gross_profit !== null ? formatCurrency(stats.gross_profit) : '<span class="null-value">incomplete data</span>'}
+                    </div>
+                    ${stats.gross_margin_pct !== null ? `<div class="subtext">${formatPercent(stats.gross_margin_pct)} margin</div>` : ''}
+                </div>
+                <div class="stat-card">
+                    <div class="label">Total Cost</div>
+                    <div class="value">${stats.total_cost !== null ? formatCurrency(stats.total_cost) : '<span class="null-value">incomplete</span>'}</div>
+                </div>
+            `;
+        }
+        
+        async function loadRevenueChart() {
+            const data = await fetchJSON('/api/stats/timeseries', { granularity: currentGranularity });
+            if (!data) return;
+            
+            if (charts.revenue) charts.revenue.destroy();
+            
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            charts.revenue = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.period),
+                    datasets: [{
+                        label: 'Revenue',
+                        data: data.map(d => d.revenue),
+                        borderColor: '#000',
+                        backgroundColor: 'rgba(0, 0, 0, 0.05)',
+                        fill: true,
+                        tension: 0.1
+                    }, {
+                        label: 'Orders',
+                        data: data.map(d => d.orders),
+                        borderColor: '#666',
+                        backgroundColor: 'transparent',
+                        yAxisID: 'y1',
+                        tension: 0.1,
+                        borderDash: [4, 4]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: { labels: { color: '#000' } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#333' }, grid: { color: '#ddd' } },
+                        y: { 
+                            ticks: { color: '#333', callback: v => '$' + v }, 
+                            grid: { color: '#ddd' } 
+                        },
+                        y1: {
+                            position: 'right',
+                            ticks: { color: '#333' },
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+        
+        async function loadCategoryChart() {
+            if (!cachedStats) return;
+            const breakdown = cachedStats.category_breakdown;
+            if (!breakdown) return;
+            
+            const sorted = Object.entries(breakdown)
+                .sort((a, b) => b[1].revenue - a[1].revenue)
+                .slice(0, 10);
+            
+            if (charts.category) charts.category.destroy();
+            
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            charts.category = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: sorted.map(([k]) => k || 'Uncategorized'),
+                    datasets: [{
+                        data: sorted.map(([_, v]) => v.revenue),
+                        backgroundColor: [
+                            '#333', '#666', '#999', '#bbb', '#ddd',
+                            '#000', '#444', '#777', '#aaa', '#ccc'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            position: 'right',
+                            labels: { color: '#000', boxWidth: 12, font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+        
+        async function loadPaymentChart() {
+            if (!cachedStats) return;
+            const breakdown = cachedStats.payment_breakdown;
+            if (!breakdown) return;
+            
+            const sorted = Object.entries(breakdown).sort((a, b) => b[1].total - a[1].total);
+            
+            if (charts.payment) charts.payment.destroy();
+            
+            const ctx = document.getElementById('paymentChart').getContext('2d');
+            charts.payment = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(([k]) => k || 'Unknown'),
+                    datasets: [{
+                        label: 'Revenue',
+                        data: sorted.map(([_, v]) => v.total),
+                        backgroundColor: '#000'
+                    }, {
+                        label: 'Orders',
+                        data: sorted.map(([_, v]) => v.count),
+                        backgroundColor: '#999',
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#000' } }
+                    },
+                    scales: {
+                        x: { ticks: { color: '#333' }, grid: { color: '#ddd' } },
+                        y: { ticks: { color: '#333' }, grid: { color: '#ddd' } },
+                        y1: { position: 'right', ticks: { color: '#333' }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+        
+        async function loadHourlyChart() {
+            const data = await fetchJSON('/api/stats/hourly');
+            if (!data) return;
+            
+            if (charts.hourly) charts.hourly.destroy();
+            
+            const ctx = document.getElementById('hourlyChart').getContext('2d');
+            charts.hourly = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.hourly.map(d => d.label),
+                    datasets: [{
+                        label: 'Revenue',
+                        data: data.hourly.map(d => d.revenue),
+                        backgroundColor: '#000'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#333', maxRotation: 45 }, grid: { color: '#ddd' } },
+                        y: { ticks: { color: '#333' }, grid: { color: '#ddd' } }
+                    }
+                }
+            });
+            
+            if (charts.daily) charts.daily.destroy();
+            
+            const ctx2 = document.getElementById('dailyChart').getContext('2d');
+            charts.daily = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: data.daily.map(d => d.day.slice(0, 3)),
+                    datasets: [{
+                        label: 'Revenue',
+                        data: data.daily.map(d => d.revenue),
+                        backgroundColor: '#666'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#333' }, grid: { color: '#ddd' } },
+                        y: { ticks: { color: '#333' }, grid: { color: '#ddd' } }
+                    }
+                }
+            });
+        }
+        
+        async function loadTopItemsChart() {
+            const data = await fetchJSON('/api/stats/top_items', { sort_by: currentTopItemsSort, limit: 15 });
+            if (!data) return;
+            cachedTopItems = data;
+            
+            if (charts.topItems) charts.topItems.destroy();
+            
+            const valueKey = currentTopItemsSort === 'qty' ? 'total_qty' : 
+                             currentTopItemsSort === 'orders' ? 'order_count' :
+                             currentTopItemsSort === 'profit' ? 'profit' : 'total_revenue';
+            
+            const ctx = document.getElementById('topItemsChart').getContext('2d');
+            charts.topItems = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.name.length > 25 ? d.name.slice(0, 25) + '...' : d.name),
+                    datasets: [{
+                        label: currentTopItemsSort.charAt(0).toUpperCase() + currentTopItemsSort.slice(1),
+                        data: data.map(d => d[valueKey] || 0),
+                        backgroundColor: '#000'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#333' }, grid: { color: '#ddd' } },
+                        y: { ticks: { color: '#333', font: { size: 10 } }, grid: { color: '#ddd' } }
+                    }
+                }
+            });
+            
+            if (currentTableView === 'topItems') renderTopItemsTable();
+        }
+        
+        async function loadOrders() {
+            const data = await fetchJSON('/api/orders');
+            if (!data) return;
+            cachedOrders = data;
+            if (currentTableView === 'orders') renderOrdersTable();
+        }
+        
+        async function loadItems() {
+            const data = await fetchJSON('/api/order_items');
+            if (!data) return;
+            cachedItems = data;
+            if (currentTableView === 'items') renderItemsTable();
+        }
+        
+        function renderOrdersTable() {
+            const head = document.getElementById('tableHead');
+            const body = document.getElementById('tableBody');
+            
+            head.innerHTML = `
+                <tr>
+                    <th onclick="sortTable('order_id')">Order ID</th>
+                    <th onclick="sortTable('timestamp')">Timestamp</th>
+                    <th onclick="sortTable('items_count')">Items</th>
+                    <th onclick="sortTable('total_qty')">Qty</th>
+                    <th onclick="sortTable('total')">Subtotal</th>
+                    <th onclick="sortTable('tax')">Tax</th>
+                    <th onclick="sortTable('discount')">Discount</th>
+                    <th onclick="sortTable('total_with_tax')">Total</th>
+                    <th onclick="sortTable('payment_method')">Payment</th>
+                    <th onclick="sortTable('amount_tendered')">Tendered</th>
+                    <th onclick="sortTable('change_given')">Change</th>
+                </tr>
+            `;
+            
+            const sorted = sortData([...cachedOrders]);
+            
+            if (sorted.length === 0) {
+                body.innerHTML = '<tr><td colspan="11" class="empty-state">No orders found</td></tr>';
+                return;
+            }
+            
+            body.innerHTML = sorted.map(o => `
+                <tr>
+                    <td class="truncate">${o.order_id || '<span class="null-value">—</span>'}</td>
+                    <td>${formatDate(o.timestamp)}</td>
+                    <td class="numeric">${o.items_count}</td>
+                    <td class="numeric">${formatNumber(o.total_qty, 1)}</td>
+                    <td class="numeric">${formatCurrency(o.total)}</td>
+                    <td class="numeric">${formatCurrency(o.tax)}</td>
+                    <td class="numeric ${o.discount > 0 ? 'negative' : ''}">${formatCurrency(o.discount)}</td>
+                    <td class="numeric positive">${formatCurrency(o.total_with_tax)}</td>
+                    <td>${paymentBadge(o.payment_method)}</td>
+                    <td class="numeric">${formatCurrency(o.amount_tendered)}</td>
+                    <td class="numeric">${formatCurrency(o.change_given)}</td>
+                </tr>
+            `).join('');
+            
+            updateSortIndicators();
+        }
+        
+        function renderItemsTable() {
+            const head = document.getElementById('tableHead');
+            const body = document.getElementById('tableBody');
+            
+            head.innerHTML = `
+                <tr>
+                    <th onclick="sortTable('name')">Name</th>
+                    <th onclick="sortTable('category')">Category</th>
+                    <th onclick="sortTable('qty')">Qty</th>
+                    <th onclick="sortTable('unit_price')">Price</th>
+                    <th onclick="sortTable('line_subtotal')">Subtotal</th>
+                    <th onclick="sortTable('unit_cost')">Cost</th>
+                    <th onclick="sortTable('line_cost')">Line Cost</th>
+                    <th onclick="sortTable('margin')">Margin</th>
+                    <th onclick="sortTable('margin_pct')">Margin %</th>
+                    <th onclick="sortTable('order_timestamp')">Date</th>
+                    <th onclick="sortTable('payment_method')">Payment</th>
+                </tr>
+            `;
+            
+            const sorted = sortData([...cachedItems]);
+            
+            if (sorted.length === 0) {
+                body.innerHTML = '<tr><td colspan="11" class="empty-state">No items found</td></tr>';
+                return;
+            }
+            
+            body.innerHTML = sorted.map(i => {
+                let costCell;
+                if (i.unit_cost !== null) {
+                    let indicator = '';
+                    let title = 'From order';
+                    if (i.unit_cost_source === 'inventory') {
+                        indicator = ' <span style="color:#009;font-size:10px" title="From inventory">[I]</span>';
+                        title = 'Backfilled from inventory';
+                    } else if (i.unit_cost_source === 'keystone') {
+                        indicator = ' <span style="color:#900;font-size:10px" title="Keystone guess (50%)">[K]</span>';
+                        title = 'Keystone guess (50% of price)';
+                    }
+                    costCell = `<span title="${title}">${formatCurrency(i.unit_cost)}${indicator}</span>`;
+                } else {
+                    costCell = '<span class="null-value">—</span>';
+                }
+                return `
+                <tr>
+                    <td class="truncate">${i.name || '<span class="null-value">Unknown</span>'}</td>
+                    <td>${i.category || '<span class="null-value">—</span>'}</td>
+                    <td class="numeric">${formatNumber(i.qty, 1)}</td>
+                    <td class="numeric">${formatCurrency(i.unit_price)}</td>
+                    <td class="numeric">${formatCurrency(i.line_subtotal)}</td>
+                    <td class="numeric">${costCell}</td>
+                    <td class="numeric">${i.line_cost !== null ? formatCurrency(i.line_cost) : '<span class="null-value">—</span>'}</td>
+                    <td class="numeric ${i.margin > 0 ? 'positive' : i.margin < 0 ? 'negative' : ''}">${i.margin !== null ? formatCurrency(i.margin) : '<span class="null-value">—</span>'}</td>
+                    <td class="numeric ${i.margin_pct > 20 ? 'positive' : i.margin_pct < 10 ? 'negative' : ''}">${i.margin_pct !== null ? formatPercent(i.margin_pct) : '<span class="null-value">—</span>'}</td>
+                    <td>${formatDate(i.order_timestamp)}</td>
+                    <td>${paymentBadge(i.payment_method)}</td>
+                </tr>
+            `}).join('');
+            
+            updateSortIndicators();
+        }
+        
+        function renderTopItemsTable() {
+            const head = document.getElementById('tableHead');
+            const body = document.getElementById('tableBody');
+            
+            head.innerHTML = `
+                <tr>
+                    <th onclick="sortTable('name')">Item Name</th>
+                    <th onclick="sortTable('category')">Category</th>
+                    <th onclick="sortTable('total_qty')">Total Qty</th>
+                    <th onclick="sortTable('total_revenue')">Total Revenue</th>
+                    <th onclick="sortTable('total_cost')">Total Cost</th>
+                    <th onclick="sortTable('profit')">Profit</th>
+                    <th onclick="sortTable('margin_pct')">Margin %</th>
+                    <th onclick="sortTable('avg_price')">Avg Price</th>
+                    <th onclick="sortTable('order_count')">Orders</th>
+                </tr>
+            `;
+            
+            const sorted = sortData([...cachedTopItems]);
+            
+            if (sorted.length === 0) {
+                body.innerHTML = '<tr><td colspan="9" class="empty-state">No data</td></tr>';
+                return;
+            }
+            
+            body.innerHTML = sorted.map(i => `
+                <tr>
+                    <td class="truncate">${i.name}</td>
+                    <td>${i.category || '<span class="null-value">—</span>'}</td>
+                    <td class="numeric">${formatNumber(i.total_qty, 1)}</td>
+                    <td class="numeric positive">${formatCurrency(i.total_revenue)}</td>
+                    <td class="numeric">${i.total_cost !== null ? formatCurrency(i.total_cost) : '<span class="null-value">—</span>'}</td>
+                    <td class="numeric ${i.profit > 0 ? 'positive' : i.profit < 0 ? 'negative' : ''}">${i.profit !== null ? formatCurrency(i.profit) : '<span class="null-value">—</span>'}</td>
+                    <td class="numeric ${i.margin_pct > 30 ? 'positive' : i.margin_pct < 15 ? 'negative' : ''}">${i.margin_pct !== null ? formatPercent(i.margin_pct) : '<span class="null-value">—</span>'}</td>
+                    <td class="numeric">${formatCurrency(i.avg_price)}</td>
+                    <td class="numeric">${i.order_count}</td>
+                </tr>
+            `).join('');
+            
+            updateSortIndicators();
+        }
+        
+        function sortData(data) {
+            if (!currentSortColumn) return data;
+            return data.sort((a, b) => {
+                let aVal = a[currentSortColumn];
+                let bVal = b[currentSortColumn];
+                if (aVal === null || aVal === undefined) aVal = currentSortAsc ? Infinity : -Infinity;
+                if (bVal === null || bVal === undefined) bVal = currentSortAsc ? Infinity : -Infinity;
+                if (typeof aVal === 'string') {
+                    return currentSortAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                }
+                return currentSortAsc ? aVal - bVal : bVal - aVal;
+            });
+        }
+        
+        function sortTable(column) {
+            if (currentSortColumn === column) {
+                currentSortAsc = !currentSortAsc;
+            } else {
+                currentSortColumn = column;
+                currentSortAsc = false;
+            }
+            if (currentTableView === 'orders') renderOrdersTable();
+            else if (currentTableView === 'items') renderItemsTable();
+            else renderTopItemsTable();
+        }
+        
+        function updateSortIndicators() {
+            document.querySelectorAll('th').forEach(th => {
+                th.classList.remove('sorted', 'asc');
+            });
+            if (currentSortColumn) {
+                const th = document.querySelector(`th[onclick="sortTable('${currentSortColumn}')"]`);
+                if (th) {
+                    th.classList.add('sorted');
+                    if (currentSortAsc) th.classList.add('asc');
+                }
+            }
+        }
+        
+        function showTable(view, btn) {
+            currentTableView = view;
+            currentSortColumn = null;
+            document.querySelectorAll('.table-tabs button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if (view === 'orders') renderOrdersTable();
+            else if (view === 'items') renderItemsTable();
+            else renderTopItemsTable();
+        }
+        
+        function setGranularity(g, btn) {
+            currentGranularity = g;
+            document.querySelectorAll('.chart-card:first-child .chart-controls button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            loadRevenueChart();
+        }
+        
+        function setTopItemsSort(sort, btn) {
+            currentTopItemsSort = sort;
+            document.querySelectorAll('.chart-card:nth-last-child(2) .chart-controls button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            loadTopItemsChart();
+        }
+        
+        async function applyFilters() {
+            await Promise.all([
+                loadStats(),
+                loadRevenueChart(),
+                loadHourlyChart(),
+                loadTopItemsChart(),
+                loadOrders(),
+                loadItems()
+            ]);
+            loadCategoryChart();
+            loadPaymentChart();
+        }
+        
+        function resetFilters() {
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            document.getElementById('keyword').value = '';
+            document.getElementById('category').value = '';
+            document.getElementById('paymentMethod').value = '';
+            document.getElementById('minTotal').value = '';
+            document.getElementById('maxTotal').value = '';
+            document.getElementById('minPrice').value = '';
+            document.getElementById('maxPrice').value = '';
+            document.getElementById('minQty').value = '';
+            document.getElementById('maxQty').value = '';
+            guessKeystone = false;
+            document.getElementById('keystoneToggle').classList.remove('active');
+            applyFilters();
+        }
+        
+        function exportData(type) {
+            const filters = getFilters();
+            const qs = buildQueryString({ ...filters, type });
+            window.open(API_BASE + '/api/export/csv' + qs, '_blank');
+        }
+        
+        // Init
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadDropdowns();
+            applyFilters();
+        });
+        
+        // Enter key triggers filter
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+                applyFilters();
+            }
+        });
+    </script>
+</body>
+</html>
