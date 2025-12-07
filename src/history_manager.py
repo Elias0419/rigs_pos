@@ -633,7 +633,19 @@ class OrderDetailsPopup(Popup):
             change_given,
         ) = order
 
-        items_dict = {str(i): it for i, it in enumerate(self.order_items or [])}
+        items_dict = {}
+        for i, raw_item in enumerate(self.order_items or []):
+            item = dict(raw_item)
+
+            quantity = item.get("quantity")
+            if quantity in (None, ""):
+                quantity = item.get("qty", 0)
+            item["quantity"] = quantity or 0
+
+            if "total_price" not in item:
+                item["total_price"] = item.get("line_subtotal") or item.get("subtotal", 0)
+
+            items_dict[str(i)] = item
         return {
             "order_id": order_id,
             "items": items_dict,
