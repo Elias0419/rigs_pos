@@ -1,6 +1,5 @@
 import sqlite3
 from datetime import datetime
-import json
 import uuid
 import os
 import logging
@@ -488,7 +487,6 @@ class DatabaseManager:
     def add_order_history(
         self,
         order_id,
-        items,
         total,
         tax,
         discount,
@@ -506,10 +504,9 @@ class DatabaseManager:
             cursor = conn.cursor()
 
             cursor.execute(
-                "INSERT INTO order_history (order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO order_history (order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given) VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     order_id,
-                    items,
                     total,
                     tax,
                     discount,
@@ -706,40 +703,9 @@ class DatabaseManager:
 
         self._insert_order_items_from_list(order_id, items_list, order_timestamp)
 
-    def modify_order(self, order_id, **kwargs):
-        original_items_obj = None
-        if "items" in kwargs and isinstance(kwargs["items"], (list, dict)):
-            original_items_obj = kwargs["items"]
-
-        if self._save_current_order_state(order_id, "modified"):
-            conn = self._get_connection()
-            try:
-                cursor = conn.cursor()
-
-                if "items" in kwargs and isinstance(kwargs["items"], (list, dict)):
-
-                    kwargs["items"] = json.dumps(kwargs["items"], ensure_ascii=False)
-
-                set_clause = ", ".join([f"{key} = ?" for key in kwargs.keys()])
-                values = list(kwargs.values())
-                values.append(order_id)
-
-                cursor.execute(
-                    f"UPDATE order_history SET {set_clause} WHERE order_id = ?", values
-                )
-                conn.commit()
-
-                if original_items_obj is not None:
-                    self._rewrite_order_items_for_order(order_id, original_items_obj)
-
-            except sqlite3.Error as e:
-                logger.warn(f"[DatabaseManager]:\n{e}")
-                return False
-            finally:
-                conn.close()
-            return True
-        else:
-            return False
+    def update_order_items(self, order_id, items_obj):
+        self._rewrite_order_items_for_order(order_id, items_obj)
+        return True
 
     def get_order_by_id(self, order_id):
 
@@ -776,7 +742,25 @@ class DatabaseManager:
         conn = self._get_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT order_id, items, total, tax, discount, total_with_tax, timestamp, payment_method, amount_tendered, change_given FROM order_history"
+            """
+            SELECT
+                oh.order_id,
+                COALESCE(item_summary.item_names, '') AS item_names,
+                oh.total,
+                oh.tax,
+                oh.discount,
+                oh.total_with_tax,
+                oh.timestamp,
+                oh.payment_method,
+                oh.amount_tendered,
+                oh.change_given
+            FROM order_history oh
+            LEFT JOIN (
+                SELECT order_id, GROUP_CONCAT(name, ', ') AS item_names
+                FROM order_items
+                GROUP BY order_id
+            ) AS item_summary ON oh.order_id = item_summary.order_id
+            """
         )
         order_history = cursor.fetchall()
         conn.close()
@@ -952,7 +936,6 @@ class DatabaseManager:
 
         success = self.add_order_history(
             order_details["order_id"],
-            json.dumps(items_for_db),
             order_details["total"],
             tax,
             order_details["discount"],

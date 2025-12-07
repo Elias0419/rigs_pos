@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-import csv, json
+import csv
 
 from kivy.app import App
 from kivy.clock import Clock
@@ -369,14 +369,8 @@ class HistoryView(BoxLayout):
         term = term.lower()
         results = []
         for order in self.order_history:
-            try:
-                items = json.loads(order[1])
-            except json.JSONDecodeError as e:
-                logger.warning(f"[OrderManager]: search_order_by_item_name\n{e}")
-                continue
-            if isinstance(items, dict):
-                items = [items]
-            if any(term in (it.get("name", "") or "").lower() for it in items):
+            item_names = (order[1] or "").lower()
+            if term in item_names:
                 results.append(order)
         self.update_rv_data(results)
         self.update_totals()
@@ -441,14 +435,7 @@ class HistoryView(BoxLayout):
                 logger.warning(f"[HistoryManager] show_order_details\n{e}")
 
     def format_items(self, items_str):
-        try:
-            parsed = json.loads(items_str)
-            items = [parsed] if isinstance(parsed, dict) else parsed
-            names = ", ".join(it.get("name", "Unknown") for it in items)
-            return self.truncate_text(names)
-        except json.JSONDecodeError as e:
-            logger.warning(f"JSON parsing error in format_items: {e}")
-            return self.truncate_text("Error parsing items")
+        return self.truncate_text(items_str or "")
 
     def format_money(self, v):
         try:
@@ -563,14 +550,13 @@ class OrderDetailsPopup(Popup):
         self.db_manager = DatabaseManager("db/inventory.db", self)
         self.history_view = HistoryView()
         self.history_popup = HistoryPopup()
+        self.order_items = self.db_manager.get_order_items(order[0])
 
         content_layout = MDBoxLayout(
             orientation="vertical", spacing=10, padding=10
         )
 
         details = self.format_order_details(order, self.history_view)
-        order_items = self.db_manager.get_order_items(order[0])
-
         header = MDBoxLayout(orientation="vertical", size_hint_y=None, height=dp(60))
         header.add_widget(
             MarkupLabel(
@@ -584,7 +570,7 @@ class OrderDetailsPopup(Popup):
             )
         )
 
-        items_section = self.build_items_section(order_items, order[1])
+        items_section = self.build_items_section(self.order_items)
         summary = self.build_summary_section(details)
 
         # footer buttons
@@ -636,7 +622,7 @@ class OrderDetailsPopup(Popup):
     def convert_order_to_dict(self, order):
         (
             order_id,
-            items_json,
+            _item_summary,
             total,
             tax,
             discount,
@@ -646,17 +632,8 @@ class OrderDetailsPopup(Popup):
             amount_tendered,
             change_given,
         ) = order
-        try:
-            items = json.loads(items_json)
-        except json.JSONDecodeError as e:
-            logger.warning(f"[OrderDetailsPopup] convert_order_to_dict \n{e}")
-            items = []
 
-        items_dict = (
-            {str(i): it for i, it in enumerate(items)}
-            if isinstance(items, list)
-            else items
-        )
+        items_dict = {str(i): it for i, it in enumerate(self.order_items or [])}
         return {
             "order_id": order_id,
             "items": items_dict,
@@ -670,8 +647,8 @@ class OrderDetailsPopup(Popup):
             "change_given": change_given,
         }
 
-    def build_items_section(self, order_items, fallback_items_json):
-        items = order_items or self._parse_items_fallback(fallback_items_json)
+    def build_items_section(self, order_items):
+        items = order_items
         title = MarkupLabel(text="[b]Items[/b]", size_hint_y=None, height=dp(30))
 
         if not items:
@@ -776,24 +753,9 @@ class OrderDetailsPopup(Popup):
         suffix = f" ({per_pack} per pack)" if per_pack else ""
         return f"{self._format_bool(is_papers)}{suffix}"
 
-    def _parse_items_fallback(self, items_json):
-        try:
-            parsed = json.loads(items_json)
-            if isinstance(parsed, dict):
-                parsed = [parsed]
-            return parsed
-        except Exception as e:
-            logger.warning(f"[OrderDetailsPopup] failed to parse items fallback\n{e}")
-            return []
-
     def open_modify_order_popup(self, order_id):
         # fetch and parse items
-        order_details = self.db_manager.get_order_by_id(order_id)
-        items_json = order_details[1]
-        try:
-            items = json.loads(items_json)
-        except json.JSONDecodeError:
-            items = []
+        items = self.db_manager.get_order_items(order_id)
 
         modify_order_container = MDBoxLayout(
             orientation="vertical", size_hint=(1, 1), padding=5, spacing=5
@@ -809,13 +771,14 @@ class OrderDetailsPopup(Popup):
             modify_order_layout.add_widget(ti)
 
         def on_confirm(_instance):
-            # apply edits
+            updated_items = []
             for item, name_input in zip(items, item_name_inputs):
-                item["name"] = name_input.text
-            updated_items_json = json.dumps(items)
+                updated_item = dict(item)
+                updated_item["name"] = name_input.text
+                updated_items.append(updated_item)
 
             # persist
-            self.db_manager.modify_order(order_id, items=updated_items_json)
+            self.db_manager.update_order_items(order_id, updated_items)
 
             # close popups and refresh history
             try:
