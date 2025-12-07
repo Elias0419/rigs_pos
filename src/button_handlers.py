@@ -131,17 +131,21 @@ class ButtonHandler:
         except Exception as e: # FIXME
             logger.warn(f"ButtonHandler.open_cameras broad execption catch FIXME\n{e}")
 
-    def on_admin_button_press(self, instance):
+    def on_admin_button_press(self, entry):
         admin_actions = {
             "Reporting": self.show_reporting,
             "Time Sheets": self.show_time_sheets,
             "Users": self.show_add_user,
+            "Analytics": self.open_analytics_dashboard,
         }
         for action_text, action in admin_actions.items():
-            if action_text in instance.text:
+            if action_text == entry:
                 action()
                 break
         self.app.popup_manager.admin_popup.dismiss()
+
+    def open_analytics_dashboard(self):
+        self.app.utilities.open_analytics_dashboard()
 
     def handle_numeric_input(self, input_field, instance_text):
         current_input = (

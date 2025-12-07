@@ -335,6 +335,7 @@
 <body>
     <header>
         <h1>RIGS ORDER ANALYTICS</h1>
+        <button onclick="shutdownServer()" style="position:absolute;right:12px;top:8px;">Shutdown Server</button>
     </header>
     
     <main>
@@ -1179,6 +1180,15 @@
             const qs = buildQueryString({ ...filters, type });
             window.open(API_BASE + '/api/export/csv' + qs, '_blank');
         }
+
+        function shutdownServer() {
+            navigator.sendBeacon('/shutdown', '');
+            window.close();
+        }
+        
+        window.addEventListener('beforeunload', () => {
+            navigator.sendBeacon('/shutdown', '');
+        });
         
         // Init
         document.addEventListener('DOMContentLoaded', async () => {

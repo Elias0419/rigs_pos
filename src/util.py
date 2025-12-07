@@ -302,6 +302,12 @@ class Utilities:
             "_total_paper_tax_per_pack": total_tax,
         }
 
+    @staticmethod
+    def open_analytics_dashboard():
+        subprocess.Popen(["python3", "analytics/analytics_server.py"])
+        time.sleep(0.1)
+        subprocess.Popen(["xdg-open", "http://127.0.0.1:5000"])
+
     def get_open_session_for_user_today(self, expected_name):
 
         found_name, session_path = self._find_active_session_today()

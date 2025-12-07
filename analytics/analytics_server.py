@@ -795,5 +795,9 @@ def export_csv():
         headers={"Content-Disposition": f"attachment; filename={data_type}_export.csv"}
     )
 
+@app.route("/shutdown", methods=["POST"])
+def shutdown():
+    os._exit(0)
+
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
