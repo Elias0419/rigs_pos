@@ -1818,6 +1818,8 @@ class Utilities:
         )
         self.update_inventory_cache()
         self.app.inventory_manager.refresh_inventory()
+        if getattr(self.app.label_manager, "dual_pane_mode", False):
+            self.app.inventory_manager.refresh_label_inventory_for_dual_pane_mode()
         popup.dismiss()
 
     def inventory_item_confirm_and_close(
