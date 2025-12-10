@@ -4005,7 +4005,6 @@ class PopupManager:
 
     def handle_duplicate_barcodes(self, barcode):
         try:
-            logger.warn("in popups", barcode)
             items = self.app.db_manager.handle_duplicate_barcodes(barcode)
 
             if not isinstance(items, list):
