@@ -1118,7 +1118,7 @@ class LabelPrinter:
         line_gap = 4
 
         name_font = self._load_font(34)
-        price_font = self._load_font(38)
+        price_font = self._load_font(58)
         body_font = self._load_font(26)
 
         barcode_img = self._make_barcode_image(barcode_data, module_height=20.0)
