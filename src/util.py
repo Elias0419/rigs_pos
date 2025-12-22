@@ -1809,8 +1809,6 @@ class Utilities:
             except ValueError:
                 self.app.popup_manager.show_missing_papers_count_warning()
                 return
-        if not cost_input:
-            pass
         self.app.inventory_row.update_item_in_database(
             barcode_input,
             name_input,
