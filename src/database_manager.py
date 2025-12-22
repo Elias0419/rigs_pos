@@ -252,6 +252,11 @@ class DatabaseManager:
     ):
         item_id = uuid.uuid4()
 
+        if not cost:
+            import inspect
+            stack = inspect.stack()
+            self.app.popup_manager.DEBUG_empty_cost(stack)
+
         # replace ean barcodes with upc a
         if len(str(barcode)) == 13:
             ean_barcode = barcode

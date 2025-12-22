@@ -4068,7 +4068,17 @@ class PopupManager:
         layout.add_widget(button)
         popup.open()
 
-
+    def DEBUG_empty_cost(self, stack):
+        layout = BoxLayout(orientation="vertical")
+        for i in range(len(stack)):
+            caller_frame = stack[i]
+            file_name = caller_frame.filename
+            line_number = caller_frame.lineno
+            function_name = caller_frame.function
+            label = MDLabel(text=f"Called from {file_name}, line {line_number}, in {function_name}")
+            layout.add_widget(label)
+        popup = Popup(title="DEBUG", content=layout, size_hint=(0.8, 0.8))
+        popup.open()
 
 class MarkupButton(Button):
     def __init__(self, **kwargs):
