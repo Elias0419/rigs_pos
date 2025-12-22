@@ -256,6 +256,7 @@ class DatabaseManager:
             import inspect
             stack = inspect.stack()
             self.app.popup_manager.DEBUG_empty_cost(stack)
+            return False
 
         # replace ean barcodes with upc a
         if len(str(barcode)) == 13:
