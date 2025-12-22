@@ -1158,7 +1158,7 @@ class Utilities:
         btn_pay = MDFlatButton(
             text="[b][size=40]PAY[/b][/size]",
             on_press=self.app.button_handler.on_button_press,
-            # on_press=self.test,
+            #on_press=lambda x: self.app.db_manager.add_item(1234567890123, "tacos", 9.99),
             padding=(8, 8),
             font_name=self.font,
             font_style="H6",
@@ -1891,6 +1891,11 @@ class Utilities:
 
             if not self.app.db_manager.barcode_exists(new_barcode):
                 return new_barcode
+
+    def replace_ean(self):
+        upc_barcode = self.generate_unique_barcode()
+        self.app.popup_manager.warn_about_ean_replacement()
+        return upc_barcode
 
     def apply_categories(self):
         categories_str = ", ".join(self.app.popup_manager.selected_categories)

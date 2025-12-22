@@ -251,7 +251,12 @@ class DatabaseManager:
         papers_per_pack=None,
     ):
         item_id = uuid.uuid4()
-        self.create_items_table()
+
+        # replace ean barcodes with upc a
+        if len(str(barcode)) == 13:
+            ean_barcode = barcode
+            barcode = self.app.utilities.replace_ean()
+
         conn = self._get_connection()
         try:
             taxable = bool(taxable)
@@ -967,7 +972,7 @@ class DatabaseManager:
         is_rolling_papers=False,
         papers_per_pack=None,
     ):
-        logger.warn("add to db")
+
         if barcode and name and price:
             try:
                 self.add_item(

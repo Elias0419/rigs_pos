@@ -4053,6 +4053,22 @@ class PopupManager:
             self.app.utilities.update_display()
             self.app.utilities.update_financial_summary()
 
+    def warn_about_ean_replacement(self):
+        layout = BoxLayout()
+        label = MDLabel(text=f"EAN (European) Barcode replaced with standard UPC barcode. Make sure you cover the manufacturor's barcode with our label to prevent confusion when scanning.")
+        layout.add_widget(label)
+
+        popup = Popup(
+            title="EAN replaced",
+            size_hint=(0.2, 0.2),
+            content=layout
+
+                      )
+        button = MDRaisedButton(text="OK", on_release=lambda x: popup.dismiss())
+        layout.add_widget(button)
+        popup.open()
+
+
 
 class MarkupButton(Button):
     def __init__(self, **kwargs):
