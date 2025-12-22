@@ -467,10 +467,12 @@ class InventoryManagementView(BoxLayout):
             self.app.popup_manager.view_container.add_widget(
                 self.app.popup_manager.label_printing_view
             )
-        except Exception as e:
-            print(
-                f"[Inventory Manager] refresh_label_inventory_for_dual_pane_mode\n{e}"
+        except AttributeError as e:
+            logger.info(
+                f"[Inventory Manager] refresh_label_inventory_for_dual_pane_mode expected error when not in dual pane mode\n{e}"
             )
+        except Exception as e:
+            logger.error(f"[Inventory Manager] refresh_label_inventory_for_dual_pane_mode unexpected error\n{e}")
 
     def reset_inventory_context(self):
         self.app.current_context = "inventory"

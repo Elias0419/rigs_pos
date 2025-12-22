@@ -3773,6 +3773,17 @@ class PopupManager:
         )
         self.missing_papers_warning.open()
 
+    def catch_inventory_item_empty_cost(self):
+        layout = BoxLayout()
+        message = "Cost can't be empty. If you don't have an actual cost please enter it as 50% of the intended sale price. eg, if you're gonna sell it for 40, put 20 for the cost"
+        label = MDLabel(text=message)
+        layout.add_widget(label)
+        popup = Popup(content=layout, size_hint=(0.2, 0.2))
+        button = MDRaisedButton(text="OK", on_release=lambda x: popup.dismiss())
+        layout.add_widget(button)
+        popup.open()
+
+
     def catch_label_printing_errors(self, e):
         if hasattr(self, "label_errors_popup") and self.label_errors_popup._is_open:
             self.label_errors_popup.dismiss()

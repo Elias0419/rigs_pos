@@ -1796,6 +1796,9 @@ class Utilities:
         papers_per_pack,
         popup,
     ):
+        if not cost_input.text:
+            self.app.popup_manager.catch_inventory_item_empty_cost()
+            return
         papers_text = (papers_per_pack or "").strip()
         if bool(is_rolling_papers):
             if not papers_text:
@@ -1806,6 +1809,8 @@ class Utilities:
             except ValueError:
                 self.app.popup_manager.show_missing_papers_count_warning()
                 return
+        if not cost_input:
+            pass
         self.app.inventory_row.update_item_in_database(
             barcode_input,
             name_input,
@@ -1835,6 +1840,9 @@ class Utilities:
         is_rolling_papers_checkbox=None,
         papers_per_pack_input=None,
     ):
+        if not cost_input.text:
+            self.app.popup_manager.catch_inventory_item_empty_cost()
+            return
         try:
             int(barcode_input.text)
         except ValueError as e:
