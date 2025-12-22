@@ -969,6 +969,7 @@ class DatabaseManager:
     ):
         logger.warn("add to db")
         if barcode and name and price:
+            barcode, _ = self.app.utilities.ensure_upc_barcode(barcode)
             try:
                 self.add_item(
                     barcode,

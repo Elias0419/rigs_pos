@@ -416,6 +416,11 @@ class InventoryManagementView(BoxLayout):
         is_rolling_papers=False,
         papers_per_pack=None,
     ):
+        barcode_text, replaced_ean = self.app.utilities.ensure_upc_barcode(
+            barcode_input.text
+        )
+        if replaced_ean:
+            barcode_input.text = barcode_text
         try:
             int(barcode_input.text)
         except ValueError:
