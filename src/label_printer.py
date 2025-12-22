@@ -955,42 +955,12 @@ class LabelPrinter:
                 continue
         return ImageFont.load_default()
 
-    def _calculate_upc_checksum(self, upc_without_check: str) -> int:
-        oddsum = sum(int(d) for d in upc_without_check[::2])
-        evensum = sum(int(d) for d in upc_without_check[1::2])
-        check = (evensum + oddsum * 3) % 10
-        return 0 if check == 0 else 10 - check
-
-    def _normalize_upc(self, code: str) -> str:
-        digits = re.sub(r"\\D", "", str(code or ""))
-        if not digits:
-            raise ValueError("Empty barcode provided")
-
-        from_upc_e = False
-        if len(digits) == 8:
-            digits = self.handle_upc_e(digits)
-            from_upc_e = True
-
-        if len(digits) == 11:
-            return digits + str(self._calculate_upc_checksum(digits))
-
-        if len(digits) == 12:
-            body, check_digit = digits[:-1], int(digits[-1])
-            expected = self._calculate_upc_checksum(body)
-            if check_digit != expected:
-                if from_upc_e:
-                    return body + str(expected)
-                raise ValueError(
-                    f"Invalid UPC-A check digit for {code}: expected {expected}, got {check_digit}"
-                )
-            return digits
-
-        raise ValueError(f"Unsupported UPC length {len(digits)} for code '{code}'")
-
     def _make_barcode_image(self, code: str, module_height: float = 15.0) -> Image.Image:
-        normalized_upc = self._normalize_upc(code)
         upc_cls = barcode.get_barcode_class("upc")
-        upc = upc_cls(normalized_upc[:-1], writer=ImageWriter())
+        try:
+            upc = upc_cls(code, writer=ImageWriter())
+        except barcode.errors.NumberOfDigitsError:
+            upc = upc_cls(self.handle_upc_e(code), writer=ImageWriter())
         writer_options = {
             "write_text": False,
             "module_width": 0.20,
