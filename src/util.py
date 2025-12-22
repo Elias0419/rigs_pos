@@ -1892,17 +1892,6 @@ class Utilities:
             if not self.app.db_manager.barcode_exists(new_barcode):
                 return new_barcode
 
-    def ensure_upc_barcode(self, barcode, notify=True):
-        cleaned_barcode = (barcode or "").strip()
-
-        if len(cleaned_barcode) == 13 and cleaned_barcode.isdigit():
-            new_barcode = self.generate_unique_barcode()
-            if notify:
-                self.app.popup_manager.show_ean_replacement_notification(new_barcode)
-            return new_barcode, True
-
-        return cleaned_barcode, False
-
     def apply_categories(self):
         categories_str = ", ".join(self.app.popup_manager.selected_categories)
         self.app.popup_manager.add_to_db_category_input.text = categories_str

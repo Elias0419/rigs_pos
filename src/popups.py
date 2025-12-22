@@ -128,36 +128,6 @@ class PopupManager:
             0,
         )
 
-    def show_ean_replacement_notification(self, new_barcode: str) -> None:
-        message = (
-            "This product's EAN barcode was replaced.\n"
-            f"Generated UPC-A: {new_barcode}\n"
-            "Make sure you cover the product's barcode with our sticker so it will scan properly."
-        )
-
-        layout = MDBoxLayout(
-            orientation="vertical", padding=20, spacing=20, size_hint=(1, 1)
-        )
-        layout.add_widget(MDLabel(text=message, halign="center"))
-
-        button_row = MDBoxLayout(
-            orientation="horizontal", size_hint_y=None, height="48dp"
-        )
-        button_row.add_widget(BoxLayout())
-        close_button = MDRaisedButton(text="OK")
-        button_row.add_widget(close_button)
-        layout.add_widget(button_row)
-
-        popup = Popup(
-            title="UPC-A generated",
-            content=layout,
-            size_hint=(0.6, 0.4),
-            overlay_color=(0, 0, 0, 0),
-            separator_height=0,
-        )
-        close_button.bind(on_release=lambda *_: popup.dismiss())
-        popup.open()
-
     def _open_review_popup(
         self,
         title: str,
