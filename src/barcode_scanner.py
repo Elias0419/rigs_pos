@@ -142,10 +142,12 @@ class BarcodeScanner:
                 self.process_item_details(item_details)
 
     def process_item_details(self, item_details):
-        item_name = item_details.get("name", "Error!")
-        item_price = item_details.get("price", 0.0)
-        item_id = item_details.get("item_id")
-        self.app.order_manager.add_item(item_name, item_price, item_id=item_id)
+        item_name = item_details.name
+        item_price = item_details.price
+        item_id = item_details.item_id
+        barcode = item_details.barcode
+        is_custom = False
+        self.app.order_manager.add_item(item_name, item_price, item_id, barcode, is_custom)
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
 
