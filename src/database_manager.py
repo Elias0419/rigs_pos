@@ -168,6 +168,7 @@ class DatabaseManager:
                     is_rolling_papers INTEGER,
                     papers_per_pack  INTEGER,
                     order_timestamp  TEXT,
+                    is_custom        INTEGER NOT NULL DEFAULT 0,
                     FOREIGN KEY(order_id) REFERENCES order_history(order_id)
                 )
                 """
@@ -184,11 +185,15 @@ class DatabaseManager:
             cursor.execute(
                 "CREATE INDEX IF NOT EXISTS idx_order_items_timestamp ON order_items(order_timestamp)"
             )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_order_items_is_custom ON order_items(is_custom)"
+            )
             conn.commit()
         except sqlite3.Error as e:
             logger.warn(f"[DatabaseManager]:\n{e}")
         finally:
             conn.close()
+
 
     def create_modified_orders_table(self):
         conn = self._get_connection()
