@@ -48,7 +48,7 @@ class DatabaseManager:
         self.create_order_history_table()
         self.create_order_items_table()
         self.create_modified_orders_table()
-        self.create_dist_table()
+        # self.create_dist_table()
         self.create_payment_history_table()
         self.create_attendance_log_table()
 
@@ -215,27 +215,6 @@ class DatabaseManager:
         finally:
             conn.close()
 
-    def create_dist_table(self):
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute(
-                """CREATE TABLE IF NOT EXISTS distributor_info (
-                                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                    name TEXT NOT NULL,
-                                    contact_info TEXT,
-                                    item_name TEXT,
-                                    item_id TEXT,
-                                    price REAL,
-                                    notes TEXT,
-                                    FOREIGN KEY(item_id) REFERENCES items(item_id)
-                                )"""
-            )
-            conn.commit()
-        except sqlite3.Error as e:
-            logger.warn(f"[DatabaseManager]:\n{e}")
-        finally:
-            conn.close()
 
     def add_item(
         self,
@@ -782,7 +761,6 @@ class DatabaseManager:
         conn.row_factory = sqlite3.Row
         try:
             cursor = conn.cursor()
-            inventory_lookup = self._get_inventory_lookup()
             cursor.execute(
                 """
                 SELECT
@@ -807,10 +785,10 @@ class DatabaseManager:
                 """,
                 (order_id,),
             )
+
             rows = cursor.fetchall()
-            items = []
-            for row in rows:
-                base = {
+            return [
+                {
                     "id": row["id"],
                     "order_id": row["order_id"],
                     "item_id": row["item_id"],
@@ -822,119 +800,23 @@ class DatabaseManager:
                     "line_subtotal": row["line_subtotal"],
                     "unit_cost": row["unit_cost"],
                     "line_cost": row["line_cost"],
-                    "taxable": self._maybe_bool(row["taxable"]),
-                    "is_rolling_papers": self._maybe_bool(row["is_rolling_papers"]),
+                    "taxable": row["taxable"],
+                    "is_rolling_papers": row["is_rolling_papers"],
                     "papers_per_pack": row["papers_per_pack"],
                     "order_timestamp": row["order_timestamp"],
                 }
-
-                merged = self._merge_inventory_details(base, inventory_lookup)
-                items.append(merged)
-
-            return items
+                for row in rows
+            ]
         finally:
             conn.close()
+
 
     def _maybe_bool(self, value):
         if value is None:
             return None
         return bool(value)
 
-    def _merge_inventory_details(self, order_item, inventory_lookup):
 
-        lookup_key = (
-            order_item.get("item_id"),
-            order_item.get("barcode"),
-            (order_item.get("name") or "").lower(),
-        )
-
-        inv = None
-        for key in lookup_key:
-            if not key:
-                continue
-            inv = inventory_lookup.get(key)
-            if inv:
-                break
-
-        if not inv:
-            # Nothing to enrich with
-            return order_item
-
-        merged = dict(order_item)
-
-        merged["item_id"] = merged.get("item_id") or inv.get("item_id")
-        merged["barcode"] = merged.get("barcode") or inv.get("barcode")
-        merged["category"] = merged.get("category") or inv.get("category")
-
-        unit_cost = merged.get("unit_cost")
-        inv_cost = inv.get("cost")
-        if unit_cost is None and inv_cost is not None:
-            unit_cost = float(inv_cost)
-            merged["unit_cost"] = unit_cost
-
-        qty = merged.get("qty") or 0
-        if merged.get("line_cost") is None and unit_cost is not None:
-            merged["line_cost"] = qty * unit_cost
-
-        if merged.get("taxable") is None:
-            merged["taxable"] = self._maybe_bool(inv.get("taxable"))
-
-        if merged.get("is_rolling_papers") is None:
-            merged["is_rolling_papers"] = self._maybe_bool(inv.get("is_rolling_papers"))
-
-        if merged.get("papers_per_pack") is None:
-            merged["papers_per_pack"] = inv.get("papers_per_pack")
-
-        if merged.get("unit_price") is None:
-            merged["unit_price"] = inv.get("price")
-
-        if merged.get("line_subtotal") is None and merged.get("unit_price") is not None:
-            merged["line_subtotal"] = qty * float(merged["unit_price"])
-
-        return merged
-
-    def _get_inventory_lookup(self):
-        """
-        Build a lookup by item_id, barcode, and lowercased name for quick enrichment.
-        """
-
-        conn = self._get_connection()
-        conn.row_factory = sqlite3.Row
-        try:
-            cursor = conn.cursor()
-            cursor.execute(
-                """
-                SELECT item_id, barcode, name, category, price, cost, taxable, is_rolling_papers, papers_per_pack
-                FROM items
-                """
-            )
-            rows = cursor.fetchall()
-
-            lookup = {}
-            for row in rows:
-                entry = {
-                    "item_id": row["item_id"],
-                    "barcode": row["barcode"],
-                    "name": row["name"],
-                    "category": row["category"],
-                    "price": row["price"],
-                    "cost": row["cost"],
-                    "taxable": row["taxable"],
-                    "is_rolling_papers": row["is_rolling_papers"],
-                    "papers_per_pack": row["papers_per_pack"],
-                }
-
-                for key in (
-                    row["item_id"],
-                    row["barcode"],
-                    (row["name"] or "").lower(),
-                ):
-                    if key:
-                        lookup[key] = entry
-
-            return lookup
-        finally:
-            conn.close()
 
     def send_order_to_history_database(self, order_details, order_manager, db_manager):
         tax = order_details["total_with_tax"] - order_details["total"]
@@ -1019,29 +901,6 @@ class DatabaseManager:
         conn.close()
         return exists
 
-    def get_all_distrib(self):
-
-        conn = self._get_connection()
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        query = "SELECT * FROM distributor_info"
-        cursor.execute(query)
-        rows = cursor.fetchall()
-
-        distributors = {
-            row["id"]: {
-                "name": row["name"],
-                "contact_info": row["contact_info"],
-                "item_name": row["item_name"],
-                "item_id": row["item_id"],
-                "price": row["price"],
-                "notes": row["notes"],
-            }
-            for row in rows
-        }
-
-        conn.close()
-        return distributors
 
     def close_connection(self):
         conn = self._get_connection()
@@ -1174,3 +1033,53 @@ class DatabaseManager:
             logger.warn(f"[DatabaseManager]:\n{e}")
         finally:
             conn.close()
+
+
+## Deprecated
+
+    def create_dist_table(self):
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """CREATE TABLE IF NOT EXISTS distributor_info (
+                                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                    name TEXT NOT NULL,
+                                    contact_info TEXT,
+                                    item_name TEXT,
+                                    item_id TEXT,
+                                    price REAL,
+                                    notes TEXT,
+                                    FOREIGN KEY(item_id) REFERENCES items(item_id)
+                                )"""
+            )
+            conn.commit()
+        except sqlite3.Error as e:
+            logger.warn(f"[DatabaseManager]:\n{e}")
+        finally:
+            conn.close()
+
+    def get_all_distrib(self):
+
+        conn = self._get_connection()
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        query = "SELECT * FROM distributor_info"
+        cursor.execute(query)
+        rows = cursor.fetchall()
+
+        distributors = {
+            row["id"]: {
+                "name": row["name"],
+                "contact_info": row["contact_info"],
+                "item_name": row["item_name"],
+                "item_id": row["item_id"],
+                "price": row["price"],
+                "notes": row["notes"],
+            }
+            for row in rows
+        }
+
+        conn.close()
+        return distributors
+
