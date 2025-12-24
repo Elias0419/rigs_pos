@@ -145,6 +145,99 @@ class LineItem:
         return li
 
 
+@dataclass
+class Order:
+    tax_rate: float
+    items: Dict[str, LineItem] = field(default_factory=dict)
+    order_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    subtotal: float = 0.0
+    line_item_discount_total: float = 0.0
+    order_level_discount: float = 0.0
+    total_discount: float = 0.0
+    total: float = 0.0
+    tax_amount: float = 0.0
+    total_with_tax: Optional[float] = None
+    payment_method: Optional[str] = None
+    amount_tendered: float = 0.0
+    change_given: float = 0.0
+
+    def recalculate_totals(self) -> float:
+        for item in self.items.values():
+            item.recompute()
+
+        self.subtotal = sum(float(it.line_subtotal) for it in self.items.values())
+        self.line_item_discount_total = sum(float(it.line_discount_total) for it in self.items.values())
+
+        self.total_discount = float(self.order_level_discount) + float(self.line_item_discount_total)
+        self.total = max(self.subtotal - self.total_discount, 0.0)
+
+        self._update_total_with_tax()
+        return self.total
+
+    def _update_total_with_tax(self) -> None:
+        self.tax_amount = max(self.total * self.tax_rate, 0.0)
+        self.total_with_tax = self.total + self.tax_amount
+
+    def calculate_total_with_tax(self) -> Optional[float]:
+        self._update_total_with_tax()
+        return self.total_with_tax
+
+    def clear(self) -> None:
+        self.items = {}
+        self.subtotal = 0.0
+        self.total = 0.0
+        self.tax_amount = 0.0
+        self.total_with_tax = None
+        self.order_level_discount = 0.0
+        self.line_item_discount_total = 0.0
+        self.total_discount = 0.0
+        self.payment_method = None
+        self.amount_tendered = 0.0
+        self.change_given = 0.0
+        self.order_id = str(uuid.uuid4())
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "order_id": self.order_id,
+            "items": {item_id: li.to_dict() for item_id, li in self.items.items()},
+            "subtotal": float(self.subtotal),
+            "total": float(self.total),
+            "tax_rate": float(self.tax_rate),
+            "tax_amount": float(self.tax_amount),
+            "total_with_tax": float(self.total_with_tax) if self.total_with_tax is not None else None,
+            "order_level_discount": float(self.order_level_discount),
+            "line_item_discount_total": float(self.line_item_discount_total),
+            "total_discount": float(self.total_discount),
+            "payment_method": self.payment_method,
+            "amount_tendered": float(self.amount_tendered),
+            "change_given": float(self.change_given),
+        }
+
+    @staticmethod
+    def from_dict(payload: Dict[str, Any]) -> "Order":
+        order = Order(
+            tax_rate=float(payload.get("tax_rate", 0.0)),
+            order_id=str(payload.get("order_id", uuid.uuid4())),
+        )
+
+        items_payload = payload.get("items", {}) or {}
+        items: Dict[str, LineItem] = {}
+        for _, item_payload in items_payload.items():
+            if not isinstance(item_payload, dict):
+                continue
+            li = LineItem.from_dict(item_payload)
+            items[li.item_id] = li
+        order.items = items
+
+        order.order_level_discount = float(payload.get("order_level_discount", 0.0))
+        order.payment_method = payload.get("payment_method")
+        order.amount_tendered = float(payload.get("amount_tendered", 0.0))
+        order.change_given = float(payload.get("change_given", 0.0))
+
+        order.recalculate_totals()
+        return order
+
+
 class OrderManager:
     _instance = None
 
@@ -157,23 +250,8 @@ class OrderManager:
         if hasattr(self, "_init"):
             return
 
-        self.items: Dict[str, LineItem] = {}
-
-        self.total = 0.0
-        self.subtotal = 0.0
-        self.tax_amount = 0.0
-        self.change_given = 0.0
-        self.amount_tendered = 0.0
-        self.tax_rate = float(tax_rate)
-        self.payment_method = None
-        self._total_with_tax = None
-        self.order_id = str(uuid.uuid4())
+        self.order = Order(tax_rate=float(tax_rate))
         self.saved_orders_dir = "saved_orders"
-
-        # order-level discounts only (line-level discounts live on LineItem)
-        self.order_level_discount = 0.0
-        self.line_item_discount_total = 0.0
-        self.total_discount = 0.0
 
         self.app = ref
 
@@ -182,112 +260,125 @@ class OrderManager:
 
         self._init = True
 
+    @property
+    def items(self) -> Dict[str, LineItem]:
+        return self.order.items
+
+    @property
+    def subtotal(self) -> float:
+        return self.order.subtotal
+
+    @property
+    def total(self) -> float:
+        return self.order.total
+
+    @property
+    def tax_rate(self) -> float:
+        return self.order.tax_rate
+
+    @property
+    def tax_amount(self) -> float:
+        return self.order.tax_amount
+
+    @property
+    def order_level_discount(self) -> float:
+        return self.order.order_level_discount
+
+    @property
+    def line_item_discount_total(self) -> float:
+        return self.order.line_item_discount_total
+
+    @property
+    def total_discount(self) -> float:
+        return self.order.total_discount
+
+    @property
+    def payment_method(self) -> Optional[str]:
+        return self.order.payment_method
+
+    @property
+    def amount_tendered(self) -> float:
+        return self.order.amount_tendered
+
+    @property
+    def change_given(self) -> float:
+        return self.order.change_given
+
+    @property
+    def order_id(self) -> str:
+        return self.order.order_id
+
     def recalculate_order_totals(self, remove=False):
-        for it in self.items.values():
-            it.recompute()
-
-        self.subtotal = sum(float(it.line_subtotal) for it in self.items.values())
-        self.line_item_discount_total = sum(float(it.line_discount_total) for it in self.items.values())
-
-        self.total_discount = float(self.order_level_discount) + float(self.line_item_discount_total)
-        self.total = max(self.subtotal - self.total_discount, 0.0)
-
-        self._update_total_with_tax()
-        return self.total
+        self.order.recalculate_totals()
+        return self.order.total
 
     def _update_total_with_tax(self):
-        self.tax_amount = self.total * self.tax_rate
-        self._total_with_tax = self.total + self.tax_amount
+        self.order._update_total_with_tax()
 
     def calculate_total_with_tax(self):
         self._update_total_with_tax()
-        return self._total_with_tax
+        return self.order.total_with_tax
 
     def update_tax_amount(self):
-        self.tax_amount = max(self.total * self.tax_rate, 0.0)
-        return self.tax_amount
+        self.order.tax_amount = max(self.order.total * self.order.tax_rate, 0.0)
+        return self.order.tax_amount
 
     def add_line_discount(self, item_id, value, percent=False, per_unit=True):
-        if item_id in self.items:
+        if item_id in self.order.items:
             d = Discount(
                 type="percent" if percent else "amount",
                 value=float(value),
                 per_unit=bool(per_unit),
             )
-            self.items[item_id].add_discount(d)
+            self.order.items[item_id].add_discount(d)
             self.recalculate_order_totals()
 
     def clear_line_discounts(self, item_id):
-        if item_id in self.items:
-            self.items[item_id].clear_discounts()
+        if item_id in self.order.items:
+            self.order.items[item_id].clear_discounts()
             self.recalculate_order_totals()
 
     def increment_last_line_discount(self, item_id, delta):
-        if item_id in self.items:
-            self.items[item_id].increment_last_discount(float(delta))
+        if item_id in self.order.items:
+            self.order.items[item_id].increment_last_discount(float(delta))
             self.recalculate_order_totals()
 
     def decrement_last_line_discount(self, item_id, delta):
         self.increment_last_line_discount(item_id, -float(delta))
 
     def remove_item(self, item_name):
-        item_to_remove = next((key for key, value in self.items.items() if value.name == item_name), None)
+        item_to_remove = next((key for key, value in self.order.items.items() if value.name == item_name), None)
         if item_to_remove:
-            del self.items[item_to_remove]
+            del self.order.items[item_to_remove]
             self.recalculate_order_totals()
 
     def adjust_item_quantity(self, item_id, adjustment):
-        if item_id in self.items:
-            item = self.items[item_id]
+        if item_id in self.order.items:
+            item = self.order.items[item_id]
             new_quantity = max(int(item.quantity) + int(adjustment), 1)
             item.quantity = new_quantity
             item.recompute()
             self.recalculate_order_totals()
 
     def get_order_details(self):
-        return {
-            "order_id": self.order_id,
-            "items": {item_id: li.to_dict() for item_id, li in self.items.items()},
-            "subtotal": float(self.subtotal),
-            "total": float(self.total),
-            "tax_rate": float(self.tax_rate),
-            "tax_amount": float(self.tax_amount),
-            "total_with_tax": float(self._total_with_tax) if self._total_with_tax is not None else None,
-            "order_level_discount": float(self.order_level_discount),
-            "line_item_discount_total": float(self.line_item_discount_total),
-            "total_discount": float(self.total_discount),
-            "payment_method": self.payment_method,
-            "amount_tendered": float(self.amount_tendered),
-            "change_given": float(self.change_given),
-        }
+        return self.order
 
     def clear_order(self):
-        self.items = {}
-        self.subtotal = 0.0
-        self.total = 0.0
-        self.tax_amount = 0.0
-        self._total_with_tax = None
-        self.order_level_discount = 0.0
-        self.line_item_discount_total = 0.0
-        self.total_discount = 0.0
-        self.payment_method = None
-        self.amount_tendered = 0.0
-        self.change_given = 0.0
-        self.order_id = str(uuid.uuid4())
+        self.order.clear()
 
     def save_order_to_disk(self):
         if not os.path.exists(self.saved_orders_dir):
             os.makedirs(self.saved_orders_dir)
 
-        order_details = self.get_order_details()
-        order_filename = f"order_{self.order_id}.json"
+        order_details = self.order.to_dict()
+        order_filename = f"order_{self.order.order_id}.json"
         filepath = os.path.join(self.saved_orders_dir, order_filename)
 
         with open(filepath, "w") as file:
             json.dump(order_details, file)
 
     def delete_order_from_disk(self, order):
-        order_id = order["order_id"]
+        order_id = order.order_id if isinstance(order, Order) else order["order_id"]
         order_filename = f"order_{order_id}.json"
         full_path = os.path.join(self.saved_orders_dir, order_filename)
         try:
@@ -296,7 +387,7 @@ class OrderManager:
             logger.info(f"[Order Manager] Expected error in delete_order_from_disk\n{e}")
 
     def load_order_from_disk(self, order):
-        order_id = order["order_id"]
+        order_id = order.order_id if isinstance(order, Order) else order["order_id"]
         order_filename = f"order_{order_id}.json"
         full_path = os.path.join(self.saved_orders_dir, order_filename)
 
@@ -308,24 +399,7 @@ class OrderManager:
             return False
 
         try:
-            self.order_id = str(order_data["order_id"])
-
-            items_payload = order_data.get("items", {}) or {}
-            new_items: Dict[str, LineItem] = {}
-            for _, payload in items_payload.items():
-                if not isinstance(payload, dict):
-                    continue
-                li = LineItem.from_dict(payload)
-                new_items[li.item_id] = li
-            self.items = new_items
-
-            self.order_level_discount = float(order_data.get("order_level_discount", 0.0))
-            self.payment_method = order_data.get("payment_method")
-            self.amount_tendered = float(order_data.get("amount_tendered", 0.0))
-            self.change_given = float(order_data.get("change_given", 0.0))
-
-            self.recalculate_order_totals()
-
+            self.order = Order.from_dict(order_data)
             self.app.utilities.update_display()
             self.app.utilities.update_financial_summary()
             return True
@@ -417,11 +491,11 @@ class OrderManager:
         self.add_order_level_discount(add_val)
 
     def set_payment_method(self, method):
-        self.payment_method = method
+        self.order.payment_method = method
 
     def set_payment_details(self, amount_tendered=None, change=None):
-        self.amount_tendered = amount_tendered if amount_tendered is not None else 0.0
-        self.change_given = change if change is not None else 0.0
+        self.order.amount_tendered = amount_tendered if amount_tendered is not None else 0.0
+        self.order.change_given = change if change is not None else 0.0
 
     def add_custom_item(self, name, price, item_id, barcode, is_custom):
         if not name or not price:
@@ -469,14 +543,15 @@ class OrderManager:
         self.recalculate_order_totals()
 
     def finalize_order(self):
+        self.recalculate_order_totals()
         order_details = self.get_order_details()
 
         order_summary = f"[size=18][b]Order Summary:[/b][/size]\n\n"
 
-        for _, item_details in order_details["items"].items():
-            item_name = item_details["name"]
-            quantity = item_details["quantity"]
-            total_price_for_item = item_details["total_price"]
+        for item in order_details.items.values():
+            item_name = item.name
+            quantity = item.quantity
+            total_price_for_item = item.total_price
 
             try:
                 total_price_float = float(total_price_for_item)
@@ -486,11 +561,11 @@ class OrderManager:
 
             order_summary += self.create_order_summary_item(item_name, quantity, total_price_float)
 
-        order_summary += f"\nSubtotal: ${order_details['subtotal']:.2f}"
-        order_summary += f"\nTax: ${order_details['tax_amount']:.2f}"
-        if order_details["total_discount"] > 0:
-            order_summary += f"\nDiscount: ${order_details['total_discount']:.2f}"
-        order_summary += f"\n\n[size=20]Total: [b]${order_details['total_with_tax']:.2f}[/b][/size]"
+        order_summary += f"\nSubtotal: ${order_details.subtotal:.2f}"
+        order_summary += f"\nTax: ${order_details.tax_amount:.2f}"
+        if order_details.total_discount > 0:
+            order_summary += f"\nDiscount: ${order_details.total_discount:.2f}"
+        order_summary += f"\n\n[size=20]Total: [b]${order_details.total_with_tax:.2f}[/b][/size]"
 
         self.app.popup_manager.show_order_popup(order_summary)
 
@@ -524,11 +599,11 @@ class OrderManager:
             pass
 
     def set_order_level_discount(self, amount):
-        self.order_level_discount = max(0.0, float(amount))
+        self.order.order_level_discount = max(0.0, float(amount))
         self.recalculate_order_totals()
 
     def add_order_level_discount(self, amount):
-        self.order_level_discount = max(0.0, float(self.order_level_discount) + float(amount))
+        self.order.order_level_discount = max(0.0, float(self.order.order_level_discount) + float(amount))
         self.recalculate_order_totals()
 
     def discount_entire_order(self, discount_amount, percent=False):
@@ -574,8 +649,8 @@ class OrderManager:
             self.app.financial_summary.order_mod_popup.dismiss()
 
     def remove_order_discount(self):
-        if float(self.order_level_discount) > 0:
-            self.order_level_discount = 0.0
+        if float(self.order.order_level_discount) > 0:
+            self.order.order_level_discount = 0.0
             self.recalculate_order_totals()
             self.app.utilities.update_display()
             self.app.utilities.update_financial_summary()

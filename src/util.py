@@ -750,13 +750,6 @@ class Utilities:
                     formatted_data.append(formatted_session)
         return formatted_data
 
-    # def display_attendance_log(self): # testing
-    #     data = self.load_attendance_data()
-    #     sessions = self.organize_sessions(data)
-    #     display_data = self.format_sessions_for_display(sessions)
-    #     for line in display_data:
-    #         print(line)
-
     def reset_pin_timer(self):
         logger.warn("reset_pin_timer", self.app.pin_reset_timer)
         if self.app.pin_reset_timer is not None:
@@ -789,8 +782,6 @@ class Utilities:
         formatted_date = f"[size=26]{current_date}[/size]"
         self.app.clock_label.font_name = self.font
         self.app.clock_label.text = f"{formatted_time}\n{formatted_date}\n"
-
-        # self.app.clock_label.color = self.get_text_color()
 
     def update_lockscreen_clock(self, *args):
 
@@ -922,7 +913,7 @@ class Utilities:
         subtotal = self.app.order_manager.subtotal
         total_with_tax = self.app.order_manager.calculate_total_with_tax()
         tax = self.app.order_manager.tax_amount
-        discount = self.app.order_manager.order_level_discount
+        discount = self.app.order_manager.total_discount
 
         self.app.financial_summary_widget.update_summary(
             subtotal, tax, total_with_tax, discount
@@ -1752,12 +1743,6 @@ class Utilities:
         Clock.schedule_once(
             lambda dt: setattr(layout, "background_color", original_color), 0.5
         )
-
-    # elif instance.text == "TEST": TODO
-    #     print("test button")
-    #     eel_thread = threading.Thread(target=self.start_eel)
-    #     eel_thread.daemon = True
-    #     eel_thread.start()
 
     def dismiss_single_discount_popup(self):
         self.app.popup_manager.discount_item_popup.dismiss()

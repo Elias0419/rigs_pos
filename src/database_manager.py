@@ -488,8 +488,6 @@ class DatabaseManager:
         amount_tendered,
         change_given,
     ):
-
-        self.create_order_history_table()
         conn = self._get_connection()
 
         try:
@@ -511,7 +509,7 @@ class DatabaseManager:
             )
             conn.commit()
         except sqlite3.Error as e:
-            logger.warn(f"[DatabaseManager]:\n{e}")
+            logger.warn(f"[DatabaseManager]:add_order_history\n{e}")
             return False
         finally:
             conn.close()
@@ -821,36 +819,35 @@ class DatabaseManager:
 
 
     def send_order_to_history_database(self, order_details):
-        print(order_details)
-        # tax = order_details["total_with_tax"] - order_details["total"]
-        # timestamp = datetime.now()
-        #
-        # items_for_db = [
-        #     {**{"name": item_name}, **item_details}
-        #     for item_name, item_details in order_details["items"].items()
-        # ]
-        #
-        # success = self.add_order_history(
-        #     order_details["order_id"],
-        #     order_details["total"],
-        #     tax,
-        #     order_details["discount"],
-        #     order_details["total_with_tax"],
-        #     timestamp,
-        #     order_details["payment_method"],
-        #     order_details["amount_tendered"],
-        #     order_details["change_given"],
-        # )
-        #
-        # if not success:
-        #     logger.warn(
-        #         f"[DatabaseManager] Failed to insert order_history for order_id={order_details['order_id']}"
-        #     )
-        #     return
-        #
-        # self._insert_order_items_from_list(
-        #     order_details["order_id"], items_for_db, timestamp
-        # )
+        tax = order_details.total_with_tax - order_details.total
+        timestamp = datetime.now()
+
+        items_for_db = [
+            item_details.to_dict()
+            for item_details in order_details.items.values()
+        ]
+
+        success = self.add_order_history(
+            order_details.order_id,
+            order_details.total,
+            tax,
+            order_details.total_discount,
+            order_details.total_with_tax,
+            timestamp,
+            order_details.payment_method,
+            order_details.amount_tendered,
+            order_details.change_given,
+        )
+
+        if not success:
+            logger.error(
+                f"[DatabaseManager] send_order_to_history_database failed to insert order_history for order_id={order_details['order_id']}"
+            )
+            return
+
+        self._insert_order_items_from_list(
+            order_details.order_id, items_for_db, timestamp
+        )
 
     def add_item_to_database(
         self,

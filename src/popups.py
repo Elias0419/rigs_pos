@@ -1588,38 +1588,23 @@ class PopupManager:
         self.add_or_bypass_popup.open()
 
     def show_item_details_popup(self, item_id, item_button):
+        li = self.app.order_manager.items.get(item_id)
+        if not li:
+            return
 
-        item_info = self.app.order_manager.items.get(item_id)
-        if item_info:
-            item_name = item_info["name"]
-            item_quantity = item_info["quantity"]
-            item_price = item_info["total_price"]
-            original_price = item_price / item_quantity
-            item_discount = item_info.get("discount", {"amount": 0, "percent": False})
+        item_name = li.name
+        item_quantity = int(li.quantity)
+        item_price = float(li.total_price)
+        original_price = float(li.unit_price)
+
+        item_discount_amount = float(li.line_discount_total)
+        has_discount = item_discount_amount > 0.0
+
         item_popup_layout = GridLayout(
             rows=3, cols=3, orientation="lr-tb", size_hint=(1, 1), spacing=5, padding=10
         )
-        # details_layout = BoxLayout(orientation="vertical", size_hint=(1, 1))
-        _blank = BoxLayout(
-            size_hint=(1, 1),
-        )
-        # _blank2 = BoxLayout(
-        #     size_hint=(1, 1),
-        # )
-        #
-        # details_text = MarkupLabel(
-        #     text=f"[size=20]{item_name}\n\n${original_price} x {item_quantity} = ${item_price:.2f}[/size]",
-        #     size_hint=(1, 1),
-        #     halign="center",
-        # )
-        # details_button = MDFlatButton(
-        #     text="",
-        #     size_hint=(1, 1),
-        #     md_bg_color="grey",
-        #     on_press=lambda x: self.inventory_item_short_details(item_id),
-        # )
-        # details_button.add_widget(details_text)
-        # details_layout.add_widget(details_button)
+
+        _blank = BoxLayout(size_hint=(1, 1))
 
         minus_container = AnchorLayout(anchor_x="center", anchor_y="center")
         minus_button = MDFlatButton(
@@ -1630,14 +1615,6 @@ class PopupManager:
         )
         minus_container.add_widget(minus_button)
 
-        # quantity_container = AnchorLayout(anchor_x="center", anchor_y="center")
-        # quantity_label = MarkupLabel(
-        #     text=f"[size=30]{str(item_quantity)}[/size]",
-        #     halign="center",
-        #     valign="center",
-        # )
-        # quantity_container.add_widget(quantity_label)
-
         plus_container = AnchorLayout(anchor_x="center", anchor_y="center")
         plus_button = MDFlatButton(
             text=f"[size=75]+[/size]",
@@ -1647,37 +1624,25 @@ class PopupManager:
         )
         plus_container.add_widget(plus_button)
 
-        dicount_button_layout = BoxLayout(
-            orientation="horizontal",
-            size_hint=(1, 1),
-        )
-        if float(item_discount["amount"]) > 0:
+        dicount_button_layout = BoxLayout(orientation="horizontal", size_hint=(1, 1))
+        if has_discount:
             dicount_button_layout.add_widget(
                 self.app.utilities.create_md_raised_button(
                     f"[b][size=20]Remove Discount[/size][/b]",
-                    lambda x, item_id=item_id: self.app.order_manager.remove_single_item_discount(
-                        item_id
-                    ),
-                    # self.add_discount_popup,
+                    lambda x, item_id=item_id: self.app.order_manager.remove_single_item_discount(item_id),
                     (1, 0.8),
                 )
             )
-
         else:
             dicount_button_layout.add_widget(
                 self.app.utilities.create_md_raised_button(
                     f"[b][size=20]Add Discount[/size][/b]",
                     lambda x, item_id=item_id: self.open_add_discount_popup(item_id),
-                    # self.add_discount_popup,
                     (1, 0.8),
                 )
             )
 
-        remove_button_layout = BoxLayout(
-            orientation="horizontal",
-            size_hint=(1, 1),
-        )
-
+        remove_button_layout = BoxLayout(orientation="horizontal", size_hint=(1, 1))
         remove_button_layout.add_widget(
             self.app.utilities.create_md_raised_button(
                 f"[b][size=20]Remove Item[/size][/b]",
@@ -1686,10 +1651,7 @@ class PopupManager:
             )
         )
 
-        cancel_button_layout = BoxLayout(
-            orientation="horizontal",
-            size_hint=(1, 1),
-        )
+        cancel_button_layout = BoxLayout(orientation="horizontal", size_hint=(1, 1))
         cancel_button_layout.add_widget(
             Button(
                 text="Close",
@@ -1698,12 +1660,8 @@ class PopupManager:
             )
         )
 
-        # item_popup_layout.add_widget(_blank)
-        # item_popup_layout.add_widget(details_layout)
-        # item_popup_layout.add_widget(_blank2)
         item_popup_layout.add_widget(minus_container)
         item_popup_layout.add_widget(_blank)
-        # item_popup_layout.add_widget(quantity_container)
         item_popup_layout.add_widget(plus_container)
         item_popup_layout.add_widget(dicount_button_layout)
         item_popup_layout.add_widget(remove_button_layout)
@@ -1719,13 +1677,13 @@ class PopupManager:
             title="",
             content=item_popup_layout,
             size_hint=(0.4, 0.2),
-            # background="images/transparent.png",
             background_color=(0, 0, 0, 0.5),
             separator_height=0,
             overlay_color=(0, 0, 0, 0),
             pos_hint={"x": popup_x, "top": popup_y},
         )
         self.item_popup.open()
+
 
     def inventory_item_short_details(self, item_id):
 
@@ -1930,7 +1888,6 @@ class PopupManager:
         self.custom_discount_order_popup.open()
 
     def add_discount_popup(self, item_id, instance=None):
-        # print("add_discount_popup", item_id)
         self.current_item_discount_type = "percent"
         discount_item_popup_layout = GridLayout(
             orientation="tb-lr", spacing=5, cols=1, rows=3
@@ -2185,8 +2142,7 @@ class PopupManager:
             container.add_widget(self.queue_container)
             container.add_widget(button_container)
             return container
-        # except Exception as e:
-        #     print(f"expected error in popup manager show_label_printing_view\n{e}")
+
         else:
             self.app.label_manager.dual_pane_mode = False
             self.label_printing_view.show_inventory_for_label_printing(
@@ -2312,8 +2268,6 @@ class PopupManager:
             )
             self.dual_popup.open()
             self.toggle_overlay_popup()
-            # except Exception as e:
-            #     print(f"[popups]\nshow_dual_inventory_and_label_managers\n{e}")
 
     def show_inventory_management_view(self, dual_pane_mode=False):
         if (
@@ -2505,9 +2459,6 @@ class PopupManager:
     def show_lock_screen(
         self, clock_out=False, current_user=None, auto=False, timestamp=None
     ):
-        # print(clock_out, current_user, auto, timestamp)
-        # if clock_out and current_user is not None:
-        # print("condtion\n\nTEST")
         if self.app.disable_lock_screen:
             self.do_nothing(None)
         else:
@@ -2518,7 +2469,6 @@ class PopupManager:
                 )
                 left_side_layout = MDGridLayout(orientation="lr-tb", cols=2, rows=2)
                 lock_button_layout_container = MDBoxLayout(spacing=5, padding=10)
-                # lock_button_layout = MDGridLayout(orientation="lr-tb",cols=3, rows=4, size_hint=(0.5, 1))
                 self.lockscreen_keypad_layout = GridLayout(
                     cols=3, rows=4, spacing=10, padding=10, size_hint=(0.1, 1)
                 )
@@ -2560,8 +2510,6 @@ class PopupManager:
                         btn_2.bind(on_press=self.app.utilities.manual_override)
                         self.lockscreen_keypad_layout.add_widget(btn_2)
                 right_side_layout = self.create_right_side_layout()
-
-                # lock_button_layout.add_widget(self.lockscreen_keypad_layout)
                 lock_button_layout_container.add_widget(self.lockscreen_keypad_layout)
                 clock_layout = self.create_clock_layout()
                 self.clock_out_info = MarkupLabel(text="")
@@ -2907,9 +2855,9 @@ class PopupManager:
 
         items_layout = GridLayout(orientation="lr-tb", size_hint_y=1, rows=20, cols=2)
 
-        for item_id, item_details in order_details["items"].items():
-            item_text = f"{item_details['quantity']}x {item_details['name']}"
-            item_price = f"${item_details['total_price']:.2f}"
+        for item_id, item_details in order_details.items.items():
+            item_text = f"{item_details.quantity}x {item_details.name}"
+            item_price = f"${item_details.total_price:.2f}"
             item_label = MarkupLabel(
                 text=item_text,
                 halign="left",
@@ -2930,20 +2878,20 @@ class PopupManager:
         totals_container = AnchorLayout(anchor_x="right", size_hint_y=0.1)
         totals_layout = GridLayout(orientation="tb-lr", rows=4)
         subtotal_label = MarkupLabel(
-            text=f"Subtotal: ${order_details['subtotal']:.2f}", halign="right"
+            text=f"Subtotal: ${order_details.subtotal:.2f}", halign="right"
         )
         tax_label = MarkupLabel(
-            text=f"Tax: ${order_details['tax_amount']:.2f}", halign="right"
+            text=f"Tax: ${order_details.tax_amount:.2f}", halign="right"
         )
         total_label = MarkupLabel(
-            text=f"[size=25]Total: [b]${order_details['total_with_tax']:.2f}[/b][/size]",
+            text=f"[size=25]Total: [b]${order_details.total_with_tax:.2f}[/b][/size]",
             halign="right",
         )
 
         totals_layout.add_widget(subtotal_label)
-        if order_details["order_level_discount"] > 0:
+        if order_details.total_discount > 0:
             discount_label = MarkupLabel(
-                text=f"Discount: -${order_details['order_level_discount']:.2f}", halign="right"
+                text=f"Discount: -${order_details.total_discount:.2f}", halign="right"
             )
             totals_layout.add_widget(discount_label)
         else:
@@ -3011,7 +2959,7 @@ class PopupManager:
         popup_layout.add_widget(buttons_layout_bottom)
 
         self.finalize_order_popup = Popup(
-            title=f"Finalize Order - {order_details['order_id']}",
+            title=f"Finalize Order - {order_details.order_id}",
             content=popup_layout,
             size_hint=(0.4, 0.6),
             overlay_color=(0, 0, 0, 0),
@@ -3180,7 +3128,7 @@ class PopupManager:
 
         card.add_widget(
             MarkupLabel(
-                text=f"[b]${total_with_tax:.2f} Paid With {order_details['payment_method']}[/b]",
+                text=f"[b]${total_with_tax:.2f} Paid With {order_details.payment_method}[/b]",
                 halign="center",
                 theme_text_color="Primary",
             )
