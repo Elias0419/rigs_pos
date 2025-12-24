@@ -30,7 +30,7 @@ from kivymd.uix.selectioncontrol import MDCheckbox
 from kivymd.uix.textfield import MDTextField
 from PIL import Image as PILImage
 
-from order_manager import OrderException
+from order_manager import CustomOrderMissingFields
 from inventory_manager import InventoryManagementView, InventoryView
 from open_cash_drawer import open_cash_drawer
 
@@ -2790,7 +2790,9 @@ class PopupManager:
         )
         self.admin_popup.open()
 
-    def show_custom_item_popup(self, barcode="01234567890"):
+    def show_custom_item_popup(self):
+
+        item_id, barcode, is_custom = self.app.utilities.generate_custom_item_details()
 
         self.custom_item_popup_layout = BoxLayout(
             orientation="vertical", spacing=5, padding=5
@@ -2847,7 +2849,10 @@ class PopupManager:
         confirm_button = self.app.utilities.create_md_raised_button(
             "[size=20][b]Confirm[/b][/size]",
             lambda x: self.order_manager_custom_item_guard(
-                name=self.custom_item_name_input.text, price=self.cash_input.text
+                name=self.custom_item_name_input.text, price=self.cash_input.text,
+                item_id=item_id,
+                barcode=barcode,
+                is_custom=is_custom
             ),
             (0.8, 0.8),
         )
@@ -2876,10 +2881,10 @@ class PopupManager:
 
 
 
-    def order_manager_custom_item_guard(self, name=None, price=None):
+    def order_manager_custom_item_guard(self, name=None, price=None, item_id=None, barcode=None, is_custom=True):
         try:
-            self.app.order_manager.add_custom_item(name, price)
-        except OrderException:
+            self.app.order_manager.add_custom_item(name, price, item_id, barcode, is_custom)
+        except CustomOrderMissingFields:
             # name or price are missing
             self.open_order_manager_custom_item_warning()
 
@@ -2936,9 +2941,9 @@ class PopupManager:
         )
 
         totals_layout.add_widget(subtotal_label)
-        if order_details["discount"] > 0:
+        if order_details["order_level_discount"] > 0:
             discount_label = MarkupLabel(
-                text=f"Discount: -${order_details['discount']:.2f}", halign="right"
+                text=f"Discount: -${order_details['order_level_discount']:.2f}", halign="right"
             )
             totals_layout.add_widget(discount_label)
         else:
@@ -3155,8 +3160,8 @@ class PopupManager:
 
         order_summary = "Order Complete:\n\n"
         for item_id, item_details in self.app.order_manager.items.items():
-            item_name = item_details["name"]
-            quantity = item_details["quantity"]
+            item_name = item_details.name
+            quantity = item_details.quantity
             order_summary += f"{item_name} x{quantity}\n"
 
         card = MDCard(
@@ -3227,9 +3232,7 @@ class PopupManager:
 
     def automatic_done_actions(self):
         order_details = self.app.order_manager.get_order_details()
-        self.app.db_manager.send_order_to_history_database(
-            order_details, self.app.order_manager, self.app.db_manager
-        )
+        self.app.db_manager.send_order_to_history_database(order_details)
         self.app.order_manager.clear_order()
         self.payment_popup.dismiss()
         self.app.utilities.update_financial_summary()

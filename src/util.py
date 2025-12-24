@@ -842,32 +842,35 @@ class Utilities:
         self.app.order_layout.clear_widgets()
 
         for item_id, item_info in self.app.order_manager.items.items():
-            item_name = item_info["name"]
-            price = item_info["price"]
-            item_quantity = item_info["quantity"]
-            item_total_price = item_info["total_price"]
-            item_discount = item_info.get("discount", {"amount": 0, "percent": False})
-            price_times_quantity = price * item_quantity
+            name = item_info.name
+            unit_price = item_info.unit_price
+            quantity = item_info.quantity
+            barcode = item_info.barcode
+            is_custom = item_info.is_custom
+            discounts = item_info.discounts
+            line_subtotal = item_info.line_subtotal
+            line_discount_total = item_info.line_discount_total
+            total_price = item_info.total_price
+            price_times_quantity = unit_price * quantity
 
-            if type(item_total_price) is float:
-
-                if item_quantity > 1:
-                    if float(item_discount["amount"]) > 0:
-                        item_display_text = f"{item_name}"
-                        price_display_text = f"${price_times_quantity:.2f} - {float(item_discount['amount']):.2f}\n = ${item_total_price:.2f}"
-                        quantity_display_text = f"{item_quantity}"
+            if isinstance(total_price, (int, float)):
+                if quantity > 1:
+                    if line_discount_total > 0:
+                        item_display_text = f"{name}"
+                        price_display_text = f"${price_times_quantity:.2f} - {line_discount_total:.2f}\n = ${total_price:.2f}"
+                        quantity_display_text = f"{quantity}"
                     else:
-                        item_display_text = f"{item_name}"
-                        price_display_text = f"${item_total_price:.2f}"
-                        quantity_display_text = f"{item_quantity}"
+                        item_display_text = f"{name}"
+                        price_display_text = f"${total_price:.2f}"
+                        quantity_display_text = f"{quantity}"
                 else:
-                    if float(item_discount["amount"]) > 0:
-                        item_display_text = f"{item_name}"
-                        price_display_text = f"${price_times_quantity:.2f} - {float(item_discount['amount']):.2f}\n = ${item_total_price:.2f}"
+                    if line_discount_total > 0:
+                        item_display_text = f"{name}"
+                        price_display_text = f"${price_times_quantity:.2f} - {line_discount_total:.2f}\n = ${total_price:.2f}"
                         quantity_display_text = ""
                     else:
-                        item_display_text = f"{item_name}"
-                        price_display_text = f"${item_total_price:.2f}"
+                        item_display_text = f"{name}"
+                        price_display_text = f"${total_price:.2f}"
                         quantity_display_text = ""
             else:
                 return
@@ -914,13 +917,12 @@ class Utilities:
             )
 
             self.app.order_layout.add_widget(item_button)
-            # self.app.order_layout.add_widget(blue_line)
 
     def update_financial_summary(self):
         subtotal = self.app.order_manager.subtotal
         total_with_tax = self.app.order_manager.calculate_total_with_tax()
         tax = self.app.order_manager.tax_amount
-        discount = self.app.order_manager.order_discount
+        discount = self.app.order_manager.order_level_discount
 
         self.app.financial_summary_widget.update_summary(
             subtotal, tax, total_with_tax, discount
@@ -949,7 +951,7 @@ class Utilities:
 
     def on_add_or_bypass_choice(self, choice_text, barcode):
         if choice_text == "Add Custom Item":
-            self.app.popup_manager.show_custom_item_popup(barcode)
+            self.app.popup_manager.show_custom_item_popup()
         elif choice_text == "Add to Database":
             self.app.popup_manager.show_add_to_database_popup(barcode)
 
@@ -1473,10 +1475,6 @@ class Utilities:
     def dismiss_add_discount_popup(self):
         self.dismiss_popups("discount_popup")
 
-    def dismiss_bypass_popup(self, instance, barcode):
-        self.app.on_add_or_bypass_choice(instance.text, barcode)
-        # self.dismiss_popups('popup')
-
     def close_add_to_database_popup(self):
         self.app.popup_manager.add_to_db_popup.dismiss()
 
@@ -1796,7 +1794,7 @@ class Utilities:
         papers_per_pack,
         popup,
     ):
-        if not cost_input.text:
+        if not cost_input:
             self.app.popup_manager.catch_inventory_item_empty_cost()
             return
         papers_text = (papers_per_pack or "").strip()
@@ -1964,6 +1962,13 @@ class Utilities:
         else:
             self.update_selected_categories.append(category)
             instance.text = f"{category}\n (Selected)"
+
+    def generate_custom_item_details(self):
+        barcode_part = self.generate_unique_barcode()
+        barcode = "CST-" + barcode_part
+        item_id = str(uuid.uuid4())
+        is_custom = 1 # true for sql
+        return item_id, barcode, is_custom
 
 
 class ReusableTimer:

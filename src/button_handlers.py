@@ -274,9 +274,7 @@ class ButtonHandler:
         Clock.unschedule(self.app.popup_manager.timeout_event)
         order_details = self.app.order_manager.get_order_details()
 
-        self.app.db_manager.send_order_to_history_database(
-            order_details, self.app.order_manager, self.app.db_manager
-        )
+        self.app.db_manager.send_order_to_history_database(order_details)
         self.app.order_manager.clear_order()
         self.app.popup_manager.payment_popup.dismiss()
         self.app.utilities.update_financial_summary()

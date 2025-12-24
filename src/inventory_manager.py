@@ -97,14 +97,17 @@ class InventoryRow(RecycleDataViewBehavior, BoxLayout):
 
     def add_to_order(self):
         item_details = self.app.db_manager.get_item_details(barcode=self.barcode)
-        item_id = item_details.get("item_id") if item_details else None
+        item_id = item_details.get("item_id")
+        barcode = item_details.get("barcode")
+        is_custom = False
         try:
             price_float = float(self.price)
-        except Exception as e:
-            logger.warning(e)
+        except (TypeError, ValueError) as e:
+            logger.error(f"[Inventory Manager] add_to_order failed to convert price to float for some reason\n{e}")
             return
+
         om = self.order_manager or self.app.order_manager
-        om.add_item(self.name, price_float, item_id=item_id)
+        om.add_item(self.name, price_float, item_id=item_id, barcode=barcode, is_custom=is_custom)
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
         self.app.popup_manager.inventory_popup.dismiss()

@@ -398,66 +398,63 @@ class DatabaseManager:
 
         return items
 
-    def get_item_details(self, item_id="", name="", price=0.0, barcode="", dupe=False):
+    def get_item_details(self, *, item_id: str = "", barcode: str = ""):
+
         conn = None
         try:
             conn = self._get_connection()
             cursor = conn.cursor()
 
-            item_details = None
-            if dupe:
-                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, papers_per_pack FROM items WHERE name = ? AND price = ?"
-                cursor.execute(query, (name, price))
-                if cursor.rowcount == 0:
-                    query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, papers_per_pack FROM items WHERE name = ?"
-                    cursor.execute(query, (name,))
+            sql = """
+                SELECT
+                    name,
+                    price,
+                    barcode,
+                    cost,
+                    sku,
+                    category,
+                    item_id,
+                    parent_barcode,
+                    taxable,
+                    is_rolling_papers,
+                    papers_per_pack
+                FROM items
+                WHERE {where_clause}
+                LIMIT 1
+            """
 
-            elif item_id:
-                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, papers_per_pack FROM items WHERE item_id = ?"
-                cursor.execute(query, (item_id,))
-
-            elif barcode:
-                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, papers_per_pack FROM items WHERE barcode = ?"
-                cursor.execute(query, (barcode,))
-
-            elif name and price:
-                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, papers_per_pack FROM items WHERE name = ? AND price = ?"
-                cursor.execute(query, (name, price))
-                if cursor.rowcount == 0:
-
-                    query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, papers_per_pack FROM items WHERE name = ?"
-                    cursor.execute(query, (name,))
-
-            elif name:
-                query = "SELECT name, price, barcode, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, papers_per_pack FROM items WHERE name = ?"
-                cursor.execute(query, (name,))
-
+            if item_id and str(item_id).strip():
+                cursor.execute(sql.format(where_clause="item_id = ?"), (str(item_id).strip(),))
+            elif barcode and str(barcode).strip():
+                cursor.execute(sql.format(where_clause="barcode = ?"), (str(barcode).strip(),))
             else:
                 return None
 
-            item = cursor.fetchone()
+            row = cursor.fetchone()
+            if not row:
+                return None
 
-            if item:
-                item_details = {
-                    "name": item[0],
-                    "price": item[1],
-                    "barcode": item[2],
-                    "cost": item[3],
-                    "sku": item[4],
-                    "category": item[5],
-                    "item_id": item[6],
-                    "parent_barcode": item[7],
-                    "taxable": bool(item[8]),
-                    "is_rolling_papers": bool(item[9]),
-                    "papers_per_pack": item[10],
-                }
+            return {
+                "name": row[0],
+                "price": row[1],
+                "barcode": row[2],
+                "cost": row[3],
+                "sku": row[4],
+                "category": row[5],
+                "item_id": row[6],
+                "parent_barcode": row[7],
+                "taxable": int(row[8]) if row[8] is not None else 1,
+                "is_rolling_papers": int(row[9]) if row[9] is not None else 0,
+                "papers_per_pack": row[10],
+            }
 
         except Exception as e:
-            logger.warn(f"[DatabaseManager]: get_item_details\n {e}")
+            logger.warning(f"[DatabaseManager]: get_item_details\n{e}")
+            return None
         finally:
             if conn:
                 conn.close()
-        return item_details
+
 
     def delete_item(self, item_id):
         logger.warn(f"delete\n{item_id}")
@@ -823,36 +820,37 @@ class DatabaseManager:
 
 
 
-    def send_order_to_history_database(self, order_details, order_manager, db_manager):
-        tax = order_details["total_with_tax"] - order_details["total"]
-        timestamp = datetime.now()
-
-        items_for_db = [
-            {**{"name": item_name}, **item_details}
-            for item_name, item_details in order_details["items"].items()
-        ]
-
-        success = self.add_order_history(
-            order_details["order_id"],
-            order_details["total"],
-            tax,
-            order_details["discount"],
-            order_details["total_with_tax"],
-            timestamp,
-            order_details["payment_method"],
-            order_details["amount_tendered"],
-            order_details["change_given"],
-        )
-
-        if not success:
-            logger.warn(
-                f"[DatabaseManager] Failed to insert order_history for order_id={order_details['order_id']}"
-            )
-            return
-
-        self._insert_order_items_from_list(
-            order_details["order_id"], items_for_db, timestamp
-        )
+    def send_order_to_history_database(self, order_details):
+        print(order_details)
+        # tax = order_details["total_with_tax"] - order_details["total"]
+        # timestamp = datetime.now()
+        #
+        # items_for_db = [
+        #     {**{"name": item_name}, **item_details}
+        #     for item_name, item_details in order_details["items"].items()
+        # ]
+        #
+        # success = self.add_order_history(
+        #     order_details["order_id"],
+        #     order_details["total"],
+        #     tax,
+        #     order_details["discount"],
+        #     order_details["total_with_tax"],
+        #     timestamp,
+        #     order_details["payment_method"],
+        #     order_details["amount_tendered"],
+        #     order_details["change_given"],
+        # )
+        #
+        # if not success:
+        #     logger.warn(
+        #         f"[DatabaseManager] Failed to insert order_history for order_id={order_details['order_id']}"
+        #     )
+        #     return
+        #
+        # self._insert_order_items_from_list(
+        #     order_details["order_id"], items_for_db, timestamp
+        # )
 
     def add_item_to_database(
         self,
