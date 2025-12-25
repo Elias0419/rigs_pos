@@ -5,7 +5,7 @@ from math import log1p
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.metrics import dp
-from kivy.properties import StringProperty, ObjectProperty, BooleanProperty
+from kivy.properties import ListProperty, NumericProperty, ObjectProperty, StringProperty, BooleanProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
@@ -13,7 +13,7 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.recycleview import RecycleView
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
-from kivy.graphics import Color, Line
+from kivy.graphics import Color, Line, Rectangle
 from kivy.factory import Factory
 from kivymd.uix.button import MDRaisedButton, MDFlatButton
 
@@ -70,13 +70,38 @@ class InventoryRow(RecycleDataViewBehavior, BoxLayout):
     order_manager = ObjectProperty(allownone=True)
     formatted_price = StringProperty()
     formatted_name = StringProperty("")
+    row_index = NumericProperty(0)
+    bg_color = ListProperty([1, 1, 1, 1])
 
     def __init__(self, **kwargs):
-        super().__init__(orientation="horizontal", spacing=5, padding=5, **kwargs)
+        super().__init__(
+            orientation="horizontal",
+            spacing=dp(10),
+            padding=[dp(12), dp(10), dp(12), dp(10)],
+            size_hint_y=None,
+            height=dp(72),
+            **kwargs,
+        )
         self.app = App.get_running_app()
+
+        with self.canvas.before:
+            self._bg_color_instr = Color(*self.bg_color)
+            self._bg_rect = Rectangle(pos=self.pos, size=self.size)
+
+        self.bind(pos=self._sync_bg, size=self._sync_bg, bg_color=self._sync_bg_color)
+
         self._name_lbl = MarkupLabel()
-        self._price_lbl = Label(size_hint_x=0.2)
-        self._btn = MDFlatButton(text="Add to Order")
+        self._price_lbl = Label(
+            size_hint_x=None,
+            width=dp(120),
+            markup=True,
+            halign="right",
+            valign="middle",
+            color=(0, 0, 0, 1),
+        )
+        self._price_lbl.bind(size=lambda *_: setattr(self._price_lbl, "text_size", self._price_lbl.size))
+
+        self._btn = MDRaisedButton(text="ADD", size_hint_x=None, width=dp(120))
         self._btn.bind(on_release=lambda *_: self.add_to_order())
 
         self.bind(formatted_name=self._name_lbl.setter("text"))
@@ -90,25 +115,34 @@ class InventoryRow(RecycleDataViewBehavior, BoxLayout):
 
         add_bottom_divider(self)
 
+    def _sync_bg(self, *_):
+        self._bg_rect.pos = self.pos
+        self._bg_rect.size = self.size
+
+    def _sync_bg_color(self, *_):
+        self._bg_color_instr.rgba = self.bg_color
+
     def refresh_view_attrs(self, rv, index, data):
         res = super().refresh_view_attrs(rv, index, data)
-        # ensure initial formatting is applied
+        self.row_index = index
+        self.bg_color = [1, 1, 1, 1] if (index % 2 == 0) else [0.96, 0.96, 0.96, 1]
+
         self._on_name(self, self.name)
         self._on_price(self, self.price)
-        # if the RecycleView passed an order_manager, use it
+
         if "order_manager" in data and data["order_manager"] is not None:
             self.order_manager = data["order_manager"]
         return res
 
     def _on_name(self, *_):
         name = self.name or ""
-        self.formatted_name = f"[b][size=20]{name}[/size][/b]" if name else "[b][/b]"
+        self.formatted_name = f"[color=000000][b][size=22]{name}[/size][/b][/color]" if name else "[b][/b]"
 
     def _on_price(self, *_):
         try:
-            self.formatted_price = f"{float(self.price):.2f}"
+            self.formatted_price = f"[color=000000][b][size=22]${float(self.price):.2f}[/size][/b][/color]"
         except Exception:
-            self.formatted_price = "Invalid"
+            self.formatted_price = "[color=000000][b][size=22]—[/size][/b][/color]"
 
     def add_to_order(self):
         item_details = self.app.db_manager.get_item_details(barcode=self.barcode)
@@ -118,7 +152,9 @@ class InventoryRow(RecycleDataViewBehavior, BoxLayout):
         try:
             price_float = float(self.price)
         except (TypeError, ValueError) as e:
-            logger.error(f"[Inventory Manager] add_to_order failed to convert price to float for some reason\n{e}")
+            logger.error(
+                f"[Inventory Manager] add_to_order failed to convert price to float for some reason\n{e}"
+            )
             return
 
         om = self.order_manager or self.app.order_manager
@@ -126,7 +162,6 @@ class InventoryRow(RecycleDataViewBehavior, BoxLayout):
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
         self.app.popup_manager.inventory_popup.dismiss()
-
 
 class InventoryManagementRow(RecycleDataViewBehavior, BoxLayout):
     barcode = StringProperty()

@@ -4,6 +4,9 @@ import uuid
 from datetime import datetime, date
 
 from kivy.clock import Clock
+from kivy.graphics import Color, Rectangle
+from kivy.metrics import dp
+
 from kivy.properties import ColorProperty
 from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.boxlayout import BoxLayout
@@ -38,6 +41,59 @@ import logging
 
 logger = logging.getLogger("rigs_pos")
 
+def _add_bottom_divider(widget):
+    with widget.canvas.after:
+        Color(0, 0, 0, 0.12)
+        widget._divider_rect = Rectangle(pos=widget.pos, size=(widget.width, dp(1)))
+    widget.bind(pos=lambda *_: _sync_divider(widget), size=lambda *_: _sync_divider(widget))
+
+
+def _sync_divider(widget):
+    if hasattr(widget, "_divider_rect"):
+        widget._divider_rect.pos = (widget.x, widget.y)
+        widget._divider_rect.size = (widget.width, dp(1))
+
+
+class _OrderRow(BoxLayout):
+    def __init__(self, index, left_text, right_text, **kwargs):
+        super().__init__(
+            orientation="horizontal",
+            spacing=dp(10),
+            padding=[dp(12), dp(10), dp(12), dp(10)],
+            size_hint_y=None,
+            height=dp(56),
+            **kwargs,
+        )
+
+        bg = (1, 1, 1, 1) if (index % 2 == 0) else (0.96, 0.96, 0.96, 1)
+        with self.canvas.before:
+            self._bg_color = Color(*bg)
+            self._bg_rect = Rectangle(pos=self.pos, size=self.size)
+        self.bind(pos=self._sync_bg, size=self._sync_bg)
+
+        self._left = MarkupLabel(
+            text=f"[color=000000][b][size=20]{left_text}[/size][/b][/color]",
+            halign="left",
+            size_hint_x=0.75,
+            size_hint_y=None,
+            height=self.height,
+        )
+        self._right = MarkupLabel(
+            text=f"[color=000000][b][size=20]{right_text}[/size][/b][/color]",
+            halign="right",
+            size_hint_x=0.25,
+            size_hint_y=None,
+            height=self.height,
+        )
+
+        self.add_widget(self._left)
+        self.add_widget(self._right)
+
+        _add_bottom_divider(self)
+
+    def _sync_bg(self, *_):
+        self._bg_rect.pos = self.pos
+        self._bg_rect.size = self.size
 
 class MarkupLabel(MDLabel):
     def __init__(self, **kwargs):
@@ -2846,67 +2902,55 @@ class PopupManager:
 
 
     def show_order_popup(self, order_summary):
-
         order_details = self.app.order_manager.get_order_details()
+
         popup_layout = GridLayout(
-            orientation="tb-lr", spacing=5, padding=5, cols=2, rows=2
+            orientation="tb-lr",
+            spacing=dp(8),
+            padding=dp(10),
+            cols=2,
+            rows=2,
         )
 
-        items_layout = GridLayout(orientation="lr-tb", size_hint_y=1, rows=20, cols=2)
+        items_layout = GridLayout(
+            orientation="lr-tb",
+            size_hint_y=1,
+            cols=1,
+            spacing=dp(0),
+        )
 
+        i = 0
         for item_id, item_details in order_details.items.items():
-            item_text = f"{item_details.quantity}x {item_details.name}"
-            item_price = f"${item_details.total_price:.2f}"
-            item_label = MarkupLabel(
-                text=item_text,
-                halign="left",
-                size_hint_x=7 / 8,
-                size_hint_y=None,
-                height=40,
-            )
-            price_label = MarkupLabel(
-                text=item_price,
-                halign="right",
-                size_hint_x=1 / 8,
-                size_hint_y=None,
-                height=40,
-            )
-            items_layout.add_widget(item_label)
-            items_layout.add_widget(price_label)
+            left = f"{item_details.quantity}x {item_details.name}"
+            right = f"${item_details.total_price:.2f}"
+            items_layout.add_widget(_OrderRow(i, left, right))
+            i += 1
 
         totals_container = AnchorLayout(anchor_x="right", size_hint_y=0.1)
-        totals_layout = GridLayout(orientation="tb-lr", rows=4)
-        subtotal_label = MarkupLabel(
-            text=f"Subtotal: ${order_details.subtotal:.2f}", halign="right"
-        )
-        tax_label = MarkupLabel(
-            text=f"Tax: ${order_details.tax_amount:.2f}", halign="right"
-        )
+        totals_layout = GridLayout(orientation="tb-lr", rows=4, size_hint_x=None, width=dp(280), spacing=dp(4))
+
+        subtotal_label = MarkupLabel(text=f"[b][size=20]Subtotal: ${order_details.subtotal:.2f}[/size][/b]", halign="right")
+        tax_label = MarkupLabel(text=f"[b][size=20]Tax: ${order_details.tax_amount:.2f}[/size][/b]", halign="right")
         total_label = MarkupLabel(
-            text=f"[size=25]Total: [b]${order_details.total_with_tax:.2f}[/b][/size]",
+            text=f"[size=26]Total: [b]${order_details.total_with_tax:.2f}[/b][/size]",
             halign="right",
         )
 
         totals_layout.add_widget(subtotal_label)
         if order_details.total_discount > 0:
-            discount_label = MarkupLabel(
-                text=f"Discount: -${order_details.total_discount:.2f}", halign="right"
-            )
+            discount_label = MarkupLabel(text=f"[color=000000][b][size=20]Discount: -${order_details.total_discount:.2f}[/size][/b][/color]", halign="right")
             totals_layout.add_widget(discount_label)
         else:
-            _blank = MarkupLabel(text="", size_hint_y=None, height=1)
-            totals_layout.add_widget(_blank)
+            totals_layout.add_widget(MarkupLabel(text="", size_hint_y=None, height=dp(1)))
 
         totals_layout.add_widget(tax_label)
         totals_layout.add_widget(total_label)
         totals_container.add_widget(totals_layout)
-        # items_and_totals_layout.add_widget(totals_layout)
-        popup_layout.add_widget(items_layout)
-        popup_layout.add_widget(totals_container)
+
         buttons_layout_top = GridLayout(
             orientation="tb-lr",
-            spacing=5,
-            padding=5,
+            spacing=dp(8),
+            padding=dp(10),
             cols=1,
             rows=3,
             size_hint_x=1 / 3,
@@ -2914,46 +2958,49 @@ class PopupManager:
         )
         buttons_layout_bottom = GridLayout(
             orientation="tb-lr",
-            spacing=5,
-            padding=5,
+            spacing=dp(8),
+            padding=dp(10),
             cols=1,
-            rows=3,
+            rows=2,
             size_hint_x=1 / 3,
             size_hint_y=2 / 5,
         )
-        btn_pay_cash = self.app.utilities.create_md_raised_button(
-            f"[b][size=20]Pay Cash[/b][/size]",
-            self.app.button_handler.on_payment_button_press,
-            (0.8, 1),
-        )
 
-        btn_pay_credit = self.app.utilities.create_md_raised_button(
-            f"[b][size=20]Pay Credit[/b][/size]",
+        btn_pay_cash = self.app.utilities.create_md_raised_button(
+            "[b][size=22]Pay Cash[/size][/b]",
             self.app.button_handler.on_payment_button_press,
-            (0.8, 1),
+            (0.86, 1),
+        )
+        btn_pay_credit = self.app.utilities.create_md_raised_button(
+            "[b][size=22]Pay Credit[/size][/b]",
+            self.app.button_handler.on_payment_button_press,
+            (0.86, 1),
         )
         btn_pay_debit = self.app.utilities.create_md_raised_button(
-            f"[b][size=20]Pay Debit[/b][/size]",
+            "[b][size=22]Pay Debit[/size][/b]",
             self.app.button_handler.on_payment_button_press,
-            (0.8, 1),
+            (0.86, 1),
         )
-
         btn_pay_split = self.app.utilities.create_md_raised_button(
-            f"[b][size=20]Split[/b][/size]",
+            "[b][size=22]Split[/size][/b]",
             self.app.button_handler.on_payment_button_press,
-            (0.8, 1),
+            (0.86, 1),
         )
 
         btn_cancel = Button(
             text="Cancel",
             on_press=self.app.button_handler.on_payment_button_press,
-            size_hint=(0.8, 1),
+            size_hint=(0.86, 1),
         )
+
         buttons_layout_top.add_widget(btn_pay_cash)
         buttons_layout_top.add_widget(btn_pay_debit)
         buttons_layout_top.add_widget(btn_pay_credit)
         buttons_layout_bottom.add_widget(btn_pay_split)
         buttons_layout_bottom.add_widget(btn_cancel)
+
+        popup_layout.add_widget(items_layout)
+        popup_layout.add_widget(totals_container)
         popup_layout.add_widget(buttons_layout_top)
         popup_layout.add_widget(buttons_layout_bottom)
 
