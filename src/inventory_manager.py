@@ -1,3 +1,7 @@
+import re
+import unicodedata
+from math import log1p
+
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.metrics import dp
@@ -11,9 +15,9 @@ from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.graphics import Color, Line
 from kivy.factory import Factory
-
 from kivymd.uix.button import MDRaisedButton, MDFlatButton
 
+from rapidfuzz import fuzz
 
 from database_manager import DatabaseManager
 import logging
@@ -46,6 +50,17 @@ def add_bottom_divider(widget, rgba=(0.5, 0.5, 0.5, 1), width=1):
 def _update_divider(widget):
     if hasattr(widget, "_divider") and widget._divider is not None:
         widget._divider.points = [widget.x, widget.y, widget.right, widget.y]
+
+_norm_re = re.compile(r"[^0-9a-z]+")
+
+
+def normalize_name(s: str) -> str:
+    s = s or ""
+    s = unicodedata.normalize("NFKD", s)
+    s = "".join(ch for ch in s if not unicodedata.combining(ch))
+    s = s.casefold()
+    s = _norm_re.sub(" ", s)
+    return " ".join(s.split())
 
 
 class InventoryRow(RecycleDataViewBehavior, BoxLayout):
@@ -267,18 +282,22 @@ class InventoryView(BoxLayout):
     def __init__(self, order_manager, **kwargs):
         super().__init__(orientation="vertical", spacing=5, padding=10, **kwargs)
         self.order_manager = order_manager
-        self.full_inventory = []
+        self.app = self.order_manager.app
 
-        # Top search bar
+        self.full_inventory = []
+        self._search_cache = []
+        self._popularity_norm = {}
+
+        self._filter_ev = None
+        self._last_query_norm = ""
+
         top = BoxLayout(size_hint_y=None, height=dp(32), spacing=5)
-        self.search_input = TextInput(hint_text="Search", multiline=False)
-        self.search_input.bind(text=self.filter_inventory)
+        self.search_input = TextInput(hint_text="Search item name", multiline=False)
+        self.search_input.bind(text=self._on_search_text)
         top.add_widget(self.search_input)
         self.add_widget(top)
 
-        # RecycleView
         self.rv = RecycleView()
-
         layout = RecycleBoxLayout(
             default_size=(None, dp(48)),
             default_size_hint=(1, None),
@@ -291,27 +310,102 @@ class InventoryView(BoxLayout):
         self.rv.viewclass = InventoryRow
         self.add_widget(self.rv)
 
-    def show_inventory(self, inventory_items):
-        self.full_inventory = inventory_items
-        data = self._generate_data(self.full_inventory)
-        # attach order_manager for row-level use
+        self.refresh_from_app_cache()
+
+    def refresh_from_app_cache(self):
+        self.full_inventory = list(self.app.inventory_cache or [])
+
+        pop_raw = self.app.db_manager.get_item_popularity_by_name()
+        self._popularity_norm = {normalize_name(k): float(v) for k, v in pop_raw.items()}
+
+        self._search_cache = []
+        for item in self.full_inventory:
+            name = "" if item[1] is None else str(item[1])
+            n_name = normalize_name(name)
+            tokens = n_name.split()
+            sold = float(self._popularity_norm.get(n_name, 0.0))
+            self._search_cache.append(
+                {"item": item, "name": name, "n_name": n_name, "tokens": tokens, "sold": sold}
+            )
+
+        self._apply_filter_now(self._last_query_norm)
+
+    def _generate_data(self, items):
+        return [{"barcode": str(item[0]), "name": item[1], "price": str(item[2])} for item in items]
+
+    def _on_search_text(self, _, text):
+        self._last_query_norm = normalize_name(text or "")
+        if self._filter_ev is not None:
+            self._filter_ev.cancel()
+        self._filter_ev = Clock.schedule_once(lambda dt: self._apply_filter_now(self._last_query_norm), 0.12)
+
+    def _apply_filter_now(self, query_norm: str):
+        if not query_norm:
+            data = self._generate_data(self.full_inventory)
+            for d in data:
+                d["order_manager"] = self.order_manager
+            self.rv.data = data
+            return
+
+        q_tokens = query_norm.split()
+
+        if len(q_tokens) == 1 and len(query_norm) <= 2:
+            q = q_tokens[0]
+            hits = []
+            for r in self._search_cache:
+                if any(t.startswith(q) for t in r["tokens"]):
+                    hits.append((r["sold"], r["name"], r["item"]))
+            hits.sort(key=lambda x: (-x[0], x[1]))
+            filtered = [it for _, _, it in hits[:200]]
+            data = self._generate_data(filtered)
+            for d in data:
+                d["order_manager"] = self.order_manager
+            self.rv.data = data
+            return
+
+        scored = []
+        for r in self._search_cache:
+            m = self._match_prefixes(r["tokens"], q_tokens)
+            if m is None:
+                continue
+
+            quality = 0.0
+            for q, (i, tok) in zip(q_tokens, m):
+                completion = len(q) / max(1, len(tok))
+                quality += 100.0 * completion - 2.0 * i
+
+            if r["n_name"].startswith(query_norm):
+                quality += 15.0
+
+            final = quality * 1000.0 + 2500.0 * log1p(r["sold"])
+            scored.append((final, r["sold"], r["name"], r["item"]))
+
+        scored.sort(key=lambda x: (-x[0], -x[1], x[2]))
+
+        filtered = [it for _, _, _, it in scored[:200]]
+        data = self._generate_data(filtered)
         for d in data:
             d["order_manager"] = self.order_manager
         self.rv.data = data
 
-    def _generate_data(self, items):
-        # items: [(barcode, name, price, ...)]
-        return [
-            {"barcode": str(item[0]), "name": item[1], "price": str(item[2])}
-            for item in items
-        ]
-
-    def filter_inventory(self, _, text):
-        query = (text or "").lower().strip()
-        if not query:
-            return
-        filtered = [it for it in self.full_inventory if query in it[1].lower()]
-        self.rv.data = self._generate_data(filtered)
+    def _match_prefixes(self, tokens, q_tokens):
+        used = set()
+        matches = []
+        for q in q_tokens:
+            best_i = None
+            best_tok = None
+            for i, tok in enumerate(tokens):
+                if i in used:
+                    continue
+                if tok.startswith(q):
+                    if best_i is None or i < best_i or (i == best_i and len(tok) < len(best_tok)):
+                        best_i = i
+                        best_tok = tok
+            if best_i is None:
+                return None
+            used.add(best_i)
+            matches.append((best_i, best_tok))
+        return matches
 
 
 class InventoryManagementView(BoxLayout):
@@ -454,6 +548,7 @@ class InventoryManagementView(BoxLayout):
                     else ""
                 )
                 self.app.utilities.update_inventory_cache()
+                InventoryView.refresh_from_app_cache()
                 self.refresh_label_inventory_for_dual_pane_mode()
             except Exception as e:
                 logger.warning(e)

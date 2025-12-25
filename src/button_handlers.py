@@ -116,7 +116,7 @@ class ButtonHandler:
             "Distrib TEST": self.show_distrib,
             "Dual Pane": self.show_dual_pane_mode,
             "Admin": self.show_admin_popup,
-            "Notes": self.show_notes_popup,
+            "Custom Item": self.show_custom_item_popup,
             "Cameras": self.open_cameras,
         }
         for action_text, action in tool_actions.items():
@@ -234,14 +234,9 @@ class ButtonHandler:
         button_actions = {
             "Clear Order": self.clear_order,
             "Pay": self.pay_order,
-            "Custom": self.show_custom_item_popup,
             "Tools": self.show_tools_popup,
             "Search": self.show_inventory,
         }
-
-        # action = button_actions.get(instance.text)
-        # if action:
-        #     action()
 
         for action_text, action in button_actions.items():
             if action_text.lower() in instance.text.lower():

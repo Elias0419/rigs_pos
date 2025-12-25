@@ -1035,51 +1035,26 @@ class DatabaseManager:
             conn.close()
 
 
-## Deprecated
-
-    def create_dist_table(self):
+    def get_item_popularity_by_name(self) -> dict[str, float]:
         conn = self._get_connection()
+        cursor = conn.cursor()
         try:
-            cursor = conn.cursor()
             cursor.execute(
-                """CREATE TABLE IF NOT EXISTS distributor_info (
-                                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                    name TEXT NOT NULL,
-                                    contact_info TEXT,
-                                    item_name TEXT,
-                                    item_id TEXT,
-                                    price REAL,
-                                    notes TEXT,
-                                    FOREIGN KEY(item_id) REFERENCES items(item_id)
-                                )"""
+                """
+                SELECT name, COALESCE(SUM(qty), 0)
+                FROM order_items
+                GROUP BY name
+                """
             )
-            conn.commit()
+            out: dict[str, float] = {}
+            for name, qty in cursor.fetchall():
+                if name is None:
+                    continue
+                out[str(name)] = float(qty or 0.0)
+            return out
         except sqlite3.Error as e:
-            logger.warn(f"[DatabaseManager]:\n{e}")
+            logger.warn(f"[DatabaseManager.get_item_popularity_by_name]:\n{e}")
+            return {}
         finally:
             conn.close()
-
-    def get_all_distrib(self):
-
-        conn = self._get_connection()
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
-        query = "SELECT * FROM distributor_info"
-        cursor.execute(query)
-        rows = cursor.fetchall()
-
-        distributors = {
-            row["id"]: {
-                "name": row["name"],
-                "contact_info": row["contact_info"],
-                "item_name": row["item_name"],
-                "item_id": row["item_id"],
-                "price": row["price"],
-                "notes": row["notes"],
-            }
-            for row in rows
-        }
-
-        conn.close()
-        return distributors
 

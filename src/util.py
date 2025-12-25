@@ -77,7 +77,7 @@ from barcode_scanner import BarcodeScanner
 from button_handlers import ButtonHandler
 from database_manager import DatabaseManager
 from history_manager import HistoryPopup, HistoryView
-from inventory_manager import InventoryManagementRow, InventoryManagementView
+from inventory_manager import InventoryManagementRow, InventoryManagementView, InventoryView
 from label_printer import LabelPrinter, LabelPrintingView
 from open_cash_drawer import open_cash_drawer
 from order_manager import OrderManager
@@ -1191,7 +1191,7 @@ class Utilities:
 
         button_layout.add_widget(_blank3)
         button_layout.add_widget(btn_pay)
-        button_layout.add_widget(btn_custom_item)
+        # button_layout.add_widget(btn_custom_item)
         button_layout.add_widget(btn_inventory)
         button_layout.add_widget(btn_tools)
 
@@ -1803,6 +1803,7 @@ class Utilities:
             papers_text,
         )
         self.update_inventory_cache()
+        InventoryView.refresh_from_app_cache()
         self.app.inventory_manager.refresh_inventory()
         if getattr(self.app.label_manager, "dual_pane_mode", False):
             self.app.inventory_manager.refresh_label_inventory_for_dual_pane_mode()
