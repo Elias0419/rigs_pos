@@ -3,9 +3,12 @@ from PIL import Image
 import escpos
 import base64
 import logging
+from typing import Any, Dict
 from escpos.config import Config as _BaseConfig
 from escpos import exceptions, printer
 import yaml
+
+from order_manager import LineItem, Order
 
 
 class Config(_BaseConfig):
@@ -73,17 +76,70 @@ class ReceiptPrinter:
         base64_bytes = base64.b64encode(uuid_bytes)
         return str(base64_bytes.decode("utf-8")).replace("=", "")
 
+    def _normalize_order_payload(self, order_details: Order) -> Dict[str, Any]:
+        if not isinstance(order_details, Order):
+            raise TypeError(f"Expected Order instance, got {type(order_details)}")
+
+        # Ensure totals on the Order and each LineItem are up to date.
+        order_details.recalculate_totals()
+
+        normalized_items: Dict[str, Dict[str, Any]] = {}
+        for item_id, line_item in order_details.items.items():
+            if not isinstance(line_item, LineItem):
+                raise TypeError(f"Order items must be LineItem instances, got {type(line_item)}")
+
+            line_item.recompute()
+            item_dict = {
+                "item_id": line_item.item_id,
+                "barcode": line_item.barcode,
+                "is_custom": line_item.is_custom,
+                "name": line_item.name,
+                "quantity": int(line_item.quantity),
+                "unit_price": float(line_item.unit_price),
+                "line_subtotal": float(line_item.line_subtotal),
+                "line_discount_total": float(line_item.line_discount_total),
+                "total_price": float(line_item.total_price),
+            }
+            normalized_items[str(item_id)] = item_dict
+
+        tax_amount = float(order_details.tax_amount)
+        total_with_tax = order_details.total_with_tax
+        if total_with_tax is None:
+            total_with_tax = order_details.calculate_total_with_tax()
+
+        payload: Dict[str, Any] = {
+            "order_id": str(order_details.order_id),
+            "items": normalized_items,
+            "subtotal": float(order_details.subtotal),
+            "total_discount": float(order_details.total_discount),
+            "total": float(order_details.total),
+            "tax_rate": float(order_details.tax_rate),
+            "tax_amount": tax_amount,
+            "total_with_tax": float(total_with_tax),
+            "payment_method": order_details.payment_method,
+            "amount_tendered": float(order_details.amount_tendered),
+            "change_given": float(order_details.change_given),
+        }
+
+        return payload
+
     def print_receipt(self, order_details, reprint=False, draft=False, qr_code=False):
-        if len(order_details.get("items", {})) == 0:
+        try:
+            normalized_order = self._normalize_order_payload(order_details)
+        except Exception as e:
+            self.app.popup_manager.catch_receipt_printer_errors(e, order_details)
+            return False
+
+        if len(normalized_order.get("items", {})) == 0:
             return
         logo = self._rcpt_load_logo()
 
         try:
             date_str = self._rcpt_print_header(logo)
-            self._rcpt_print_items(order_details)
-            self._rcpt_print_totals(order_details, draft)
-            self._rcpt_print_review_and_barcode(order_details, draft, qr_code)
-            self._rcpt_print_footer(order_details, reprint, draft, date_str)
+            self._rcpt_print_items(normalized_order)
+            self._rcpt_print_totals(normalized_order, draft)
+            self._rcpt_print_review_and_barcode(normalized_order, draft, qr_code)
+            self._rcpt_print_footer(normalized_order, reprint, draft, date_str)
             self.printer.cut()
             return True
         except Exception as e:
@@ -235,7 +291,7 @@ class ReceiptPrinter:
             # Optional second line(s): per-item discount etc. not bold
             self.printer.set(align="left", font="a", bold=False)
             try:
-                disc_amt = float(item.get("discount", {}).get("amount", 0) or 0)
+                disc_amt = float(item.get("line_discount_total", 0.0) or 0.0)
             except Exception:
                 disc_amt = 0.0
             if disc_amt > 0:
@@ -253,7 +309,7 @@ class ReceiptPrinter:
         display_subtotal = max(0.0, round(orig_subtotal - paper_excise, 2))
 
         try:
-            order_disc = float(order_details.get("discount", 0) or 0)
+            order_disc = float(order_details.get("total_discount", 0) or 0)
         except Exception:
             order_disc = 0.0
 
