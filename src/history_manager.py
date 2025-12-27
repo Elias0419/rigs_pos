@@ -25,6 +25,7 @@ from kivymd.uix.pickers import MDDatePicker
 
 
 from database_manager import DatabaseManager
+from order_manager import LineItem, Order
 import logging
 
 logger = logging.getLogger("rigs_pos")
@@ -613,51 +614,73 @@ class OrderDetailsPopup(Popup):
 
     def print_receipt(self, order):
         if self.receipt_printer:
-            order_dict = self.convert_order_to_dict(order)
-            self.receipt_printer.print_receipt(order_dict, reprint=True)
+            order_obj = self.convert_order_to_order(order)
+            if order_obj:
+                self.receipt_printer.print_receipt(order_obj, reprint=True)
 
     def refund(self, *_):  # TODO
         pass
 
-    def convert_order_to_dict(self, order):
-        (
-            order_id,
-            _item_summary,
-            total,
-            tax,
-            discount,
-            total_with_tax,
-            timestamp,
-            payment_method,
-            amount_tendered,
-            change_given,
-        ) = order
+    def convert_order_to_order(self, order):
+        try:
+            (
+                order_id,
+                _item_summary,
+                total,
+                tax,
+                discount,
+                _total_with_tax,
+                _timestamp,
+                payment_method,
+                amount_tendered,
+                change_given,
+            ) = order
+        except Exception as e:
+            logger.warning(f"[OrderDetailsPopup] convert_order_to_order unpack failed: {e}")
+            return None
 
-        items_dict = {}
-        for i, raw_item in enumerate(self.order_items or []):
-            item = dict(raw_item)
+        try:
+            total_val = float(total or 0)
+        except Exception:
+            total_val = 0.0
 
-            quantity = item.get("quantity")
-            if quantity in (None, ""):
-                quantity = item.get("qty", 0)
-            item["quantity"] = quantity or 0
+        try:
+            tax_val = float(tax or 0)
+        except Exception:
+            tax_val = 0.0
 
-            if "total_price" not in item:
-                item["total_price"] = item.get("line_subtotal") or item.get("subtotal", 0)
+        tax_rate = tax_val / total_val if total_val else 0.0
+        order_obj = Order(tax_rate=tax_rate, order_id=str(order_id))
+        order_obj.payment_method = payment_method
+        order_obj.amount_tendered = float(amount_tendered or 0)
+        order_obj.change_given = float(change_given or 0)
+        order_obj.order_level_discount = float(discount or 0)
 
-            items_dict[str(i)] = item
-        return {
-            "order_id": order_id,
-            "items": items_dict,
-            "subtotal": total,
-            "tax_amount": tax,
-            "total_with_tax": total_with_tax,
-            "timestamp": timestamp,
-            "discount": discount,
-            "payment_method": payment_method,
-            "amount_tendered": amount_tendered,
-            "change_given": change_given,
-        }
+        items = {}
+        for idx, raw_item in enumerate(self.order_items or []):
+            try:
+                quantity = raw_item.get("qty") or raw_item.get("quantity") or 1
+                unit_price = raw_item.get("unit_price") or raw_item.get("price") or 0
+                barcode = raw_item.get("barcode")
+                if barcode in (None, ""):
+                    barcode = None
+
+                line_item = LineItem(
+                    item_id=str(raw_item.get("item_id") or idx),
+                    name=raw_item.get("name") or "",
+                    unit_price=float(unit_price),
+                    quantity=int(quantity) if quantity not in (None, "") else 1,
+                    barcode=str(barcode) if barcode is not None else None,
+                    is_custom=int(raw_item.get("is_custom") or 0),
+                )
+                line_item.recompute()
+                items[line_item.item_id] = line_item
+            except Exception as e:
+                logger.warning(f"[OrderDetailsPopup] Skipping item due to error: {e}")
+
+        order_obj.items = items
+        order_obj.recalculate_totals()
+        return order_obj
 
     def build_items_section(self, order_items):
         items = order_items
