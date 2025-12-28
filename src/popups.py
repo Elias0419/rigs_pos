@@ -2392,18 +2392,30 @@ class PopupManager:
 
         rounding_layout = BoxLayout(orientation="vertical", spacing=5)
         rounding_layout.add_widget(
-            Label(text="Round down to nearest:", size_hint_y=None, height=30, font_size=18)
+            Label(text="Round down targets:", size_hint_y=None, height=30, font_size=18)
         )
 
         rounding_buttons = GridLayout(cols=2, spacing=5)
-        for amount in [1, 5, 10, 20]:
+        round_down_targets = self.app.order_manager.get_round_down_targets()
+        max_rounding_buttons = 4
+
+        for target_amount in round_down_targets:
             rounding_buttons.add_widget(
                 self.app.utilities.create_md_raised_button(
-                    f"${amount}",
-                    lambda x, d=amount: self.app.order_manager.round_down_payment_adjustment(d),
+                    f"${target_amount:,.2f}",
+                    lambda x, t=target_amount: self.app.order_manager.round_down_to_target_total(t),
                     size_hint=(1,1),
                 )
             )
+
+        for _ in range(max_rounding_buttons - len(round_down_targets)):
+            placeholder_btn = self.app.utilities.create_md_raised_button(
+                "--",
+                lambda x: None,
+                size_hint=(1, 1),
+            )
+            placeholder_btn.disabled = True
+            rounding_buttons.add_widget(placeholder_btn)
 
         rounding_layout.add_widget(rounding_buttons)
 

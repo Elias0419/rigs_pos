@@ -456,25 +456,70 @@ class OrderManager:
         except AttributeError:
             logger.info("[Order Manager]: order mod popup already dismissed")
 
-    def round_down_payment_adjustment(self, denomination):
-        try:
-            denomination = float(denomination)
-        except (TypeError, ValueError):
-            logger.warning("[Order Manager]: invalid denomination for round down")
-            return False
+    def _determine_round_down_step(self, current_total: float) -> float:
+        if current_total < 20:
+            return 1.0
+        if current_total < 75:
+            return 2.0
+        if current_total < 200:
+            return 5.0
+        if current_total < 500:
+            return 10.0
+        if current_total < 1000:
+            return 20.0
+        return 50.0
 
-        if denomination <= 0:
-            logger.warning("[Order Manager]: denomination must be positive for round down")
+    def get_round_down_targets(self, max_options: int = 4) -> List[float]:
+        current_total = self.calculate_total_with_tax()
+        if current_total is None or current_total <= 0:
+            return []
+
+        step = self._determine_round_down_step(current_total)
+        max_drop = max(current_total * 0.2, step)
+        if current_total < 20:
+            max_drop = min(max_drop, 1.0)
+
+        targets = []
+        base_target = math.floor(current_total / step) * step
+        base_target = round(base_target, 2)
+        if math.isclose(base_target, current_total):
+            base_target = round(base_target - step, 2)
+
+        while len(targets) < max_options and base_target > 0:
+            drop_amount = current_total - base_target
+            if drop_amount <= 0 or drop_amount > max_drop:
+                break
+
+            if targets and math.isclose(base_target, targets[-1]):
+                base_target = round(base_target - step, 2)
+                continue
+
+            targets.append(base_target)
+            base_target = round(base_target - step, 2)
+
+        return targets
+
+    def round_down_to_target_total(self, target_total_with_tax):
+        try:
+            target_total_with_tax = float(target_total_with_tax)
+        except (TypeError, ValueError):
+            logger.warning("[Order Manager]: invalid target total for round down")
             return False
 
         current_total = self.calculate_total_with_tax()
-        target_total = math.floor(current_total / denomination) * denomination
+        if current_total is None or current_total <= 0:
+            logger.warning("[Order Manager]: cannot round down without a valid current total")
+            return False
 
-        if target_total <= 0:
+        if target_total_with_tax <= 0:
             logger.warning("[Order Manager]: target total not positive after round down")
             return False
 
-        if not self.adjust_order_to_target_total(target_total):
+        if target_total_with_tax >= current_total:
+            logger.warning("[Order Manager]: target total must be below current total for round down")
+            return False
+
+        if not self.adjust_order_to_target_total(target_total_with_tax):
             return False
 
         self._finalize_adjust_price()

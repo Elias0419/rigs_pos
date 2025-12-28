@@ -534,6 +534,9 @@ class Utilities:
         seconds_until_end = (end_of_shift - now).total_seconds()
         return seconds_until_end
 
+    def _test(self):
+        print(self.estimate_quarterly_tax())
+
     # def time_until_end_of_shift(self): # testing
     #
     #     hour = 11
