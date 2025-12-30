@@ -88,8 +88,9 @@ class BarcodeScanner:
         item_price = item_details["price"]
         item_id = item_details["item_id"]
         barcode = item_details["barcode"]
+        unit_cost = item_details.get("cost")
         is_custom = False
-        self.app.order_manager.add_item(item_name, item_price, item_id, barcode, is_custom)
+        self.app.order_manager.add_item(item_name, item_price, item_id, barcode, is_custom, unit_cost=unit_cost)
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
 

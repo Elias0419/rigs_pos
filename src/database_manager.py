@@ -625,7 +625,7 @@ class DatabaseManager:
 
                 line_subtotal = qty * unit_price
 
-                unit_cost = item.get("cost")
+                unit_cost = item.get("cost", item.get("unit_cost"))
                 line_cost = None
                 if unit_cost is not None:
                     unit_cost = float(unit_cost)
@@ -778,7 +778,8 @@ class DatabaseManager:
                     taxable,
                     is_rolling_papers,
                     papers_per_pack,
-                    order_timestamp
+                    order_timestamp,
+                    is_custom
                 FROM order_items
                 WHERE order_id = ?
                 ORDER BY id
@@ -804,6 +805,7 @@ class DatabaseManager:
                     "is_rolling_papers": row["is_rolling_papers"],
                     "papers_per_pack": row["papers_per_pack"],
                     "order_timestamp": row["order_timestamp"],
+                    "is_custom": row["is_custom"],
                 }
                 for row in rows
             ]
@@ -1057,4 +1059,3 @@ class DatabaseManager:
             return {}
         finally:
             conn.close()
-

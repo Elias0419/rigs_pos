@@ -4043,10 +4043,8 @@ class PopupManager:
                 button = MDRaisedButton(
                     text=item["name"],
                     size_hint=(1, None),
-                    on_press=lambda x, barcode=barcode, choice=item["name"], price=item[
-                        "price"
-                    ]: self.add_dupe_choice_to_order(
-                        barcode=barcode, choice=choice, price=price
+                    on_press=lambda x, item_details=item: self.add_dupe_choice_to_order(
+                        item_details
                     ),
                 )
                 layout.add_widget(button)
@@ -4060,17 +4058,20 @@ class PopupManager:
         except Exception as e:
             logger.warn(f"Exception in handle_duplicate_barcodes\n{e}")
 
-    def add_dupe_choice_to_order(self, barcode, choice, price):
-
-        item_details = self.app.db_manager.get_item_details(
-            barcode=barcode, name=choice, dupe=True, price=price
-        )
-
+    def add_dupe_choice_to_order(self, item_details):
         if item_details:
-
-            item_name = item_details["name"]
-            item_price = item_details["price"]
-            self.app.order_manager.add_item(item_name, item_price)
+            item_name = item_details.get("name")
+            item_price = item_details.get("price")
+            item_id = item_details.get("item_id")
+            barcode = item_details.get("barcode")
+            unit_cost = item_details.get("cost")
+            self.app.order_manager.add_item(
+                item_name,
+                item_price,
+                item_id=item_id,
+                barcode=barcode,
+                unit_cost=unit_cost,
+            )
             self.handle_duplicate_barcodes_popup.dismiss()
             self.app.utilities.update_display()
             self.app.utilities.update_financial_summary()

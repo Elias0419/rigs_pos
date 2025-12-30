@@ -48,6 +48,7 @@ class LineItem:
     quantity: int = 1
     barcode: Optional[str] = None
     is_custom: int = 0  # stored as INTEGER in sqlite, so use 0/1
+    unit_cost: Optional[float] = None
 
     discounts: List[Discount] = field(default_factory=list)
 
@@ -55,12 +56,15 @@ class LineItem:
     line_subtotal: float = 0.0
     line_discount_total: float = 0.0
     total_price: float = 0.0
+    line_cost: float = 0.0
 
     def recompute(self) -> None:
         price = float(self.unit_price)
         qty = int(self.quantity)
         if qty < 1:
             raise ValueError("quantity must be >= 1")
+
+        self.unit_cost = float(self.unit_cost) if self.unit_cost is not None else None
 
         subtotal = price * qty
 
@@ -87,6 +91,9 @@ class LineItem:
         self.line_subtotal = float(subtotal)
         self.line_discount_total = float(disc_total)
         self.total_price = float(subtotal - disc_total)
+        self.line_cost = (
+            float(self.unit_cost) * qty if self.unit_cost is not None else 0.0
+        )
 
     def add_discount(self, discount: Discount) -> None:
         self.discounts.append(discount)
@@ -111,6 +118,9 @@ class LineItem:
             "name": self.name,
             "price": float(self.unit_price),
             "quantity": int(self.quantity),
+            "cost": float(self.unit_cost) if self.unit_cost is not None else None,
+            "unit_cost": float(self.unit_cost) if self.unit_cost is not None else None,
+            "line_cost": float(self.line_cost) if self.unit_cost is not None else None,
             "discounts": [d.to_dict() for d in self.discounts],
             "line_subtotal": float(self.line_subtotal),
             "line_discount_total": float(self.line_discount_total),
@@ -123,6 +133,9 @@ class LineItem:
         name = str(d["name"])
         unit_price = float(d["price"])
         quantity = int(d.get("quantity", 1))
+
+        unit_cost_raw = d.get("unit_cost", d.get("cost"))
+        unit_cost = float(unit_cost_raw) if unit_cost_raw not in (None, "") else None
 
         barcode = d.get("barcode")
         barcode = str(barcode) if barcode not in (None, "") else None
@@ -139,6 +152,7 @@ class LineItem:
             quantity=quantity,
             barcode=barcode,
             is_custom=is_custom,
+            unit_cost=unit_cost,
             discounts=discounts,
         )
         li.recompute()
@@ -565,9 +579,8 @@ class OrderManager:
         except Exception as e:
             logger.warning(f"[Order Manager]: add_custom_item\n{e}")
 
-    def add_item(self, item_name, item_price, item_id, barcode, is_custom):
-        # Aggregate by item_id (custom items typically have unique item_id and therefore won't aggregate).
-        item_id = str(item_id)
+    def add_item(self, item_name, item_price, item_id=None, barcode=None, is_custom=False, unit_cost=None):
+        item_id = str(item_id) if item_id not in (None, "") else str(uuid.uuid4())
 
         if item_id in self.items:
             li = self.items[item_id]
@@ -580,6 +593,7 @@ class OrderManager:
                 is_custom=int(bool(is_custom)),
                 name=str(item_name),
                 unit_price=float(item_price),
+                unit_cost=float(unit_cost) if unit_cost not in (None, "") else None,
                 quantity=1,
             )
             li.recompute()

@@ -148,6 +148,7 @@ class InventoryRow(RecycleDataViewBehavior, BoxLayout):
         item_details = self.app.db_manager.get_item_details(barcode=self.barcode)
         item_id = item_details.get("item_id")
         barcode = item_details.get("barcode")
+        unit_cost = item_details.get("cost")
         is_custom = False
         try:
             price_float = float(self.price)
@@ -158,7 +159,14 @@ class InventoryRow(RecycleDataViewBehavior, BoxLayout):
             return
 
         om = self.order_manager or self.app.order_manager
-        om.add_item(self.name, price_float, item_id=item_id, barcode=barcode, is_custom=is_custom)
+        om.add_item(
+            self.name,
+            price_float,
+            item_id=item_id,
+            barcode=barcode,
+            is_custom=is_custom,
+            unit_cost=unit_cost,
+        )
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
         self.app.popup_manager.inventory_popup.dismiss()

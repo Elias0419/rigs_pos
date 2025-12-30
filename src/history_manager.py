@@ -661,6 +661,7 @@ class OrderDetailsPopup(Popup):
             try:
                 quantity = raw_item.get("qty") or raw_item.get("quantity") or 1
                 unit_price = raw_item.get("unit_price") or raw_item.get("price") or 0
+                unit_cost = raw_item.get("unit_cost") or raw_item.get("cost")
                 barcode = raw_item.get("barcode")
                 if barcode in (None, ""):
                     barcode = None
@@ -672,6 +673,7 @@ class OrderDetailsPopup(Popup):
                     quantity=int(quantity) if quantity not in (None, "") else 1,
                     barcode=str(barcode) if barcode is not None else None,
                     is_custom=int(raw_item.get("is_custom") or 0),
+                    unit_cost=float(unit_cost) if unit_cost not in (None, "") else None,
                 )
                 line_item.recompute()
                 items[line_item.item_id] = line_item
