@@ -51,7 +51,7 @@ printer:
     media.width:
         pixel: 612
 """
-WIDTH = 48
+WIDTH = 50
 
 
 class ReceiptPrinter:
@@ -149,7 +149,12 @@ class ReceiptPrinter:
     def _fmt_line(self, left: str, right: str, width: int = WIDTH) -> str:
         left = (left or "").strip()
         right = (right or "").strip()
-        pad = max(1, width - len(left) - len(right))
+        min_gap = 1
+        available_for_left = max(0, width - len(right) - min_gap)
+        if len(left) > available_for_left:
+            left = left[:available_for_left]
+
+        pad = max(min_gap, width - len(left) - len(right))
         return f"{left}{' ' * pad}{right}"
 
     def _calc_paper_tax_total(self, order_details) -> float:
