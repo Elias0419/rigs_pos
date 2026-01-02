@@ -1311,21 +1311,30 @@ class LabelPrinter:
         font: ImageFont.FreeTypeFont,
         max_width: int,
     ) -> list[str]:
-        words = text.split()
-        if not words:
-            return []
+        normalized_text = (text or "").replace("\\n", "\n")
+        raw_lines = normalized_text.split("\n")
+
         lines: list[str] = []
-        line = words[0]
-        for word in words[1:]:
-            test = f"{line} {word}"
-            bbox = draw.textbbox((0, 0), test, font=font)
-            w = bbox[2] - bbox[0]
-            if w <= max_width:
-                line = test
-            else:
-                lines.append(line)
-                line = word
-        lines.append(line)
+        for raw_line in raw_lines:
+            words = raw_line.split()
+
+            # Preserve intentional blank lines with a spacer to keep vertical rhythm.
+            if not words:
+                lines.append(" ")
+                continue
+
+            line = words[0]
+            for word in words[1:]:
+                test = f"{line} {word}"
+                bbox = draw.textbbox((0, 0), test, font=font)
+                w = bbox[2] - bbox[0]
+                if w <= max_width:
+                    line = test
+                else:
+                    lines.append(line)
+                    line = word
+            lines.append(line)
+
         return lines
 
     def _render_label(self, item: dict) -> tuple[Image.Image, str, bool, int]:
