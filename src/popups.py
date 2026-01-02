@@ -1349,6 +1349,9 @@ class PopupManager:
         rolling_papers_default = (
             item_details.get("is_rolling_papers") if item_details else False
         )
+        is_cigarette_default = (
+            item_details.get("is_cigarette") if item_details else False
+        )
         papers_per_pack_default = (
             item_details.get("papers_per_pack") if item_details else None
         )
@@ -1395,10 +1398,13 @@ class PopupManager:
         content.add_widget(sku_layout)
         content.add_widget(category_layout)
 
-        rolling_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2)
+        rolling_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2, spacing=10)
         rolling_checkbox = MDCheckbox(active=bool(rolling_papers_default))
+        cigarette_checkbox = MDCheckbox(active=bool(is_cigarette_default))
         rolling_layout.add_widget(Label(text="Rolling Papers", size_hint_x=0.2))
         rolling_layout.add_widget(rolling_checkbox)
+        rolling_layout.add_widget(Label(text="Cigarettes", size_hint_x=0.2))
+        rolling_layout.add_widget(cigarette_checkbox)
         papers_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2)
         papers_input = TextInput(
             text=str(papers_per_pack_default or ""),
@@ -1434,6 +1440,7 @@ class PopupManager:
                 sku_input.text,
                 self.add_to_db_category_input_row.text,
                 rolling_checkbox.active,
+                cigarette_checkbox.active,
                 papers_input.text,
                 self.inventory_item_update_popup,
             ),
@@ -1551,10 +1558,13 @@ class PopupManager:
         category_layout.add_widget(Label(text="Categories", size_hint_x=0.2))
         category_layout.add_widget(self.add_to_db_category_input)
 
-        rolling_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        rolling_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4, spacing=10)
         rolling_checkbox = MDCheckbox()
+        cigarette_checkbox = MDCheckbox()
         rolling_layout.add_widget(Label(text="Rolling Papers", size_hint_x=0.2))
         rolling_layout.add_widget(rolling_checkbox)
+        rolling_layout.add_widget(Label(text="Cigarettes", size_hint_x=0.2))
+        rolling_layout.add_widget(cigarette_checkbox)
 
         papers_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         papers_input = TextInput(
@@ -1591,6 +1601,7 @@ class PopupManager:
                     sku_input.text,
                     self.add_to_db_category_input.text,
                     rolling_checkbox.active,
+                    cigarette_checkbox.active,
                     papers_input.text,
                 ),
             )
@@ -3926,12 +3937,17 @@ class PopupManager:
 
         category_layout.add_widget(self.add_to_db_category_input_inv)
 
-        rolling_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        rolling_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4, spacing=10)
         rolling_checkbox = MDCheckbox(
             active=bool(getattr(self.app.inventory_manager, "is_rolling_papers", False))
         )
+        cigarette_checkbox = MDCheckbox(
+            active=bool(getattr(self.app.inventory_manager, "is_cigarette", False))
+        )
         rolling_layout.add_widget(Label(text="Rolling Papers", size_hint_x=0.2))
         rolling_layout.add_widget(rolling_checkbox)
+        rolling_layout.add_widget(Label(text="Cigarettes", size_hint_x=0.2))
+        rolling_layout.add_widget(cigarette_checkbox)
 
         papers_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         papers_input = TextInput(
@@ -3977,6 +3993,7 @@ class PopupManager:
                     self.inventory_item_popup,
                     query=query,
                     is_rolling_papers_checkbox=rolling_checkbox,
+                    is_cigarette_checkbox=cigarette_checkbox,
                     papers_per_pack_input=papers_input,
                 ),
             )
@@ -4071,6 +4088,7 @@ class PopupManager:
                 item_id=item_id,
                 barcode=barcode,
                 unit_cost=unit_cost,
+                is_cigarette=item_details.get("is_cigarette"),
             )
             self.handle_duplicate_barcodes_popup.dismiss()
             self.app.utilities.update_display()

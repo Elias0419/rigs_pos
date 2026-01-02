@@ -166,6 +166,7 @@ class InventoryRow(RecycleDataViewBehavior, BoxLayout):
             barcode=barcode,
             is_custom=is_custom,
             unit_cost=unit_cost,
+            is_cigarette=item_details.get("is_cigarette"),
         )
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
@@ -180,6 +181,7 @@ class InventoryManagementRow(RecycleDataViewBehavior, BoxLayout):
     category = StringProperty()
     formatted_price = StringProperty()
     is_rolling_papers = BooleanProperty(False)
+    is_cigarette = BooleanProperty(False)
     papers_per_pack = StringProperty("")
 
     def __init__(self, **kwargs):
@@ -219,6 +221,7 @@ class InventoryManagementRow(RecycleDataViewBehavior, BoxLayout):
         self._on_price(self, self.price)
         if data:
             self.is_rolling_papers = bool(data.get("is_rolling_papers", False))
+            self.is_cigarette = bool(data.get("is_cigarette", False))
             self.papers_per_pack = str(data.get("papers_per_pack", "") or "")
         return res
 
@@ -239,6 +242,7 @@ class InventoryManagementRow(RecycleDataViewBehavior, BoxLayout):
         sku,
         category,
         is_rolling_papers,
+        is_cigarette,
         papers_per_pack,
     ):
         barcode = (barcode or "").strip()
@@ -298,6 +302,7 @@ class InventoryManagementRow(RecycleDataViewBehavior, BoxLayout):
             category,
             taxable=item_details.get("taxable", True),
             is_rolling_papers=bool(is_rolling_papers),
+            is_cigarette=bool(is_cigarette),
             papers_per_pack=papers_per_pack_value,
         )
 
@@ -309,6 +314,7 @@ class InventoryManagementRow(RecycleDataViewBehavior, BoxLayout):
             self.sku = sku or ""
             self.category = category or ""
             self.is_rolling_papers = bool(is_rolling_papers)
+            self.is_cigarette = bool(is_cigarette)
             self.papers_per_pack = (
                 str(papers_per_pack_value) if papers_per_pack_value is not None else ""
             )
@@ -459,6 +465,7 @@ class InventoryManagementView(BoxLayout):
     sku = StringProperty()
     category = StringProperty()
     is_rolling_papers = BooleanProperty(False)
+    is_cigarette = BooleanProperty(False)
     papers_per_pack = StringProperty("")
 
     def __init__(self, **kwargs):
@@ -554,6 +561,7 @@ class InventoryManagementView(BoxLayout):
         sku_input,
         category_input,
         is_rolling_papers=False,
+        is_cigarette=False,
         papers_per_pack=None,
     ):
         try:
@@ -583,6 +591,7 @@ class InventoryManagementView(BoxLayout):
                     sku_input.text,
                     category_input.text,
                     is_rolling_papers=is_rolling_papers,
+                    is_cigarette=is_cigarette,
                     papers_per_pack=papers_per_pack_value,
                 )
                 self.papers_per_pack = (
@@ -590,6 +599,8 @@ class InventoryManagementView(BoxLayout):
                     if papers_per_pack_value is not None
                     else ""
                 )
+                self.is_rolling_papers = bool(is_rolling_papers)
+                self.is_cigarette = bool(is_cigarette)
                 self.app.utilities.update_inventory_cache()
                 InventoryView.refresh_from_app_cache()
                 self.refresh_label_inventory_for_dual_pane_mode()
@@ -638,8 +649,9 @@ class InventoryManagementView(BoxLayout):
                 "sku": str(item[4]),
                 "category": str(item[5]),
                 "is_rolling_papers": bool(item[9]) if len(item) > 9 else False,
+                "is_cigarette": bool(item[10]) if len(item) > 10 else False,
                 "papers_per_pack": (
-                    str(item[10]) if len(item) > 10 and item[10] is not None else ""
+                    str(item[11]) if len(item) > 11 and item[11] is not None else ""
                 ),
             }
             for item in items

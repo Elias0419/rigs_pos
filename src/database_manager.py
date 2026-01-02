@@ -29,6 +29,14 @@ class DatabaseManager:
     def _get_connection(self):
         return sqlite3.connect(self.db_path)
 
+    def _add_column_if_missing(self, conn, table_name, column_name, column_def):
+        cursor = conn.cursor()
+        cursor.execute(f"PRAGMA table_info({table_name})")
+        columns = [row[1] for row in cursor.fetchall()]
+        if column_name not in columns:
+            cursor.execute(f"ALTER TABLE {table_name} ADD COLUMN {column_def}")
+            conn.commit()
+
     def ensure_database_exists(self):
         db_directory = os.path.dirname(self.db_path)
         os.makedirs(db_directory, exist_ok=True)
@@ -111,10 +119,23 @@ class DatabaseManager:
                                 item_id TEXT,
                                 taxable BOOLEAN DEFAULT TRUE,
                                 is_rolling_papers BOOLEAN NOT NULL DEFAULT FALSE,
+                                is_cigarette BOOLEAN NOT NULL DEFAULT FALSE,
                                 papers_per_pack INTEGER,
                                 PRIMARY KEY (barcode, sku),
                                 FOREIGN KEY(parent_barcode) REFERENCES items(barcode)
                             )"""
+            )
+            self._add_column_if_missing(
+                conn,
+                "items",
+                "is_cigarette",
+                "is_cigarette BOOLEAN NOT NULL DEFAULT FALSE",
+            )
+            self._add_column_if_missing(
+                conn,
+                "items",
+                "papers_per_pack",
+                "papers_per_pack INTEGER",
             )
             conn.commit()
         except sqlite3.Error as e:
@@ -166,12 +187,25 @@ class DatabaseManager:
                     line_cost        REAL,
                     taxable          INTEGER,
                     is_rolling_papers INTEGER,
+                    is_cigarette INTEGER,
                     papers_per_pack  INTEGER,
                     order_timestamp  TEXT,
                     is_custom        INTEGER NOT NULL DEFAULT 0,
                     FOREIGN KEY(order_id) REFERENCES order_history(order_id)
                 )
                 """
+            )
+            self._add_column_if_missing(
+                conn,
+                "order_items",
+                "is_cigarette",
+                "is_cigarette INTEGER",
+            )
+            self._add_column_if_missing(
+                conn,
+                "order_items",
+                "papers_per_pack",
+                "papers_per_pack INTEGER",
             )
             cursor.execute(
                 "CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id)"
@@ -187,6 +221,9 @@ class DatabaseManager:
             )
             cursor.execute(
                 "CREATE INDEX IF NOT EXISTS idx_order_items_is_custom ON order_items(is_custom)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_order_items_is_cigarette ON order_items(is_cigarette)"
             )
             conn.commit()
         except sqlite3.Error as e:
@@ -232,6 +269,7 @@ class DatabaseManager:
         parent_barcode=None,
         taxable=True,
         is_rolling_papers=False,
+        is_cigarette=False,
         papers_per_pack=None,
     ):
         item_id = uuid.uuid4()
@@ -251,6 +289,7 @@ class DatabaseManager:
         try:
             taxable = bool(taxable)
             is_rolling_papers = bool(is_rolling_papers)
+            is_cigarette = bool(is_cigarette)
             try:
                 papers_per_pack_value = (
                     int(papers_per_pack) if papers_per_pack not in (None, "") else None
@@ -259,7 +298,7 @@ class DatabaseManager:
                 papers_per_pack_value = None
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO items (barcode, name, price, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, papers_per_pack) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO items (barcode, name, price, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, is_cigarette, papers_per_pack) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     barcode,
                     name,
@@ -271,6 +310,7 @@ class DatabaseManager:
                     parent_barcode,
                     taxable,
                     is_rolling_papers,
+                    is_cigarette,
                     papers_per_pack_value,
                 ),
             )
@@ -286,6 +326,7 @@ class DatabaseManager:
                 "parent_barcode": parent_barcode,
                 "taxable": taxable,
                 "is_rolling_papers": is_rolling_papers,
+                "is_cigarette": is_cigarette,
                 "papers_per_pack": papers_per_pack_value,
             }
             self.app.utilities.update_barcode_cache(item_details)
@@ -307,13 +348,14 @@ class DatabaseManager:
         category=None,
         taxable=True,
         is_rolling_papers=False,
+        is_cigarette=False,
         papers_per_pack=None,
     ):
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
             update_query = """UPDATE items
-                            SET barcode=?, name=?, price=?, cost=?, sku=?, category=?, taxable=?, is_rolling_papers=?, papers_per_pack=?
+                            SET barcode=?, name=?, price=?, cost=?, sku=?, category=?, taxable=?, is_rolling_papers=?, is_cigarette=?, papers_per_pack=?
                             WHERE item_id=?"""
             try:
                 papers_per_pack_value = (
@@ -332,6 +374,7 @@ class DatabaseManager:
                     category,
                     bool(taxable),
                     bool(is_rolling_papers),
+                    bool(is_cigarette),
                     papers_per_pack_value,
                     item_id,
                 ),
@@ -350,6 +393,7 @@ class DatabaseManager:
                 "category": category,
                 "taxable": bool(taxable),
                 "is_rolling_papers": bool(is_rolling_papers),
+                "is_cigarette": bool(is_cigarette),
                 "papers_per_pack": papers_per_pack_value,
             }
             self.app.utilities.update_barcode_cache(item_details)
@@ -363,7 +407,7 @@ class DatabaseManager:
     def handle_duplicate_barcodes(self, barcode):
 
         query = """
-                SELECT barcode, name, price, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, papers_per_pack
+                SELECT barcode, name, price, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, is_cigarette, papers_per_pack
                 FROM items
                 WHERE barcode = ?
                """
@@ -387,7 +431,8 @@ class DatabaseManager:
                     "parent_barcode": row[7],
                     "taxable": bool(row[8]),
                     "is_rolling_papers": bool(row[9]),
-                    "papers_per_pack": row[10],
+                    "is_cigarette": bool(row[10]),
+                    "papers_per_pack": row[11],
                 }
                 items.append(item_details)
 
@@ -417,6 +462,7 @@ class DatabaseManager:
                     parent_barcode,
                     taxable,
                     is_rolling_papers,
+                    is_cigarette,
                     papers_per_pack
                 FROM items
                 WHERE {where_clause}
@@ -445,7 +491,8 @@ class DatabaseManager:
                 "parent_barcode": row[7],
                 "taxable": int(row[8]) if row[8] is not None else 1,
                 "is_rolling_papers": int(row[9]) if row[9] is not None else 0,
-                "papers_per_pack": row[10],
+                "is_cigarette": int(row[10]) if row[10] is not None else 0,
+                "papers_per_pack": row[11],
             }
 
         except Exception as e:
@@ -588,10 +635,11 @@ class DatabaseManager:
                     line_cost,
                     taxable,
                     is_rolling_papers,
+                    is_cigarette,
                     papers_per_pack,
                     order_timestamp
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             for item in items_list:
                 if not isinstance(item, dict):
@@ -639,6 +687,10 @@ class DatabaseManager:
                 if is_rolling is not None:
                     is_rolling = int(bool(is_rolling))
 
+                is_cigarette = item.get("is_cigarette")
+                if is_cigarette is not None:
+                    is_cigarette = int(bool(is_cigarette))
+
                 papers_per_pack = item.get("papers_per_pack")
 
                 cursor.execute(
@@ -656,6 +708,7 @@ class DatabaseManager:
                         line_cost,
                         taxable,
                         is_rolling,
+                        is_cigarette,
                         papers_per_pack,
                         order_timestamp,
                     ),
@@ -777,6 +830,7 @@ class DatabaseManager:
                     line_cost,
                     taxable,
                     is_rolling_papers,
+                    is_cigarette,
                     papers_per_pack,
                     order_timestamp,
                     is_custom
@@ -803,6 +857,7 @@ class DatabaseManager:
                     "line_cost": row["line_cost"],
                     "taxable": row["taxable"],
                     "is_rolling_papers": row["is_rolling_papers"],
+                    "is_cigarette": row["is_cigarette"],
                     "papers_per_pack": row["papers_per_pack"],
                     "order_timestamp": row["order_timestamp"],
                     "is_custom": row["is_custom"],
@@ -860,6 +915,7 @@ class DatabaseManager:
         sku=None,
         categories=None,
         is_rolling_papers=False,
+        is_cigarette=False,
         papers_per_pack=None,
     ):
 
@@ -873,6 +929,7 @@ class DatabaseManager:
                     sku,
                     categories,
                     is_rolling_papers=is_rolling_papers,
+                    is_cigarette=is_cigarette,
                     papers_per_pack=papers_per_pack,
                 )
                 self.app.popup_manager.add_to_db_popup.dismiss()
@@ -884,7 +941,7 @@ class DatabaseManager:
         cursor = conn.cursor()
         try:
             cursor.execute(
-                "SELECT barcode, name, price, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, papers_per_pack FROM items"
+                "SELECT barcode, name, price, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, is_cigarette, papers_per_pack FROM items"
             )
             items = cursor.fetchall()
         except sqlite3.Error as e:

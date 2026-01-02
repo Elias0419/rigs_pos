@@ -1779,6 +1779,7 @@ class Utilities:
         sku_input,
         category_input,
         is_rolling_papers,
+        is_cigarette,
         papers_per_pack,
         popup,
     ):
@@ -1803,6 +1804,7 @@ class Utilities:
             sku_input,
             category_input,
             is_rolling_papers,
+            is_cigarette,
             papers_text,
         )
         self.update_inventory_cache()
@@ -1823,6 +1825,7 @@ class Utilities:
         popup,
         query=None,
         is_rolling_papers_checkbox=None,
+        is_cigarette_checkbox=None,
         papers_per_pack_input=None,
     ):
         if not cost_input.text:
@@ -1840,6 +1843,11 @@ class Utilities:
             is_rolling_papers = (
                 bool(is_rolling_papers_checkbox.active)
                 if is_rolling_papers_checkbox is not None
+                else False
+            )
+            is_cigarette = (
+                bool(is_cigarette_checkbox.active)
+                if is_cigarette_checkbox is not None
                 else False
             )
 
@@ -1865,6 +1873,7 @@ class Utilities:
                 sku_input,
                 category_input,
                 is_rolling_papers,
+                is_cigarette,
                 papers_text,
             )
             self.app.inventory_manager.refresh_inventory(query=query)

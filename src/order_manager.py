@@ -49,6 +49,7 @@ class LineItem:
     barcode: Optional[str] = None
     is_custom: int = 0  # stored as INTEGER in sqlite, so use 0/1
     unit_cost: Optional[float] = None
+    is_cigarette: Optional[int] = None
 
     discounts: List[Discount] = field(default_factory=list)
 
@@ -63,6 +64,9 @@ class LineItem:
         qty = int(self.quantity)
         if qty < 1:
             raise ValueError("quantity must be >= 1")
+
+        if self.is_cigarette is not None:
+            self.is_cigarette = int(bool(self.is_cigarette))
 
         self.unit_cost = float(self.unit_cost) if self.unit_cost is not None else None
 
@@ -121,6 +125,7 @@ class LineItem:
             "cost": float(self.unit_cost) if self.unit_cost is not None else None,
             "unit_cost": float(self.unit_cost) if self.unit_cost is not None else None,
             "line_cost": float(self.line_cost) if self.unit_cost is not None else None,
+            "is_cigarette": int(self.is_cigarette) if self.is_cigarette is not None else None,
             "discounts": [d.to_dict() for d in self.discounts],
             "line_subtotal": float(self.line_subtotal),
             "line_discount_total": float(self.line_discount_total),
@@ -141,6 +146,10 @@ class LineItem:
         barcode = str(barcode) if barcode not in (None, "") else None
 
         is_custom = int(d.get("is_custom", 0))
+        is_cigarette_raw = d.get("is_cigarette")
+        is_cigarette = (
+            int(is_cigarette_raw) if is_cigarette_raw not in (None, "") else None
+        )
 
         discounts_raw = d.get("discounts", []) or []
         discounts = [Discount.from_dict(x) for x in discounts_raw]
@@ -153,6 +162,7 @@ class LineItem:
             barcode=barcode,
             is_custom=is_custom,
             unit_cost=unit_cost,
+            is_cigarette=is_cigarette,
             discounts=discounts,
         )
         li.recompute()
@@ -567,7 +577,15 @@ class OrderManager:
             return
 
         try:
-            self.add_item(name, price, item_id, barcode, is_custom)
+            self.add_item(
+                name,
+                price,
+                item_id,
+                barcode,
+                is_custom,
+                unit_cost=None,
+                is_cigarette=None,
+            )
         except Exception as e:
             logger.warning("Exception in add custom item order_manager.py: %s", e)
 
@@ -579,7 +597,7 @@ class OrderManager:
         except Exception as e:
             logger.warning(f"[Order Manager]: add_custom_item\n{e}")
 
-    def add_item(self, item_name, item_price, item_id=None, barcode=None, is_custom=False, unit_cost=None):
+    def add_item(self, item_name, item_price, item_id=None, barcode=None, is_custom=False, unit_cost=None, is_cigarette=None):
         item_id = str(item_id) if item_id not in (None, "") else str(uuid.uuid4())
 
         if item_id in self.items:
@@ -594,6 +612,7 @@ class OrderManager:
                 name=str(item_name),
                 unit_price=float(item_price),
                 unit_cost=float(unit_cost) if unit_cost not in (None, "") else None,
+                is_cigarette=int(is_cigarette) if is_cigarette not in (None, "") else None,
                 quantity=1,
             )
             li.recompute()
