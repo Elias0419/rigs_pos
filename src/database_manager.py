@@ -115,6 +115,7 @@ class DatabaseManager:
                                 cost REAL,
                                 sku TEXT,
                                 category TEXT,
+                                product_category TEXT,
                                 parent_barcode TEXT,
                                 item_id TEXT,
                                 taxable BOOLEAN DEFAULT TRUE,
@@ -136,6 +137,12 @@ class DatabaseManager:
                 "items",
                 "papers_per_pack",
                 "papers_per_pack INTEGER",
+            )
+            self._add_column_if_missing(
+                conn,
+                "items",
+                "product_category",
+                "product_category TEXT",
             )
             conn.commit()
         except sqlite3.Error as e:
@@ -180,6 +187,7 @@ class DatabaseManager:
                     barcode          TEXT,
                     name             TEXT NOT NULL,
                     category         TEXT,
+                    product_category TEXT,
                     qty              REAL NOT NULL,
                     unit_price       REAL NOT NULL,
                     line_subtotal    REAL NOT NULL,
@@ -191,9 +199,15 @@ class DatabaseManager:
                     papers_per_pack  INTEGER,
                     order_timestamp  TEXT,
                     is_custom        INTEGER NOT NULL DEFAULT 0,
-                    FOREIGN KEY(order_id) REFERENCES order_history(order_id)
+                FOREIGN KEY(order_id) REFERENCES order_history(order_id)
                 )
                 """
+            )
+            self._add_column_if_missing(
+                conn,
+                "order_items",
+                "product_category",
+                "product_category TEXT",
             )
             self._add_column_if_missing(
                 conn,
@@ -215,6 +229,9 @@ class DatabaseManager:
             )
             cursor.execute(
                 "CREATE INDEX IF NOT EXISTS idx_order_items_category ON order_items(category)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_order_items_product_category ON order_items(product_category)"
             )
             cursor.execute(
                 "CREATE INDEX IF NOT EXISTS idx_order_items_timestamp ON order_items(order_timestamp)"
@@ -266,6 +283,7 @@ class DatabaseManager:
         cost=None,
         sku=None,
         category=None,
+        product_category=None,
         parent_barcode=None,
         taxable=True,
         is_rolling_papers=False,
@@ -290,6 +308,9 @@ class DatabaseManager:
             taxable = bool(taxable)
             is_rolling_papers = bool(is_rolling_papers)
             is_cigarette = bool(is_cigarette)
+            product_category_value = product_category if product_category not in (None, "") else None
+            if category in (None, "") and product_category_value:
+                category = product_category_value
             try:
                 papers_per_pack_value = (
                     int(papers_per_pack) if papers_per_pack not in (None, "") else None
@@ -298,7 +319,7 @@ class DatabaseManager:
                 papers_per_pack_value = None
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO items (barcode, name, price, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, is_cigarette, papers_per_pack) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO items (barcode, name, price, cost, sku, category, product_category, item_id, parent_barcode, taxable, is_rolling_papers, is_cigarette, papers_per_pack) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     barcode,
                     name,
@@ -306,6 +327,7 @@ class DatabaseManager:
                     cost,
                     sku,
                     category,
+                    product_category_value,
                     str(item_id),
                     parent_barcode,
                     taxable,
@@ -322,6 +344,7 @@ class DatabaseManager:
                 "cost": cost,
                 "sku": sku,
                 "category": category,
+                "product_category": product_category_value,
                 "item_id": str(item_id),
                 "parent_barcode": parent_barcode,
                 "taxable": taxable,
@@ -346,6 +369,7 @@ class DatabaseManager:
         cost=None,
         sku=None,
         category=None,
+        product_category=None,
         taxable=True,
         is_rolling_papers=False,
         is_cigarette=False,
@@ -355,7 +379,7 @@ class DatabaseManager:
         try:
             cursor = conn.cursor()
             update_query = """UPDATE items
-                            SET barcode=?, name=?, price=?, cost=?, sku=?, category=?, taxable=?, is_rolling_papers=?, is_cigarette=?, papers_per_pack=?
+                            SET barcode=?, name=?, price=?, cost=?, sku=?, category=?, product_category=?, taxable=?, is_rolling_papers=?, is_cigarette=?, papers_per_pack=?
                             WHERE item_id=?"""
             try:
                 papers_per_pack_value = (
@@ -363,6 +387,9 @@ class DatabaseManager:
                 )
             except (TypeError, ValueError):
                 papers_per_pack_value = None
+            product_category_value = product_category if product_category not in (None, "") else None
+            if category in (None, "") and product_category_value:
+                category = product_category_value
             cursor.execute(
                 update_query,
                 (
@@ -372,6 +399,7 @@ class DatabaseManager:
                     cost,
                     sku,
                     category,
+                    product_category_value,
                     bool(taxable),
                     bool(is_rolling_papers),
                     bool(is_cigarette),
@@ -391,6 +419,7 @@ class DatabaseManager:
                 "cost": cost,
                 "sku": sku,
                 "category": category,
+                "product_category": product_category_value,
                 "taxable": bool(taxable),
                 "is_rolling_papers": bool(is_rolling_papers),
                 "is_cigarette": bool(is_cigarette),
@@ -458,6 +487,7 @@ class DatabaseManager:
                     cost,
                     sku,
                     category,
+                    product_category,
                     item_id,
                     parent_barcode,
                     taxable,
@@ -487,12 +517,13 @@ class DatabaseManager:
                 "cost": row[3],
                 "sku": row[4],
                 "category": row[5],
-                "item_id": row[6],
-                "parent_barcode": row[7],
-                "taxable": int(row[8]) if row[8] is not None else 1,
-                "is_rolling_papers": int(row[9]) if row[9] is not None else 0,
-                "is_cigarette": int(row[10]) if row[10] is not None else 0,
-                "papers_per_pack": row[11],
+                "product_category": row[6],
+                "item_id": row[7],
+                "parent_barcode": row[8],
+                "taxable": int(row[9]) if row[9] is not None else 1,
+                "is_rolling_papers": int(row[10]) if row[10] is not None else 0,
+                "is_cigarette": int(row[11]) if row[11] is not None else 0,
+                "papers_per_pack": row[12],
             }
 
         except Exception as e:
@@ -628,6 +659,7 @@ class DatabaseManager:
                     barcode,
                     name,
                     category,
+                    product_category,
                     qty,
                     unit_price,
                     line_subtotal,
@@ -639,7 +671,7 @@ class DatabaseManager:
                     papers_per_pack,
                     order_timestamp
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             for item in items_list:
                 if not isinstance(item, dict):
@@ -693,6 +725,8 @@ class DatabaseManager:
 
                 papers_per_pack = item.get("papers_per_pack")
 
+                category_value = item.get("category") or item.get("product_category")
+                product_category_value = item.get("product_category", category_value)
                 cursor.execute(
                     insert_sql,
                     (
@@ -700,7 +734,8 @@ class DatabaseManager:
                         item.get("item_id"),
                         item.get("barcode"),
                         name,
-                        item.get("category"),
+                        category_value,
+                        product_category_value,
                         qty,
                         unit_price,
                         line_subtotal,
@@ -913,24 +948,21 @@ class DatabaseManager:
         price,
         cost=0.0,
         sku=None,
-        categories=None,
-        is_rolling_papers=False,
-        is_cigarette=False,
-        papers_per_pack=None,
+        product_category=None,
     ):
 
         if barcode and name and price:
             try:
+                product_category_clean = (
+                    product_category if product_category not in ("", "Select Category") else None
+                )
                 self.add_item(
                     barcode,
                     name,
                     price,
                     cost,
                     sku,
-                    categories,
-                    is_rolling_papers=is_rolling_papers,
-                    is_cigarette=is_cigarette,
-                    papers_per_pack=papers_per_pack,
+                    product_category=product_category_clean,
                 )
                 self.app.popup_manager.add_to_db_popup.dismiss()
             except Exception as e:
@@ -941,7 +973,7 @@ class DatabaseManager:
         cursor = conn.cursor()
         try:
             cursor.execute(
-                "SELECT barcode, name, price, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, is_cigarette, papers_per_pack FROM items"
+                "SELECT barcode, name, price, cost, sku, category, product_category, item_id, parent_barcode, taxable, is_rolling_papers, is_cigarette, papers_per_pack FROM items"
             )
             items = cursor.fetchall()
         except sqlite3.Error as e:

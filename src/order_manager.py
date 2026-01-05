@@ -50,6 +50,7 @@ class LineItem:
     is_custom: int = 0  # stored as INTEGER in sqlite, so use 0/1
     unit_cost: Optional[float] = None
     is_cigarette: Optional[int] = None
+    product_category: Optional[str] = None
 
     discounts: List[Discount] = field(default_factory=list)
 
@@ -126,6 +127,8 @@ class LineItem:
             "unit_cost": float(self.unit_cost) if self.unit_cost is not None else None,
             "line_cost": float(self.line_cost) if self.unit_cost is not None else None,
             "is_cigarette": int(self.is_cigarette) if self.is_cigarette is not None else None,
+            "category": self.product_category,
+            "product_category": self.product_category,
             "discounts": [d.to_dict() for d in self.discounts],
             "line_subtotal": float(self.line_subtotal),
             "line_discount_total": float(self.line_discount_total),
@@ -150,6 +153,7 @@ class LineItem:
         is_cigarette = (
             int(is_cigarette_raw) if is_cigarette_raw not in (None, "") else None
         )
+        product_category = d.get("product_category", d.get("category"))
 
         discounts_raw = d.get("discounts", []) or []
         discounts = [Discount.from_dict(x) for x in discounts_raw]
@@ -163,6 +167,7 @@ class LineItem:
             is_custom=is_custom,
             unit_cost=unit_cost,
             is_cigarette=is_cigarette,
+            product_category=product_category,
             discounts=discounts,
         )
         li.recompute()
@@ -597,7 +602,7 @@ class OrderManager:
         except Exception as e:
             logger.warning(f"[Order Manager]: add_custom_item\n{e}")
 
-    def add_item(self, item_name, item_price, item_id=None, barcode=None, is_custom=False, unit_cost=None, is_cigarette=None):
+    def add_item(self, item_name, item_price, item_id=None, barcode=None, is_custom=False, unit_cost=None, is_cigarette=None, product_category=None):
         item_id = str(item_id) if item_id not in (None, "") else str(uuid.uuid4())
 
         if item_id in self.items:
@@ -613,6 +618,7 @@ class OrderManager:
                 unit_price=float(item_price),
                 unit_cost=float(unit_cost) if unit_cost not in (None, "") else None,
                 is_cigarette=int(is_cigarette) if is_cigarette not in (None, "") else None,
+                product_category=product_category,
                 quantity=1,
             )
             li.recompute()

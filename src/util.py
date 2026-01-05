@@ -1778,37 +1778,30 @@ class Utilities:
         cost_input,
         sku_input,
         category_input,
-        is_rolling_papers,
-        is_cigarette,
-        papers_per_pack,
+        product_category,
         popup,
     ):
-        if not cost_input:
+        if cost_input in (None, ""):
             self.app.popup_manager.catch_inventory_item_empty_cost()
             return
-        papers_text = (papers_per_pack or "").strip()
-        if bool(is_rolling_papers):
-            if not papers_text:
-                self.app.popup_manager.show_missing_papers_count_warning()
-                return
-            try:
-                int(papers_text)
-            except ValueError:
-                self.app.popup_manager.show_missing_papers_count_warning()
-                return
+        category_value = product_category or category_input or ""
+        if category_value == "Select Category":
+            category_value = ""
         self.app.inventory_row.update_item_in_database(
             barcode_input,
             name_input,
             price_input,
             cost_input,
             sku_input,
-            category_input,
-            is_rolling_papers,
-            is_cigarette,
-            papers_text,
+            category_value,
+            category_value,
+            False,
+            False,
+            "",
         )
         self.update_inventory_cache()
-        InventoryView.refresh_from_app_cache(None)
+        iv = InventoryView(self.app.order_manager)
+        iv.refresh_from_app_cache()
         self.app.inventory_manager.refresh_inventory()
         if getattr(self.app.label_manager, "dual_pane_mode", False):
             self.app.inventory_manager.refresh_label_inventory_for_dual_pane_mode()
@@ -1824,9 +1817,7 @@ class Utilities:
         category_input,
         popup,
         query=None,
-        is_rolling_papers_checkbox=None,
-        is_cigarette_checkbox=None,
-        papers_per_pack_input=None,
+        product_category=None,
     ):
         if not cost_input.text:
             self.app.popup_manager.catch_inventory_item_empty_cost()
@@ -1839,32 +1830,14 @@ class Utilities:
             return
 
         if len(name_input.text) > 0:
-
-            is_rolling_papers = (
-                bool(is_rolling_papers_checkbox.active)
-                if is_rolling_papers_checkbox is not None
-                else False
-            )
-            is_cigarette = (
-                bool(is_cigarette_checkbox.active)
-                if is_cigarette_checkbox is not None
-                else False
-            )
-
-            papers_text = ""
-            if papers_per_pack_input is not None:
-                papers_text = (papers_per_pack_input.text or "").strip()
-
-            if is_rolling_papers:
-                if not papers_text:
-                    self.app.popup_manager.show_missing_papers_count_warning()
-                    return
-                try:
-                    int(papers_text)
-                except ValueError:
-                    self.app.popup_manager.show_missing_papers_count_warning()
-                    return
-
+            selected_category = (product_category or "").strip()
+            if selected_category == "Select Category":
+                selected_category = ""
+            if not selected_category:
+                self.app.popup_manager.show_missing_product_category_warning()
+                return
+            if category_input is not None:
+                category_input.text = selected_category
             self.app.inventory_manager.add_item_to_database(
                 barcode_input,
                 name_input,
@@ -1872,9 +1845,7 @@ class Utilities:
                 cost_input,
                 sku_input,
                 category_input,
-                is_rolling_papers,
-                is_cigarette,
-                papers_text,
+                selected_category,
             )
             self.app.inventory_manager.refresh_inventory(query=query)
             self.app.popup_manager.inventory_item_popup.dismiss()

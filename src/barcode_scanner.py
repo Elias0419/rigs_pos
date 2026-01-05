@@ -98,6 +98,8 @@ class BarcodeScanner:
             is_custom,
             unit_cost=unit_cost,
             is_cigarette=item_details.get("is_cigarette"),
+            product_category=item_details.get("product_category")
+            or item_details.get("category"),
         )
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()

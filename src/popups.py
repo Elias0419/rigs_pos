@@ -29,6 +29,7 @@ from kivymd.uix.floatlayout import MDFloatLayout
 from kivymd.uix.gridlayout import MDGridLayout
 from kivymd.uix.label import MDLabel
 from kivymd.uix.menu import MDDropdownMenu
+from kivymd.uix.list import OneLineListItem
 from kivymd.uix.selectioncontrol import MDCheckbox
 from kivymd.uix.textfield import MDTextField
 from PIL import Image as PILImage
@@ -146,6 +147,24 @@ class TitleCaseTextInput(TextInput):
 class PopupManager:
     def __init__(self, ref):
         self.app = ref
+        self.product_categories = [
+            "Rolling papers",
+            "Cigarettes",
+            "Cigars",
+            "Pouches (zyn, etc)",
+            "Vapes",
+            "Electronics",
+            "Torches",
+            "Lighters",
+            "THC",
+            "CBD",
+            "Grinders",
+            "Dugouts",
+            "Trays/Ashtrays",
+            "Jewelry",
+            "Other Accessories",
+            "Glass",
+        ]
 
     def show_error(self, summary: str) -> None:
         Clock.schedule_once(
@@ -183,6 +202,31 @@ class PopupManager:
             ),
             0,
         )
+
+    def get_product_categories(self):
+        return list(self.product_categories)
+
+    def _create_product_category_menu(self, button, on_select=None):
+        def set_category(text):
+            button.text = text
+            if on_select:
+                on_select(text)
+            menu.dismiss()
+
+        menu_items = [
+            {
+                "viewclass": "OneLineListItem",
+                "text": option,
+                "on_release": lambda x=option: set_category(x),
+            }
+            for option in self.get_product_categories()
+        ]
+        menu = MDDropdownMenu(
+            caller=button,
+            items=menu_items,
+            width=dp(256),
+        )
+        return menu
 
     def _open_review_popup(
         self,
@@ -705,7 +749,7 @@ class PopupManager:
                 self.discount_dropdown = MDDropdownMenu(
                     items=menu_items,
                     caller=self.discount_button,
-                    width_mult=4,
+                    width=dp(256),
                 )
                 self.discount_button.bind(
                     on_release=lambda x, dd=self.discount_dropdown: dd.open()
@@ -722,7 +766,7 @@ class PopupManager:
                 self.discount_type_dropdown = MDDropdownMenu(
                     items=menu_items_type,
                     caller=self.discount_type_button,
-                    width_mult=4,
+                    width=dp(256),
                 )
                 self.discount_type_button.bind(
                     on_release=lambda x, dd=self.discount_type_dropdown: dd.open()
@@ -1346,15 +1390,11 @@ class PopupManager:
 
         content = BoxLayout(orientation="vertical", size_hint_y=1, padding=10)
         item_details = self.app.db_manager.get_item_details(barcode=instance.barcode)
-        rolling_papers_default = (
-            item_details.get("is_rolling_papers") if item_details else False
-        )
-        is_cigarette_default = (
-            item_details.get("is_cigarette") if item_details else False
-        )
-        papers_per_pack_default = (
-            item_details.get("papers_per_pack") if item_details else None
-        )
+        product_category_default = (
+            item_details.get("product_category")
+            if item_details
+            else None
+        ) or (item_details.get("category") if item_details else "")
         name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2)
         name_input = TextInput(text=instance.name, font_size=20)
         name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
@@ -1384,41 +1424,25 @@ class PopupManager:
         sku_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
         sku_layout.add_widget(sku_input)
 
-        category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2)
-        self.add_to_db_category_input_row = TextInput(
-            text=instance.category, disabled=True, font_size=20
+        product_category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2)
+        product_category_button = MDRaisedButton(
+            text=product_category_default or "Select Category", size_hint_x=0.6
         )
-        category_layout.add_widget(Label(text="Categories", size_hint_x=0.2))
-        category_layout.add_widget(self.add_to_db_category_input_row)
+        product_category_menu = self._create_product_category_menu(
+            product_category_button
+        )
+        product_category_button.bind(on_release=lambda *_: product_category_menu.open())
+        product_category_layout.add_widget(
+            Label(text="Product Category", size_hint_x=0.2)
+        )
+        product_category_layout.add_widget(product_category_button)
 
         content.add_widget(name_layout)
         content.add_widget(barcode_layout)
         content.add_widget(price_layout)
         content.add_widget(cost_layout)
         content.add_widget(sku_layout)
-        content.add_widget(category_layout)
-
-        rolling_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2, spacing=10)
-        rolling_checkbox = MDCheckbox(active=bool(rolling_papers_default))
-        cigarette_checkbox = MDCheckbox(active=bool(is_cigarette_default))
-        rolling_layout.add_widget(Label(text="Rolling Papers", size_hint_x=0.2))
-        rolling_layout.add_widget(rolling_checkbox)
-        rolling_layout.add_widget(Label(text="Cigarettes", size_hint_x=0.2))
-        rolling_layout.add_widget(cigarette_checkbox)
-        papers_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2)
-        papers_input = TextInput(
-            text=str(papers_per_pack_default or ""),
-            input_filter="int",
-            font_size=20,
-            disabled=not rolling_checkbox.active,
-        )
-        rolling_checkbox.bind(
-            active=lambda instance, value: setattr(papers_input, "disabled", not value)
-        )
-        papers_layout.add_widget(Label(text="Papers per Pack", size_hint_x=0.2))
-        papers_layout.add_widget(papers_input)
-        content.add_widget(rolling_layout)
-        content.add_widget(papers_layout)
+        content.add_widget(product_category_layout)
 
         button_layout = BoxLayout(
             orientation="horizontal",
@@ -1438,18 +1462,10 @@ class PopupManager:
                 price_input.text,
                 cost_input.text,
                 sku_input.text,
-                self.add_to_db_category_input_row.text,
-                rolling_checkbox.active,
-                cigarette_checkbox.active,
-                papers_input.text,
+                "",
+                product_category_button.text,
                 self.inventory_item_update_popup,
             ),
-        )
-
-        categories_button = MDRaisedButton(
-            text="[b][size=20]Categories[/b][/size]",
-            size_hint=(0.2, 1),
-            on_press=lambda x: self.open_update_category_button_popup(),
         )
 
         close_button = MDRaisedButton(
@@ -1470,7 +1486,6 @@ class PopupManager:
         )
         _blank = MDBoxLayout(size_hint=(1, 1))
         button_layout.add_widget(update_details_button)
-        button_layout.add_widget(categories_button)
         button_layout.add_widget(close_button)
         button_layout.add_widget(_blank)
         if self.app.admin:
@@ -1553,38 +1568,26 @@ class PopupManager:
         sku_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
         sku_layout.add_widget(sku_input)
 
-        category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        self.add_to_db_category_input = TextInput(disabled=True)
-        category_layout.add_widget(Label(text="Categories", size_hint_x=0.2))
-        category_layout.add_widget(self.add_to_db_category_input)
-
-        rolling_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4, spacing=10)
-        rolling_checkbox = MDCheckbox()
-        cigarette_checkbox = MDCheckbox()
-        rolling_layout.add_widget(Label(text="Rolling Papers", size_hint_x=0.2))
-        rolling_layout.add_widget(rolling_checkbox)
-        rolling_layout.add_widget(Label(text="Cigarettes", size_hint_x=0.2))
-        rolling_layout.add_widget(cigarette_checkbox)
-
-        papers_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        papers_input = TextInput(
-            input_filter="int",
-            disabled=not rolling_checkbox.active,
+        product_category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
+        product_category_button = MDRaisedButton(
+            text="Select Category",
+            size_hint_x=0.6,
         )
-        rolling_checkbox.bind(
-            active=lambda instance, value: setattr(papers_input, "disabled", not value)
+        product_category_menu = self._create_product_category_menu(
+            product_category_button
         )
-        papers_layout.add_widget(Label(text="Papers per Pack", size_hint_x=0.2))
-        papers_layout.add_widget(papers_input)
+        product_category_button.bind(
+            on_release=lambda *_: product_category_menu.open()
+        )
+        product_category_layout.add_widget(Label(text="Product Category", size_hint_x=0.2))
+        product_category_layout.add_widget(product_category_button)
 
         content.add_widget(name_layout)
         content.add_widget(barcode_layout)
         content.add_widget(price_layout)
         content.add_widget(cost_layout)
         content.add_widget(sku_layout)
-        content.add_widget(category_layout)
-        content.add_widget(rolling_layout)
-        content.add_widget(papers_layout)
+        content.add_widget(product_category_layout)
 
         button_layout = BoxLayout(
             orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
@@ -1593,16 +1596,17 @@ class PopupManager:
         button_layout.add_widget(
             MDRaisedButton(
                 text="Confirm",
-                on_press=lambda _: self.app.db_manager.add_item_to_database(
-                    barcode_input.text,
-                    name_input.text,
-                    price_input.text,
-                    cost_input.text,
-                    sku_input.text,
-                    self.add_to_db_category_input.text,
-                    rolling_checkbox.active,
-                    cigarette_checkbox.active,
-                    papers_input.text,
+                on_press=lambda _: (
+                    self.app.db_manager.add_item_to_database(
+                        barcode_input.text,
+                        name_input.text,
+                        price_input.text,
+                        cost_input.text,
+                        sku_input.text,
+                        product_category_button.text,
+                    )
+                    if product_category_button.text not in ("", "Select Category")
+                    else self.show_missing_product_category_warning()
                 ),
             )
         )
@@ -1612,12 +1616,6 @@ class PopupManager:
                 text="Close", on_press=lambda x: self.add_to_db_popup.dismiss()
             )
         )
-        button_layout.add_widget(
-            MDRaisedButton(
-                text="Categories", on_press=lambda x: self.open_category_button_popup()
-            )
-        )
-
         content.add_widget(button_layout)
 
         self.add_to_db_popup = Popup(
@@ -3793,6 +3791,27 @@ class PopupManager:
         )
         self.missing_papers_warning.open()
 
+    def show_missing_product_category_warning(self):
+        layout = BoxLayout(orientation="vertical", padding=10, spacing=10)
+        message = Label(
+            text="Select a product category before saving.",
+            halign="center",
+        )
+        layout.add_widget(message)
+        button = MDRaisedButton(
+            text="OK",
+            size_hint=(1, None),
+            height="48dp",
+            on_press=lambda _: self.missing_product_category_warning.dismiss(),
+        )
+        layout.add_widget(button)
+        self.missing_product_category_warning = Popup(
+            title="Product Category",
+            content=layout,
+            size_hint=(0.35, 0.25),
+        )
+        self.missing_product_category_warning.open()
+
     def catch_inventory_item_empty_cost(self):
         layout = BoxLayout()
         message = "Cost can't be empty. If you don't have an actual cost please enter it as 50% of the intended sale price. eg, if you're gonna sell it for 40, put 20 for the cost"
@@ -3929,47 +3948,33 @@ class PopupManager:
 
         sku_layout.add_widget(sku_input)
 
-        category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        self.add_to_db_category_input_inv = TextInput(
-            text=self.app.inventory_manager.category, disabled=True, font_size=20
+        product_category_layout = BoxLayout(
+            orientation="horizontal", size_hint_y=0.4
         )
-        category_layout.add_widget(Label(text="Category", size_hint_x=0.2))
-
-        category_layout.add_widget(self.add_to_db_category_input_inv)
-
-        rolling_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4, spacing=10)
-        rolling_checkbox = MDCheckbox(
-            active=bool(getattr(self.app.inventory_manager, "is_rolling_papers", False))
+        product_category_button = MDRaisedButton(
+            text=(
+                getattr(self.app.inventory_manager, "product_category", "")
+                or "Select Category"
+            ),
+            size_hint_x=0.6,
         )
-        cigarette_checkbox = MDCheckbox(
-            active=bool(getattr(self.app.inventory_manager, "is_cigarette", False))
+        product_category_menu = self._create_product_category_menu(
+            product_category_button
         )
-        rolling_layout.add_widget(Label(text="Rolling Papers", size_hint_x=0.2))
-        rolling_layout.add_widget(rolling_checkbox)
-        rolling_layout.add_widget(Label(text="Cigarettes", size_hint_x=0.2))
-        rolling_layout.add_widget(cigarette_checkbox)
-
-        papers_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        papers_input = TextInput(
-            text=str(getattr(self.app.inventory_manager, "papers_per_pack", "") or ""),
-            input_filter="int",
-            font_size=20,
-            disabled=not rolling_checkbox.active,
+        product_category_button.bind(
+            on_release=lambda *_: product_category_menu.open()
         )
-        rolling_checkbox.bind(
-            active=lambda instance, value: setattr(papers_input, "disabled", not value)
+        product_category_layout.add_widget(
+            Label(text="Product Category", size_hint_x=0.2)
         )
-        papers_layout.add_widget(Label(text="Papers per Pack", size_hint_x=0.2))
-        papers_layout.add_widget(papers_input)
+        product_category_layout.add_widget(product_category_button)
 
         content.add_widget(name_layout)
         content.add_widget(barcode_layout)
         content.add_widget(price_layout)
         content.add_widget(cost_layout)
         content.add_widget(sku_layout)
-        content.add_widget(category_layout)
-        content.add_widget(rolling_layout)
-        content.add_widget(papers_layout)
+        content.add_widget(product_category_layout)
 
         button_layout = BoxLayout(
             orientation="horizontal",
@@ -3989,12 +3994,10 @@ class PopupManager:
                     price_input,
                     cost_input,
                     sku_input,
-                    self.add_to_db_category_input_inv,
+                    None,
                     self.inventory_item_popup,
                     query=query,
-                    is_rolling_papers_checkbox=rolling_checkbox,
-                    is_cigarette_checkbox=cigarette_checkbox,
-                    papers_per_pack_input=papers_input,
+                    product_category=product_category_button.text,
                 ),
             )
         )
@@ -4005,13 +4008,6 @@ class PopupManager:
                 on_press=lambda x: self.app.utilities.set_generated_barcode(
                     self.barcode_input,
                 ),
-            )
-        )
-        button_layout.add_widget(
-            MDRaisedButton(
-                text="[b][size=20]Categories[/size][/b]",
-                on_press=lambda x: self.open_category_button_popup_inv(),
-                size_hint=(1, 1),
             )
         )
         button_layout.add_widget(
