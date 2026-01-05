@@ -1539,7 +1539,7 @@ class PopupManager:
     def delete_item(self, barcode="", name="", price=0):
 
         item_details = self.app.db_manager.get_item_details(
-            barcode=barcode, name=name, price=price
+            barcode=barcode
         )
         item_id = item_details["item_id"]
 
