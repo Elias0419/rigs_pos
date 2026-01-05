@@ -122,6 +122,7 @@ class DatabaseManager:
                                 is_rolling_papers BOOLEAN NOT NULL DEFAULT FALSE,
                                 is_cigarette BOOLEAN NOT NULL DEFAULT FALSE,
                                 papers_per_pack INTEGER,
+                                ean_barcode TEXT,
                                 PRIMARY KEY (barcode, sku),
                                 FOREIGN KEY(parent_barcode) REFERENCES items(barcode)
                             )"""
@@ -143,6 +144,15 @@ class DatabaseManager:
                 "items",
                 "product_category",
                 "product_category TEXT",
+            )
+            self._add_column_if_missing(
+                conn,
+                "items",
+                "ean_barcode",
+                "ean_barcode TEXT",
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_items_ean_barcode ON items(ean_barcode)"
             )
             conn.commit()
         except sqlite3.Error as e:
@@ -289,6 +299,7 @@ class DatabaseManager:
         is_rolling_papers=False,
         is_cigarette=False,
         papers_per_pack=None,
+        ean_barcode=None,
     ):
         item_id = uuid.uuid4()
 
@@ -302,6 +313,8 @@ class DatabaseManager:
         if len(str(barcode)) == 13:
             ean_barcode = barcode
             barcode = self.app.utilities.replace_ean()
+
+        ean_value = str(ean_barcode).strip() if ean_barcode not in (None, "") else None
 
         conn = self._get_connection()
         try:
@@ -319,7 +332,7 @@ class DatabaseManager:
                 papers_per_pack_value = None
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO items (barcode, name, price, cost, sku, category, product_category, item_id, parent_barcode, taxable, is_rolling_papers, is_cigarette, papers_per_pack) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO items (barcode, name, price, cost, sku, category, product_category, item_id, parent_barcode, taxable, is_rolling_papers, is_cigarette, papers_per_pack, ean_barcode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     barcode,
                     name,
@@ -334,6 +347,7 @@ class DatabaseManager:
                     is_rolling_papers,
                     is_cigarette,
                     papers_per_pack_value,
+                    ean_value,
                 ),
             )
             conn.commit()
@@ -351,6 +365,7 @@ class DatabaseManager:
                 "is_rolling_papers": is_rolling_papers,
                 "is_cigarette": is_cigarette,
                 "papers_per_pack": papers_per_pack_value,
+                "ean_barcode": ean_value,
             }
             self.app.utilities.update_barcode_cache(item_details)
         except sqlite3.IntegrityError as e:
@@ -374,12 +389,13 @@ class DatabaseManager:
         is_rolling_papers=False,
         is_cigarette=False,
         papers_per_pack=None,
+        ean_barcode=None,
     ):
         conn = self._get_connection()
         try:
             cursor = conn.cursor()
             update_query = """UPDATE items
-                            SET barcode=?, name=?, price=?, cost=?, sku=?, category=?, product_category=?, taxable=?, is_rolling_papers=?, is_cigarette=?, papers_per_pack=?
+                            SET barcode=?, name=?, price=?, cost=?, sku=?, category=?, product_category=?, taxable=?, is_rolling_papers=?, is_cigarette=?, papers_per_pack=?, ean_barcode=?
                             WHERE item_id=?"""
             try:
                 papers_per_pack_value = (
@@ -390,6 +406,15 @@ class DatabaseManager:
             product_category_value = product_category if product_category not in (None, "") else None
             if category in (None, "") and product_category_value:
                 category = product_category_value
+            ean_value = ean_barcode
+            if len(str(barcode)) == 13:
+                ean_value = barcode
+                barcode = self.app.utilities.replace_ean()
+            if ean_value is None:
+                cursor.execute("SELECT ean_barcode FROM items WHERE item_id=?", (item_id,))
+                row = cursor.fetchone()
+                if row:
+                    ean_value = row[0]
             cursor.execute(
                 update_query,
                 (
@@ -404,6 +429,7 @@ class DatabaseManager:
                     bool(is_rolling_papers),
                     bool(is_cigarette),
                     papers_per_pack_value,
+                    ean_value,
                     item_id,
                 ),
             )
@@ -424,6 +450,7 @@ class DatabaseManager:
                 "is_rolling_papers": bool(is_rolling_papers),
                 "is_cigarette": bool(is_cigarette),
                 "papers_per_pack": papers_per_pack_value,
+                "ean_barcode": ean_value,
             }
             self.app.utilities.update_barcode_cache(item_details)
         except Exception as e:
@@ -436,7 +463,7 @@ class DatabaseManager:
     def handle_duplicate_barcodes(self, barcode):
 
         query = """
-                SELECT barcode, name, price, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, is_cigarette, papers_per_pack
+                SELECT barcode, name, price, cost, sku, category, item_id, parent_barcode, taxable, is_rolling_papers, is_cigarette, papers_per_pack, ean_barcode
                 FROM items
                 WHERE barcode = ?
                """
@@ -462,6 +489,7 @@ class DatabaseManager:
                     "is_rolling_papers": bool(row[9]),
                     "is_cigarette": bool(row[10]),
                     "papers_per_pack": row[11],
+                    "ean_barcode": row[12],
                 }
                 items.append(item_details)
 
@@ -493,20 +521,26 @@ class DatabaseManager:
                     taxable,
                     is_rolling_papers,
                     is_cigarette,
-                    papers_per_pack
+                    papers_per_pack,
+                    ean_barcode
                 FROM items
                 WHERE {where_clause}
                 LIMIT 1
             """
 
+            row = None
             if item_id and str(item_id).strip():
                 cursor.execute(sql.format(where_clause="item_id = ?"), (str(item_id).strip(),))
+                row = cursor.fetchone()
             elif barcode and str(barcode).strip():
-                cursor.execute(sql.format(where_clause="barcode = ?"), (str(barcode).strip(),))
+                barcode_value = str(barcode).strip()
+                cursor.execute(sql.format(where_clause="barcode = ?"), (barcode_value,))
+                row = cursor.fetchone()
+                if not row and len(barcode_value) == 13:
+                    cursor.execute(sql.format(where_clause="ean_barcode = ?"), (barcode_value,))
+                    row = cursor.fetchone()
             else:
                 return None
-
-            row = cursor.fetchone()
             if not row:
                 return None
 
@@ -524,6 +558,7 @@ class DatabaseManager:
                 "is_rolling_papers": int(row[10]) if row[10] is not None else 0,
                 "is_cigarette": int(row[11]) if row[11] is not None else 0,
                 "papers_per_pack": row[12],
+                "ean_barcode": row[13],
             }
 
         except Exception as e:
@@ -973,7 +1008,7 @@ class DatabaseManager:
         cursor = conn.cursor()
         try:
             cursor.execute(
-                "SELECT barcode, name, price, cost, sku, category, product_category, item_id, parent_barcode, taxable, is_rolling_papers, is_cigarette, papers_per_pack FROM items"
+                "SELECT barcode, name, price, cost, sku, category, product_category, item_id, parent_barcode, taxable, is_rolling_papers, is_cigarette, papers_per_pack, ean_barcode FROM items"
             )
             items = cursor.fetchall()
         except sqlite3.Error as e:

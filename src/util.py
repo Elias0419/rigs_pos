@@ -42,6 +42,7 @@ import sys
 import threading
 import time
 import uuid
+from typing import Dict
 import pwd
 import glob
 import re
@@ -116,6 +117,13 @@ class BarcodeCache:
             data["is_dupe"] = len(data["items"]) > 1
             for v in self._gen_variants(canon):
                 self.variant[v] = canon
+            for item in data["items"]:
+                if isinstance(item, dict):
+                    ean_value = item.get("ean_barcode")
+                else:
+                    ean_value = item[13] if len(item) > 13 else None
+                if ean_value:
+                    self.variant[str(ean_value).strip()] = canon
 
     @staticmethod
     def _gen_variants(code: str):
@@ -464,9 +472,14 @@ class Utilities:
         bucket["items"].append(item_details)
         bucket["is_dupe"] = len(bucket["items"]) > 1
 
-        if len(bucket["items"]) == 1:
-            for v in cache._gen_variants(canonical):
-                cache.variant[v] = canonical
+        for v in cache._gen_variants(canonical):
+            cache.variant[v] = canonical
+
+        ean_barcode = item_details.get("ean_barcode")
+        if ean_barcode not in (None, ""):
+            ean_value = str(ean_barcode).strip()
+            if ean_value:
+                cache.variant[ean_value] = canonical
 
     def initialize_categories(self):
         categories = [
