@@ -1880,7 +1880,7 @@ class Utilities:
 
     def replace_ean(self):
         upc_barcode = self.generate_unique_barcode()
-        self.app.popup_manager.warn_about_ean_replacement()
+        # self.app.popup_manager.warn_about_ean_replacement()
         return upc_barcode
 
     def apply_categories(self):
