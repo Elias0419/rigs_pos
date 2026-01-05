@@ -206,9 +206,16 @@ class PopupManager:
     def get_product_categories(self):
         return list(self.product_categories)
 
+    def _style_product_category_button(self, button):
+        if button.text and button.text != "Select Category":
+            button.md_bg_color = (0.0, 0.6, 0.3, 1)
+        else:
+            button.md_bg_color = button.theme_cls.primary_color
+
     def _create_product_category_menu(self, button, on_select=None):
         def set_category(text):
             button.text = text
+            self._style_product_category_button(button)
             if on_select:
                 on_select(text)
             menu.dismiss()
@@ -1424,25 +1431,21 @@ class PopupManager:
         sku_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
         sku_layout.add_widget(sku_input)
 
-        product_category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2)
         product_category_button = MDRaisedButton(
             text=product_category_default or "Select Category", size_hint_x=0.6
         )
+        product_category_button.size_hint = (1, 1)
+        self._style_product_category_button(product_category_button)
         product_category_menu = self._create_product_category_menu(
             product_category_button
         )
         product_category_button.bind(on_release=lambda *_: product_category_menu.open())
-        product_category_layout.add_widget(
-            Label(text="Product Category", size_hint_x=0.2)
-        )
-        product_category_layout.add_widget(product_category_button)
 
         content.add_widget(name_layout)
         content.add_widget(barcode_layout)
         content.add_widget(price_layout)
         content.add_widget(cost_layout)
         content.add_widget(sku_layout)
-        content.add_widget(product_category_layout)
 
         button_layout = BoxLayout(
             orientation="horizontal",
@@ -1468,9 +1471,11 @@ class PopupManager:
             ),
         )
 
-        close_button = MDRaisedButton(
+        close_button = MDFlatButton(
             text="[b][size=20]Close[/b][/size]",
             size_hint=(0.2, 1),
+            md_bg_color=(0.8, 0.8, 0.8, 1),
+            text_color=(0, 0, 0, 1),
             on_press=lambda x: self.inventory_item_update_popup.dismiss(),
         )
 
@@ -1486,6 +1491,7 @@ class PopupManager:
         )
         _blank = MDBoxLayout(size_hint=(1, 1))
         button_layout.add_widget(update_details_button)
+        button_layout.add_widget(product_category_button)
         button_layout.add_widget(close_button)
         button_layout.add_widget(_blank)
         if self.app.admin:
@@ -1568,26 +1574,24 @@ class PopupManager:
         sku_layout.add_widget(Label(text="SKU", size_hint_x=0.2))
         sku_layout.add_widget(sku_input)
 
-        product_category_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
         product_category_button = MDRaisedButton(
             text="Select Category",
             size_hint_x=0.6,
         )
+        product_category_button.size_hint = (1, 1)
+        self._style_product_category_button(product_category_button)
         product_category_menu = self._create_product_category_menu(
             product_category_button
         )
         product_category_button.bind(
             on_release=lambda *_: product_category_menu.open()
         )
-        product_category_layout.add_widget(Label(text="Product Category", size_hint_x=0.2))
-        product_category_layout.add_widget(product_category_button)
 
         content.add_widget(name_layout)
         content.add_widget(barcode_layout)
         content.add_widget(price_layout)
         content.add_widget(cost_layout)
         content.add_widget(sku_layout)
-        content.add_widget(product_category_layout)
 
         button_layout = BoxLayout(
             orientation="horizontal", size_hint_y=None, height="50dp", spacing=10
@@ -1612,8 +1616,14 @@ class PopupManager:
         )
 
         button_layout.add_widget(
-            MDRaisedButton(
-                text="Close", on_press=lambda x: self.add_to_db_popup.dismiss()
+            product_category_button
+        )
+        button_layout.add_widget(
+            MDFlatButton(
+                text="Close",
+                md_bg_color=(0.8, 0.8, 0.8, 1),
+                text_color=(0, 0, 0, 1),
+                on_press=lambda x: self.add_to_db_popup.dismiss()
             )
         )
         content.add_widget(button_layout)
@@ -3948,9 +3958,6 @@ class PopupManager:
 
         sku_layout.add_widget(sku_input)
 
-        product_category_layout = BoxLayout(
-            orientation="horizontal", size_hint_y=0.4
-        )
         product_category_button = MDRaisedButton(
             text=(
                 getattr(self.app.inventory_manager, "product_category", "")
@@ -3958,23 +3965,20 @@ class PopupManager:
             ),
             size_hint_x=0.6,
         )
+        product_category_button.size_hint = (1, 1)
+        self._style_product_category_button(product_category_button)
         product_category_menu = self._create_product_category_menu(
             product_category_button
         )
         product_category_button.bind(
             on_release=lambda *_: product_category_menu.open()
         )
-        product_category_layout.add_widget(
-            Label(text="Product Category", size_hint_x=0.2)
-        )
-        product_category_layout.add_widget(product_category_button)
 
         content.add_widget(name_layout)
         content.add_widget(barcode_layout)
         content.add_widget(price_layout)
         content.add_widget(cost_layout)
         content.add_widget(sku_layout)
-        content.add_widget(product_category_layout)
 
         button_layout = BoxLayout(
             orientation="horizontal",
@@ -4011,8 +4015,13 @@ class PopupManager:
             )
         )
         button_layout.add_widget(
-            MDRaisedButton(
+            product_category_button
+        )
+        button_layout.add_widget(
+            MDFlatButton(
                 text="[b][size=20]Cancel[/size][/b]",
+                md_bg_color=(0.8, 0.8, 0.8, 1),
+                text_color=(0, 0, 0, 1),
                 on_press=lambda x: self.inventory_item_popup.dismiss(),
                 size_hint=(1, 1),
             )
