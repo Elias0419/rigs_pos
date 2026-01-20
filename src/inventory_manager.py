@@ -17,8 +17,6 @@ from kivy.graphics import Color, Line, Rectangle
 from kivy.factory import Factory
 from kivymd.uix.button import MDRaisedButton, MDFlatButton
 
-from rapidfuzz import fuzz
-
 from database_manager import DatabaseManager
 import logging
 

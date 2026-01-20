@@ -192,7 +192,7 @@ class BarcodeScanner:
 
         return False
 
-    def _handle_license_payload(self, raw_bytes: bytes):
+    def _handle_license_payload(self, raw_bytes):
         Clock.schedule_once(lambda dt: self.is_21(raw_bytes), 0)
 
     def _looks_like_1d_license(self, s):
@@ -278,23 +278,17 @@ class BarcodeScanner:
         # default false
         return False
 
-    def is_21(self, raw_bytes, app=None):
+    def is_21(self, raw_bytes):
         dec = id21_check(raw_bytes)
         summary = summarize_for_popup(dec)
 
         if dec.hard_fail:
-            logger.warning("ID scan fail\n%s", summary)
-            self.app.popup_manager.show_error(summary)
-            return False
+            self.app.popup_manager.open_review_popup(summary, "NOT 21", False)
 
         if dec.needs_review:
-            logger.info("ID needs review\n%s", summary)
-            self.app.popup_manager.show_warning(summary)
-            return True
+            self.app.popup_manager.open_review_popup(summary, "ID NEEDS REVIEW", False)
 
-        logger.info("ID 21+ verified\n%s", summary)
-        self.app.popup_manager.show_info(summary)
-        return True
+        self.app.popup_manager.open_review_popup(summary, "21+ OK", True)
 
 
 if __name__ == "__main__":

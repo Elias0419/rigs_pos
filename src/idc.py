@@ -403,8 +403,8 @@ def _state_abbr_from_fields(f: dict[str, str]) -> str | None:
     return abbr or None
 
 
-def id21_check(raw: bytes, today: date = None) -> Decision:
-    today = today or date.today()
+def id21_check(raw: bytes) -> Decision:
+    today = date.today()
     p = parse_aamva(raw)
     f = p.fields
 

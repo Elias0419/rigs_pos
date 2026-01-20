@@ -220,68 +220,7 @@ class Utilities:
         inventory = self.app.db_manager.get_all_items()
         return inventory
 
-    def is_21(self, raw_bytes: bytes):
-        errors = []
-        result = False
 
-        if not raw_bytes:
-            errors.append("Empty scan payload")
-        else:
-            try:
-                dob = self._extract_dob_from_aamva(raw_bytes)
-                if dob is None:
-                    errors.append("Could not parse date in any expected format")
-                else:
-                    today = date.today()
-                    age = (
-                        today.year
-                        - dob.year
-                        - ((today.month, today.day) < (dob.month, dob.day))
-                    )
-                    result = age >= 21
-
-            except ValueError as e:
-                errors.append(f"DOB parse error: {str(e)}")
-            except Exception as e:
-                errors.append(f"Unexpected error: {str(e)}")
-                logger.error(f"[ID SCAN] Unexpected error: {e!r}")
-
-        try:
-            self.app.popup_manager.id_scan_popup(result, errors)
-        except Exception as e:
-            logger.warning(f"[ID SCAN] popup error: {e!r}")
-
-    def _extract_dob_from_aamva(self, raw_bytes: bytes):
-        text = raw_bytes.decode("utf-8", "ignore")
-        # find DBB
-        m = re.search(r"DBB([^\r\n]+)", text)
-        if not m:
-            raise ValueError("DBB field not found in AAMVA data")
-        payload = m.group(1)
-        digits = re.sub(r"\D", "", payload)
-        if len(digits) < 8:
-            raise ValueError("Invalid date format: insufficient digits")
-
-        dob = None
-        try:
-            if 1900 <= int(digits[:4]) <= 2100:
-                # YYYYMMDD
-                y, mo, d = int(digits[:4]), int(digits[4:6]), int(digits[6:8])
-            else:
-                # MMDDYYYY
-                mo, d, y = int(digits[:2]), int(digits[2:4]), int(digits[4:8])
-            dob = date(y, mo, d)
-        except ValueError:
-            # fallback
-            for fmt in ("%m%d%Y", "%Y%m%d"):
-                try:
-                    dob = datetime.strptime(digits[:8], fmt).date()
-                    break
-                except ValueError:
-                    continue
-        if dob is None:
-            raise ValueError("Could not parse date in any expected format")
-        return dob
 
     def reset_idle_timer(self):
         try:
