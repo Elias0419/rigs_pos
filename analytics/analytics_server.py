@@ -423,7 +423,7 @@ def get_summary_stats():
             orders_seen[oid] = {
                 "tax": safe_float(row["order_tax"]),
                 "discount": safe_float(row["order_discount"]),
-                "total": safe_float(row["order_total"]),
+                "total_with_tax": safe_float(row["order_total"]),
                 "payment_method": row["payment_method"],
                 "timestamp": row["order_timestamp"],
             }
