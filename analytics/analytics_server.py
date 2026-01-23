@@ -192,7 +192,7 @@ def get_orders():
         query += " AND oh.total_with_tax <= ?"
         params.append(float(max_total))
     if category:
-        query += " AND LOWER(oi.category) = LOWER(?)"
+        query += " AND LOWER(COALESCE(oi.product_category, oi.category)) = LOWER(?)"
         params.append(category)
     if keyword:
         query += " AND (LOWER(oi.name) LIKE ? OR LOWER(oh.items) LIKE ?)"
@@ -302,6 +302,7 @@ def get_order_items():
             "barcode": safe_str(row["barcode"]),
             "name": safe_str(row["name"], "Unknown Item"),
             "category": safe_str(row["category"], "Uncategorized"),
+            "product_category": safe_str(row["product_category"], row["category"]),
             "qty": qty,
             "unit_price": unit_price,
             "line_subtotal": line_subtotal,
@@ -334,7 +335,9 @@ def get_order_items():
 def get_categories():
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT DISTINCT category FROM order_items WHERE category IS NOT NULL AND category != '' ORDER BY category")
+    cursor.execute(
+        "SELECT DISTINCT COALESCE(product_category, category) as category FROM order_items WHERE COALESCE(product_category, category) IS NOT NULL AND COALESCE(product_category, category) != '' ORDER BY category"
+    )
     categories = [row["category"] for row in cursor.fetchall()]
     conn.close()
     return jsonify(categories)
@@ -359,7 +362,7 @@ def get_summary_stats():
     category = request.args.get("category", "").strip()
     payment_method = request.args.get("payment_method", "").strip()
     guess_keystone = request.args.get("guess_keystone", "").lower() == "true"
-    
+    exclude_empty_days = request.args.get("exclude_empty_days", "").lower() == "true"
     # Primary data source: order_items (joined with order_history for payment filter and tax/discount)
     item_query = """
         SELECT oi.*, oh.payment_method, oh.tax as order_tax, oh.discount as order_discount,
@@ -434,7 +437,7 @@ def get_summary_stats():
     # Tax and discount come from order_history 
     total_tax = sum(o["tax"] for o in orders_seen.values())
     total_discount = sum(o["discount"] for o in orders_seen.values())
-    total_revenue = total_subtotal + total_tax  # Total with tax
+    total_revenue = sum(o["total_with_tax"] for o in orders_seen.values())
     
     # Track cost data completeness (after backfill)
     items_with_cost = [i for i in items if i.get("unit_cost") is not None]
@@ -456,7 +459,15 @@ def get_summary_stats():
         min_date = min(timestamps)
         max_date = max(timestamps)
         date_range = {"start": min_date.isoformat(), "end": max_date.isoformat()}
-        days = (max_date - min_date).days + 1
+        if exclude_empty_days:
+            days = len({t.date() for t in timestamps})
+        else:
+            start_dt = parse_timestamp(start_date) if start_date else min_date
+            end_dt = parse_timestamp(end_date) if end_date else max_date
+            if start_dt and end_dt:
+                days = (end_dt.date() - start_dt.date()).days + 1
+            else:
+                days = 0
         daily_avg_revenue = total_revenue / days if days else 0
         daily_avg_orders = total_orders / days if days else 0
     else:
@@ -467,7 +478,7 @@ def get_summary_stats():
     for oid, o in orders_seen.items():
         pm = safe_str(o["payment_method"], "unknown").lower()
         payment_breakdown[pm]["count"] += 1
-        payment_breakdown[pm]["total"] += o["total"]
+        payment_breakdown[pm]["total"] += o["total_with_tax"]
     
     category_breakdown = defaultdict(lambda: {"units": 0, "revenue": 0, "cost": 0})
     for i in items:
