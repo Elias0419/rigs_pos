@@ -282,16 +282,17 @@ class ButtonHandler:
         if draft:
             printer.print_receipt(order_details, draft=True)
         else:
-            if qr:
-                printer.print_receipt(order_details, qr_code=True)
-            else:
-                printer.print_receipt(order_details)
-            try:
-                self.app.qr_code_receipt_decision_popup.dismiss()
-            except AttributeError:
-                logger.info(
-                    "ButtonHandler:on_receipt_button_press\nexpected error dismissing qr popup"
-                )
+            printer.print_receipt(order_details, qr_code=True)
+            # if qr:
+            #     printer.print_receipt(order_details, qr_code=True)
+            # else:
+            #     printer.print_receipt(order_details)
+            # try:
+            #     self.app.qr_code_receipt_decision_popup.dismiss()
+            # except AttributeError:
+            #     logger.info(
+            #         "ButtonHandler:on_receipt_button_press\nexpected error dismissing qr popup"
+            #     )
 
     def on_lock_screen_button_press(self, button_text, instance):
         if button_text == "Reset":
