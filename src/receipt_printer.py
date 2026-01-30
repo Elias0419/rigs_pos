@@ -372,14 +372,14 @@ class ReceiptPrinter:
         if not draft:
             if qr_code:
                 review_url = "https://g.page/r/CfHmpKJDLRqXEBM/review"
+                qr_img = Image.open("images/qrcode.png")
                 self.printer.set(align="center", font="a", bold=False)
                 self.printer.textln()
                 self.printer.textln("Thanks for shopping at RIGS!")
                 self.printer.set(align="center", font="a", bold=True)
                 self.printer.textln("Scan the QR Code to review us on Google!")
-                # self.printer.set(align="center", font="a", bold=False)
-                # self.printer.textln("It really helps!")
-                self.printer.qr(review_url, native=True, size=4)
+                self.printer.image(qr_img)
+                # self.printer.qr(review_url, native=True, size=4)
                 self.printer.set(align="center", font="a", bold=False)
                 self.printer.textln("g.page/r/CfHmpKJDLRqXEBM/review")
 
