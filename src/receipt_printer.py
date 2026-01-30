@@ -378,7 +378,7 @@ class ReceiptPrinter:
                 self.printer.textln("Thanks for shopping at RIGS!")
                 self.printer.set(align="center", font="a", bold=True)
                 self.printer.textln("Scan the QR Code to review us on Google!")
-                self.printer.image(qr_img)
+                self.printer.image(qr_img, center=True)
                 # self.printer.qr(review_url, native=True, size=4)
                 self.printer.set(align="center", font="a", bold=False)
                 self.printer.textln("g.page/r/CfHmpKJDLRqXEBM/review")
