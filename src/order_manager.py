@@ -127,7 +127,6 @@ class LineItem:
             "unit_cost": float(self.unit_cost) if self.unit_cost is not None else None,
             "line_cost": float(self.line_cost) if self.unit_cost is not None else None,
             "is_cigarette": int(self.is_cigarette) if self.is_cigarette is not None else None,
-            "category": self.product_category,
             "product_category": self.product_category,
             "discounts": [d.to_dict() for d in self.discounts],
             "line_subtotal": float(self.line_subtotal),
@@ -153,7 +152,7 @@ class LineItem:
         is_cigarette = (
             int(is_cigarette_raw) if is_cigarette_raw not in (None, "") else None
         )
-        product_category = d.get("product_category", d.get("category"))
+        product_category = d.get("product_category")
 
         discounts_raw = d.get("discounts", []) or []
         discounts = [Discount.from_dict(x) for x in discounts_raw]

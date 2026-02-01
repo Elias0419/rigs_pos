@@ -165,8 +165,7 @@ class InventoryRow(RecycleDataViewBehavior, BoxLayout):
             is_custom=is_custom,
             unit_cost=unit_cost,
             is_cigarette=item_details.get("is_cigarette"),
-            product_category=item_details.get("product_category")
-            or item_details.get("category"),
+            product_category=item_details.get("product_category"),
         )
         self.app.utilities.update_display()
         self.app.utilities.update_financial_summary()
@@ -242,7 +241,6 @@ class InventoryManagementRow(RecycleDataViewBehavior, BoxLayout):
         price,
         cost,
         sku,
-        category,
         product_category,
         is_rolling_papers,
         is_cigarette,
@@ -302,7 +300,6 @@ class InventoryManagementRow(RecycleDataViewBehavior, BoxLayout):
             price_value,
             cost_value,
             sku,
-            category,
             product_category=product_category,
             taxable=item_details.get("taxable", True),
             is_rolling_papers=bool(is_rolling_papers),
@@ -316,7 +313,6 @@ class InventoryManagementRow(RecycleDataViewBehavior, BoxLayout):
             self.price = str(price_value)
             self.cost = str(cost_value)
             self.sku = sku or ""
-            self.category = category or ""
             self.product_category = product_category or ""
             self.is_rolling_papers = bool(is_rolling_papers)
             self.is_cigarette = bool(is_cigarette)
@@ -479,7 +475,7 @@ class InventoryManagementView(BoxLayout):
 
         self.app = App.get_running_app()
         self.database_manager = DatabaseManager("db/inventory.db", None)
-        self.inventory_view = InventoryView()
+        self.inventory_view = InventoryView(self.app.order_manager)
         self.full_inventory = self.database_manager.get_all_items()
 
         bar = BoxLayout(size_hint_y=None, height=dp(48), spacing=5)
@@ -563,7 +559,6 @@ class InventoryManagementView(BoxLayout):
         price_input,
         cost_input,
         sku_input,
-        category_input,
         product_category=None,
     ):
         try:
@@ -572,9 +567,6 @@ class InventoryManagementView(BoxLayout):
             logger.warning("[Inventory Manager] add_item_to_database no barcode")
             self.app.popup_manager.catch_label_printer_missing_barcode()
             return
-        category_value = category_input.text if category_input is not None else ""
-        if not category_value and product_category:
-            category_value = product_category
         if name_input:
             try:
                 self.database_manager.add_item(
@@ -583,7 +575,6 @@ class InventoryManagementView(BoxLayout):
                     price_input.text,
                     cost_input.text,
                     sku_input.text,
-                    category_value,
                     product_category=product_category,
                 )
                 self.product_category = product_category or ""
@@ -633,12 +624,12 @@ class InventoryManagementView(BoxLayout):
                 "price": str(item[2]),
                 "cost": str(item[3]),
                 "sku": str(item[4]),
-                "category": str(item[5]),
-                "product_category": str(item[6]) if len(item) > 6 else "",
-                "is_rolling_papers": bool(item[10]) if len(item) > 10 else False,
-                "is_cigarette": bool(item[11]) if len(item) > 11 else False,
+                "category": str(item[5]) if len(item) > 5 else "",
+                "product_category": str(item[5]) if len(item) > 5 else "",
+                "is_rolling_papers": bool(item[9]) if len(item) > 9 else False,
+                "is_cigarette": bool(item[10]) if len(item) > 10 else False,
                 "papers_per_pack": (
-                    str(item[12]) if len(item) > 12 and item[12] is not None else ""
+                    str(item[11]) if len(item) > 11 and item[11] is not None else ""
                 ),
             }
             for item in items

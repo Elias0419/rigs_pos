@@ -121,7 +121,7 @@ class BarcodeCache:
                 if isinstance(item, dict):
                     ean_value = item.get("ean_barcode")
                 else:
-                    ean_value = item[13] if len(item) > 13 else None
+                    ean_value = item[12] if len(item) > 12 else None
                 if ean_value:
                     self.variant[str(ean_value).strip()] = canon
 
@@ -159,7 +159,7 @@ class Utilities:
         self.app.current_context = "main"
         self.app.theme_cls.theme_style = "Dark"
         self.app.theme_cls.primary_palette = "Brown"
-        self.app.selected_categories = []
+        # self.app.selected_categories = []
 
     def register_fonts(self):
         from kivy.core.text import LabelBase
@@ -195,16 +195,19 @@ class Utilities:
         self.app.order_manager = OrderManager(self.app)
         self.app.history_manager = HistoryView(self.app)
         self.app.history_popup = HistoryPopup()
+
+        self.app.inventory_cache = self.initialize_inventory_cache()
         self.app.inventory_manager = InventoryManagementView()
         self.app.inventory_row = InventoryManagementRow()
+
         self.app.label_printer = LabelPrinter(self.app)
         self.app.label_manager = LabelPrintingView(self.app)
         self.app.pin_reset_timer = ReusableTimer(5.0, self.reset_pin)
         self.app.button_handler = ButtonHandler(self.app)
         self.app.popup_manager = PopupManager(self.app)
-        self.app.categories = self.initialize_categories()
+
         self.app.barcode_cache = self.initialize_barcode_cache()
-        self.app.inventory_cache = self.initialize_inventory_cache()
+
 
     def initialize_receipt_printer(self):
         try:
@@ -420,11 +423,6 @@ class Utilities:
             if ean_value:
                 cache.variant[ean_value] = canonical
 
-    def initialize_categories(self):
-        categories = [
-            "Categories are unused, talk to Owen",
-        ]
-        return categories
 
     def store_user_details(self, name, pin, admin):
         user_details = {"name": name, "pin": pin, "admin": admin}
@@ -1736,17 +1734,16 @@ class Utilities:
         if cost_input in (None, ""):
             self.app.popup_manager.catch_inventory_item_empty_cost()
             return
-        category_value = product_category or category_input or ""
-        if category_value == "Select Category":
-            category_value = ""
+        product_category_value = product_category or ""
+        if product_category_value == "Select Category":
+            product_category_value = ""
         self.app.inventory_row.update_item_in_database(
             barcode_input,
             name_input,
             price_input,
             cost_input,
             sku_input,
-            category_value,
-            category_value,
+            product_category_value,
             False,
             False,
             "",
@@ -1796,7 +1793,6 @@ class Utilities:
                 price_input,
                 cost_input,
                 sku_input,
-                category_input,
                 selected_category,
             )
             self.app.inventory_manager.refresh_inventory(query=query)

@@ -80,7 +80,6 @@ class ReceiptPrinter:
         if not isinstance(order_details, Order):
             raise TypeError(f"Expected Order instance, got {type(order_details)}")
 
-        # Ensure totals on the Order and each LineItem are up to date.
         order_details.recalculate_totals()
 
         normalized_items: Dict[str, Dict[str, Any]] = {}

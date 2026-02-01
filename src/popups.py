@@ -1305,8 +1305,8 @@ class PopupManager:
         product_category_default = (
             item_details.get("product_category")
             if item_details
-            else None
-        ) or (item_details.get("category") if item_details else "")
+            else ""
+        )
         name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.2)
         name_input = TextInput(text=instance.name, font_size=20)
         name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
@@ -3999,6 +3999,7 @@ class PopupManager:
                 barcode=barcode,
                 unit_cost=unit_cost,
                 is_cigarette=item_details.get("is_cigarette"),
+                product_category=item_details.get("product_category"),
             )
             self.handle_duplicate_barcodes_popup.dismiss()
             self.app.utilities.update_display()

@@ -713,7 +713,7 @@ class OrderDetailsPopup(Popup):
             "Unit Cost",
             "Line Cost",
             "Barcode",
-            "Category",
+            "Product Category",
             "Rolling Papers",
         ]
 
@@ -738,7 +738,7 @@ class OrderDetailsPopup(Popup):
                 )
             )
             table.add_widget(self._table_label(str(item.get("barcode", ""))))
-            table.add_widget(self._table_label(item.get("category", "")))
+            table.add_widget(self._table_label(item.get("product_category", "")))
             table.add_widget(self._table_label(self._format_papers(item)))
 
         scroll.add_widget(table)
