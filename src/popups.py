@@ -147,6 +147,42 @@ class TitleCaseTextInput(TextInput):
 class PopupManager:
     def __init__(self, ref):
         self.app = ref
+        self.common_categories = [
+            "American Glass Bongs",
+            "American Glass Pipes",
+            "American Glass Bubblers",
+            "American Glass Rigs",
+            "American Glass Slides",
+            "Import Glass Bongs",
+            "Import Glass Pipes",
+            "Import Glass Bubblers",
+            "Import Glass Rigs",
+            "Import Glass Slides",
+            "Shitty Import Quartz",
+            "Fancy Import Quarz",
+            "American Quarz",
+            "Grinders",
+            "510 Batteries",
+            "Concentrate Vapes",
+            "Dry Vapes",
+            "Silicone",
+        ]
+        self.uncommon_categories = [
+            "Rolling papers",
+            "Cigarettes",
+            "Cigars",
+            "Pouches (zyn, etc)",
+            "Nicotine Vapes",
+            "Torches",
+            "Lighters",
+            "THC",
+            "CBD",
+            "Dugouts",
+            "Trays/Ashtrays",
+            "Jewelry",
+            "Other Accessories",
+            "Everything Else",
+        ]
         self.product_categories = [
             "Rolling papers",
             "Cigarettes",
@@ -178,6 +214,13 @@ class PopupManager:
         else:
             button.md_bg_color = button.theme_cls.primary_color
 
+    @staticmethod
+    def _style_category_choice_button(button, is_selected):
+        if is_selected:
+            button.md_bg_color = (0.0, 0.6, 0.3, 1)
+        else:
+            button.md_bg_color = button.theme_cls.primary_color
+
     def _create_product_category_menu(self, button, on_select=None):
         def set_category(text):
             button.text = text
@@ -200,6 +243,170 @@ class PopupManager:
             width=dp(256),
         )
         return menu
+
+    def show_missing_product_category_popup(self, item_ids):
+        if not item_ids:
+            return
+        missing_items = self.app.db_manager.get_items_missing_product_category(item_ids)
+        if not missing_items:
+            return
+
+        selections = {}
+        common_buttons = {}
+        uncommon_buttons = {}
+
+        layout = MDBoxLayout(orientation="vertical", spacing=dp(12), padding=dp(12))
+        header = MarkupLabel(
+            text="[b][size=22]Missing Categories[/size][/b]\\nSelect a category or dismiss to skip.",
+            halign="center",
+            size_hint_y=None,
+            height=dp(70),
+        )
+        layout.add_widget(header)
+
+        scroll_view = ScrollView(size_hint=(1, 1), do_scroll_x=False, do_scroll_y=True)
+        items_layout = MDBoxLayout(
+            orientation="vertical",
+            size_hint_y=None,
+            adaptive_height=True,
+            spacing=dp(12),
+            padding=[0, 0, 0, dp(12)],
+        )
+        scroll_view.add_widget(items_layout)
+
+        def set_item_category(item_id, category):
+            selections[item_id] = category
+            for button in common_buttons.get(item_id, []):
+                self._style_category_choice_button(button, button.text == category)
+            uncommon_button = uncommon_buttons.get(item_id)
+            if uncommon_button:
+                if category in self.uncommon_categories:
+                    uncommon_button.text = category
+                else:
+                    uncommon_button.text = "Other Categories"
+
+        for item in missing_items:
+            item_id = item.get("item_id")
+            item_name = item.get("name") or "Unknown Item"
+
+            item_container = MDBoxLayout(
+                orientation="vertical",
+                size_hint_y=None,
+                adaptive_height=True,
+                spacing=dp(8),
+                padding=dp(8),
+            )
+
+            item_label = MarkupLabel(
+                text=f"[b][size=20]{item_name}[/size][/b]",
+                halign="left",
+                size_hint_y=None,
+                height=dp(30),
+            )
+            item_container.add_widget(item_label)
+
+            common_grid = MDGridLayout(
+                cols=3,
+                size_hint_y=None,
+                adaptive_height=True,
+                spacing=dp(6),
+            )
+            buttons = []
+            for category in self.common_categories:
+                button = MDRaisedButton(
+                    text=category,
+                    size_hint_y=None,
+                    height=dp(46),
+                    on_release=lambda btn, cat=category, iid=item_id: set_item_category(
+                        iid, cat
+                    ),
+                )
+                buttons.append(button)
+                common_grid.add_widget(button)
+            common_buttons[item_id] = buttons
+
+            item_container.add_widget(common_grid)
+
+            uncommon_button = MDRaisedButton(
+                text="Other Categories",
+                size_hint_y=None,
+                height=dp(48),
+            )
+            uncommon_menu = None
+
+            def on_uncommon_select(option, iid=item_id):
+                set_item_category(iid, option)
+                if uncommon_menu:
+                    uncommon_menu.dismiss()
+
+            menu_items = [
+                {
+                    "viewclass": "OneLineListItem",
+                    "text": option,
+                    "on_release": lambda x=option: on_uncommon_select(x),
+                }
+                for option in self.uncommon_categories
+            ]
+            uncommon_menu = MDDropdownMenu(
+                caller=uncommon_button,
+                items=menu_items,
+                width=dp(240),
+            )
+            uncommon_button.bind(on_release=lambda *_: uncommon_menu.open())
+            uncommon_buttons[item_id] = uncommon_button
+
+            item_container.add_widget(uncommon_button)
+            items_layout.add_widget(item_container)
+
+        layout.add_widget(scroll_view)
+
+        button_layout = MDBoxLayout(
+            orientation="vertical",
+            size_hint_y=None,
+            height=dp(140),
+            spacing=dp(10),
+        )
+
+        confirm_button = MDRaisedButton(
+            text="[b]Confirm[/b]",
+            size_hint=(1, None),
+            height=dp(60),
+            on_release=lambda *_: self._confirm_missing_categories(
+                selections, missing_items
+            ),
+        )
+        dismiss_button = MDRaisedButton(
+            text="[b]DISMISS[/b]",
+            size_hint=(1, None),
+            height=dp(60),
+            md_bg_color=(0.85, 0.2, 0.2, 1),
+            on_release=lambda *_: self.missing_category_popup.dismiss(),
+        )
+        button_layout.add_widget(confirm_button)
+        button_layout.add_widget(dismiss_button)
+        layout.add_widget(button_layout)
+
+        self.missing_category_popup = Popup(
+            title="Missing Categories",
+            content=layout,
+            size_hint=(0.9, 0.9),
+            auto_dismiss=False,
+        )
+        self.missing_category_popup.open()
+
+    def _confirm_missing_categories(self, selections, missing_items):
+        item_ids = {item.get("item_id") for item in missing_items}
+        updates = {
+            item_id: category
+            for item_id, category in selections.items()
+            if item_id in item_ids and category
+        }
+        if updates:
+            for item_id, category in updates.items():
+                self.app.db_manager.update_item_product_category(item_id, category)
+            self.app.utilities.update_inventory_cache()
+            toast(f"Saved {len(updates)} categories.")
+        self.missing_category_popup.dismiss()
 
     def open_review_popup(self, summary, title, is_21):
         layout = BoxLayout(orientation="vertical")
@@ -3162,12 +3369,19 @@ class PopupManager:
 
     def automatic_done_actions(self):
         order_details = self.app.order_manager.get_order_details()
+        item_ids = [
+            item.item_id
+            for item in order_details.items.values()
+            if getattr(item, "item_id", None)
+        ]
+        item_ids = list(dict.fromkeys(item_ids))
         self.app.db_manager.send_order_to_history_database(order_details)
         self.app.order_manager.clear_order()
         self.payment_popup.dismiss()
         self.app.utilities.update_financial_summary()
         self.app.order_layout.clear_widgets()
         self.app.order_manager.delete_order_from_disk(order_details)
+        self.app.popup_manager.show_missing_product_category_popup(item_ids)
 
     def qr_code_receipt_decision_popup(self, _):
         qr_code_receipt_decision_popup_layout = BoxLayout(

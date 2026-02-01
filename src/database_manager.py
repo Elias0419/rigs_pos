@@ -1012,6 +1012,62 @@ class DatabaseManager:
         conn.close()
         return exists
 
+    def get_items_missing_product_category(self, item_ids):
+        if not item_ids:
+            return []
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            placeholders = ",".join("?" * len(item_ids))
+            cursor.execute(
+                f"""
+                SELECT item_id, name, barcode, sku, product_category
+                FROM items
+                WHERE item_id IN ({placeholders})
+                  AND (product_category IS NULL OR product_category = '')
+                """,
+                tuple(item_ids),
+            )
+            rows = cursor.fetchall()
+            return [
+                {
+                    "item_id": row[0],
+                    "name": row[1],
+                    "barcode": row[2],
+                    "sku": row[3],
+                    "product_category": row[4],
+                }
+                for row in rows
+            ]
+        except sqlite3.Error as e:
+            logger.warn(f"[DatabaseManager]:\n{e}")
+            return []
+        finally:
+            conn.close()
+
+    def update_item_product_category(self, item_id, product_category):
+        if not item_id:
+            return False
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            product_category_value = (
+                product_category if product_category not in (None, "") else None
+            )
+            cursor.execute(
+                "UPDATE items SET product_category=? WHERE item_id=?",
+                (product_category_value, item_id),
+            )
+            if cursor.rowcount == 0:
+                return False
+            conn.commit()
+            return True
+        except sqlite3.Error as e:
+            logger.warn(f"[DatabaseManager]:\n{e}")
+            return False
+        finally:
+            conn.close()
+
 
     def close_connection(self):
         conn = self._get_connection()

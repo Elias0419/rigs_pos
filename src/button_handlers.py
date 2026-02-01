@@ -268,6 +268,12 @@ class ButtonHandler:
     def on_done_button_press(self, instance):
         Clock.unschedule(self.app.popup_manager.timeout_event)
         order_details = self.app.order_manager.get_order_details()
+        item_ids = [
+            item.item_id
+            for item in order_details.items.values()
+            if getattr(item, "item_id", None)
+        ]
+        item_ids = list(dict.fromkeys(item_ids))
 
         self.app.db_manager.send_order_to_history_database(order_details)
         self.app.order_manager.clear_order()
@@ -275,6 +281,7 @@ class ButtonHandler:
         self.app.utilities.update_financial_summary()
         self.app.order_layout.clear_widgets()
         self.app.order_manager.delete_order_from_disk(order_details)
+        self.app.popup_manager.show_missing_product_category_popup(item_ids)
 
     def on_receipt_button_press(self, instance, draft=False, qr=False):
         printer = self.app.receipt_printer
