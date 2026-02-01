@@ -166,6 +166,7 @@ class PopupManager:
             "Concentrate Vapes",
             "Dry Vapes",
             "Silicone",
+            "Cleaners",
         ]
         self.uncommon_categories = [
             "Rolling papers",
