@@ -184,30 +184,9 @@ class PopupManager:
             "Other Accessories",
             "Everything Else",
         ]
-        self.product_categories = [
-            "Rolling papers",
-            "Cigarettes",
-            "Cigars",
-            "Pouches (zyn, etc)",
-            "Vapes",
-            "Electronics",
-            "Torches",
-            "Lighters",
-            "THC",
-            "CBD",
-            "Grinders",
-            "Dugouts",
-            "Trays/Ashtrays",
-            "Jewelry",
-            "Other Accessories",
-            "Glass",
-            "everything_else" # temporary
-        ]
-
-
 
     def get_product_categories(self):
-        return list(self.product_categories)
+        return list(self.common_categories) + list(self.uncommon_categories)
 
     def _style_product_category_button(self, button):
         if button.text and button.text != "Select Category":
