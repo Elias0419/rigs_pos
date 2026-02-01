@@ -479,9 +479,9 @@ class InventoryManagementView(BoxLayout):
 
         self.app = App.get_running_app()
         self.database_manager = DatabaseManager("db/inventory.db", None)
+        self.inventory_view = InventoryView()
         self.full_inventory = self.database_manager.get_all_items()
 
-        # Top controls
         bar = BoxLayout(size_hint_y=None, height=dp(48), spacing=5)
         self.inv_search_input = TextInput(
             hint_text="Search", multiline=False, size_hint_x=0.8
@@ -499,7 +499,6 @@ class InventoryManagementView(BoxLayout):
         bar.add_widget(add_btn)
         self.add_widget(bar)
 
-        # RecycleView
         self.rv = RecycleView()
 
         layout = RecycleBoxLayout(
@@ -514,7 +513,6 @@ class InventoryManagementView(BoxLayout):
         self.rv.viewclass = InventoryManagementRow
         self.add_widget(self.rv)
 
-        # first render
         Clock.schedule_once(lambda dt: self.filter_inventory(None), 0.1)
 
     def detach_from_parent(self):
@@ -590,7 +588,7 @@ class InventoryManagementView(BoxLayout):
                 )
                 self.product_category = product_category or ""
                 self.app.utilities.update_inventory_cache()
-                InventoryView.refresh_from_app_cache()
+                self.inventory_view.refresh_from_app_cache()
                 self.refresh_label_inventory_for_dual_pane_mode()
             except Exception as e:
                 logger.warning(e)
