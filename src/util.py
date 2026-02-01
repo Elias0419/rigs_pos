@@ -403,25 +403,47 @@ class Utilities:
         inventory = self.app.db_manager.get_all_items()
         self.app.inventory_cache = inventory
 
+    def _refresh_barcode_cache_variants(self):
+        cache = self.app.barcode_cache
+        cache.variant = {}
+        for canon, data in cache.main.items():
+            data["is_dupe"] = len(data["items"]) > 1
+            for v in cache._gen_variants(canon):
+                cache.variant[v] = canon
+            for item in data["items"]:
+                if isinstance(item, dict):
+                    ean_value = item.get("ean_barcode")
+                else:
+                    ean_value = item[12] if len(item) > 12 else None
+                if ean_value:
+                    cache.variant[str(ean_value).strip()] = canon
+
     def update_barcode_cache(self, item_details):
         cache = self.app.barcode_cache
         raw_barcode = item_details["barcode"]
         barcode = str(raw_barcode).strip()
+        item_id = str(item_details.get("item_id", "")).strip()
 
-        canonical = cache.variant.get(barcode, barcode)
+        if item_id:
+            for canon in list(cache.main.keys()):
+                items = cache.main[canon]["items"]
+                kept_items = []
+                for item in items:
+                    if isinstance(item, dict):
+                        existing_id = item.get("item_id")
+                    else:
+                        existing_id = item[6] if len(item) > 6 else None
+                    if str(existing_id).strip() != item_id:
+                        kept_items.append(item)
+                if kept_items:
+                    cache.main[canon]["items"] = kept_items
+                else:
+                    del cache.main[canon]
 
+        canonical = barcode
         bucket = cache.main[canonical]
         bucket["items"].append(item_details)
-        bucket["is_dupe"] = len(bucket["items"]) > 1
-
-        for v in cache._gen_variants(canonical):
-            cache.variant[v] = canonical
-
-        ean_barcode = item_details.get("ean_barcode")
-        if ean_barcode not in (None, ""):
-            ean_value = str(ean_barcode).strip()
-            if ean_value:
-                cache.variant[ean_value] = canonical
+        self._refresh_barcode_cache_variants()
 
 
     def store_user_details(self, name, pin, admin):
