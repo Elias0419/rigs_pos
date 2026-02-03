@@ -237,7 +237,7 @@ class PopupManager:
 
         layout = MDBoxLayout(orientation="vertical", spacing=dp(12), padding=dp(12))
         header = MarkupLabel(
-            text="[b][size=22]Missing Categories[/size][/b]\\nSelect a category or dismiss to skip.",
+            text="[b][size=22]Missing Categories[/size][/b]",
             halign="center",
             size_hint_y=None,
             height=dp(70),
@@ -350,7 +350,7 @@ class PopupManager:
         confirm_button = MDRaisedButton(
             text="[b]Confirm[/b]",
             size_hint=(1, None),
-            height=dp(60),
+            height=dp(160),
             on_release=lambda *_: self._confirm_missing_categories(
                 selections, missing_items
             ),
@@ -358,7 +358,7 @@ class PopupManager:
         dismiss_button = MDRaisedButton(
             text="[b]DISMISS[/b]",
             size_hint=(1, None),
-            height=dp(60),
+            height=dp(160),
             md_bg_color=(0.85, 0.2, 0.2, 1),
             on_release=lambda *_: self.missing_category_popup.dismiss(),
         )
@@ -370,7 +370,7 @@ class PopupManager:
             title="Missing Categories",
             content=layout,
             size_hint=(0.9, 0.9),
-            auto_dismiss=False,
+            auto_dismiss=True,
         )
         self.missing_category_popup.open()
 
