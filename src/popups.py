@@ -161,12 +161,15 @@ class PopupManager:
             "Shitty Import Quartz",
             "Fancy Import Quarz",
             "American Quarz",
+            "Import Chillums",
+            "American Chillums",
             "Grinders",
             "510 Batteries",
             "Concentrate Vapes",
             "Dry Vapes",
             "Silicone",
             "Cleaners",
+            "Butane",
         ]
         self.uncommon_categories = [
             "Rolling papers",
