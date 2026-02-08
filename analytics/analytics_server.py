@@ -86,7 +86,7 @@ def get_inventory_lookup():
             "item_id": row["item_id"],
             "barcode": row["barcode"],
             "name": row["name"],
-            "category": row["category"],
+            "category": row["product_category"],
             "price": row["price"],
             "cost": row["cost"],
             "taxable": row["taxable"],
@@ -301,8 +301,8 @@ def get_order_items():
             "item_id": safe_str(row["item_id"]),
             "barcode": safe_str(row["barcode"]),
             "name": safe_str(row["name"], "Unknown Item"),
-            "category": safe_str(row["category"], "Uncategorized"),
-            "product_category": safe_str(row["product_category"], row["category"]),
+            "category": safe_str(row["product_category"], "Uncategorized"),
+            "product_category": safe_str(row["product_category"], row["product_category"]),
             "qty": qty,
             "unit_price": unit_price,
             "line_subtotal": line_subtotal,
@@ -338,7 +338,7 @@ def get_categories():
     cursor.execute(
         "SELECT DISTINCT COALESCE(product_category, category) as category FROM order_items WHERE COALESCE(product_category, category) IS NOT NULL AND COALESCE(product_category, category) != '' ORDER BY category"
     )
-    categories = [row["category"] for row in cursor.fetchall()]
+    categories = [row["product_category"] for row in cursor.fetchall()]
     conn.close()
     return jsonify(categories)
 
@@ -406,7 +406,7 @@ def get_summary_stats():
             "item_id": row["item_id"],
             "barcode": row["barcode"],
             "name": row["name"],
-            "category": row["category"],
+            "category": row["product_category"],
             "qty": safe_float(row["qty"]),
             "unit_price": safe_float(row["unit_price"]),
             "line_subtotal": safe_float(row["line_subtotal"]),
@@ -647,7 +647,7 @@ def get_top_items():
             "item_id": row["item_id"],
             "barcode": row["barcode"],
             "name": row["name"],
-            "category": row["category"],
+            "category": row["product_category"],
             "qty": safe_float(row["qty"]),
             "unit_price": safe_float(row["unit_price"]),
             "line_subtotal": safe_float(row["line_subtotal"]),
@@ -660,7 +660,7 @@ def get_top_items():
         key = (row["name"] or "").lower()
         agg = aggregated[key]
         agg["name"] = agg["name"] or row["name"]
-        agg["category"] = agg["category"] or row["category"]
+        agg["category"] = agg["category"] or row["product_category"]
         agg["total_qty"] += item["qty"]
         agg["total_revenue"] += item.get("line_subtotal") or 0
         if item.get("line_cost"):
