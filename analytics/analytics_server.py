@@ -74,7 +74,7 @@ def get_inventory_lookup():
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT item_id, barcode, name, category, price, cost, taxable, is_rolling_papers, papers_per_pack
+        SELECT item_id, barcode, name, product_category, price, cost, taxable, is_rolling_papers, papers_per_pack
         FROM items
     """)
     rows = cursor.fetchall()
@@ -783,7 +783,7 @@ def export_csv():
             ORDER BY oi.order_timestamp DESC
         """)
         rows = cursor.fetchall()
-        headers = ["id", "order_id", "item_id", "barcode", "name", "category", 
+        headers = ["id", "order_id", "item_id", "barcode", "name", "category",
                    "qty", "unit_price", "line_subtotal", "unit_cost", "line_cost",
                    "taxable", "is_rolling_papers", "papers_per_pack", "order_timestamp", "payment_method"]
     else:
