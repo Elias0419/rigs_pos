@@ -73,7 +73,7 @@ def get_inventory_lookup():
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT item_id, barcode, name, category, price, cost, taxable, is_rolling_papers, papers_per_pack
+        SELECT item_id, barcode, name, product_category, price, cost, taxable, is_rolling_papers, papers_per_pack
         FROM items
     """)
     rows = cursor.fetchall()
@@ -85,7 +85,8 @@ def get_inventory_lookup():
             "item_id": row["item_id"],
             "barcode": row["barcode"],
             "name": row["name"],
-            "category": row["category"],
+            "category": row["product_category"],
+            "product_category": row["product_category"],
             "price": row["price"],
             "cost": row["cost"],
             "taxable": row["taxable"],
@@ -191,7 +192,7 @@ def get_orders():
         query += " AND oh.total_with_tax <= ?"
         params.append(float(max_total))
     if category:
-        query += " AND LOWER(COALESCE(oi.product_category, oi.category)) = LOWER(?)"
+        query += " AND LOWER(oi.product_category) = LOWER(?)"
         params.append(category)
     if keyword:
         query += " AND (LOWER(oi.name) LIKE ? OR LOWER(oh.items) LIKE ?)"
@@ -263,7 +264,7 @@ def get_order_items():
         query += " AND LOWER(oi.name) LIKE ?"
         params.append(f"%{keyword}%")
     if category:
-        query += " AND LOWER(oi.category) = LOWER(?)"
+        query += " AND LOWER(oi.product_category) = LOWER(?)"
         params.append(category)
     if min_price:
         query += " AND oi.unit_price >= ?"
@@ -300,8 +301,8 @@ def get_order_items():
             "item_id": safe_str(row["item_id"]),
             "barcode": safe_str(row["barcode"]),
             "name": safe_str(row["name"], "Unknown Item"),
-            "category": safe_str(row["category"], "Uncategorized"),
-            "product_category": safe_str(row["product_category"], row["category"]),
+            "category": safe_str(row["product_category"], "Uncategorized"),
+            "product_category": safe_str(row["product_category"], "Uncategorized"),
             "qty": qty,
             "unit_price": unit_price,
             "line_subtotal": line_subtotal,
@@ -335,7 +336,7 @@ def get_categories():
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT DISTINCT COALESCE(product_category, category) as category FROM order_items WHERE COALESCE(product_category, category) IS NOT NULL AND COALESCE(product_category, category) != '' ORDER BY category"
+        "SELECT DISTINCT product_category as category FROM order_items WHERE product_category IS NOT NULL AND product_category != '' ORDER BY category"
     )
     categories = [row["category"] for row in cursor.fetchall()]
     conn.close()
@@ -385,7 +386,7 @@ def get_summary_stats():
         item_query += " AND LOWER(oi.name) LIKE ?"
         params_item.append(f"%{keyword}%")
     if category:
-        item_query += " AND LOWER(oi.category) = LOWER(?)"
+        item_query += " AND LOWER(oi.product_category) = LOWER(?)"
         params_item.append(category)
     
     cursor.execute(item_query, params_item)
@@ -405,7 +406,8 @@ def get_summary_stats():
             "item_id": row["item_id"],
             "barcode": row["barcode"],
             "name": row["name"],
-            "category": row["category"],
+            "category": row["product_category"],
+            "product_category": row["product_category"],
             "qty": safe_float(row["qty"]),
             "unit_price": safe_float(row["unit_price"]),
             "line_subtotal": safe_float(row["line_subtotal"]),
@@ -481,7 +483,7 @@ def get_summary_stats():
     
     category_breakdown = defaultdict(lambda: {"units": 0, "revenue": 0, "cost": 0})
     for i in items:
-        cat = safe_str(i.get("category"), "uncategorized").lower()
+        cat = safe_str(i.get("product_category"), "uncategorized").lower()
         category_breakdown[cat]["units"] += i["qty"]
         category_breakdown[cat]["revenue"] += safe_float(i.get("line_subtotal"))
         category_breakdown[cat]["cost"] += safe_float(i.get("line_cost")) if i.get("line_cost") else 0
@@ -545,7 +547,7 @@ def get_timeseries():
     if category:
         item_query = """
             SELECT order_id FROM order_items 
-            WHERE LOWER(category) = LOWER(?)
+            WHERE LOWER(product_category) = LOWER(?)
         """
         cursor.execute(item_query, [category])
         valid_order_ids = set(row["order_id"] for row in cursor.fetchall())
@@ -605,7 +607,7 @@ def get_top_items():
     
     # Get all matching items
     query = """
-        SELECT item_id, barcode, name, category, qty, unit_price, line_subtotal, unit_cost, line_cost, order_id
+        SELECT item_id, barcode, name, product_category, qty, unit_price, line_subtotal, unit_cost, line_cost, order_id
         FROM order_items
         WHERE name IS NOT NULL AND name != ''
     """
@@ -618,7 +620,7 @@ def get_top_items():
         query += " AND order_timestamp <= ?"
         params.append(end_date + " 23:59:59")
     if category:
-        query += " AND LOWER(category) = LOWER(?)"
+        query += " AND LOWER(product_category) = LOWER(?)"
         params.append(category)
     
     cursor.execute(query, params)
@@ -646,7 +648,8 @@ def get_top_items():
             "item_id": row["item_id"],
             "barcode": row["barcode"],
             "name": row["name"],
-            "category": row["category"],
+            "category": row["product_category"],
+            "product_category": row["product_category"],
             "qty": safe_float(row["qty"]),
             "unit_price": safe_float(row["unit_price"]),
             "line_subtotal": safe_float(row["line_subtotal"]),
@@ -659,7 +662,7 @@ def get_top_items():
         key = (row["name"] or "").lower()
         agg = aggregated[key]
         agg["name"] = agg["name"] or row["name"]
-        agg["category"] = agg["category"] or row["category"]
+        agg["category"] = agg["category"] or row["product_category"]
         agg["total_qty"] += item["qty"]
         agg["total_revenue"] += item.get("line_subtotal") or 0
         if item.get("line_cost"):
@@ -782,7 +785,7 @@ def export_csv():
             ORDER BY oi.order_timestamp DESC
         """)
         rows = cursor.fetchall()
-        headers = ["id", "order_id", "item_id", "barcode", "name", "category",
+        headers = ["id", "order_id", "item_id", "barcode", "name", "product_category",
                    "qty", "unit_price", "line_subtotal", "unit_cost", "line_cost",
                    "taxable", "is_rolling_papers", "papers_per_pack", "order_timestamp", "payment_method"]
     else:
