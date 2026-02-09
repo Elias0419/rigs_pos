@@ -1636,9 +1636,8 @@ class PopupManager:
         item_details = self.app.db_manager.get_item_details(
             barcode=barcode
         )
-        item_id = item_details["item_id"]
 
-        self.app.db_manager.delete_item(item_id)
+        self.app.db_manager.delete_item(item_details)
         self.delete_item_popup.dismiss()
         self.inventory_item_update_popup.dismiss()
         self.app.inventory_manager.refresh_inventory()
