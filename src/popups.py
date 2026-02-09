@@ -1646,7 +1646,7 @@ class PopupManager:
     def show_add_to_database_popup(self, barcode, categories=None):
         content = BoxLayout(orientation="vertical", padding=10)
         name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        name_input = TitleCaseTextInput()
+        name_input = TextInput()
         name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
         name_layout.add_widget(name_input)
         barcode_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
@@ -2935,7 +2935,7 @@ class PopupManager:
             size_hint_y=None,
             height=50,
         )
-        self.custom_item_name_input = TitleCaseTextInput(
+        self.custom_item_name_input = TextInput(
             text="",
             hint_text="Enter Name",
             multiline=False,
@@ -4027,7 +4027,7 @@ class PopupManager:
 
         content = BoxLayout(orientation="vertical", padding=10)
         name_layout = BoxLayout(orientation="horizontal", size_hint_y=0.4)
-        name_input = TitleCaseTextInput(
+        name_input = TextInput(
             text=self.app.inventory_manager.name, font_size=20
         )
         name_layout.add_widget(Label(text="Name", size_hint_x=0.2))
