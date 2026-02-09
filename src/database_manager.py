@@ -556,45 +556,45 @@ class DatabaseManager:
             if conn:
                 conn.close()
 
+    def delete_item_no_item_id(self, name):
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            delete_query = "DELETE FROM items WHERE name = ?"
+            cursor.execute(delete_query, (name,))
 
-    def delete_item(self, item_details):
-        if item_details["item_id"]:
-            item_id = item_details["item_id"]
-            conn = self._get_connection()
-            try:
-                cursor = conn.cursor()
-                delete_query = "DELETE FROM items WHERE item_id = ?"
-                cursor.execute(delete_query, (item_id,))
+            if cursor.rowcount == 0:
 
-                if cursor.rowcount == 0:
-
-                    return False
-
-                conn.commit()
-                return True
-            except sqlite3.Error as e:
-                logger.warn(f"[DatabaseManager]: delete_item \n{e}")
                 return False
-            finally:
-                conn.close()
-        else: # item_id is missing
-            name = item_details["name"]
-            logger.warn(f"[DatabaseManager]: delete_item \nmissing item_id attempting to delete by name:  {name}")
-            conn = self._get_connection()
-            try:
-                cursor = conn.cursor()
-                delete_query = "DELETE FROM items WHERE name = ?"
-                cursor.execute(delete_query, (name,))
-                if cursor.rowcount == 0:
-                    return False
-                conn.commit()
-                return True
-            except sqlite3.Error as e:
-                logger.warn(f"[DatabaseManager]: delete_item \n{e}")
-                return False
-            finally:
-                conn.close()
 
+            conn.commit()
+            return True
+        except sqlite3.Error as e:
+            logger.warn(f"[DatabaseManager]:\n{e}")
+            return False
+        finally:
+            conn.close()
+
+
+
+    def delete_item(self, item_id):
+        conn = self._get_connection()
+        try:
+            cursor = conn.cursor()
+            delete_query = "DELETE FROM items WHERE item_id = ?"
+            cursor.execute(delete_query, (item_id,))
+
+            if cursor.rowcount == 0:
+
+                return False
+
+            conn.commit()
+            return True
+        except sqlite3.Error as e:
+            logger.warn(f"[DatabaseManager]:\n{e}")
+            return False
+        finally:
+            conn.close()
 
     def add_order_history(
         self,

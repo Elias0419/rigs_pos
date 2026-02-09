@@ -1632,15 +1632,25 @@ class PopupManager:
             self.do_nothing()
 
     def delete_item(self, barcode="", name="", price=0):
-
+        complete = False
         item_details = self.app.db_manager.get_item_details(
             barcode=barcode
         )
-
-        self.app.db_manager.delete_item(item_details)
-        self.delete_item_popup.dismiss()
-        self.inventory_item_update_popup.dismiss()
-        self.app.inventory_manager.refresh_inventory()
+        if item_details:
+            item_id = item_details["item_id"]
+            if self.app.db_manager.delete_item(item_id):
+                complete = True
+        else:
+            logger.warning(f"[PopupManager]: delete_item missing item_id: {name}")
+            if self.app.db_manager.delete_item_no_item_id(name):
+                complete = True
+        if complete:
+            self.delete_item_popup.dismiss()
+            self.inventory_item_update_popup.dismiss()
+            self.app.inventory_manager.refresh_inventory()
+        else:
+            # Should do something else here probably
+            logger.error("[PopupManager]: delete_item failed to delete item")
 
     def show_add_to_database_popup(self, barcode, categories=None):
         content = BoxLayout(orientation="vertical", padding=10)
