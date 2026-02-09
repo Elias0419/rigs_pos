@@ -255,7 +255,7 @@ class Utilities:
     @staticmethod
     def open_analytics_dashboard():
         subprocess.Popen(["python3", "analytics/analytics_server.py"])
-        time.sleep(0.1)
+        time.sleep(0.5)
         subprocess.Popen(["xdg-open", "http://127.0.0.1:5000"])
 
     def get_open_session_for_user_today(self, expected_name):
