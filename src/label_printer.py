@@ -757,29 +757,14 @@ class LabelPrinter:
     def _render_standard_label(
         self, barcode_data: str, title: str, price_text: str, details: str
     ) -> Image.Image:
-        canvas = Image.new("RGB", (CONTINUOUS_LABEL_WIDTH, STANDARD_LABEL_HEIGHT), "white")
+        vertical_width = STANDARD_LABEL_HEIGHT
+        vertical_height = CONTINUOUS_LABEL_WIDTH
+        canvas = Image.new("RGB", (vertical_width, vertical_height), "white")
         draw = ImageDraw.Draw(canvas)
 
-        margin_x = 18
+        margin_x = 16
         margin_y = 16
-        col_gap = 20
-        barcode_col_width = 280
-
-        barcode_img = self._make_barcode_image(barcode_data, module_height=26.0).rotate(90, expand=True)
-        bw, bh = barcode_img.size
-        max_bw = barcode_col_width
-        max_bh = STANDARD_LABEL_HEIGHT - (2 * margin_y)
-        scale = min(max_bw / float(bw), max_bh / float(bh), 1.0)
-        if scale < 1.0:
-            barcode_img = barcode_img.resize((int(bw * scale), int(bh * scale)), resample=Image.LANCZOS)
-            bw, bh = barcode_img.size
-
-        barcode_x = margin_x + (barcode_col_width - bw) // 2
-        barcode_y = margin_y + (max_bh - bh) // 2
-        canvas.paste(barcode_img, (barcode_x, barcode_y))
-
-        text_x = margin_x + barcode_col_width + col_gap
-        text_w = CONTINUOUS_LABEL_WIDTH - text_x - margin_x
+        text_w = vertical_width - (2 * margin_x)
 
         title_font = self._load_font(44)
         price_font = self._load_font(72)
@@ -799,15 +784,29 @@ class LabelPrinter:
         price_text = fit_single_line(price_text, price_font)
         details = fit_single_line(details, details_font)
 
-        y = margin_y + 8
-        for text, font, gap in [(title, title_font, 12), (price_text, price_font, 12), (details, details_font, 0)]:
+        y = margin_y
+        for text, font, gap in [(title, title_font, 12), (price_text, price_font, 12), (details, details_font, 18)]:
             if not text:
                 continue
             bbox = draw.textbbox((0, 0), text, font=font)
-            draw.text((text_x, y), text, fill="black", font=font)
+            text_width = bbox[2] - bbox[0]
+            draw.text(((vertical_width - text_width) // 2, y), text, fill="black", font=font)
             y += (bbox[3] - bbox[1]) + gap
 
-        return canvas
+        barcode_img = self._make_barcode_image(barcode_data, module_height=26.0)
+        bw, bh = barcode_img.size
+        max_bw = vertical_width - (2 * margin_x)
+        max_bh = max(vertical_height - y - margin_y, 40)
+        scale = min(max_bw / float(bw), max_bh / float(bh), 1.0)
+        if scale < 1.0:
+            barcode_img = barcode_img.resize((int(bw * scale), int(bh * scale)), resample=Image.LANCZOS)
+            bw, bh = barcode_img.size
+
+        barcode_x = (vertical_width - bw) // 2
+        barcode_y = vertical_height - margin_y - bh
+        canvas.paste(barcode_img, (barcode_x, barcode_y))
+
+        return canvas.transpose(Image.ROTATE_270)
 
     def _render_label(self, item: dict) -> tuple[Image.Image, str, bool, int]:
         content = item.get("content", {})
