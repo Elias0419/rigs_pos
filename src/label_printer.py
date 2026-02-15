@@ -44,6 +44,20 @@ CONTINUOUS_LABEL_WIDTH = 696  # 300dpi printable width for 64mm/2.4in stock
 STANDARD_LABEL_HEIGHT = 450  # 1.5in at 300dpi
 STANDARD_TEXT_CHAR_LIMIT = 50
 
+# Standard label layout knobs.
+STANDARD_MARGIN_X = 12
+STANDARD_MARGIN_Y = 10
+STANDARD_BAND_GAP = 8
+STANDARD_COLUMN_GAP = 18
+STANDARD_BARCODE_FRACTION = 0.48
+STANDARD_TOP_FONT_SIZE = 42
+STANDARD_BOTTOM_FONT_SIZE = 42
+STANDARD_PRICE_START_FONT_SIZE = 170
+STANDARD_PRICE_MIN_FONT_SIZE = 60
+STANDARD_BARCODE_MODULE_HEIGHT = 22.0
+STANDARD_BARCODE_MODULE_WIDTH = 0.22
+STANDARD_BARCODE_QUIET_ZONE = 1.0
+
 
 class MarkupLabel(MDLabel):
     def __init__(self, **kwargs):
@@ -744,9 +758,9 @@ class LabelPrinter:
             upc = upc_cls(self.handle_upc_e(code), writer=ImageWriter())
         writer_options = {
             "write_text": False,
-            "module_width": 0.20,
+            "module_width": STANDARD_BARCODE_MODULE_WIDTH,
             "module_height": module_height,
-            "quiet_zone": 1.0,
+            "quiet_zone": STANDARD_BARCODE_QUIET_ZONE,
             "dpi": 300,
         }
         img = upc.render(writer_options=writer_options)
@@ -754,59 +768,123 @@ class LabelPrinter:
             img = img.convert("RGB")
         return img
 
+    def _fit_font_size(
+        self,
+        draw: ImageDraw.ImageDraw,
+        text: str,
+        start_size: int,
+        min_size: int,
+        max_w: int,
+        max_h: int,
+    ) -> tuple[ImageFont.FreeTypeFont, int, int]:
+        size = int(start_size)
+        while size >= int(min_size):
+            font = self._load_font(size)
+            bbox = draw.textbbox((0, 0), text, font=font)
+            w = bbox[2] - bbox[0]
+            h = bbox[3] - bbox[1]
+            if w <= max_w and h <= max_h:
+                return font, w, h
+            size -= 1
+
+        font = self._load_font(int(min_size))
+        bbox = draw.textbbox((0, 0), text, font=font)
+        return font, bbox[2] - bbox[0], bbox[3] - bbox[1]
+
     def _render_standard_label(
         self, barcode_data: str, title: str, price_text: str, details: str
     ) -> Image.Image:
-        vertical_width = STANDARD_LABEL_HEIGHT
-        vertical_height = CONTINUOUS_LABEL_WIDTH
-        canvas = Image.new("RGB", (vertical_width, vertical_height), "white")
+        canvas = Image.new("RGB", (CONTINUOUS_LABEL_WIDTH, STANDARD_LABEL_HEIGHT), "white")
         draw = ImageDraw.Draw(canvas)
 
-        margin_x = 16
-        margin_y = 16
-        text_w = vertical_width - (2 * margin_x)
+        margin_x = STANDARD_MARGIN_X
+        margin_y = STANDARD_MARGIN_Y
+        band_gap = STANDARD_BAND_GAP
+        column_gap = STANDARD_COLUMN_GAP
+        barcode_fraction = max(0.1, min(0.9, STANDARD_BARCODE_FRACTION))
 
-        title_font = self._load_font(44)
-        price_font = self._load_font(72)
-        details_font = self._load_font(30)
+        usable_w = CONTINUOUS_LABEL_WIDTH - (2 * margin_x)
 
         def fit_single_line(text: str, font: ImageFont.FreeTypeFont) -> str:
             t = (text or "").strip()
             if not t:
                 return ""
-            if draw.textbbox((0, 0), t, font=font)[2] <= text_w:
+            if draw.textbbox((0, 0), t, font=font)[2] <= usable_w:
                 return t
-            while t and draw.textbbox((0, 0), f"{t}…", font=font)[2] > text_w:
+            while t and draw.textbbox((0, 0), f"{t}…", font=font)[2] > usable_w:
                 t = t[:-1]
             return f"{t}…" if t else ""
 
-        title = fit_single_line(title, title_font)
-        price_text = fit_single_line(price_text, price_font)
-        details = fit_single_line(details, details_font)
+        top_font = self._load_font(STANDARD_TOP_FONT_SIZE)
+        bottom_font = self._load_font(STANDARD_BOTTOM_FONT_SIZE)
 
-        y = margin_y
-        for text, font, gap in [(title, title_font, 12), (price_text, price_font, 12), (details, details_font, 18)]:
-            if not text:
-                continue
-            bbox = draw.textbbox((0, 0), text, font=font)
-            text_width = bbox[2] - bbox[0]
-            draw.text(((vertical_width - text_width) // 2, y), text, fill="black", font=font)
-            y += (bbox[3] - bbox[1]) + gap
+        top_text = fit_single_line(title, top_font)
+        bottom_text = fit_single_line(details, bottom_font)
 
-        barcode_img = self._make_barcode_image(barcode_data, module_height=26.0)
-        bw, bh = barcode_img.size
-        max_bw = vertical_width - (2 * margin_x)
-        max_bh = max(vertical_height - y - margin_y, 40)
-        scale = min(max_bw / float(bw), max_bh / float(bh), 1.0)
-        if scale < 1.0:
-            barcode_img = barcode_img.resize((int(bw * scale), int(bh * scale)), resample=Image.LANCZOS)
+        top_h = 0
+        if top_text:
+            top_bbox = draw.textbbox((0, 0), top_text, font=top_font)
+            top_h = top_bbox[3] - top_bbox[1]
+            draw.text((margin_x, margin_y), top_text, fill="black", font=top_font)
+
+        bottom_h = 0
+        if bottom_text:
+            bottom_bbox = draw.textbbox((0, 0), bottom_text, font=bottom_font)
+            bottom_h = bottom_bbox[3] - bottom_bbox[1]
+            draw.text(
+                (margin_x, STANDARD_LABEL_HEIGHT - margin_y - bottom_h),
+                bottom_text,
+                fill="black",
+                font=bottom_font,
+            )
+
+        y0 = margin_y + (top_h if top_h else 0) + (band_gap if top_h else 0)
+        y1 = STANDARD_LABEL_HEIGHT - margin_y - (bottom_h if bottom_h else 0) - (band_gap if bottom_h else 0)
+        middle_h = max(1, y1 - y0)
+
+        barcode_col_w = int((usable_w - column_gap) * barcode_fraction)
+        price_col_w = usable_w - column_gap - barcode_col_w
+        barcode_x0 = margin_x
+        price_x0 = margin_x + barcode_col_w + column_gap
+
+        if barcode_data:
+            barcode_img = self._make_barcode_image(
+                barcode_data,
+                module_height=STANDARD_BARCODE_MODULE_HEIGHT,
+            )
             bw, bh = barcode_img.size
+            max_bw = max(1, barcode_col_w)
+            max_bh = max(1, middle_h)
+            scale = min(
+                max_bw / float(bw),
+                max_bh / float(bh),
+                1.0,
+            )
+            if scale < 1.0:
+                barcode_img = barcode_img.resize(
+                    (int(bw * scale), int(bh * scale)),
+                    resample=Image.LANCZOS,
+                )
+                bw, bh = barcode_img.size
 
-        barcode_x = (vertical_width - bw) // 2
-        barcode_y = vertical_height - margin_y - bh
-        canvas.paste(barcode_img, (barcode_x, barcode_y))
+            barcode_x = barcode_x0 + (barcode_col_w - bw) // 2
+            barcode_y = y0 + (middle_h - bh) // 2
+            canvas.paste(barcode_img, (barcode_x, barcode_y))
 
-        return canvas.transpose(Image.ROTATE_270)
+        if price_text:
+            price_font, price_w, price_h = self._fit_font_size(
+                draw,
+                price_text,
+                STANDARD_PRICE_START_FONT_SIZE,
+                STANDARD_PRICE_MIN_FONT_SIZE,
+                max(1, price_col_w),
+                max(1, middle_h),
+            )
+            price_x = price_x0 + (price_col_w - price_w) // 2
+            price_y = y0 + (middle_h - price_h) // 2
+            draw.text((price_x, price_y), price_text, fill="black", font=price_font)
+
+        return canvas
 
     def _render_label(self, item: dict) -> tuple[Image.Image, str, bool, int]:
         content = item.get("content", {})
