@@ -58,6 +58,7 @@ STANDARD_PRICE_MIN_FONT_SIZE = 60
 STANDARD_BARCODE_MODULE_HEIGHT = 22.0
 STANDARD_BARCODE_MODULE_WIDTH = 0.22
 STANDARD_BARCODE_QUIET_ZONE = 1.0
+MIN_BARCODE_MODULE_WIDTH = 0.08
 
 # Small-label pair (2-up) layout knobs.
 LABEL_MODE_STANDARD = "standard"
@@ -73,6 +74,7 @@ SMALL_PRICE_MIN_FONT_SIZE = 26
 SMALL_TEXT_FONT_SIZE = 28
 SMALL_TEXT_MIN_FONT_SIZE = 16
 SMALL_BARCODE_MODULE_HEIGHT = 16.0
+SMALL_BARCODE_MODULE_WIDTH = 0.12
 
 
 class MarkupLabel(MDLabel):
@@ -794,22 +796,39 @@ class LabelPrinter:
                 continue
         return ImageFont.load_default()
 
-    def _make_barcode_image(self, code: str, module_height: float = 15.0) -> Image.Image:
+    def _make_barcode_image(
+        self,
+        code: str,
+        module_height: float = 15.0,
+        module_width: float = STANDARD_BARCODE_MODULE_WIDTH,
+        max_width_px: int | None = None,
+        max_height_px: int | None = None,
+    ) -> Image.Image:
         upc_cls = barcode.get_barcode_class("upc")
         try:
             upc = upc_cls(code, writer=ImageWriter())
         except barcode.errors.NumberOfDigitsError:
             upc = upc_cls(self.handle_upc_e(code), writer=ImageWriter())
-        writer_options = {
-            "write_text": False,
-            "module_width": STANDARD_BARCODE_MODULE_WIDTH,
-            "module_height": module_height,
-            "quiet_zone": STANDARD_BARCODE_QUIET_ZONE,
-            "dpi": 300,
-        }
-        img = upc.render(writer_options=writer_options)
-        if img.mode != "RGB":
-            img = img.convert("RGB")
+
+        current_module_width = max(float(module_width), MIN_BARCODE_MODULE_WIDTH)
+        while True:
+            writer_options = {
+                "write_text": False,
+                "module_width": current_module_width,
+                "module_height": module_height,
+                "quiet_zone": STANDARD_BARCODE_QUIET_ZONE,
+                "dpi": 300,
+            }
+            img = upc.render(writer_options=writer_options)
+            bw, bh = img.size
+            fits_w = max_width_px is None or bw <= max_width_px
+            fits_h = max_height_px is None or bh <= max_height_px
+            if (fits_w and fits_h) or current_module_width <= MIN_BARCODE_MODULE_WIDTH:
+                break
+            current_module_width = max(MIN_BARCODE_MODULE_WIDTH, current_module_width * 0.9)
+
+        # Keep bars hard-edged for scanner readability (never antialias).
+        img = img.convert("1").convert("RGB")
         return img
 
     def _fit_font_size(
@@ -895,21 +914,11 @@ class LabelPrinter:
             barcode_img = self._make_barcode_image(
                 barcode_data,
                 module_height=STANDARD_BARCODE_MODULE_HEIGHT,
+                module_width=STANDARD_BARCODE_MODULE_WIDTH,
+                max_width_px=max(1, barcode_col_w),
+                max_height_px=max(1, middle_h),
             )
             bw, bh = barcode_img.size
-            max_bw = max(1, barcode_col_w)
-            max_bh = max(1, middle_h)
-            scale = min(
-                max_bw / float(bw),
-                max_bh / float(bh),
-                1.0,
-            )
-            if scale < 1.0:
-                barcode_img = barcode_img.resize(
-                    (int(bw * scale), int(bh * scale)),
-                    resample=Image.LANCZOS,
-                )
-                bw, bh = barcode_img.size
 
             barcode_x = barcode_x0 + (barcode_col_w - bw) // 2
             barcode_y = y0 + (middle_h - bh) // 2
@@ -971,10 +980,9 @@ class LabelPrinter:
 
         content = panel_item.get("content", {})
         top_text = content.get("title") or panel_item.get("name", "")
-        bottom_text = content.get("details") or panel_item.get("name", "")
-        price_text = self._format_price(panel_item.get("price", ""))
-        top_line = " ".join(part for part in [price_text, top_text] if part).strip()
-        bottom_line = " ".join(part for part in [price_text, bottom_text] if part).strip()
+        bottom_text = content.get("details") or self._format_price(panel_item.get("price", ""))
+        top_line = top_text.strip()
+        bottom_line = bottom_text.strip()
 
         text_width = max(1, panel_width - (2 * margin_x))
         top_font, top_line = self._fit_text_to_width(
@@ -993,12 +1001,14 @@ class LabelPrinter:
         barcode_y = top_y + text_h + section_gap
         barcode_data = panel_item.get("barcode")
         if barcode_data:
-            barcode_img = self._make_barcode_image(barcode_data, module_height=SMALL_BARCODE_MODULE_HEIGHT)
+            barcode_img = self._make_barcode_image(
+                barcode_data,
+                module_height=SMALL_BARCODE_MODULE_HEIGHT,
+                module_width=SMALL_BARCODE_MODULE_WIDTH,
+                max_width_px=text_width,
+                max_height_px=barcode_h,
+            )
             bw, bh = barcode_img.size
-            scale = min(text_width / float(bw), barcode_h / float(bh), 1.0)
-            if scale < 1.0:
-                barcode_img = barcode_img.resize((int(bw * scale), int(bh * scale)), resample=Image.LANCZOS)
-                bw, bh = barcode_img.size
             panel.paste(barcode_img, (margin_x + (text_width - bw) // 2, barcode_y + (barcode_h - bh) // 2))
 
         bottom_y = barcode_y + barcode_h + section_gap
