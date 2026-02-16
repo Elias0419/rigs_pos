@@ -26,6 +26,7 @@ from kivy.uix.popup import Popup
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.uix.recycleview import RecycleView
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
+from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
 from kivy.uix.textinput import TextInput
 
 from kivymd.uix.boxlayout import BoxLayout, MDBoxLayout
@@ -57,6 +58,21 @@ STANDARD_PRICE_MIN_FONT_SIZE = 60
 STANDARD_BARCODE_MODULE_HEIGHT = 22.0
 STANDARD_BARCODE_MODULE_WIDTH = 0.22
 STANDARD_BARCODE_QUIET_ZONE = 1.0
+
+# Small-label pair (2-up) layout knobs.
+LABEL_MODE_STANDARD = "standard"
+LABEL_MODE_SMALL = "small"
+SMALL_PAIR_LABEL_HEIGHT = 420
+SMALL_PAIR_SIDE_GAP = 16
+SMALL_LABEL_MARGIN_X = 10
+SMALL_LABEL_MARGIN_Y = 8
+SMALL_SECTION_GAP = 6
+SMALL_BARCODE_BAND_FRACTION = 0.40
+SMALL_PRICE_START_FONT_SIZE = 78
+SMALL_PRICE_MIN_FONT_SIZE = 26
+SMALL_TEXT_FONT_SIZE = 28
+SMALL_TEXT_MIN_FONT_SIZE = 16
+SMALL_BARCODE_MODULE_HEIGHT = 16.0
 
 
 class MarkupLabel(MDLabel):
@@ -181,6 +197,28 @@ class LabelPrintingRow(RecycleDataViewBehavior, BoxLayout):
         form_layout.add_widget(self.details_input)
         content.add_widget(form_layout)
 
+        mode_tabs = TabbedPanel(do_default_tab=False, size_hint=(1, None), height=dp(120))
+        default_tab = TabbedPanelItem(text="Default")
+        default_tab.add_widget(
+            Label(text="Standard 64mm label layout", halign="left", valign="middle")
+        )
+        small_tab = TabbedPanelItem(text="Small (2-up)")
+        small_tab.add_widget(
+            Label(text="Two side-by-side labels per strip", halign="left", valign="middle")
+        )
+        mode_tabs.add_widget(default_tab)
+        mode_tabs.add_widget(small_tab)
+        mode_tabs.switch_to(default_tab)
+        self._selected_label_mode = LABEL_MODE_STANDARD
+
+        def on_tab_switch(_tabs, tab, *_args):
+            self._selected_label_mode = (
+                LABEL_MODE_SMALL if tab is small_tab else LABEL_MODE_STANDARD
+            )
+
+        mode_tabs.bind(current_tab=on_tab_switch)
+        content.add_widget(mode_tabs)
+
         btn_layout = BoxLayout(
             orientation="horizontal", size_hint=(1, None), height=dp(48), spacing=10
         )
@@ -260,6 +298,7 @@ class LabelPrintingRow(RecycleDataViewBehavior, BoxLayout):
                 price=price_text or self.price,
                 quantity=quantity,
                 content=content,
+                mode=getattr(self, "_selected_label_mode", LABEL_MODE_STANDARD),
             )
 
 
@@ -348,8 +387,8 @@ class LabelPrintingView(BoxLayout):
             self.full_inventory, self.dual_pane_mode
         )
 
-    def remove_from_queue(self, item_name, embed=False):
-        removed, is_empty = self.label_printer.remove_from_queue(item_name)
+    def remove_from_queue(self, item_index, embed=False):
+        removed, is_empty = self.label_printer.remove_from_queue(item_index)
         if removed:
             if is_empty:
                 if embed:
@@ -387,7 +426,7 @@ class LabelPrintingView(BoxLayout):
         queue_layout = BoxLayout(orientation="vertical", spacing=5, padding=5)
         item_layout = BoxLayout(orientation="vertical", spacing=5, padding=5)
 
-        for item in self.label_printer.print_queue:
+        for idx, item in enumerate(self.label_printer.print_queue):
             name_text = (
                 f"{item['name'][:27]}..."
                 if (embed and len(item["name"]) > 30)
@@ -396,50 +435,51 @@ class LabelPrintingView(BoxLayout):
             name_label = Label(text=name_text, size_hint_x=0.2)
             qty_label = Label(text=f"Qty: {item['quantity']}", size_hint_x=0.05)
             summary = self.label_printer.describe_queue_item(item)
-            text_label = Label(text=summary, size_hint_x=0.35, halign="left")
+            mode_label = "Small 2-up" if item.get("mode") == LABEL_MODE_SMALL else "Standard"
+            text_label = Label(text=f"[{mode_label}] {summary}", size_hint_x=0.35, halign="left")
 
             if embed:
                 plus_button = MDIconButton(
                     icon="plus",
                     size_hint_x=0.1,
-                    on_release=lambda _b, item=item: self.increment_quantity(
-                        item_str=item["name"], embed=True
+                    on_release=lambda _b, idx=idx: self.increment_quantity(
+                        item_index=idx, embed=True
                     ),
                 )
                 minus_button = MDIconButton(
                     icon="minus",
                     size_hint_x=0.1,
-                    on_release=lambda _b, item=item: self.decrement_quantity(
-                        item_str=item["name"], embed=True
+                    on_release=lambda _b, idx=idx: self.decrement_quantity(
+                        item_index=idx, embed=True
                     ),
                 )
                 rm_button = Button(
                     text="Remove",
                     size_hint_x=0.1,
-                    on_release=lambda _b, item=item: self.remove_from_queue(
-                        item_name=item["name"], embed=True
+                    on_release=lambda _b, idx=idx: self.remove_from_queue(
+                        item_index=idx, embed=True
                     ),
                 )
             else:
                 plus_button = MDIconButton(
                     icon="plus",
                     size_hint_x=0.1,
-                    on_release=lambda _b, item=item: self.increment_quantity(
-                        item_str=item["name"]
+                    on_release=lambda _b, idx=idx: self.increment_quantity(
+                        item_index=idx
                     ),
                 )
                 minus_button = MDIconButton(
                     icon="minus",
                     size_hint_x=0.1,
-                    on_release=lambda _b, item=item: self.decrement_quantity(
-                        item_str=item["name"]
+                    on_release=lambda _b, idx=idx: self.decrement_quantity(
+                        item_index=idx
                     ),
                 )
                 rm_button = Button(
                     text="Remove",
                     size_hint_x=0.1,
-                    on_release=lambda _b, item=item: self.remove_from_queue(
-                        item_name=item["name"]
+                    on_release=lambda _b, idx=idx: self.remove_from_queue(
+                        item_index=idx
                     ),
                 )
 
@@ -447,8 +487,8 @@ class LabelPrintingView(BoxLayout):
             preview_button = Button(
                 text="Preview",
                 size_hint_x=0.1,
-                on_release=lambda _b, item=item: self.label_printer.preview_barcode_label(
-                    name=item["name"]
+                on_release=lambda _b, idx=idx: self.label_printer.preview_barcode_label(
+                    index=idx
                 ),
             )
 
@@ -526,21 +566,20 @@ class LabelPrintingView(BoxLayout):
         except Exception as e:
             logger.error(f"Unexpected error in refresh_print_queue_for_embed\n{e}")
 
-    def increment_quantity(self, item_str, embed=False):
-        for item in self.label_printer.print_queue:
-            if item["name"] == item_str:
-                item["quantity"] += 1
-                self.label_printer.save_queue()
-                (
-                    self.refresh_print_queue_for_embed()
-                    if embed
-                    else self.refresh_and_show_print_queue()
-                )
-                break
+    def increment_quantity(self, item_index, embed=False):
+        if 0 <= item_index < len(self.label_printer.print_queue):
+            self.label_printer.print_queue[item_index]["quantity"] += 1
+            self.label_printer.save_queue()
+            (
+                self.refresh_print_queue_for_embed()
+                if embed
+                else self.refresh_and_show_print_queue()
+            )
 
-    def decrement_quantity(self, item_str, embed=False):
-        for item in self.label_printer.print_queue:
-            if item["name"] == item_str and item["quantity"] > 1:
+    def decrement_quantity(self, item_index, embed=False):
+        if 0 <= item_index < len(self.label_printer.print_queue):
+            item = self.label_printer.print_queue[item_index]
+            if item["quantity"] > 1:
                 item["quantity"] -= 1
                 self.label_printer.save_queue()
                 (
@@ -548,7 +587,6 @@ class LabelPrintingView(BoxLayout):
                     if embed
                     else self.refresh_and_show_print_queue()
                 )
-                break
 
     def update_print_queue_quantity(self, item_name, new_quantity):
         self.label_printer.update_queue_item_quantity(item_name, new_quantity)
@@ -664,6 +702,7 @@ class LabelPrinter:
                     "name": item.get("name", ""),
                     "price": self._format_price(item.get("price", "")),
                     "quantity": int(item.get("quantity", 1) or 1),
+                    "mode": item.get("mode", LABEL_MODE_STANDARD) if item.get("mode") in (LABEL_MODE_STANDARD, LABEL_MODE_SMALL) else LABEL_MODE_STANDARD,
                     "content": {
                         "title": (content.get("title") or item.get("name", ""))[:STANDARD_TEXT_CHAR_LIMIT],
                         "details": (content.get("details") or "")[:STANDARD_TEXT_CHAR_LIMIT],
@@ -690,7 +729,7 @@ class LabelPrinter:
         return price_text
 
 
-    def add_to_queue(self, barcode, name, price, quantity, content=None):
+    def add_to_queue(self, barcode, name, price, quantity, content=None, mode=LABEL_MODE_STANDARD):
         try:
             content = content or {}
             item = {
@@ -698,6 +737,7 @@ class LabelPrinter:
                 "name": name,
                 "price": self._format_price(price),
                 "quantity": int(quantity),
+                "mode": mode if mode in (LABEL_MODE_STANDARD, LABEL_MODE_SMALL) else LABEL_MODE_STANDARD,
                 "content": {
                     "title": (content.get("title") or name)[:STANDARD_TEXT_CHAR_LIMIT],
                     "details": (content.get("details") or "")[:STANDARD_TEXT_CHAR_LIMIT],
@@ -726,7 +766,11 @@ class LabelPrinter:
         title = content.get("title", "")
         details = content.get("details", "")
         summary = " • ".join(part for part in [title, details] if part)
-        return summary[:60] if summary else "Standard 64mm label"
+        if summary:
+            return summary[:60]
+        if item.get("mode") == LABEL_MODE_SMALL:
+            return "Small 2-up label"
+        return "Standard 64mm label"
 
     def handle_upc_e(self, barcode_data):
         logger.warn(f"inside handle_upc_e:\n'{barcode_data}")
@@ -886,7 +930,100 @@ class LabelPrinter:
 
         return canvas
 
+    def _fit_text_to_width(
+        self,
+        draw: ImageDraw.ImageDraw,
+        text: str,
+        start_size: int,
+        min_size: int,
+        max_width: int,
+    ) -> tuple[ImageFont.FreeTypeFont, str]:
+        clean = (text or "").strip()
+        if not clean:
+            return self._load_font(min_size), ""
+
+        size = int(start_size)
+        while size >= int(min_size):
+            font = self._load_font(size)
+            candidate = clean
+            while candidate and draw.textbbox((0, 0), candidate, font=font)[2] > max_width:
+                candidate = candidate[:-1]
+            if candidate:
+                if candidate != clean:
+                    candidate = f"{candidate}…"
+                return font, candidate
+            size -= 1
+        return self._load_font(min_size), ""
+
+    def _render_small_label_panel(self, panel_item: dict | None, panel_width: int, panel_height: int) -> Image.Image:
+        panel = Image.new("RGB", (panel_width, panel_height), "white")
+        if not panel_item:
+            return panel
+
+        draw = ImageDraw.Draw(panel)
+        margin_x = SMALL_LABEL_MARGIN_X
+        margin_y = SMALL_LABEL_MARGIN_Y
+        section_gap = SMALL_SECTION_GAP
+        available_h = max(1, panel_height - (2 * margin_y) - (2 * section_gap))
+        barcode_h = int(available_h * SMALL_BARCODE_BAND_FRACTION)
+        text_h = max(1, (available_h - barcode_h) // 2)
+        barcode_h = max(1, available_h - (2 * text_h))
+
+        content = panel_item.get("content", {})
+        top_text = content.get("title") or panel_item.get("name", "")
+        bottom_text = content.get("details") or panel_item.get("name", "")
+        price_text = self._format_price(panel_item.get("price", ""))
+        top_line = " ".join(part for part in [price_text, top_text] if part).strip()
+        bottom_line = " ".join(part for part in [price_text, bottom_text] if part).strip()
+
+        text_width = max(1, panel_width - (2 * margin_x))
+        top_font, top_line = self._fit_text_to_width(
+            draw, top_line, SMALL_TEXT_FONT_SIZE, SMALL_TEXT_MIN_FONT_SIZE, text_width
+        )
+        bottom_font, bottom_line = self._fit_text_to_width(
+            draw, bottom_line, SMALL_TEXT_FONT_SIZE, SMALL_TEXT_MIN_FONT_SIZE, text_width
+        )
+
+        top_y = margin_y
+        if top_line:
+            tw = draw.textbbox((0, 0), top_line, font=top_font)[2]
+            th = draw.textbbox((0, 0), top_line, font=top_font)[3]
+            draw.text(((panel_width - tw) // 2, top_y + max(0, (text_h - th) // 2)), top_line, fill="black", font=top_font)
+
+        barcode_y = top_y + text_h + section_gap
+        barcode_data = panel_item.get("barcode")
+        if barcode_data:
+            barcode_img = self._make_barcode_image(barcode_data, module_height=SMALL_BARCODE_MODULE_HEIGHT)
+            bw, bh = barcode_img.size
+            scale = min(text_width / float(bw), barcode_h / float(bh), 1.0)
+            if scale < 1.0:
+                barcode_img = barcode_img.resize((int(bw * scale), int(bh * scale)), resample=Image.LANCZOS)
+                bw, bh = barcode_img.size
+            panel.paste(barcode_img, (margin_x + (text_width - bw) // 2, barcode_y + (barcode_h - bh) // 2))
+
+        bottom_y = barcode_y + barcode_h + section_gap
+        if bottom_line:
+            bw = draw.textbbox((0, 0), bottom_line, font=bottom_font)[2]
+            bh = draw.textbbox((0, 0), bottom_line, font=bottom_font)[3]
+            draw.text(((panel_width - bw) // 2, bottom_y + max(0, (text_h - bh) // 2)), bottom_line, fill="black", font=bottom_font)
+
+        return panel
+
+    def _render_small_pair_label(self, left_item: dict, right_item: dict | None = None) -> Image.Image:
+        canvas = Image.new("RGB", (CONTINUOUS_LABEL_WIDTH, SMALL_PAIR_LABEL_HEIGHT), "white")
+        panel_width = (CONTINUOUS_LABEL_WIDTH - SMALL_PAIR_SIDE_GAP) // 2
+        left_panel = self._render_small_label_panel(left_item, panel_width, SMALL_PAIR_LABEL_HEIGHT)
+        right_panel = self._render_small_label_panel(right_item, panel_width, SMALL_PAIR_LABEL_HEIGHT)
+        canvas.paste(left_panel, (0, 0))
+        canvas.paste(right_panel, (panel_width + SMALL_PAIR_SIDE_GAP, 0))
+        return canvas
+
     def _render_label(self, item: dict) -> tuple[Image.Image, str, bool, int]:
+        mode = item.get("mode", LABEL_MODE_STANDARD)
+        if mode == LABEL_MODE_SMALL:
+            image = self._render_small_pair_label(item, None)
+            return image, CONTINUOUS_LABEL_NAME, True, 0
+
         content = item.get("content", {})
         price_text = self._format_price(item.get("price", ""))
         title = content.get("title") or item.get("name", "")
@@ -904,16 +1041,20 @@ class LabelPrinter:
             backend_identifier=PRINTER_BACKEND,
         )
 
-    def preview_barcode_label(self, name):
-        for item in self.print_queue:
-            if item["name"] == name:
-                try:
-                    image, label_name, cut, rotate = self._render_label(item)
-                except Exception:
-                    self.app.popup_manager.catch_label_printer_missing_barcode()
-                    return
-                self.open_preview_popup(image)
-                break
+    def preview_barcode_label(self, index):
+        if not (0 <= index < len(self.print_queue)):
+            return
+
+        item = self.print_queue[index]
+        try:
+            if item.get("mode") == LABEL_MODE_SMALL:
+                image = self._render_small_pair_label(item, None)
+            else:
+                image, _label_name, _cut, _rotate = self._render_label(item)
+        except Exception:
+            self.app.popup_manager.catch_label_printer_missing_barcode()
+            return
+        self.open_preview_popup(image)
 
     def open_preview_popup(self, label_image):
         blank_image = Image.open("images/blank_label.png")
@@ -958,18 +1099,34 @@ class LabelPrinter:
 
     def _process_print_queue_thread(self):
         self.print_success = True
+
+        standard_jobs: list[dict] = []
+        small_jobs: list[dict] = []
         for item in self.print_queue:
-            item_quantity = item.get("quantity", 1)
-            for _ in range(item_quantity):
+            qty = max(1, int(item.get("quantity", 1)))
+            target = small_jobs if item.get("mode") == LABEL_MODE_SMALL else standard_jobs
+            target.extend([item] * qty)
+
+        for item in standard_jobs:
+            try:
+                image, label_name, cut, rotate = self._render_label(item)
+                self._send_to_printer(image, label_name, cut, rotate)
+            except Exception as e:
+                self.catch_label_printing_errors(e)
+                self.print_success = False
+                break
+
+        if self.print_success:
+            for i in range(0, len(small_jobs), 2):
+                left = small_jobs[i]
+                right = small_jobs[i + 1] if (i + 1) < len(small_jobs) else None
                 try:
-                    image, label_name, cut, rotate = self._render_label(item)
-                    self._send_to_printer(image, label_name, cut, rotate)
+                    image = self._render_small_pair_label(left, right)
+                    self._send_to_printer(image, CONTINUOUS_LABEL_NAME, True, 0)
                 except Exception as e:
                     self.catch_label_printing_errors(e)
                     self.print_success = False
                     break
-            if not self.print_success:
-                break
 
         if self.print_success:
             self.print_queue.clear()
@@ -988,12 +1145,11 @@ class LabelPrinter:
             except AttributeError:
                 pass
 
-    def remove_from_queue(self, name):
-        for i, item in enumerate(self.print_queue):
-            if item["name"] == name:
-                self.print_queue.pop(i)
-                self.save_queue()
-                return True, len(self.print_queue) == 0
+    def remove_from_queue(self, index):
+        if 0 <= index < len(self.print_queue):
+            self.print_queue.pop(index)
+            self.save_queue()
+            return True, len(self.print_queue) == 0
         return False, False
 
     def print_raw_text_label(
