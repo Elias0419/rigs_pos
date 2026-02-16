@@ -288,14 +288,14 @@ class LabelPrintingRow(RecycleDataViewBehavior, BoxLayout):
                 price_text = f"${price_text}"
 
             content = {
-                "title": self.title_input.text.strip() or self.name,
+                "title": self.title_input.text.strip(),
                 "details": self.details_input.text.strip(),
             }
 
             self.label_printer.add_to_queue(
                 barcode=self.barcode,
                 name=self.name,
-                price=price_text or self.price,
+                price=price_text,
                 quantity=quantity,
                 content=content,
                 mode=getattr(self, "_selected_label_mode", LABEL_MODE_STANDARD),
@@ -704,7 +704,7 @@ class LabelPrinter:
                     "quantity": int(item.get("quantity", 1) or 1),
                     "mode": item.get("mode", LABEL_MODE_STANDARD) if item.get("mode") in (LABEL_MODE_STANDARD, LABEL_MODE_SMALL) else LABEL_MODE_STANDARD,
                     "content": {
-                        "title": (content.get("title") or item.get("name", ""))[:STANDARD_TEXT_CHAR_LIMIT],
+                        "title": (content.get("title") or "")[:STANDARD_TEXT_CHAR_LIMIT],
                         "details": (content.get("details") or "")[:STANDARD_TEXT_CHAR_LIMIT],
                     },
                 }
@@ -739,7 +739,7 @@ class LabelPrinter:
                 "quantity": int(quantity),
                 "mode": mode if mode in (LABEL_MODE_STANDARD, LABEL_MODE_SMALL) else LABEL_MODE_STANDARD,
                 "content": {
-                    "title": (content.get("title") or name)[:STANDARD_TEXT_CHAR_LIMIT],
+                    "title": (content.get("title") or "")[:STANDARD_TEXT_CHAR_LIMIT],
                     "details": (content.get("details") or "")[:STANDARD_TEXT_CHAR_LIMIT],
                 },
             }
@@ -999,7 +999,7 @@ class LabelPrinter:
         barcode_h = max(1, available_h - (2 * text_h))
 
         content = panel_item.get("content", {})
-        top_line = (content.get("title") or panel_item.get("name", "")).strip()
+        top_line = (content.get("title") or "").strip()
         bottom_line = (content.get("details") or self._format_price(panel_item.get("price", ""))).strip()
 
         text_width = max(1, panel_width - (2 * margin_x))
@@ -1053,7 +1053,7 @@ class LabelPrinter:
 
         content = item.get("content", {})
         price_text = self._format_price(item.get("price", ""))
-        title = content.get("title") or item.get("name", "")
+        title = content.get("title") or ""
         details = content.get("details", "")
         image = self._render_standard_label(item["barcode"], title, price_text, details)
         return image, CONTINUOUS_LABEL_NAME, True, 0
