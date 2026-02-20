@@ -114,7 +114,6 @@ class DatabaseManager:
                                 price REAL,
                                 cost REAL,
                                 sku TEXT,
-                                category TEXT,
                                 product_category TEXT,
                                 parent_barcode TEXT,
                                 item_id TEXT,
@@ -196,7 +195,6 @@ class DatabaseManager:
                     item_id          TEXT,
                     barcode          TEXT,
                     name             TEXT NOT NULL,
-                    category         TEXT,
                     product_category TEXT,
                     qty              REAL NOT NULL,
                     unit_price       REAL NOT NULL,
@@ -236,9 +234,6 @@ class DatabaseManager:
             )
             cursor.execute(
                 "CREATE INDEX IF NOT EXISTS idx_order_items_name ON order_items(name)"
-            )
-            cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_order_items_category ON order_items(category)"
             )
             cursor.execute(
                 "CREATE INDEX IF NOT EXISTS idx_order_items_product_category ON order_items(product_category)"
