@@ -350,6 +350,94 @@ def get_categories():
     conn.close()
     return jsonify(categories)
 
+
+@app.route("/api/uncategorized_items")
+def get_uncategorized_items():
+    conn = get_db()
+    cursor = conn.cursor()
+
+    start_date = request.args.get("start_date")
+    end_date = request.args.get("end_date")
+
+    query = """
+        SELECT
+            oi.item_id,
+            oi.barcode,
+            oi.name,
+            MAX(oi.order_timestamp) AS last_sold_at,
+            COUNT(DISTINCT oi.order_id) AS order_count,
+            SUM(COALESCE(oi.qty, 0)) AS total_qty
+        FROM order_items oi
+        LEFT JOIN items it ON (
+            (oi.item_id IS NOT NULL AND oi.item_id != '' AND it.item_id = oi.item_id)
+            OR ((oi.item_id IS NULL OR oi.item_id = '') AND oi.barcode IS NOT NULL AND oi.barcode != '' AND it.barcode = oi.barcode)
+        )
+        WHERE oi.name IS NOT NULL
+          AND oi.name != ''
+          AND (it.product_category IS NULL OR TRIM(it.product_category) = '')
+    """
+    params = []
+
+    if start_date:
+        query += " AND oi.order_timestamp >= ?"
+        params.append(start_date)
+    if end_date:
+        query += " AND oi.order_timestamp <= ?"
+        params.append(end_date + " 23:59:59")
+
+    query += """
+        GROUP BY COALESCE(NULLIF(oi.item_id, ''), NULLIF(oi.barcode, ''), LOWER(oi.name))
+        ORDER BY last_sold_at DESC
+    """
+
+    cursor.execute(query, params)
+    rows = cursor.fetchall()
+    conn.close()
+
+    items = []
+    for row in rows:
+        items.append({
+            "item_id": safe_str(row["item_id"]),
+            "barcode": safe_str(row["barcode"]),
+            "name": safe_str(row["name"], "Unknown Item"),
+            "last_sold_at": safe_str(row["last_sold_at"]),
+            "order_count": safe_int(row["order_count"]),
+            "total_qty": round(safe_float(row["total_qty"]), 2),
+        })
+
+    return jsonify(items)
+
+
+@app.route("/api/uncategorized_items/category", methods=["POST"])
+def update_uncategorized_item_category():
+    payload = request.get_json(silent=True) or {}
+    category = (payload.get("category") or "").strip()
+    item_id = (payload.get("item_id") or "").strip()
+    barcode = (payload.get("barcode") or "").strip()
+    name = (payload.get("name") or "").strip()
+
+    if not category:
+        return jsonify({"error": "Category is required"}), 400
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    if item_id:
+        cursor.execute("UPDATE items SET product_category=? WHERE item_id=?", (category, item_id))
+    elif barcode:
+        cursor.execute("UPDATE items SET product_category=? WHERE barcode=?", (category, barcode))
+    elif name:
+        cursor.execute("UPDATE items SET product_category=? WHERE LOWER(name)=LOWER(?)", (category, name))
+    else:
+        conn.close()
+        return jsonify({"error": "An item identifier is required"}), 400
+
+    updated_rows = cursor.rowcount
+    conn.commit()
+    conn.close()
+
+    return jsonify({"updated": updated_rows})
+
 @app.route("/api/payment_methods")
 def get_payment_methods():
     conn = get_db()

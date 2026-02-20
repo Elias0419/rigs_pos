@@ -37,6 +37,7 @@ from PIL import Image as PILImage
 from order_manager import CustomOrderMissingFields
 from inventory_manager import InventoryManagementView, InventoryView
 from open_cash_drawer import open_cash_drawer
+from product_categories import ProductCategoryStore
 
 import logging
 
@@ -147,51 +148,16 @@ class TitleCaseTextInput(TextInput):
 class PopupManager:
     def __init__(self, ref):
         self.app = ref
-        self.common_categories = [
-            "American Glass Bongs",
-            "American Glass Pipes",
-            "American Glass Bubblers",
-            "American Glass Rigs",
-            "American Glass Slides",
-            "Import Glass Bongs",
-            "Import Glass Pipes",
-            "Import Glass Bubblers",
-            "Import Glass Rigs",
-            "Import Glass Slides",
-            "Shitty Import Quartz",
-            "Fancy Import Quarz",
-            "American Quarz",
-            "Import Chillums",
-            "American Chillums",
-            "Grinders",
-            "510 Batteries",
-            "Concentrate Vapes",
-            "Dry Vapes",
-            "Silicone",
-            "Cleaners",
-            "Butane",
-            "Downstems",
-            "Wraps",
-        ]
-        self.uncommon_categories = [
-            "Rolling papers",
-            "Cigarettes",
-            "Cigars",
-            "Pouches (zyn, etc)",
-            "Nicotine Vapes",
-            "Torches",
-            "Lighters",
-            "THC",
-            "CBD",
-            "Dugouts",
-            "Trays/Ashtrays",
-            "Jewelry",
-            "Other Accessories",
-            "Everything Else",
-        ]
+        self.product_category_store = ProductCategoryStore()
+
+    def get_common_product_categories(self):
+        return self.product_category_store.list_by_group("common")
+
+    def get_uncommon_product_categories(self):
+        return self.product_category_store.list_by_group("uncommon")
 
     def get_product_categories(self):
-        return list(self.common_categories) + list(self.uncommon_categories)
+        return self.product_category_store.list_all()
 
     def _style_product_category_button(self, button):
         if button.text and button.text != "Select Category":
@@ -265,7 +231,7 @@ class PopupManager:
                 self._style_category_choice_button(button, button.text == category)
             uncommon_button = uncommon_buttons.get(item_id)
             if uncommon_button:
-                if category in self.uncommon_categories:
+                if category in self.get_uncommon_product_categories():
                     uncommon_button.text = category
                 else:
                     uncommon_button.text = "Other Categories"
@@ -297,7 +263,7 @@ class PopupManager:
                 spacing=dp(6),
             )
             buttons = []
-            for category in self.common_categories:
+            for category in self.get_common_product_categories():
                 button = MDRaisedButton(
                     text=category,
                     size_hint_y=None,
@@ -330,7 +296,7 @@ class PopupManager:
                     "text": option,
                     "on_release": lambda x=option: on_uncommon_select(x),
                 }
-                for option in self.uncommon_categories
+                for option in self.get_uncommon_product_categories()
             ]
             uncommon_menu = MDDropdownMenu(
                 caller=uncommon_button,

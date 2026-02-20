@@ -331,6 +331,30 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+
+
+        .uncategorized-controls {
+            display: none;
+            align-items: flex-end;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 8px 10px;
+            border-bottom: 1px solid #ccc;
+            background: #f8f8f8;
+        }
+
+        .uncategorized-controls.visible { display: flex; }
+
+        .inline-field {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .inline-field label {
+            font-size: 10px;
+            font-weight: bold;
+        }
         
         @media (max-width: 768px) {
             .charts-grid { grid-template-columns: 1fr; }
@@ -504,7 +528,19 @@
                     <button class="active" onclick="showTable('orders', this)">Orders</button>
                     <button onclick="showTable('items', this)">Line Items</button>
                     <button onclick="showTable('topItems', this)">Top Items Summary</button>
+                    <button onclick="showTable('uncategorized', this)">Uncategorized</button>
                 </div>
+            </div>
+            <div id="uncategorizedControls" class="uncategorized-controls">
+                <div class="inline-field">
+                    <label>Start Date</label>
+                    <input type="date" id="uncatStartDate">
+                </div>
+                <div class="inline-field">
+                    <label>End Date</label>
+                    <input type="date" id="uncatEndDate">
+                </div>
+                <button onclick="loadUncategorizedItems()" class="primary">Load Uncategorized</button>
             </div>
             <div class="table-scroll">
                 <table id="dataTable">
@@ -527,6 +563,9 @@
         let cachedOrders = [];
         let cachedItems = [];
         let cachedTopItems = [];
+        let cachedUncategorizedItems = [];
+        let sortedUncategorizedItems = [];
+        let cachedCategories = [];
         let cachedStats = null;
         
         const charts = {};
@@ -629,7 +668,10 @@
             ]);
             
             const catSelect = document.getElementById('category');
+            const selectedCategory = catSelect.value;
+            catSelect.innerHTML = '<option value="">All Categories</option>';
             if (categories) {
+                cachedCategories = categories;
                 categories.forEach(c => {
                     const opt = document.createElement('option');
                     opt.value = c;
@@ -637,8 +679,11 @@
                     catSelect.appendChild(opt);
                 });
             }
-            
+            catSelect.value = selectedCategory;
+
             const pmSelect = document.getElementById('paymentMethod');
+            const selectedMethod = pmSelect.value;
+            pmSelect.innerHTML = '<option value="">All Methods</option>';
             if (methods) {
                 methods.forEach(m => {
                     const opt = document.createElement('option');
@@ -647,6 +692,7 @@
                     pmSelect.appendChild(opt);
                 });
             }
+            pmSelect.value = selectedMethod;
         }
         
         async function loadStats() {
@@ -946,6 +992,37 @@
             cachedItems = data;
             if (currentTableView === 'items') renderItemsTable();
         }
+
+        async function loadUncategorizedItems() {
+            const start = document.getElementById('uncatStartDate').value || undefined;
+            const end = document.getElementById('uncatEndDate').value || undefined;
+            const data = await fetchJSON('/api/uncategorized_items', {
+                start_date: start,
+                end_date: end,
+            });
+            if (!data) return;
+            cachedUncategorizedItems = data;
+            if (currentTableView === 'uncategorized') renderUncategorizedTable();
+        }
+
+        async function assignCategory(item, category) {
+            if (!category) return;
+            const res = await fetch('/api/uncategorized_items/category', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    item_id: item.item_id,
+                    barcode: item.barcode,
+                    name: item.name,
+                    category,
+                }),
+            });
+            if (!res.ok) {
+                showError('Failed to update category');
+                return;
+            }
+            await Promise.all([loadDropdowns(), applyFilters(), loadUncategorizedItems()]);
+        }
         
         function renderOrdersTable() {
             const head = document.getElementById('tableHead');
@@ -1097,6 +1174,53 @@
             updateSortIndicators();
         }
         
+        function renderUncategorizedTable() {
+            const head = document.getElementById('tableHead');
+            const body = document.getElementById('tableBody');
+
+            head.innerHTML = `
+                <tr>
+                    <th onclick="sortTable('last_sold_at')">Last Sold</th>
+                    <th onclick="sortTable('name')">Name</th>
+                    <th onclick="sortTable('item_id')">Item ID</th>
+                    <th onclick="sortTable('barcode')">Barcode</th>
+                    <th onclick="sortTable('total_qty')">Qty Sold</th>
+                    <th onclick="sortTable('order_count')">Orders</th>
+                    <th>Assign Category</th>
+                </tr>
+            `;
+
+            const rows = sortData([...cachedUncategorizedItems]);
+            sortedUncategorizedItems = rows;
+            if (!rows.length) {
+                body.innerHTML = '<tr><td colspan="7" class="empty-state">No uncategorized items in this date range.</td></tr>';
+                return;
+            }
+
+            body.innerHTML = rows.map((item, idx) => {
+                const options = ['<option value="">Select Category</option>']
+                    .concat(cachedCategories.map(c => `<option value="${c}">${c}</option>`))
+                    .join('');
+                return `
+                    <tr>
+                        <td>${formatDate(item.last_sold_at)}</td>
+                        <td class="truncate">${item.name}</td>
+                        <td>${item.item_id || '<span class="null-value">—</span>'}</td>
+                        <td>${item.barcode || '<span class="null-value">—</span>'}</td>
+                        <td class="numeric">${formatNumber(item.total_qty, 1)}</td>
+                        <td class="numeric">${formatNumber(item.order_count)}</td>
+                        <td>
+                            <select id="uncatCategory-${idx}" onchange="assignCategory(sortedUncategorizedItems[${idx}], this.value)">
+                                ${options}
+                            </select>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            updateSortIndicators();
+        }
+
         function sortData(data) {
             if (!currentSortColumn) return data;
             return data.sort((a, b) => {
@@ -1120,7 +1244,8 @@
             }
             if (currentTableView === 'orders') renderOrdersTable();
             else if (currentTableView === 'items') renderItemsTable();
-            else renderTopItemsTable();
+            else if (currentTableView === 'topItems') renderTopItemsTable();
+            else renderUncategorizedTable();
         }
         
         function updateSortIndicators() {
@@ -1141,9 +1266,14 @@
             currentSortColumn = null;
             document.querySelectorAll('.table-tabs button').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            const uncatControls = document.getElementById('uncategorizedControls');
+            uncatControls.classList.toggle('visible', view === 'uncategorized');
             if (view === 'orders') renderOrdersTable();
             else if (view === 'items') renderItemsTable();
-            else renderTopItemsTable();
+            else if (view === 'topItems') renderTopItemsTable();
+            else {
+                loadUncategorizedItems();
+            }
         }
         
         function setGranularity(g, btn) {
@@ -1167,15 +1297,30 @@
                 loadHourlyChart(),
                 loadTopItemsChart(),
                 loadOrders(),
-                loadItems()
+                loadItems(),
+                loadUncategorizedItems()
             ]);
             loadCategoryChart();
             loadPaymentChart();
         }
         
+        function setDefaultMainDateRange() {
+            const today = new Date();
+            const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+            document.getElementById('startDate').value = monthStart.toISOString().slice(0, 10);
+            document.getElementById('endDate').value = today.toISOString().slice(0, 10);
+        }
+
+        function setDefaultUncategorizedDateRange() {
+            const today = new Date();
+            const start = new Date(today);
+            start.setDate(start.getDate() - 29);
+            document.getElementById('uncatStartDate').value = start.toISOString().slice(0, 10);
+            document.getElementById('uncatEndDate').value = today.toISOString().slice(0, 10);
+        }
+
         function resetFilters() {
-            document.getElementById('startDate').value = '';
-            document.getElementById('endDate').value = '';
+            setDefaultMainDateRange();
             document.getElementById('keyword').value = '';
             document.getElementById('category').value = '';
             document.getElementById('paymentMethod').value = '';
@@ -1188,6 +1333,7 @@
             document.getElementById('excludeEmptyDays').checked = false;
             guessKeystone = false;
             document.getElementById('keystoneToggle').classList.remove('active');
+            setDefaultUncategorizedDateRange();
             applyFilters();
         }
         
@@ -1208,6 +1354,8 @@
         
         // Init
         document.addEventListener('DOMContentLoaded', async () => {
+            setDefaultMainDateRange();
+            setDefaultUncategorizedDateRange();
             await loadDropdowns();
             applyFilters();
         });
