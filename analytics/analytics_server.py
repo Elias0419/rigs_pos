@@ -172,6 +172,10 @@ def get_orders():
                oh.amount_tendered, oh.change_given
         FROM order_history oh
         LEFT JOIN order_items oi ON oh.order_id = oi.order_id
+        LEFT JOIN items it ON (
+            (oi.item_id IS NOT NULL AND oi.item_id != "" AND it.item_id = oi.item_id)
+            OR ((oi.item_id IS NULL OR oi.item_id = "") AND oi.barcode IS NOT NULL AND oi.barcode != "" AND it.barcode = oi.barcode)
+        )
         WHERE 1=1
     """
     params = []
@@ -192,7 +196,7 @@ def get_orders():
         query += " AND oh.total_with_tax <= ?"
         params.append(float(max_total))
     if category:
-        query += " AND LOWER(oi.product_category) = LOWER(?)"
+        query += " AND LOWER(it.product_category) = LOWER(?)"
         params.append(category)
     if keyword:
         query += " AND (LOWER(oi.name) LIKE ? OR LOWER(oh.items) LIKE ?)"
@@ -247,9 +251,13 @@ def get_order_items():
     guess_keystone = request.args.get("guess_keystone", "").lower() == "true"
     
     query = """
-        SELECT oi.*, oh.payment_method
+        SELECT oi.*, oh.payment_method, it.product_category AS resolved_product_category
         FROM order_items oi
         LEFT JOIN order_history oh ON oi.order_id = oh.order_id
+        LEFT JOIN items it ON (
+            (oi.item_id IS NOT NULL AND oi.item_id != "" AND it.item_id = oi.item_id)
+            OR ((oi.item_id IS NULL OR oi.item_id = "") AND oi.barcode IS NOT NULL AND oi.barcode != "" AND it.barcode = oi.barcode)
+        )
         WHERE 1=1
     """
     params = []
@@ -264,7 +272,7 @@ def get_order_items():
         query += " AND LOWER(oi.name) LIKE ?"
         params.append(f"%{keyword}%")
     if category:
-        query += " AND LOWER(oi.product_category) = LOWER(?)"
+        query += " AND LOWER(it.product_category) = LOWER(?)"
         params.append(category)
     if min_price:
         query += " AND oi.unit_price >= ?"
@@ -301,8 +309,8 @@ def get_order_items():
             "item_id": safe_str(row["item_id"]),
             "barcode": safe_str(row["barcode"]),
             "name": safe_str(row["name"], "Unknown Item"),
-            "category": safe_str(row["product_category"], "Uncategorized"),
-            "product_category": safe_str(row["product_category"], "Uncategorized"),
+            "category": safe_str(row["resolved_product_category"], "Uncategorized"),
+            "product_category": safe_str(row["resolved_product_category"], "Uncategorized"),
             "qty": qty,
             "unit_price": unit_price,
             "line_subtotal": line_subtotal,
@@ -336,7 +344,7 @@ def get_categories():
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute(
-        "SELECT DISTINCT product_category as category FROM order_items WHERE product_category IS NOT NULL AND product_category != '' ORDER BY category"
+        "SELECT DISTINCT product_category as category FROM items WHERE product_category IS NOT NULL AND product_category != '' ORDER BY category"
     )
     categories = [row["category"] for row in cursor.fetchall()]
     conn.close()
@@ -366,9 +374,13 @@ def get_summary_stats():
     # Primary data source: order_items (joined with order_history for payment filter and tax/discount)
     item_query = """
         SELECT oi.*, oh.payment_method, oh.tax as order_tax, oh.discount as order_discount,
-               oh.total_with_tax as order_total
+               oh.total_with_tax as order_total, it.product_category AS resolved_product_category
         FROM order_items oi
         LEFT JOIN order_history oh ON oi.order_id = oh.order_id
+        LEFT JOIN items it ON (
+            (oi.item_id IS NOT NULL AND oi.item_id != "" AND it.item_id = oi.item_id)
+            OR ((oi.item_id IS NULL OR oi.item_id = "") AND oi.barcode IS NOT NULL AND oi.barcode != "" AND it.barcode = oi.barcode)
+        )
         WHERE 1=1
     """
     params_item = []
@@ -386,7 +398,7 @@ def get_summary_stats():
         item_query += " AND LOWER(oi.name) LIKE ?"
         params_item.append(f"%{keyword}%")
     if category:
-        item_query += " AND LOWER(oi.product_category) = LOWER(?)"
+        item_query += " AND LOWER(it.product_category) = LOWER(?)"
         params_item.append(category)
     
     cursor.execute(item_query, params_item)
@@ -406,8 +418,8 @@ def get_summary_stats():
             "item_id": row["item_id"],
             "barcode": row["barcode"],
             "name": row["name"],
-            "category": row["product_category"],
-            "product_category": row["product_category"],
+            "category": row["resolved_product_category"],
+            "product_category": row["resolved_product_category"],
             "qty": safe_float(row["qty"]),
             "unit_price": safe_float(row["unit_price"]),
             "line_subtotal": safe_float(row["line_subtotal"]),
@@ -546,8 +558,9 @@ def get_timeseries():
     
     if category:
         item_query = """
-            SELECT order_id FROM order_items 
-            WHERE LOWER(product_category) = LOWER(?)
+            SELECT DISTINCT oi.order_id FROM order_items oi
+            LEFT JOIN items it ON ((oi.item_id IS NOT NULL AND oi.item_id != '' AND it.item_id = oi.item_id) OR ((oi.item_id IS NULL OR oi.item_id = '') AND oi.barcode IS NOT NULL AND oi.barcode != '' AND it.barcode = oi.barcode))
+            WHERE LOWER(it.product_category) = LOWER(?)
         """
         cursor.execute(item_query, [category])
         valid_order_ids = set(row["order_id"] for row in cursor.fetchall())
@@ -607,20 +620,21 @@ def get_top_items():
     
     # Get all matching items
     query = """
-        SELECT item_id, barcode, name, product_category, qty, unit_price, line_subtotal, unit_cost, line_cost, order_id
-        FROM order_items
-        WHERE name IS NOT NULL AND name != ''
+        SELECT oi.item_id, oi.barcode, oi.name, it.product_category AS resolved_product_category, oi.qty, oi.unit_price, oi.line_subtotal, oi.unit_cost, oi.line_cost, oi.order_id
+        FROM order_items oi
+        LEFT JOIN items it ON ((oi.item_id IS NOT NULL AND oi.item_id != "" AND it.item_id = oi.item_id) OR ((oi.item_id IS NULL OR oi.item_id = "") AND oi.barcode IS NOT NULL AND oi.barcode != "" AND it.barcode = oi.barcode))
+        WHERE oi.name IS NOT NULL AND oi.name != ''
     """
     params = []
     
     if start_date:
-        query += " AND order_timestamp >= ?"
+        query += " AND oi.order_timestamp >= ?"
         params.append(start_date)
     if end_date:
-        query += " AND order_timestamp <= ?"
+        query += " AND oi.order_timestamp <= ?"
         params.append(end_date + " 23:59:59")
     if category:
-        query += " AND LOWER(product_category) = LOWER(?)"
+        query += " AND LOWER(it.product_category) = LOWER(?)"
         params.append(category)
     
     cursor.execute(query, params)
@@ -648,8 +662,8 @@ def get_top_items():
             "item_id": row["item_id"],
             "barcode": row["barcode"],
             "name": row["name"],
-            "category": row["product_category"],
-            "product_category": row["product_category"],
+            "category": row["resolved_product_category"],
+            "product_category": row["resolved_product_category"],
             "qty": safe_float(row["qty"]),
             "unit_price": safe_float(row["unit_price"]),
             "line_subtotal": safe_float(row["line_subtotal"]),
@@ -662,7 +676,7 @@ def get_top_items():
         key = (row["name"] or "").lower()
         agg = aggregated[key]
         agg["name"] = agg["name"] or row["name"]
-        agg["category"] = agg["category"] or row["product_category"]
+        agg["category"] = agg["category"] or row["resolved_product_category"]
         agg["total_qty"] += item["qty"]
         agg["total_revenue"] += item.get("line_subtotal") or 0
         if item.get("line_cost"):
