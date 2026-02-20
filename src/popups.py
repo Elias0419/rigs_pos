@@ -171,6 +171,7 @@ class PopupManager:
             "Cleaners",
             "Butane",
             "Downstems",
+            "Wraps",
         ]
         self.uncommon_categories = [
             "Rolling papers",
