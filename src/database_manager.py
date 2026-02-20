@@ -195,7 +195,6 @@ class DatabaseManager:
                     item_id          TEXT,
                     barcode          TEXT,
                     name             TEXT NOT NULL,
-                    product_category TEXT,
                     qty              REAL NOT NULL,
                     unit_price       REAL NOT NULL,
                     line_subtotal    REAL NOT NULL,
@@ -210,12 +209,6 @@ class DatabaseManager:
                 FOREIGN KEY(order_id) REFERENCES order_history(order_id)
                 )
                 """
-            )
-            self._add_column_if_missing(
-                conn,
-                "order_items",
-                "product_category",
-                "product_category TEXT",
             )
             self._add_column_if_missing(
                 conn,
@@ -236,9 +229,6 @@ class DatabaseManager:
                 "CREATE INDEX IF NOT EXISTS idx_order_items_name ON order_items(name)"
             )
             cursor.execute(
-                "CREATE INDEX IF NOT EXISTS idx_order_items_product_category ON order_items(product_category)"
-            )
-            cursor.execute(
                 "CREATE INDEX IF NOT EXISTS idx_order_items_timestamp ON order_items(order_timestamp)"
             )
             cursor.execute(
@@ -252,7 +242,6 @@ class DatabaseManager:
             logger.warn(f"[DatabaseManager]:\n{e}")
         finally:
             conn.close()
-
 
     def create_modified_orders_table(self):
         conn = self._get_connection()
@@ -695,7 +684,6 @@ class DatabaseManager:
                     item_id,
                     barcode,
                     name,
-                    product_category,
                     qty,
                     unit_price,
                     line_subtotal,
@@ -707,7 +695,7 @@ class DatabaseManager:
                     papers_per_pack,
                     order_timestamp
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
             for item in items_list:
                 if not isinstance(item, dict):
@@ -761,7 +749,6 @@ class DatabaseManager:
 
                 papers_per_pack = item.get("papers_per_pack")
 
-                product_category_value = item.get("product_category")
                 cursor.execute(
                     insert_sql,
                     (
@@ -769,7 +756,6 @@ class DatabaseManager:
                         item.get("item_id"),
                         item.get("barcode"),
                         name,
-                        product_category_value,
                         qty,
                         unit_price,
                         line_subtotal,
@@ -886,26 +872,35 @@ class DatabaseManager:
             cursor.execute(
                 """
                 SELECT
-                    id,
-                    order_id,
-                    item_id,
-                    barcode,
-                    name,
-                    product_category,
-                    qty,
-                    unit_price,
-                    line_subtotal,
-                    unit_cost,
-                    line_cost,
-                    taxable,
-                    is_rolling_papers,
-                    is_cigarette,
-                    papers_per_pack,
-                    order_timestamp,
-                    is_custom
-                FROM order_items
-                WHERE order_id = ?
-                ORDER BY id
+                    oi.id,
+                    oi.order_id,
+                    oi.item_id,
+                    oi.barcode,
+                    oi.name,
+                    COALESCE(it.product_category, '') AS product_category,
+                    oi.qty,
+                    oi.unit_price,
+                    oi.line_subtotal,
+                    oi.unit_cost,
+                    oi.line_cost,
+                    oi.taxable,
+                    oi.is_rolling_papers,
+                    oi.is_cigarette,
+                    oi.papers_per_pack,
+                    oi.order_timestamp,
+                    oi.is_custom
+                FROM order_items oi
+                LEFT JOIN items it ON (
+                    (oi.item_id IS NOT NULL AND oi.item_id != '' AND it.item_id = oi.item_id)
+                    OR (
+                        (oi.item_id IS NULL OR oi.item_id = '')
+                        AND oi.barcode IS NOT NULL
+                        AND oi.barcode != ''
+                        AND it.barcode = oi.barcode
+                    )
+                )
+                WHERE oi.order_id = ?
+                ORDER BY oi.id
                 """,
                 (order_id,),
             )
