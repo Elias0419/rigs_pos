@@ -3,8 +3,15 @@ from flask_cors import CORS
 import sqlite3
 import json
 import os
+import sys
 from datetime import datetime, timedelta
 from collections import defaultdict
+
+SRC_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src"))
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
+
+from product_categories import ProductCategoryStore
 
 app = Flask(__name__)
 CORS(app)
@@ -341,14 +348,8 @@ def get_order_items():
 
 @app.route("/api/categories")
 def get_categories():
-    conn = get_db()
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT DISTINCT product_category as category FROM items WHERE product_category IS NOT NULL AND product_category != '' ORDER BY category"
-    )
-    categories = [row["category"] for row in cursor.fetchall()]
-    conn.close()
-    return jsonify(categories)
+    category_store = ProductCategoryStore()
+    return jsonify(category_store.list_all())
 
 
 @app.route("/api/uncategorized_items")
