@@ -25,6 +25,8 @@
         th, td { border: 1px solid #ddd; padding: 8px; font-size: 13px; text-align: left; }
         th { background: #eee; }
         .note { font-size: 12px; color: #666; margin-top: 6px; }
+        .status-pill { display: inline-block; font-size: 11px; font-weight: 700; color: #7a4b00; background: #fff3cd; border: 1px solid #ffe69c; border-radius: 999px; padding: 2px 8px; }
+        .filter-actions { display: flex; gap: 8px; align-items: end; }
     </style>
 </head>
 <body>
@@ -94,6 +96,41 @@
             <tbody id="expensesBody"></tbody>
         </table>
     </section>
+
+    <section class="card">
+        <h2>Sales Tax (Monthly Remittance)</h2>
+        <div class="row">
+            <div class="field">
+                <label for="salesTaxStartMonth">Start month</label>
+                <input id="salesTaxStartMonth" type="month" />
+            </div>
+            <div class="field">
+                <label for="salesTaxEndMonth">End month</label>
+                <input id="salesTaxEndMonth" type="month" />
+            </div>
+            <div class="field">
+                <label for="salesTaxTrailingMonths">Trailing months</label>
+                <input id="salesTaxTrailingMonths" type="number" min="1" max="60" value="12" />
+            </div>
+            <div class="field filter-actions">
+                <button id="applySalesTaxFiltersBtn">Apply</button>
+                <button id="resetSalesTaxFiltersBtn">Reset</button>
+            </div>
+        </div>
+        <table style="margin-top: 10px;">
+            <thead>
+                <tr>
+                    <th>Month</th>
+                    <th>Sales Tax Collected</th>
+                    <th>Orders</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="salesTaxBody"></tbody>
+        </table>
+        <div class="note" id="salesTaxRangeNote"></div>
+        <div class="note">Current month is marked incomplete until close of business.</div>
+    </section>
 </main>
 
 <script>
@@ -101,6 +138,13 @@ const quarterSelect = document.getElementById('quarterSelect');
 const refreshBtn = document.getElementById('refreshBtn');
 const addExpenseBtn = document.getElementById('addExpenseBtn');
 const expensesBody = document.getElementById('expensesBody');
+const salesTaxBody = document.getElementById('salesTaxBody');
+const salesTaxStartMonth = document.getElementById('salesTaxStartMonth');
+const salesTaxEndMonth = document.getElementById('salesTaxEndMonth');
+const salesTaxTrailingMonths = document.getElementById('salesTaxTrailingMonths');
+const salesTaxRangeNote = document.getElementById('salesTaxRangeNote');
+const applySalesTaxFiltersBtn = document.getElementById('applySalesTaxFiltersBtn');
+const resetSalesTaxFiltersBtn = document.getElementById('resetSalesTaxFiltersBtn');
 
 const categoryInput = document.getElementById('categoryInput');
 const descriptionInput = document.getElementById('descriptionInput');
@@ -110,6 +154,12 @@ let currentQuarter = null;
 
 function formatCurrency(value) {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value || 0);
+}
+
+function formatMonthLabel(ym) {
+    const [year, month] = ym.split('-').map(Number);
+    const d = new Date(year, month - 1, 1);
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long' });
 }
 
 function getCurrentQuarterFromDate() {
@@ -210,6 +260,48 @@ function renderExpenses(expenses) {
     }
 }
 
+function renderSalesTaxRows(rows) {
+    salesTaxBody.innerHTML = '';
+
+    if (!rows.length) {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="4">No sales tax data found for this range.</td>';
+        salesTaxBody.appendChild(row);
+        return;
+    }
+
+    for (const item of rows) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${formatMonthLabel(item.month)}</td>
+            <td>${formatCurrency(item.sales_tax_total)}</td>
+            <td>${item.order_count}</td>
+            <td>${item.is_incomplete ? '<span class="status-pill">Incomplete (current month)</span>' : 'Closed month'}</td>
+        `;
+        salesTaxBody.appendChild(row);
+    }
+}
+
+async function refreshSalesTaxData() {
+    const params = new URLSearchParams();
+    const trailingMonths = Number(salesTaxTrailingMonths.value || 12);
+    if (trailingMonths > 0) {
+        params.set('trailing_months', trailingMonths);
+    }
+    if (salesTaxStartMonth.value) {
+        params.set('start_month', salesTaxStartMonth.value);
+    }
+    if (salesTaxEndMonth.value) {
+        params.set('end_month', salesTaxEndMonth.value);
+    }
+
+    const response = await fetch(`/api/tax/sales_tax_monthly?${params.toString()}`);
+    const data = await response.json();
+
+    renderSalesTaxRows(data.rows || []);
+    salesTaxRangeNote.textContent = `Range: ${data.range_start} through ${data.range_end}`;
+}
+
 addExpenseBtn.addEventListener('click', async () => {
     const amount = Number(amountInput.value || 0);
     const payload = {
@@ -244,9 +336,18 @@ quarterSelect.addEventListener('change', () => {
 
 refreshBtn.addEventListener('click', refreshQuarterData);
 
+applySalesTaxFiltersBtn.addEventListener('click', refreshSalesTaxData);
+resetSalesTaxFiltersBtn.addEventListener('click', async () => {
+    salesTaxStartMonth.value = '';
+    salesTaxEndMonth.value = '';
+    salesTaxTrailingMonths.value = '12';
+    await refreshSalesTaxData();
+});
+
 (async function init() {
     await loadQuarterOptions();
     await refreshQuarterData();
+    await refreshSalesTaxData();
 })();
 </script>
 </body>

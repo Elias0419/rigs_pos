@@ -64,6 +64,35 @@ def parse_date(value):
     return None
 
 
+def parse_month(value):
+    if not value:
+        return None
+    try:
+        parsed = datetime.strptime(str(value), "%Y-%m").date()
+        return date(parsed.year, parsed.month, 1)
+    except ValueError:
+        return None
+
+
+def month_start_for_offset(start_month, offset):
+    month_idx = (start_month.month - 1) + offset
+    year = start_month.year + (month_idx // 12)
+    month = (month_idx % 12) + 1
+    return date(year, month, 1)
+
+
+def month_range(start_month, end_month):
+    if start_month > end_month:
+        start_month, end_month = end_month, start_month
+
+    months = []
+    cursor = start_month
+    while cursor <= end_month:
+        months.append(cursor)
+        cursor = month_start_for_offset(cursor, 1)
+    return months
+
+
 def quarter_start_end(year, quarter):
     quarter = int(quarter)
     if quarter < 1 or quarter > 4:
@@ -150,6 +179,76 @@ def compute_quarter_totals(conn, year, quarter):
         "cogs": round(cogs, 2),
         "gross_profit": round(gross_profit, 2),
         "missing_cost_lines": int(row["missing_cost_lines"] or 0),
+    }
+
+
+def compute_sales_tax_monthly(conn, start_month=None, end_month=None, trailing_months=12):
+    today = date.today()
+    current_month = date(today.year, today.month, 1)
+
+    try:
+        trailing_months = int(trailing_months)
+    except (TypeError, ValueError):
+        trailing_months = 12
+    trailing_months = min(max(trailing_months, 1), 60)
+
+    if start_month and end_month:
+        months = month_range(start_month, end_month)
+    elif start_month:
+        months = month_range(start_month, month_start_for_offset(start_month, trailing_months - 1))
+    elif end_month:
+        months = month_range(month_start_for_offset(end_month, -(trailing_months - 1)), end_month)
+    else:
+        months = month_range(month_start_for_offset(current_month, -(trailing_months - 1)), current_month)
+
+    start_date = months[0].isoformat()
+    next_after_end = month_start_for_offset(months[-1], 1).isoformat()
+
+    cursor = conn.cursor()
+    totals_by_month = {}
+    try:
+        cursor.execute(
+            """
+            SELECT
+                strftime('%Y-%m', timestamp) AS year_month,
+                COALESCE(SUM(COALESCE(tax, 0)), 0) AS sales_tax_total,
+                COUNT(*) AS order_count
+            FROM order_history
+            WHERE timestamp >= ?
+              AND timestamp < ?
+            GROUP BY year_month
+            ORDER BY year_month ASC
+            """,
+            (f"{start_date} 00:00:00", f"{next_after_end} 00:00:00"),
+        )
+        for row in cursor.fetchall():
+            totals_by_month[row["year_month"]] = {
+                "sales_tax_total": round(float(row["sales_tax_total"] or 0), 2),
+                "order_count": int(row["order_count"] or 0),
+            }
+    except sqlite3.OperationalError:
+        totals_by_month = {}
+
+    rows = []
+    current_month_key = current_month.strftime("%Y-%m")
+    for month in months:
+        month_key = month.strftime("%Y-%m")
+        month_totals = totals_by_month.get(month_key, {"sales_tax_total": 0.0, "order_count": 0})
+        rows.append(
+            {
+                "month": month_key,
+                "sales_tax_total": month_totals["sales_tax_total"],
+                "order_count": month_totals["order_count"],
+                "is_current_month": month_key == current_month_key,
+                "is_incomplete": month_key == current_month_key,
+            }
+        )
+
+    return {
+        "range_start": months[0].strftime("%Y-%m"),
+        "range_end": months[-1].strftime("%Y-%m"),
+        "trailing_months": trailing_months,
+        "rows": rows,
     }
 
 
@@ -250,6 +349,26 @@ def delete_expense(expense_id):
     expenses_payload["quarters"][quarter_key] = remaining
     save_expenses(expenses_payload)
     return jsonify({"ok": True})
+
+
+@app.route("/api/tax/sales_tax_monthly")
+def get_sales_tax_monthly():
+    start_month = parse_month(request.args.get("start_month"))
+    end_month = parse_month(request.args.get("end_month"))
+    trailing_months = request.args.get("trailing_months", 12)
+
+    conn = get_db_connection()
+    try:
+        payload = compute_sales_tax_monthly(
+            conn,
+            start_month=start_month,
+            end_month=end_month,
+            trailing_months=trailing_months,
+        )
+    finally:
+        conn.close()
+
+    return jsonify(payload)
 
 
 if __name__ == "__main__":
