@@ -2868,6 +2868,7 @@ class PopupManager:
             "Time Sheets",
             "Users",
             "Analytics",
+            "Taxes",
         ]
 
         for index, entry in enumerate(admin_buttons):

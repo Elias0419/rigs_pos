@@ -258,6 +258,12 @@ class Utilities:
         time.sleep(0.5)
         subprocess.Popen(["xdg-open", "http://127.0.0.1:5000"])
 
+    @staticmethod
+    def open_tax_dashboard():
+        subprocess.Popen(["python3", "analytics/tax_dashboard_server.py"])
+        time.sleep(0.5)
+        subprocess.Popen(["xdg-open", "http://127.0.0.1:5055"])
+
     def get_open_session_for_user_today(self, expected_name):
 
         found_name, session_path = self._find_active_session_today()
