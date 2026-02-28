@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime, date
 
 from kivy.clock import Clock
+from kivy.core.window import Window
 from kivy.graphics import Color, Rectangle
 from kivy.metrics import dp
 
@@ -149,6 +150,10 @@ class PopupManager:
     def __init__(self, ref):
         self.app = ref
         self.product_category_store = ProductCategoryStore()
+        self._menu_button_bg_color = (0.25, 0.25, 0.25, 0.9)
+        self._menu_popup_width = dp(320)
+        self._menu_popup_row_height = dp(88)
+        self._menu_popup_spacing = dp(12)
 
     def get_common_product_categories(self):
         return self.product_category_store.list_by_group("common")
@@ -2220,26 +2225,12 @@ class PopupManager:
         self.theme_change_popup.open()
 
     def show_system_popup(self):
-        float_layout = FloatLayout()
-
         system_buttons = ["Change Theme", "Reboot System", "Exit the cash register!"]
-
-        for index, tool in enumerate(system_buttons):
-            btn = MDRaisedButton(
-                text=tool,
-                size_hint=(1, 0.15),
-                pos_hint={"center_x": 0.5, "center_y": 1 - 0.2 * index},
-                on_press=self.app.button_handler.on_system_button_press,
-            )
-            float_layout.add_widget(btn)
-
-        self.system_popup = Popup(
-            content=float_layout,
-            size_hint=(0.2, 0.6),
+        self.system_popup = self._build_menu_popup(
+            button_texts=system_buttons,
+            on_release=self.app.button_handler.on_system_button_press,
+            position="submenu",
             title="",
-            background="images/transparent.png",
-            background_color=(0, 0, 0, 0),
-            separator_height=0,
         )
         self.system_popup.open()
 
@@ -2802,11 +2793,6 @@ class PopupManager:
         self.inventory_popup.open()
 
     def show_tools_popup(self):
-        tools_popup_md_bg_color = (0.25, 0.25, 0.25, 0.75)
-        # float_layout = FloatLayout()
-        float_layout = GridLayout(
-            orientation="tb-lr", size_hint=(1, 1), rows=10, spacing=10
-        )
         tool_buttons = [
             "Custom Item",
             "Label Printer",
@@ -2820,49 +2806,15 @@ class PopupManager:
             tool_buttons.insert(1, "System")
             tool_buttons.insert(2, "Cameras")
 
-        for index, tool in enumerate(tool_buttons):
-
-            btn = MDFlatButton(
-                text=f"[b][size=20]{tool}[/b][/size]",
-                size_hint_y=None,
-                _min_height=75,
-                _min_width=200,
-                md_bg_color=tools_popup_md_bg_color,
-                on_press=self.app.button_handler.on_tool_button_press,
-                _no_ripple_effect=True,
-            )
-            float_layout.add_widget(btn)
-        if self.app.admin:
-            self.tools_popup = Popup(
-                content=float_layout,
-                size_hint=(0.2, 0.8),
-                title="",
-                background="images/transparent.png",
-                background_color=(0, 0, 0, 0),
-                separator_height=0,
-                pos_hint={"center_x": 0.70, "center_y": 0.375},
-                overlay_color=(0, 0, 0, 0),
-                # pos_hint={"top":1}
-            )
-        else:
-            self.tools_popup = Popup(
-                content=float_layout,
-                size_hint=(0.2, 0.8),
-                title="",
-                background="images/transparent.png",
-                background_color=(0, 0, 0, 0),
-                separator_height=0,
-                pos_hint={"center_x": 0.70, "center_y": 0.225},
-                overlay_color=(0, 0, 0, 0),
-                # pos_hint={"top":1}
-            )
+        self.tools_popup = self._build_menu_popup(
+            button_texts=tool_buttons,
+            on_release=self.app.button_handler.on_tool_button_press,
+            position="above_tools_button",
+            title="",
+        )
         self.tools_popup.open()
 
     def show_admin_popup(self):
-
-        float_layout = GridLayout(
-            orientation="tb-lr", size_hint=(1, 1), rows=10, spacing=10
-        )
         admin_buttons = [
             "Reporting",
             "Time Sheets",
@@ -2870,32 +2822,77 @@ class PopupManager:
             "Analytics",
             "Taxes",
         ]
+        self.admin_popup = self._build_menu_popup(
+            button_texts=admin_buttons,
+            on_release=lambda x: self.app.button_handler.on_admin_button_press(x.text),
+            position="submenu",
+            title="",
+        )
+        self.admin_popup.open()
 
-        for index, entry in enumerate(admin_buttons):
+    def _build_menu_popup(self, button_texts, on_release, position, title=""):
+        layout = GridLayout(
+            cols=1,
+            spacing=self._menu_popup_spacing,
+            padding=[dp(12), dp(12), dp(12), dp(12)],
+            size_hint=(1, None),
+            height=(len(button_texts) * self._menu_popup_row_height) + ((len(button_texts) - 1) * self._menu_popup_spacing) + dp(24),
+        )
 
+        for label in button_texts:
             btn = MDFlatButton(
-                text=f"[b][size=20]{entry}[/b][/size]",
-                size_hint_y=None,
-                _min_height=75,
-                _min_width=200,
-                on_release=lambda x, entry=entry: self.app.button_handler.on_admin_button_press(entry),
-                md_bg_color=(0.5, 0.5, 0.5, 0.25),
+                text=label,
+                font_size="26sp",
+                size_hint=(1, None),
+                height=self._menu_popup_row_height,
+                md_bg_color=self._menu_button_bg_color,
+                on_release=on_release,
                 _no_ripple_effect=True,
             )
-            float_layout.add_widget(btn)
+            layout.add_widget(btn)
 
-        self.admin_popup = Popup(
-            content=float_layout,
-            size_hint=(0.2, 0.8),
-            title="",
+        popup_height = layout.height
+        popup_width = self._menu_popup_width
+        x_pos, y_pos = self._calculate_menu_position(
+            position=position,
+            popup_width=popup_width,
+            popup_height=popup_height,
+        )
+
+        return Popup(
+            content=layout,
+            size_hint=(None, None),
+            size=(popup_width, popup_height),
+            pos=(x_pos, y_pos),
+            title=title,
             background="images/transparent.png",
             background_color=(0, 0, 0, 0),
             separator_height=0,
-            pos_hint={"center_x": 0.75, "center_y": 0.22},
             overlay_color=(0, 0, 0, 0),
-            # pos_hint={"top":1}
         )
-        self.admin_popup.open()
+
+    def _calculate_menu_position(self, position, popup_width, popup_height):
+        margin = dp(10)
+        if position == "above_tools_button":
+            tools_button = getattr(self.app, "tools_button", None)
+            if tools_button:
+                button_x, button_y = tools_button.to_window(0, 0, initial=False, relative=False)
+                x_pos = button_x + (tools_button.width - popup_width) / 2
+                y_pos = button_y + tools_button.height
+                return self._clamp_popup_position(x_pos, y_pos, popup_width, popup_height, margin)
+
+        if position == "submenu" and hasattr(self, "tools_popup"):
+            x_pos = self.tools_popup.x + self.tools_popup.width + dp(8)
+            y_pos = self.tools_popup.y
+            return self._clamp_popup_position(x_pos, y_pos, popup_width, popup_height, margin)
+
+        return self._clamp_popup_position(Window.width - popup_width - margin, Window.height - popup_height - margin, popup_width, popup_height, margin)
+
+    @staticmethod
+    def _clamp_popup_position(x_pos, y_pos, popup_width, popup_height, margin):
+        clamped_x = max(margin, min(x_pos, Window.width - popup_width - margin))
+        clamped_y = max(margin, min(y_pos, Window.height - popup_height - margin))
+        return clamped_x, clamped_y
 
     def show_custom_item_popup(self):
 
