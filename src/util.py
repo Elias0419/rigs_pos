@@ -1184,6 +1184,7 @@ class Utilities:
         # button_layout.add_widget(btn_custom_item)
         button_layout.add_widget(btn_inventory)
         button_layout.add_widget(btn_tools)
+        button_layout.add_widget(btn_register)
 
         return button_layout
 
