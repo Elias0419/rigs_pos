@@ -1169,6 +1169,15 @@ class Utilities:
             size_hint_x=None,
             _min_width=225,
         )
+        btn_register = MDFlatButton(
+            text="[b][size=40]DRAWER[/b][/size]",
+            on_press=self.app.button_handler.on_button_press,
+            padding=(8, 8),
+            font_style="H1",
+            font_name=self.font,
+            size_hint_x=None,
+            _min_width=225,
+        )
 
         button_layout.add_widget(_blank3)
         button_layout.add_widget(btn_pay)

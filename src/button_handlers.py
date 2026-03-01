@@ -241,6 +241,7 @@ class ButtonHandler:
             "Pay": self.pay_order,
             "Tools": self.show_tools_popup,
             "Search": self.show_inventory,
+            "Drawer": open_cash_drawer,
         }
 
         for action_text, action in button_actions.items():
