@@ -41,6 +41,7 @@ class ProductCategoryStore:
         "Rolling papers",
         "Cigarettes",
         "Cigars",
+        "Tobacco",
         "Pouches (zyn, etc)",
         "Nicotine Vapes",
         "Torches",
@@ -50,6 +51,8 @@ class ProductCategoryStore:
         "Dugouts",
         "Trays/Ashtrays",
         "Jewelry",
+        "Carb Caps",
+        "Dab Tools",
         "Other Accessories",
         "Everything Else",
     ]
