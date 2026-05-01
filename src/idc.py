@@ -124,14 +124,35 @@ US_ABBR = {
     "Northern Mariana Islands": "MP",
 }
 
-MANDATORY = ("DAQ", "DCS", "DBB")
+REQUIRED_FIELDS = (
+    "DCA",
+    "DCB",
+    "DCD",
+    "DBA",
+    "DCS",
+    "DAC",
+    "DBD",
+    "DBB",
+    "DBC",
+    "DAY",
+    "DAG",
+    "DAI",
+    "DAJ",
+    "DAK",
+    "DAQ",
+    "DCF",
+    "DCG",
+    "DCK",
+)
+
+DATE_FIELDS = ("DBA", "DBB", "DBD")
 
 _CTRL_RS = 0x1E
-_CTRL_CR = 0x0D
 _CTRL_GS = 0x1D
 
-_AAMVA_START = b"@\n" + bytes([_CTRL_RS]) + b"\rANSI "
+_PREFIX = b"@\n" + bytes([_CTRL_RS]) + b"\r"
 _ANSI = b"ANSI "
+_AAMVA_START = _PREFIX + _ANSI
 
 
 @dataclass
@@ -156,16 +177,19 @@ class Decision:
     parsed: Parsed = field(default_factory=lambda: Parsed(ok=False))
 
 
-def _find_aamva_start(raw: bytes) -> int | None:
-    i = raw.find(_AAMVA_START)
-    if i != -1:
-        return i
-    j = raw.find(_ANSI)
-    if j == -1:
+def _find_ansi(raw: bytes) -> tuple[int, int, bool] | None:
+    full = raw.find(_AAMVA_START)
+    if full != -1:
+        return full, full + len(_PREFIX), True
+
+    ansi = raw.find(_ANSI)
+    if ansi == -1:
         return None
-    if j >= 4 and raw[j - 4 : j] == b"@\n" + bytes([_CTRL_RS]) + b"\r":
-        return j - 4
-    return j
+
+    if ansi >= len(_PREFIX) and raw[ansi - len(_PREFIX) : ansi] == _PREFIX:
+        return ansi - len(_PREFIX), ansi, True
+
+    return ansi, ansi, False
 
 
 def _strip_trailing_pad(b: bytes) -> bytes:
@@ -181,21 +205,49 @@ def _read_ascii_digits(raw: bytes, pos: int, n: int) -> tuple[str | None, int]:
     return b.decode("ascii"), pos + n
 
 
+def _choose_subfile_base(
+    raw: bytes,
+    record_start: int,
+    prefix_present: bool,
+    designators: list[tuple[str, int, int]],
+) -> int:
+    candidates = [record_start]
+    if not prefix_present:
+        candidates.append(record_start - len(_PREFIX))
+
+    best_base = candidates[0]
+    best_score = -1
+
+    for base in candidates:
+        score = 0
+        for st_s, off_i, ln_i in designators:
+            a = base + off_i
+            b = a + ln_i
+            if 0 <= a < b <= len(raw) and raw[a:b].startswith(st_s.encode("ascii")):
+                score += 1
+        if score > best_score:
+            best_base = base
+            best_score = score
+
+    return best_base
+
+
 def _parse_header_and_subfiles(raw: bytes) -> tuple[dict[str, int | str] | None, dict[str, bytes], list[str], int]:
     errs: list[str] = []
     subfiles: dict[str, bytes] = {}
 
-    start = _find_aamva_start(raw)
-    if start is None:
+    found = _find_ansi(raw)
+    if found is None:
         return None, subfiles, ["Malformed or missing ANSI header"], 0
 
-    if raw[start : start + 4] != b"@\n" + bytes([_CTRL_RS]) + b"\r":
+    record_start, ansi_pos, prefix_present = found
+    if not prefix_present:
         errs.append("Missing or nonstandard @/LF/RS/CR prefix")
 
-    if raw[start + 4 : start + 9] != _ANSI:
+    if raw[ansi_pos : ansi_pos + len(_ANSI)] != _ANSI:
         errs.append("Missing file type 'ANSI '")
 
-    pos = start + 9
+    pos = ansi_pos + len(_ANSI)
 
     iin_s, pos = _read_ascii_digits(raw, pos, 6)
     aamva_s, pos = _read_ascii_digits(raw, pos, 2)
@@ -234,7 +286,7 @@ def _parse_header_and_subfiles(raw: bytes) -> tuple[dict[str, int | str] | None,
                 off_s = off.decode("ascii", "ignore")
                 ln_s = ln.decode("ascii", "ignore")
 
-                if len(st_s) != 2 or not st_s.isalnum() or not st_s.isupper():
+                if len(st_s) != 2 or not st_s.isalnum() or st_s != st_s.upper():
                     errs.append(f"Bad subfile type '{st_s}'")
                     continue
                 if not (off_s.isdigit() and ln_s.isdigit()):
@@ -243,22 +295,28 @@ def _parse_header_and_subfiles(raw: bytes) -> tuple[dict[str, int | str] | None,
 
                 designators.append((st_s, int(off_s), int(ln_s)))
 
+    base = _choose_subfile_base(raw, record_start, prefix_present, designators)
+
     for st_s, off_i, ln_i in designators:
-        a = start + off_i
+        a = base + off_i
         b = a + ln_i
-        if a < start or b > len(raw) or ln_i <= 0:
+        if a < 0 or b > len(raw) or a >= b or ln_i <= 0:
             errs.append(f"Subfile {st_s} out of bounds (off={off_i} len={ln_i})")
             continue
+
         chunk = raw[a:b]
-        if not chunk.startswith(st_s.encode("ascii", "ignore")):
+        if not chunk.startswith(st_s.encode("ascii")):
             errs.append(f"Subfile {st_s} does not start with its type code")
+
         stripped = _strip_trailing_pad(chunk)
         if not stripped.endswith(b"\r"):
             errs.append(f"Subfile {st_s} missing CR segment terminator")
+
         subfiles[st_s] = chunk
 
     hdr = {
-        "start": start,
+        "record_start": record_start,
+        "ansi_pos": ansi_pos,
         "iin": iin_s or "",
         "aamva": aamva if aamva is not None else -1,
         "jur": jur if jur is not None else -1,
@@ -290,9 +348,9 @@ def _parse_fields_from_subfile_bytes(sub: bytes) -> tuple[dict[str, str], list[s
             continue
 
         if len(line) >= 5 and line[:2] in ("DL", "ID", "EN") and line[2:5].isalnum():
-            key = line[2:5]
+            key = line[2:5].upper()
             val = line[5:].strip()
-        elif len(line) >= 3 and line[:3].isalnum() and line[:3].isupper():
+        elif len(line) >= 3 and line[:3].isalnum() and line[:3] == line[:3].upper():
             key = line[:3]
             val = line[3:].strip()
         else:
@@ -303,6 +361,7 @@ def _parse_fields_from_subfile_bytes(sub: bytes) -> tuple[dict[str, str], list[s
             out[key] = val
         elif prev != val:
             errs.append(f"Conflicting {key} values")
+
     return out, errs
 
 
@@ -316,12 +375,11 @@ def _parse_fields_fallback(text: str) -> dict[str, str]:
         if not part:
             continue
         if len(part) >= 5 and part[:2] in ("DL", "ID", "EN") and part[2:5].isalnum():
-            key = part[2:5]
-            val = part[5:].strip()
-            out.setdefault(key, val)
+            out.setdefault(part[2:5].upper(), part[5:].strip())
             continue
-        if len(part) >= 3 and part[:3].isalnum() and part[:3].isupper():
+        if len(part) >= 3 and part[:3].isalnum() and part[:3] == part[:3].upper():
             out.setdefault(part[:3], part[3:].strip())
+
     return out
 
 
@@ -331,8 +389,34 @@ def _is_effectively_missing(v: str | None) -> bool:
     s = v.strip()
     if not s:
         return True
-    u = s.upper()
-    return u in ("NONE", "UNAVL", "UNAVL.")
+    return s.upper() in ("NONE", "UNAVL", "UNAVL.")
+
+
+def _is_missing_required_field(key: str, value: str | None) -> bool:
+    if value is None:
+        return True
+    s = value.strip()
+    if not s:
+        return True
+    if key in ("DCB", "DCD"):
+        return s.upper() in ("UNAVL", "UNAVL.")
+    return s.upper() in ("NONE", "UNAVL", "UNAVL.")
+
+
+def _parse_date_ymd8(s: str) -> date | None:
+    digits = re.sub(r"\D", "", s or "")
+    if len(digits) != 8:
+        return None
+
+    mm, dd, yyyy = int(digits[:2]), int(digits[2:4]), int(digits[4:8])
+    try:
+        return date(yyyy, mm, dd)
+    except ValueError:
+        y, m, d = int(digits[:4]), int(digits[4:6]), int(digits[6:8])
+        try:
+            return date(y, m, d)
+        except ValueError:
+            return None
 
 
 def parse_aamva(raw: bytes) -> Parsed:
@@ -360,35 +444,41 @@ def parse_aamva(raw: bytes) -> Parsed:
         p.jur_version = int(hdr["jur"]) if isinstance(hdr.get("jur"), int) and hdr["jur"] >= 0 else None
         if iin and iin in US_IIN:
             p.issuer, p.country = US_IIN[iin]
+        elif iin:
+            p.errors.append("Unknown IIN (not mapped)")
 
-    for k in MANDATORY:
-        if _is_effectively_missing(fields.get(k)):
+    for k in REQUIRED_FIELDS:
+        if _is_missing_required_field(k, fields.get(k)):
             p.errors.append(f"Missing field {k}")
 
-    dob_raw = fields.get("DBB", "")
-    if not _is_effectively_missing(dob_raw):
-        digits = re.sub(r"\D", "", dob_raw)
-        if len(digits) != 8:
-            p.errors.append("DBB not 8 digits")
+    for k in DATE_FIELDS:
+        v = fields.get(k)
+        if _is_effectively_missing(v):
+            continue
+        if len(re.sub(r"\D", "", v or "")) != 8:
+            p.errors.append(f"{k} not 8 digits")
+        elif _parse_date_ymd8(v or "") is None:
+            p.errors.append(f"{k} invalid date")
+
+    dcg = (fields.get("DCG") or "").strip().upper()
+    if dcg and not re.fullmatch(r"[A-Z]{3}", dcg):
+        p.errors.append("DCG not 3-letter country code")
+
+    if p.iin and p.iin in US_IIN:
+        issuer_full = US_IIN[p.iin][0]
+        issuer_abbr = US_ABBR.get(issuer_full)
+        daj = (fields.get("DAJ") or "").strip().upper()
+        if issuer_abbr and not daj:
+            p.errors.append("Missing field DAJ")
+        elif issuer_abbr and daj != issuer_abbr:
+            p.errors.append(f"State mismatch: IIN={issuer_abbr}, DAJ={daj}")
+
+    dak = re.sub(r"\D", "", fields.get("DAK", "") or "")
+    if dak and len(dak) not in (5, 9):
+        p.errors.append("Postal code length unusual")
 
     p.ok = len(p.errors) == 0
     return p
-
-
-def _parse_date_ymd8(s: str) -> date | None:
-    digits = re.sub(r"\D", "", s or "")
-    if len(digits) != 8:
-        return None
-
-    mm, dd, yyyy = int(digits[:2]), int(digits[2:4]), int(digits[4:8])
-    try:
-        return date(yyyy, mm, dd)
-    except ValueError:
-        y, m, d = int(digits[:4]), int(digits[4:6]), int(digits[6:8])
-        try:
-            return date(y, m, d)
-        except ValueError:
-            return None
 
 
 def _compute_age(dob: date, today: date) -> int:
@@ -398,13 +488,9 @@ def _compute_age(dob: date, today: date) -> int:
     return years
 
 
-def _state_abbr_from_fields(f: dict[str, str]) -> str | None:
-    abbr = (f.get("DAJ") or "").strip().upper()
-    return abbr or None
+def id21_check(raw: bytes, today: date | None = None) -> Decision:
+    today = today or date.today()
 
-
-def id21_check(raw: bytes) -> Decision:
-    today = date.today()
     p = parse_aamva(raw)
     f = p.fields
 
@@ -416,52 +502,29 @@ def id21_check(raw: bytes) -> Decision:
     if dob is None:
         inconsistencies.append("DOB unparsable")
     else:
-        if age is not None and (age < 0 or age > 120):
+        if age < 0 or age > 120:
             inconsistencies.append("DOB produces implausible age")
-        if age is not None and age < 21:
+        if age < 21:
             return Decision(False, True, True, age, ["Under 21"], p)
 
     exp = _parse_date_ymd8(f.get("DBA", ""))
     iss = _parse_date_ymd8(f.get("DBD", ""))
 
-    if exp and exp < today:
+    if exp is None:
+        inconsistencies.append("Expiration date unparsable")
+    elif exp < today:
         inconsistencies.append("Card expired")
-    if iss and iss > today:
+
+    if iss is None:
+        inconsistencies.append("Issue date unparsable")
+    elif iss > today:
         inconsistencies.append("Issue date in the future")
+
     if exp and iss and exp < iss:
         inconsistencies.append("Expiration before issue date")
 
-    if not _is_effectively_missing(f.get("DCF")) is False:
-        pass
-    if _is_effectively_missing(f.get("DCF")):
-        inconsistencies.append("Missing DCF (document discriminator)")
-    if _is_effectively_missing(f.get("DCK")):
-        inconsistencies.append("Missing DCK (inventory control number)")
-
-    dcg = (f.get("DCG") or "").strip().upper()
-    if dcg and not re.fullmatch(r"[A-Z]{3}", dcg):
-        inconsistencies.append("DCG not 3-letter country code")
-
-    if p.iin and p.iin in US_IIN:
-        issuer_full = US_IIN[p.iin][0]
-        issuer_abbr = US_ABBR.get(issuer_full)
-        state_abbr = _state_abbr_from_fields(f)
-        if issuer_abbr and state_abbr and issuer_abbr != state_abbr:
-            inconsistencies.append(f"State mismatch: IIN={issuer_abbr}, DAJ={state_abbr}")
-
-    if p.iin and p.iin not in US_IIN:
-        inconsistencies.append("Unknown IIN (not mapped)")
-
-    dak = re.sub(r"\D", "", f.get("DAK", "") or "")
-    if dak and len(dak) not in (5, 9):
-        inconsistencies.append("Postal code length unusual")
-
-    for k in ("DAQ", "DCS"):
-        if _is_effectively_missing(f.get(k)):
-            inconsistencies.append(f"Missing {k}")
-
     approved = age is not None and age >= 21
-    needs_review = approved and (len(inconsistencies) > 0 or not p.ok)
+    needs_review = not approved or bool(inconsistencies) or not p.ok
 
     return Decision(approved, needs_review, False, age, inconsistencies, p)
 
@@ -489,7 +552,17 @@ def summarize_for_popup(dec: Decision) -> str:
     addr = ", ".join(x for x in [f.get("DAG", ""), f.get("DAI", ""), f.get("DAJ", ""), f.get("DAK", "")] if x)
     addr = " ".join(addr.split())
 
+    if dec.hard_fail:
+        result = "RESULT: UNDER 21"
+    elif dec.approved_21 and not dec.needs_review:
+        result = "RESULT: AGE 21+ - NO PARSER FLAGS"
+    elif dec.approved_21:
+        result = "RESULT: AGE 21+ - REVIEW FLAGS"
+    else:
+        result = "RESULT: AGE UNKNOWN/UNDER 21 - REVIEW FLAGS"
+
     lines = [
+        result,
         f"Name: {name or 'n/a'}",
         f"License #: {lic or 'n/a'}",
         f"DOB: {dob or 'n/a'}  Age: {dec.age_years if dec.age_years is not None else 'n/a'}",
@@ -503,10 +576,10 @@ def summarize_for_popup(dec: Decision) -> str:
     if dec.inconsistencies or dec.parsed.errors:
         lines.append("")
         lines.append("Flags:")
-        for s in dec.inconsistencies:
-            lines.append(f"- {s}")
-        for e in dec.parsed.errors:
-            if e not in dec.inconsistencies:
-                lines.append(f"- {e}")
+        seen: set[str] = set()
+        for s in dec.inconsistencies + dec.parsed.errors:
+            if s not in seen:
+                lines.append(f"- {s}")
+                seen.add(s)
 
     return "\n".join(lines)
