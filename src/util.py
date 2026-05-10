@@ -38,6 +38,7 @@ import json
 import os
 import random
 import subprocess
+import tempfile
 import sys
 import threading
 import time
@@ -253,16 +254,46 @@ class Utilities:
         }
 
     @staticmethod
+    def _open_dashboard(script_path, default_port):
+        with tempfile.NamedTemporaryFile(prefix="rigs_dashboard_port_", delete=False) as temp_file:
+            port_file = temp_file.name
+
+        env = os.environ.copy()
+        env["RIGS_DASHBOARD_PORT_FILE"] = port_file
+        process = subprocess.Popen(["python3", script_path], env=env)
+
+        selected_port = default_port
+        deadline = time.time() + 5
+        while time.time() < deadline:
+            try:
+                with open(port_file, "r", encoding="utf-8") as handle:
+                    port_text = handle.read().strip()
+                if port_text:
+                    selected_port = int(port_text)
+                    break
+            except (OSError, ValueError):
+                pass
+
+            if process.poll() is not None:
+                logger.error("Dashboard server %s exited before selecting a port.", script_path)
+                break
+
+            time.sleep(0.1)
+
+        try:
+            os.unlink(port_file)
+        except OSError:
+            pass
+
+        subprocess.Popen(["xdg-open", f"http://127.0.0.1:{selected_port}"])
+
+    @staticmethod
     def open_analytics_dashboard():
-        subprocess.Popen(["python3", "analytics/analytics_server.py"])
-        time.sleep(0.5)
-        subprocess.Popen(["xdg-open", "http://127.0.0.1:5000"])
+        Utilities._open_dashboard("analytics/analytics_server.py", 5000)
 
     @staticmethod
     def open_tax_dashboard():
-        subprocess.Popen(["python3", "analytics/tax_dashboard_server.py"])
-        time.sleep(0.5)
-        subprocess.Popen(["xdg-open", "http://127.0.0.1:5055"])
+        Utilities._open_dashboard("analytics/tax_dashboard_server.py", 5055)
 
     def get_open_session_for_user_today(self, expected_name):
 

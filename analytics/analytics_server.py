@@ -12,6 +12,7 @@ if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
 from product_categories import ProductCategoryStore
+from server_utils import run_dashboard_app
 
 app = Flask(__name__)
 CORS(app)
@@ -916,4 +917,4 @@ def shutdown():
     os._exit(0)
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    run_dashboard_app(app, default_port=5000, host="0.0.0.0", debug=True)

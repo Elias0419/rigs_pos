@@ -6,6 +6,7 @@ from uuid import uuid4
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
+from server_utils import run_dashboard_app
 
 app = Flask(__name__)
 CORS(app)
@@ -373,4 +374,4 @@ def get_sales_tax_monthly():
 
 if __name__ == "__main__":
     ensure_expenses_file()
-    app.run(host="0.0.0.0", port=5055, debug=True)
+    run_dashboard_app(app, default_port=5055, host="0.0.0.0", debug=True)
