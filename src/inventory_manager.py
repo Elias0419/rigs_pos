@@ -16,6 +16,7 @@ from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.graphics import Color, Line, Rectangle
 from kivy.factory import Factory
 from kivymd.uix.button import MDRaisedButton, MDFlatButton
+from kivymd.toast import toast
 
 from database_manager import DatabaseManager
 import logging
@@ -144,32 +145,51 @@ class InventoryRow(RecycleDataViewBehavior, BoxLayout):
 
     def add_to_order(self):
         item_details = self.app.db_manager.get_item_details(barcode=self.barcode)
-        item_id = item_details.get("item_id")
-        barcode = item_details.get("barcode")
-        unit_cost = item_details.get("cost")
-        is_custom = False
+        err  = False
         try:
-            price_float = float(self.price)
-        except (TypeError, ValueError) as e:
-            logger.error(
-                f"[Inventory Manager] add_to_order failed to convert price to float for some reason\n{e}"
-            )
-            return
+            item_id = item_details.get("item_id")
+        except AttributeError as e:
+            logger.error(e)
+            toast("missing item_id")
+            err = True
 
-        om = self.order_manager or self.app.order_manager
-        om.add_item(
-            self.name,
-            price_float,
-            item_id=item_id,
-            barcode=barcode,
-            is_custom=is_custom,
-            unit_cost=unit_cost,
-            is_cigarette=item_details.get("is_cigarette"),
-            product_category=item_details.get("product_category"),
-        )
-        self.app.utilities.update_display()
-        self.app.utilities.update_financial_summary()
-        self.app.popup_manager.inventory_popup.dismiss()
+        try:
+            barcode = item_details.get("barcode")
+        except AttributeError as e:
+            logger.error(e)
+            toast("missing barcode")
+            err = True
+
+        try:
+            unit_cost = item_details.get("cost")
+        except AttributeError as e:
+            logger.error(e)
+            toast("missing unit_cost")
+            err = True
+        if not err:
+            is_custom = False
+            try:
+                price_float = float(self.price)
+            except (TypeError, ValueError) as e:
+                logger.error(
+                    f"[Inventory Manager] add_to_order failed to convert price to float for some reason\n{e}"
+                )
+                return
+
+            om = self.order_manager or self.app.order_manager
+            om.add_item(
+                self.name,
+                price_float,
+                item_id=item_id,
+                barcode=barcode,
+                is_custom=is_custom,
+                unit_cost=unit_cost,
+                is_cigarette=item_details.get("is_cigarette"),
+                product_category=item_details.get("product_category"),
+            )
+            self.app.utilities.update_display()
+            self.app.utilities.update_financial_summary()
+            self.app.popup_manager.inventory_popup.dismiss()
 
 class InventoryManagementRow(RecycleDataViewBehavior, BoxLayout):
     barcode = StringProperty()
