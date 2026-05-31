@@ -731,6 +731,11 @@
                     <div class="subtext">${formatCurrency(stats.daily_avg_revenue)} avg/day</div>
                 </div>
                 <div class="stat-card">
+                    <div class="label">Revenue Less Tax</div>
+                    <div class="value positive">${formatCurrency(stats.revenue_less_tax)}</div>
+                    <div class="subtext">Total revenue − sales tax</div>
+                </div>
+                <div class="stat-card">
                     <div class="label">Avg Order Value</div>
                     <div class="value">${formatCurrency(stats.avg_order_value)}</div>
                     <div class="subtext">${formatNumber(stats.avg_items_per_order, 1)} items/order</div>

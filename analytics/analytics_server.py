@@ -541,6 +541,7 @@ def get_summary_stats():
     total_tax = sum(o["tax"] for o in orders_seen.values())
     total_discount = sum(o["discount"] for o in orders_seen.values())
     total_revenue = sum(o["total_with_tax"] for o in orders_seen.values())
+    revenue_less_tax = total_revenue - total_tax
     
     # Track cost data completeness (after backfill)
     items_with_cost = [i for i in items if i.get("unit_cost") is not None]
@@ -593,6 +594,7 @@ def get_summary_stats():
     return jsonify({
         "total_orders": total_orders,
         "total_revenue": round(total_revenue, 2),
+        "revenue_less_tax": round(revenue_less_tax, 2),
         "total_subtotal": round(total_subtotal, 2),
         "total_tax": round(total_tax, 2),
         "total_discount": round(total_discount, 2),
