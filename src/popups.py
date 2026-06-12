@@ -154,6 +154,8 @@ class PopupManager:
         self._menu_popup_width = dp(320)
         self._menu_popup_row_height = dp(88)
         self._menu_popup_spacing = dp(12)
+        self._guard_clock_event = None
+        self._lock_clock_event = None
 
     def get_common_product_categories(self):
         return self.product_category_store.list_by_group("common")
@@ -2577,7 +2579,9 @@ class PopupManager:
             def update_time(*args):
                 clock_label.text = datetime.now().strftime("%I:%M %p")
 
-            Clock.schedule_interval(update_time, 1)
+            if self._guard_clock_event is not None:
+                self._guard_clock_event.cancel()
+            self._guard_clock_event = Clock.schedule_interval(update_time, 1)
 
             guard_image = Image(source="images/rigs_logo_scaled.png")
 
@@ -2597,14 +2601,22 @@ class PopupManager:
                 on_touch_down=lambda x, touch: self.app.utilities.dismiss_guard_popup()
             )
 
-            self.guard_popup.bind(
-                on_dismiss=lambda x: setattr(
-                    self.app, "is_guard_screen_displayed", False
-                )
-            )
+            self.guard_popup.bind(on_dismiss=self._on_guard_popup_dismiss)
 
             self.guard_popup.open()
             update_time()
+
+    def _on_guard_popup_dismiss(self, *args):
+        if self._guard_clock_event is not None:
+            self._guard_clock_event.cancel()
+            self._guard_clock_event = None
+        self.app.is_guard_screen_displayed = False
+
+    def _on_lock_popup_dismiss(self, *args):
+        if self._lock_clock_event is not None:
+            self._lock_clock_event.cancel()
+            self._lock_clock_event = None
+        self.app.is_lock_screen_displayed = False
 
     def show_lock_screen(
         self, clock_out=False, current_user=None, auto=False, timestamp=None
@@ -2698,11 +2710,7 @@ class PopupManager:
                     separator_height=0,
                 )
 
-                self.lock_popup.bind(
-                    on_dismiss=lambda instance: setattr(
-                        self.app, "is_lock_screen_displayed", False
-                    )
-                )
+                self.lock_popup.bind(on_dismiss=self._on_lock_popup_dismiss)
 
                 self.lock_popup.open()
 
@@ -2733,7 +2741,11 @@ class PopupManager:
             halign="center",
         )
 
-        Clock.schedule_interval(self.app.utilities.update_lockscreen_clock, 1)
+        if self._lock_clock_event is not None:
+            self._lock_clock_event.cancel()
+        self._lock_clock_event = Clock.schedule_interval(
+            self.app.utilities.update_lockscreen_clock, 1
+        )
         clock_container.add_widget(image)
         clock_container.add_widget(self.clock_label)
 
