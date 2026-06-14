@@ -2833,6 +2833,7 @@ class PopupManager:
             "Users",
             "Analytics",
             "Taxes",
+            "Categories",
         ]
         self.admin_popup = self._build_menu_popup(
             button_texts=admin_buttons,
