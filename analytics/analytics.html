@@ -1191,6 +1191,7 @@
                     <th onclick="sortTable('barcode')">Barcode</th>
                     <th onclick="sortTable('total_qty')">Qty Sold</th>
                     <th onclick="sortTable('order_count')">Orders</th>
+                    <th onclick="sortTable('current_category')">Current Category</th>
                     <th>Assign Category</th>
                 </tr>
             `;
@@ -1198,7 +1199,7 @@
             const rows = sortData([...cachedUncategorizedItems]);
             sortedUncategorizedItems = rows;
             if (!rows.length) {
-                body.innerHTML = '<tr><td colspan="7" class="empty-state">No uncategorized items in this date range.</td></tr>';
+                body.innerHTML = '<tr><td colspan="8" class="empty-state">No uncategorized or catchall-category items in this date range.</td></tr>';
                 return;
             }
 
@@ -1214,6 +1215,7 @@
                         <td>${item.barcode || '<span class="null-value">—</span>'}</td>
                         <td class="numeric">${formatNumber(item.total_qty, 1)}</td>
                         <td class="numeric">${formatNumber(item.order_count)}</td>
+                        <td>${item.current_category || '<span class="null-value">Uncategorized</span>'}</td>
                         <td>
                             <select id="uncatCategory-${idx}" onchange="assignCategory(sortedUncategorizedItems[${idx}], this.value)">
                                 ${options}

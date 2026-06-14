@@ -14,6 +14,13 @@ if SRC_DIR not in sys.path:
 from product_categories import ProductCategoryStore
 from server_utils import run_dashboard_app
 
+RECATEGORIZABLE_CATCHALL_CATEGORIES = (
+    "everything else",
+    "other accessories",
+    "everything-else",
+    "other-accessories",
+)
+
 app = Flask(__name__)
 CORS(app)
 
@@ -368,7 +375,8 @@ def get_uncategorized_items():
             oi.name,
             MAX(oi.order_timestamp) AS last_sold_at,
             COUNT(DISTINCT oi.order_id) AS order_count,
-            SUM(COALESCE(oi.qty, 0)) AS total_qty
+            SUM(COALESCE(oi.qty, 0)) AS total_qty,
+            MAX(it.product_category) AS current_category
         FROM order_items oi
         LEFT JOIN items it ON (
             (oi.item_id IS NOT NULL AND oi.item_id != '' AND it.item_id = oi.item_id)
@@ -376,9 +384,13 @@ def get_uncategorized_items():
         )
         WHERE oi.name IS NOT NULL
           AND oi.name != ''
-          AND (it.product_category IS NULL OR TRIM(it.product_category) = '')
+          AND (
+              it.product_category IS NULL
+              OR TRIM(it.product_category) = ''
+              OR LOWER(TRIM(it.product_category)) IN (?, ?, ?, ?)
+          )
     """
-    params = []
+    params = list(RECATEGORIZABLE_CATCHALL_CATEGORIES)
 
     if start_date:
         query += " AND oi.order_timestamp >= ?"
@@ -405,6 +417,7 @@ def get_uncategorized_items():
             "last_sold_at": safe_str(row["last_sold_at"]),
             "order_count": safe_int(row["order_count"]),
             "total_qty": round(safe_float(row["total_qty"]), 2),
+            "current_category": safe_str(row["current_category"]),
         })
 
     return jsonify(items)
