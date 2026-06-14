@@ -136,15 +136,19 @@ class ButtonHandler:
             "Reporting": self.show_reporting,
             "Time Sheets": self.show_time_sheets,
             "Users": self.show_add_user,
-            "Analytics": self.open_analytics_dashboard,
-            "Taxes": self.open_tax_dashboard,
-            "Categories": self.open_category_dashboard,
+            "Dashboard":self.open_dashboard,
+            # "Analytics": self.open_analytics_dashboard,
+            # "Taxes": self.open_tax_dashboard,
+            # "Categories": self.open_category_dashboard,
         }
         for action_text, action in admin_actions.items():
             if action_text == entry:
                 action()
                 break
         self.app.popup_manager.admin_popup.dismiss()
+
+    def open_dashboard(self):
+            self.app.utilities.open_dashboard()
 
     def open_analytics_dashboard(self):
         self.app.utilities.open_analytics_dashboard()

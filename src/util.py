@@ -292,6 +292,11 @@ class Utilities:
         Utilities._open_dashboard("analytics/analytics_server.py", 5000)
 
     @staticmethod
+    def open_dashboard():
+        Utilities._open_dashboard("analytics/dashboard.py", 8888)
+
+
+    @staticmethod
     def open_tax_dashboard():
         Utilities._open_dashboard("analytics/tax_dashboard_server.py", 5055)
 

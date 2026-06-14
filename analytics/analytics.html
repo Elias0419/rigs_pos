@@ -552,7 +552,7 @@
     </main>
     
     <script>
-        const API_BASE = '';
+        const API_BASE = window.location.pathname.startsWith('/analytics/') ? '/analytics' : '';
         let currentGranularity = 'day';
         let currentTopItemsSort = 'revenue';
         let currentTableView = 'orders';
@@ -1012,7 +1012,7 @@
 
         async function assignCategory(item, category) {
             if (!category) return;
-            const res = await fetch('/api/uncategorized_items/category', {
+            const res = await fetch('api/uncategorized_items/category', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -1349,13 +1349,8 @@
         }
 
         function shutdownServer() {
-            navigator.sendBeacon('/shutdown', '');
             window.close();
         }
-        
-        window.addEventListener('beforeunload', () => {
-            navigator.sendBeacon('/shutdown', '');
-        });
         
         // Init
         document.addEventListener('DOMContentLoaded', async () => {

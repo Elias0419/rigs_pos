@@ -120,7 +120,7 @@ function escapeAttr(value) {
 
 async function loadCategories() {
     try {
-        const data = await api('/api/categories');
+        const data = await api('api/categories');
         categories = data.categories || [];
         dataFile.textContent = `Editing: ${data.data_file}`;
         render();
@@ -131,7 +131,7 @@ async function loadCategories() {
 
 async function addCategory() {
     try {
-        const data = await api('/api/categories', {
+        const data = await api('api/categories', {
             method: 'POST',
             body: JSON.stringify({ name: nameInput.value, id: idInput.value, group: groupInput.value }),
         });
@@ -146,7 +146,7 @@ async function addCategory() {
 
 async function saveCategory(originalId, row) {
     try {
-        const data = await api(`/api/categories/${encodeURIComponent(originalId)}`, {
+        const data = await api(`api/categories/${encodeURIComponent(originalId)}`, {
             method: 'PUT',
             body: JSON.stringify({
                 name: row.querySelector('.name').value,
@@ -163,7 +163,7 @@ async function saveCategory(originalId, row) {
 async function deleteCategory(id, name) {
     if (!confirm(`Delete category "${name}"? Existing items keep their text value, but the category will disappear from pickers.`)) return;
     try {
-        const data = await api(`/api/categories/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        const data = await api(`api/categories/${encodeURIComponent(id)}`, { method: 'DELETE' });
         categories = data.categories || [];
         showMessage('Category deleted.');
         render();

@@ -66,6 +66,8 @@ class ProductCategoryStore:
         self.data_file = Path(data_file) if data_file is not None else self.data_file
         self._categories: Dict[str, ProductCategory] = {}
         self._name_index: Dict[str, str] = {}
+        self._loaded_mtime_ns: Optional[int] = None
+        self._dirty = False
         self._load_defaults()
 
     def _load_defaults(self):
@@ -78,14 +80,35 @@ class ProductCategoryStore:
         with data_file.open("r", encoding="utf-8") as category_file:
             data = json.load(category_file)
 
+        self._categories = {}
+        self._name_index = {}
         for item in data.get("categories", []):
             self._add(ProductCategory.from_dict(item))
+        self._loaded_mtime_ns = data_file.stat().st_mtime_ns
+        self._dirty = False
 
     def _seed_defaults(self):
         # Kept as a fallback for development/test environments where the data
         # file is unavailable. The authoritative defaults live in JSON.
+        self._categories = {}
+        self._name_index = {}
         for item in DEFAULT_CATEGORY_DATA["categories"]:
             self._add(ProductCategory.from_dict(item))
+        self._loaded_mtime_ns = None
+        self._dirty = False
+
+    def refresh(self):
+        """Reload categories from disk so long-lived UI objects see changes."""
+        self._load_defaults()
+        return self
+
+    def refresh_if_stale(self):
+        """Reload when another process has saved a newer category file."""
+        if self._dirty or not self.data_file.exists():
+            return self
+
+        self.refresh()
+        return self
 
     def _add(self, category: ProductCategory):
         if category.id in self._categories:
@@ -107,9 +130,12 @@ class ProductCategoryStore:
             name=_normalize_name(name),
             group=_normalize_group(group),
         )
-        return self._add(category)
+        category = self._add(category)
+        self._dirty = True
+        return category
 
     def read(self, name_or_id: str):
+        self.refresh_if_stale()
         key = (name_or_id or "").strip()
         if not key:
             return None
@@ -150,6 +176,7 @@ class ProductCategoryStore:
         del self._name_index[current.name.lower()]
         self._categories[updated.id] = updated
         self._name_index[updated_name_key] = updated.id
+        self._dirty = True
         return updated
 
     def delete(self, name_or_id: str) -> bool:
@@ -159,28 +186,35 @@ class ProductCategoryStore:
 
         del self._categories[category.id]
         del self._name_index[category.name.lower()]
+        self._dirty = True
         return True
 
     def list_all(self) -> List[str]:
+        self.refresh_if_stale()
         common = self.list_by_group("common")
         uncommon = self.list_by_group("uncommon")
         return common + uncommon
 
     def list_by_group(self, group: str) -> List[str]:
+        self.refresh_if_stale()
         normalized_group = _normalize_group(group)
         return [c.name for c in self._categories.values() if c.group == normalized_group]
 
     def list_category_objects(self) -> List[ProductCategory]:
+        self.refresh_if_stale()
         return list(self._categories.values())
 
     def to_dict(self) -> dict:
         return {"categories": [c.to_dict() for c in self.list_category_objects()]}
 
     def save(self):
+        payload = self.to_dict()
         self.data_file.parent.mkdir(parents=True, exist_ok=True)
         with self.data_file.open("w", encoding="utf-8") as category_file:
-            json.dump(self.to_dict(), category_file, indent=2)
+            json.dump(payload, category_file, indent=2)
             category_file.write("\n")
+        self._loaded_mtime_ns = self.data_file.stat().st_mtime_ns
+        self._dirty = False
 
 
 DEFAULT_CATEGORY_DATA = {

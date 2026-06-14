@@ -32,6 +32,11 @@ def category_payload(store):
     }
 
 
+def save_and_refresh(store):
+    store.save()
+    store.refresh()
+
+
 @app.route("/")
 def index():
     return send_from_directory(ANALYTICS_DIR, "category_dashboard.html")
@@ -53,7 +58,7 @@ def create_category():
             group=payload.get("group", "common"),
             category_id=payload.get("id") or None,
         )
-        store.save()
+        save_and_refresh(store)
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
 
@@ -74,7 +79,7 @@ def update_category(category_id):
         )
         if not category:
             return jsonify({"error": "Category not found."}), 404
-        store.save()
+        save_and_refresh(store)
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
 
@@ -87,7 +92,7 @@ def delete_category(category_id):
     if not store.delete(category_id):
         return jsonify({"error": "Category not found."}), 404
 
-    store.save()
+    save_and_refresh(store)
     return jsonify({"ok": True, **category_payload(store)})
 
 
