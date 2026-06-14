@@ -92,4 +92,4 @@ def delete_category(category_id):
 
 
 if __name__ == "__main__":
-    run_dashboard_app(app, default_port=5060, host="0.0.0.0", debug=True)
+    run_dashboard_app(app, default_port=8888, host="0.0.0.0", debug=True)
