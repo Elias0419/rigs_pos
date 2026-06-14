@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RIGS Category Editor</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background: #f5f5f5; color: #111; }
+        header { background: #111; color: #fff; padding: 14px 18px; }
+        header h1 { margin: 0; font-size: 18px; }
+        header p { margin: 4px 0 0; font-size: 12px; color: #ddd; }
+        main { max-width: 1100px; margin: 16px auto; padding: 0 12px 20px; }
+        .card { background: #fff; border: 1px solid #ccc; margin-bottom: 12px; padding: 12px; }
+        .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+        .field { display: flex; flex-direction: column; min-width: 160px; gap: 4px; }
+        label { font-size: 12px; font-weight: 700; }
+        select, input, button { font-size: 13px; padding: 6px 8px; border: 1px solid #888; }
+        button { background: #222; color: #fff; cursor: pointer; }
+        button.secondary { background: #555; }
+        button.delete { background: #8b0000; border-color: #5a0000; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; font-size: 13px; text-align: left; vertical-align: middle; }
+        th { background: #eee; }
+        .note { font-size: 12px; color: #666; margin-top: 6px; }
+        .error { color: #8b0000; font-weight: 700; }
+        .success { color: #006400; font-weight: 700; }
+        .pill { display: inline-block; font-size: 11px; font-weight: 700; border-radius: 999px; padding: 2px 8px; background: #eee; }
+        .pill.common { background: #e7f1ff; color: #063a78; border: 1px solid #b6d4fe; }
+        .pill.uncommon { background: #fff3cd; color: #7a4b00; border: 1px solid #ffe69c; }
+        .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .table-input { width: 100%; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Product Category Editor</h1>
+    <p>Add, rename, regroup, and remove categories used by inventory and reporting.</p>
+</header>
+<main>
+    <section class="card">
+        <div class="row">
+            <div class="field" style="flex: 1; min-width: 240px;">
+                <label for="nameInput">Category name</label>
+                <input id="nameInput" type="text" placeholder="Category name" />
+            </div>
+            <div class="field">
+                <label for="idInput">ID (optional)</label>
+                <input id="idInput" type="text" placeholder="auto-generated" />
+            </div>
+            <div class="field">
+                <label for="groupInput">Group</label>
+                <select id="groupInput"><option value="common">Common</option><option value="uncommon">Uncommon</option></select>
+            </div>
+            <div class="field"><button id="addBtn">Add category</button></div>
+        </div>
+        <div class="note">Leave ID blank unless you need a specific stable identifier. Names remain what existing item records store.</div>
+        <div class="note" id="dataFile"></div>
+        <div class="note" id="message"></div>
+    </section>
+
+    <section class="card">
+        <h2>Categories</h2>
+        <table>
+            <thead><tr><th>Name</th><th>ID</th><th>Group</th><th>Action</th></tr></thead>
+            <tbody id="categoryBody"></tbody>
+        </table>
+    </section>
+</main>
+<script>
+const nameInput = document.getElementById('nameInput');
+const idInput = document.getElementById('idInput');
+const groupInput = document.getElementById('groupInput');
+const addBtn = document.getElementById('addBtn');
+const categoryBody = document.getElementById('categoryBody');
+const message = document.getElementById('message');
+const dataFile = document.getElementById('dataFile');
+let categories = [];
+
+function showMessage(text, isError = false) {
+    message.textContent = text || '';
+    message.className = `note ${isError ? 'error' : 'success'}`;
+}
+
+async function api(path, options = {}) {
+    const response = await fetch(path, {
+        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+        ...options,
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Request failed.');
+    return data;
+}
+
+function render() {
+    categoryBody.innerHTML = '';
+    for (const category of categories) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><input class="table-input name" value="${escapeAttr(category.name)}" /></td>
+            <td><input class="table-input id" value="${escapeAttr(category.id)}" /></td>
+            <td>
+                <select class="group table-input">
+                    <option value="common" ${category.group === 'common' ? 'selected' : ''}>Common</option>
+                    <option value="uncommon" ${category.group === 'uncommon' ? 'selected' : ''}>Uncommon</option>
+                </select>
+                <div style="margin-top: 4px;"><span class="pill ${category.group}">${category.group}</span></div>
+            </td>
+            <td><div class="actions"><button class="save">Save</button><button class="delete">Delete</button></div></td>
+        `;
+        row.querySelector('.save').addEventListener('click', () => saveCategory(category.id, row));
+        row.querySelector('.delete').addEventListener('click', () => deleteCategory(category.id, category.name));
+        categoryBody.appendChild(row);
+    }
+}
+
+function escapeAttr(value) {
+    return String(value || '').replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+}
+
+async function loadCategories() {
+    try {
+        const data = await api('/api/categories');
+        categories = data.categories || [];
+        dataFile.textContent = `Editing: ${data.data_file}`;
+        render();
+    } catch (err) {
+        showMessage(err.message, true);
+    }
+}
+
+async function addCategory() {
+    try {
+        const data = await api('/api/categories', {
+            method: 'POST',
+            body: JSON.stringify({ name: nameInput.value, id: idInput.value, group: groupInput.value }),
+        });
+        categories = data.categories || [];
+        nameInput.value = '';
+        idInput.value = '';
+        groupInput.value = 'common';
+        showMessage('Category added.');
+        render();
+    } catch (err) { showMessage(err.message, true); }
+}
+
+async function saveCategory(originalId, row) {
+    try {
+        const data = await api(`/api/categories/${encodeURIComponent(originalId)}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+                name: row.querySelector('.name').value,
+                id: row.querySelector('.id').value,
+                group: row.querySelector('.group').value,
+            }),
+        });
+        categories = data.categories || [];
+        showMessage('Category saved.');
+        render();
+    } catch (err) { showMessage(err.message, true); }
+}
+
+async function deleteCategory(id, name) {
+    if (!confirm(`Delete category "${name}"? Existing items keep their text value, but the category will disappear from pickers.`)) return;
+    try {
+        const data = await api(`/api/categories/${encodeURIComponent(id)}`, { method: 'DELETE' });
+        categories = data.categories || [];
+        showMessage('Category deleted.');
+        render();
+    } catch (err) { showMessage(err.message, true); }
+}
+
+addBtn.addEventListener('click', addCategory);
+loadCategories();
+</script>
+</body>
+</html>

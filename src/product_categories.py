@@ -1,11 +1,14 @@
 import json
+import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional
 
 
-_CATEGORY_DATA_FILE = Path(__file__).with_name("product_categories.json")
+_CATEGORY_DATA_FILE = Path(
+    os.environ.get("RIGS_PRODUCT_CATEGORIES_PATH", Path(__file__).with_name("product_categories.json"))
+)
 
 
 @dataclass(frozen=True)
@@ -172,6 +175,12 @@ class ProductCategoryStore:
 
     def to_dict(self) -> dict:
         return {"categories": [c.to_dict() for c in self.list_category_objects()]}
+
+    def save(self):
+        self.data_file.parent.mkdir(parents=True, exist_ok=True)
+        with self.data_file.open("w", encoding="utf-8") as category_file:
+            json.dump(self.to_dict(), category_file, indent=2)
+            category_file.write("\n")
 
 
 DEFAULT_CATEGORY_DATA = {

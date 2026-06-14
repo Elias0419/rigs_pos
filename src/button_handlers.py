@@ -138,6 +138,7 @@ class ButtonHandler:
             "Users": self.show_add_user,
             "Analytics": self.open_analytics_dashboard,
             "Taxes": self.open_tax_dashboard,
+            "Categories": self.open_category_dashboard,
         }
         for action_text, action in admin_actions.items():
             if action_text == entry:
@@ -151,6 +152,9 @@ class ButtonHandler:
 
     def open_tax_dashboard(self):
         self.app.utilities.open_tax_dashboard()
+
+    def open_category_dashboard(self):
+        self.app.utilities.open_category_dashboard()
 
     def handle_numeric_input(self, input_field, instance_text):
         current_input = (

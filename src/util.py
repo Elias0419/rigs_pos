@@ -295,6 +295,10 @@ class Utilities:
     def open_tax_dashboard():
         Utilities._open_dashboard("analytics/tax_dashboard_server.py", 5055)
 
+    @staticmethod
+    def open_category_dashboard():
+        Utilities._open_dashboard("analytics/category_dashboard_server.py", 5060)
+
     def get_open_session_for_user_today(self, expected_name):
 
         found_name, session_path = self._find_active_session_today()
