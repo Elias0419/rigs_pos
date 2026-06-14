@@ -1,0 +1,113 @@
+:root {
+  color-scheme: dark;
+  --bg: #18110d;
+  --panel: #241914;
+  --panel-2: #302119;
+  --line: #4a3428;
+  --text: #fff6ee;
+  --muted: #d1b8a6;
+  --accent: #ff9f45;
+  --accent-2: #69d391;
+  --danger: #ff6b6b;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: radial-gradient(circle at top left, #3b2115, var(--bg) 42rem);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+button, input { font: inherit; }
+button {
+  border: 0;
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  background: var(--accent);
+  color: #1e120b;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 10px 24px #0005;
+}
+button:active { transform: translateY(1px); }
+input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #140e0b;
+  color: var(--text);
+  padding: 1rem 1.1rem;
+  outline: none;
+}
+input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px #ff9f4533; }
+.shell {
+  display: grid;
+  grid-template-columns: minmax(25rem, 0.9fr) minmax(34rem, 1.1fr);
+  gap: 1rem;
+  min-height: 100vh;
+  padding: 1rem;
+}
+.pane {
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  padding: 1.25rem;
+  box-shadow: 0 24px 70px #0008;
+}
+.brand-row, .order-header, .scan-row, .cash-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.brand-row, .order-header { justify-content: space-between; }
+h1, h2 { margin: 0; letter-spacing: -0.04em; }
+h1 { font-size: clamp(2rem, 5vw, 4.75rem); }
+h2 { font-size: 1.6rem; }
+.eyebrow { margin: 0 0 0.25rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.13em; font-weight: 900; font-size: 0.75rem; }
+.scan-card, .search-card, .payment, .totals {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+}
+.scan-card label, .search-card label, .cash-row label { display: block; margin-bottom: 0.5rem; color: var(--muted); font-weight: 700; }
+.scan-row input { font-size: 1.45rem; }
+.hint { color: var(--muted); margin: 0.7rem 0 0; }
+.results { display: grid; gap: 0.5rem; margin-top: 0.8rem; max-height: calc(100vh - 25rem); overflow: auto; }
+.result, .order-line {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  background: #1a120f;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 0.8rem;
+}
+.result small, .line-meta { color: var(--muted); }
+.order-pane { display: flex; flex-direction: column; }
+.status { padding: 0.5rem 0.75rem; border-radius: 999px; background: #15100d; color: var(--muted); border: 1px solid var(--line); }
+.order-items { flex: 1; display: grid; align-content: start; gap: 0.65rem; margin: 1rem 0; overflow: auto; }
+.empty { place-content: center; min-height: 18rem; color: var(--muted); border: 1px dashed var(--line); border-radius: 22px; }
+.line-controls { display: flex; gap: 0.45rem; align-items: center; }
+.line-controls button { padding: 0.5rem 0.75rem; border-radius: 12px; }
+.qty { min-width: 2rem; text-align: center; font-weight: 900; }
+.totals { display: grid; gap: 0.55rem; }
+.totals div { display: flex; justify-content: space-between; color: var(--muted); }
+.totals strong { color: var(--text); }
+.totals .grand { border-top: 1px solid var(--line); padding-top: 0.75rem; font-size: 1.8rem; color: var(--text); }
+.payment-methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+.pay-method { background: #17100d; color: var(--muted); border: 1px solid var(--line); }
+.pay-method.selected { background: var(--accent); color: #1e120b; }
+.cash-row { margin-top: 0.8rem; }
+.cash-row label { margin: 0; width: 6rem; }
+.change-row { text-align: right; margin: 0.8rem 0; color: var(--muted); }
+.primary, .finish { width: 100%; margin-top: 0.5rem; font-size: 1.2rem; }
+.finish { background: var(--accent-2); }
+.ghost { background: transparent; border: 1px solid var(--line); color: var(--text); box-shadow: none; }
+.danger { color: var(--danger); }
+@media (max-width: 900px) {
+  .shell { grid-template-columns: 1fr; }
+  .results { max-height: 20rem; }
+}
