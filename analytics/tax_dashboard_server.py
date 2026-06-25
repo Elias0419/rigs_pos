@@ -152,22 +152,43 @@ def list_quarters_with_data(conn):
 
 def compute_quarter_totals(conn, year, quarter):
     start, end = quarter_start_end(year, quarter)
+    next_start = end.fromordinal(end.toordinal() + 1)
+
     cursor = conn.cursor()
     try:
         cursor.execute(
             """
+            WITH active_orders AS (
+                SELECT order_id, total, tax, total_with_tax
+                FROM order_history
+                WHERE timestamp >= ?
+                  AND timestamp < ?
+            ),
+            active_cogs AS (
+                SELECT
+                    COALESCE(SUM(oi.line_cost), 0) AS cogs,
+                    SUM(CASE WHEN oi.line_cost IS NULL THEN 1 ELSE 0 END) AS missing_cost_lines
+                FROM order_items oi
+                JOIN active_orders ao ON ao.order_id = oi.order_id
+            )
             SELECT
-                COALESCE(SUM(line_subtotal), 0) AS revenue,
-                COALESCE(SUM(line_cost), 0) AS cogs,
-                SUM(CASE WHEN line_cost IS NULL THEN 1 ELSE 0 END) AS missing_cost_lines
-            FROM order_items
-            WHERE order_timestamp >= ? AND order_timestamp <= ?
+                COALESCE((SELECT SUM(total) FROM active_orders), 0) AS revenue,
+                COALESCE((SELECT SUM(tax) FROM active_orders), 0) AS sales_tax_collected,
+                COALESCE((SELECT SUM(total_with_tax) FROM active_orders), 0) AS gross_customer_receipts,
+                COALESCE((SELECT cogs FROM active_cogs), 0) AS cogs,
+                COALESCE((SELECT missing_cost_lines FROM active_cogs), 0) AS missing_cost_lines
             """,
-            (f"{start.isoformat()} 00:00:00", f"{end.isoformat()} 23:59:59"),
+            (f"{start.isoformat()} 00:00:00", f"{next_start.isoformat()} 00:00:00"),
         )
         row = cursor.fetchone()
     except sqlite3.OperationalError:
-        row = {"revenue": 0, "cogs": 0, "missing_cost_lines": 0}
+        row = {
+            "revenue": 0,
+            "sales_tax_collected": 0,
+            "gross_customer_receipts": 0,
+            "cogs": 0,
+            "missing_cost_lines": 0,
+        }
 
     revenue = float(row["revenue"] or 0.0)
     cogs = float(row["cogs"] or 0.0)
@@ -177,6 +198,8 @@ def compute_quarter_totals(conn, year, quarter):
         "start_date": start.isoformat(),
         "end_date": end.isoformat(),
         "revenue": round(revenue, 2),
+        "sales_tax_collected": round(float(row["sales_tax_collected"] or 0.0), 2),
+        "gross_customer_receipts": round(float(row["gross_customer_receipts"] or 0.0), 2),
         "cogs": round(cogs, 2),
         "gross_profit": round(gross_profit, 2),
         "missing_cost_lines": int(row["missing_cost_lines"] or 0),
