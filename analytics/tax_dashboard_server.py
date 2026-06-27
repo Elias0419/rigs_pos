@@ -18,27 +18,61 @@ DB_PATH = os.path.abspath(
 EXPENSES_PATH = os.environ.get(
     "RIGS_TAX_EXPENSES_PATH", os.path.join(ANALYTICS_DIR, "data", "tax_expenses.json")
 )
+VALID_PERIODS = {"month", "quarter", "year"}
 
 
 def ensure_expenses_file():
     os.makedirs(os.path.dirname(EXPENSES_PATH), exist_ok=True)
     if not os.path.exists(EXPENSES_PATH):
         with open(EXPENSES_PATH, "w", encoding="utf-8") as handle:
-            json.dump({"quarters": {}}, handle, indent=2)
+            json.dump({"cash_out": []}, handle, indent=2)
+
+
+def normalize_expenses_payload(payload):
+    """Support the old quarter-deduction JSON shape while moving to cash-out lines."""
+    if not isinstance(payload, dict):
+        return {"cash_out": []}
+    if isinstance(payload.get("cash_out"), list):
+        payload["cash_out"] = [item for item in payload["cash_out"] if isinstance(item, dict)]
+        return payload
+
+    cash_out = []
+    for quarter_key, items in payload.get("quarters", {}).items():
+        if not isinstance(items, list):
+            continue
+        year = str(quarter_key).split("-Q", 1)[0]
+        quarter = str(quarter_key).split("-Q", 1)[1] if "-Q" in str(quarter_key) else "1"
+        try:
+            fallback_date = quarter_start_end(int(year), int(quarter))[0].isoformat()
+        except (TypeError, ValueError):
+            fallback_date = date.today().isoformat()
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            cash_out.append(
+                {
+                    "id": item.get("id") or uuid4().hex,
+                    "transaction_date": item.get("transaction_date") or fallback_date,
+                    "payee": item.get("payee") or item.get("category") or "Cash Out",
+                    "category": item.get("category") or "Other Expense",
+                    "description": item.get("description") or "",
+                    "amount": round(float(item.get("amount", 0) or 0), 2),
+                    "created_at": item.get("created_at") or datetime.now().isoformat(timespec="seconds"),
+                }
+            )
+    return {"cash_out": cash_out}
 
 
 def load_expenses():
     ensure_expenses_file()
     with open(EXPENSES_PATH, "r", encoding="utf-8") as handle:
         payload = json.load(handle)
-    if "quarters" not in payload or not isinstance(payload["quarters"], dict):
-        payload = {"quarters": {}}
-    return payload
+    return normalize_expenses_payload(payload)
 
 
 def save_expenses(payload):
     with open(EXPENSES_PATH, "w", encoding="utf-8") as handle:
-        json.dump(payload, handle, indent=2)
+        json.dump(normalize_expenses_payload(payload), handle, indent=2)
 
 
 def get_db_connection():
@@ -85,7 +119,6 @@ def month_start_for_offset(start_month, offset):
 def month_range(start_month, end_month):
     if start_month > end_month:
         start_month, end_month = end_month, start_month
-
     months = []
     cursor = start_month
     while cursor <= end_month:
@@ -98,115 +131,117 @@ def quarter_start_end(year, quarter):
     quarter = int(quarter)
     if quarter < 1 or quarter > 4:
         raise ValueError("Quarter must be 1-4")
-
     start_month = ((quarter - 1) * 3) + 1
-    end_month = start_month + 2
     start = date(int(year), start_month, 1)
-
-    if end_month == 12:
-        end = date(int(year), 12, 31)
-    else:
-        next_month = date(int(year), end_month + 1, 1)
-        end = next_month.fromordinal(next_month.toordinal() - 1)
+    end = month_start_for_offset(start, 3).fromordinal(month_start_for_offset(start, 3).toordinal() - 1)
     return start, end
 
 
-def get_quarter_key(year, quarter):
-    return f"{int(year)}-Q{int(quarter)}"
+def period_start_end(period_type, period_value):
+    today = date.today()
+    if period_type == "year":
+        year = int(period_value or today.year)
+        return date(year, 1, 1), date(year, 12, 31)
+    if period_type == "quarter":
+        value = period_value or f"{today.year}-Q{((today.month - 1) // 3) + 1}"
+        year_part, quarter_part = str(value).split("-Q", 1)
+        return quarter_start_end(int(year_part), int(quarter_part))
+
+    value = period_value or date(today.year, today.month, 1).strftime("%Y-%m")
+    start = parse_month(value)
+    if not start:
+        raise ValueError("Month must use YYYY-MM format")
+    end = month_start_for_offset(start, 1).fromordinal(month_start_for_offset(start, 1).toordinal() - 1)
+    return start, end
 
 
-def list_quarters_with_data(conn):
+def get_period_key(period_type, period_value):
+    start, _ = period_start_end(period_type, period_value)
+    if period_type == "year":
+        return str(start.year)
+    if period_type == "quarter":
+        return f"{start.year}-Q{((start.month - 1) // 3) + 1}"
+    return start.strftime("%Y-%m")
+
+
+def list_periods_with_data(conn):
     cursor = conn.cursor()
+    first_date = last_date = None
     try:
-        cursor.execute("SELECT MIN(order_timestamp) AS first_ts, MAX(order_timestamp) AS last_ts FROM order_items")
+        cursor.execute("SELECT MIN(timestamp) AS first_ts, MAX(timestamp) AS last_ts FROM order_history")
         row = cursor.fetchone()
+        first_date = parse_date(row["first_ts"])
+        last_date = parse_date(row["last_ts"])
     except sqlite3.OperationalError:
-        row = None
+        pass
 
-    now = date.today()
-    if not row or (row["first_ts"] is None and row["last_ts"] is None):
-        return [{"year": now.year, "quarter": ((now.month - 1) // 3) + 1}]
+    for item in load_expenses().get("cash_out", []):
+        tx_date = parse_date(item.get("transaction_date"))
+        if not tx_date:
+            continue
+        first_date = tx_date if first_date is None or tx_date < first_date else first_date
+        last_date = tx_date if last_date is None or tx_date > last_date else last_date
 
-    first_date = parse_date(row["first_ts"]) or now
-    last_date = parse_date(row["last_ts"]) or now
+    today = date.today()
+    first_month = date((first_date or today).year, (first_date or today).month, 1)
+    last_month = date((last_date or today).year, (last_date or today).month, 1)
+    current_month = date(today.year, today.month, 1)
+    if current_month > last_month:
+        last_month = current_month
 
-    first_quarter = ((first_date.month - 1) // 3) + 1
-    last_quarter = ((last_date.month - 1) // 3) + 1
-
-    quarters = []
-    y, q = first_date.year, first_quarter
-    while (y < last_date.year) or (y == last_date.year and q <= last_quarter):
-        quarters.append({"year": y, "quarter": q})
-        q += 1
-        if q == 5:
-            q = 1
-            y += 1
-
-    current_quarter = ((now.month - 1) // 3) + 1
-    if not any(item["year"] == now.year and item["quarter"] == current_quarter for item in quarters):
-        quarters.append({"year": now.year, "quarter": current_quarter})
-
-    quarters.sort(key=lambda item: (item["year"], item["quarter"]), reverse=True)
-    return quarters
+    months = month_range(first_month, last_month)
+    years = sorted({month.year for month in months}, reverse=True)
+    quarters = sorted({f"{month.year}-Q{((month.month - 1) // 3) + 1}" for month in months}, reverse=True)
+    return {
+        "default_period": current_month.strftime("%Y-%m"),
+        "months": [month.strftime("%Y-%m") for month in reversed(months)],
+        "quarters": quarters,
+        "years": [str(year) for year in years],
+    }
 
 
-def compute_quarter_totals(conn, year, quarter):
-    start, end = quarter_start_end(year, quarter)
+def compute_cash_in_totals(conn, start, end):
     next_start = end.fromordinal(end.toordinal() + 1)
-
     cursor = conn.cursor()
     try:
         cursor.execute(
             """
-            WITH active_orders AS (
-                SELECT order_id, total, tax, total_with_tax
-                FROM order_history
-                WHERE timestamp >= ?
-                  AND timestamp < ?
-            ),
-            active_cogs AS (
-                SELECT
-                    COALESCE(SUM(oi.line_cost), 0) AS cogs,
-                    SUM(CASE WHEN oi.line_cost IS NULL THEN 1 ELSE 0 END) AS missing_cost_lines
-                FROM order_items oi
-                JOIN active_orders ao ON ao.order_id = oi.order_id
-            )
             SELECT
-                COALESCE((SELECT SUM(total) FROM active_orders), 0) AS revenue,
-                COALESCE((SELECT SUM(tax) FROM active_orders), 0) AS sales_tax_collected,
-                COALESCE((SELECT SUM(total_with_tax) FROM active_orders), 0) AS gross_customer_receipts,
-                COALESCE((SELECT cogs FROM active_cogs), 0) AS cogs,
-                COALESCE((SELECT missing_cost_lines FROM active_cogs), 0) AS missing_cost_lines
+                COALESCE(SUM(total), 0) AS taxable_cash_in,
+                COALESCE(SUM(tax), 0) AS sales_tax_collected,
+                COALESCE(SUM(total_with_tax), 0) AS gross_customer_receipts,
+                COUNT(*) AS order_count
+            FROM order_history
+            WHERE timestamp >= ?
+              AND timestamp < ?
             """,
             (f"{start.isoformat()} 00:00:00", f"{next_start.isoformat()} 00:00:00"),
         )
         row = cursor.fetchone()
     except sqlite3.OperationalError:
-        row = {
-            "revenue": 0,
-            "sales_tax_collected": 0,
-            "gross_customer_receipts": 0,
-            "cogs": 0,
-            "missing_cost_lines": 0,
-        }
-
-    revenue = float(row["revenue"] or 0.0)
-    cogs = float(row["cogs"] or 0.0)
-    gross_profit = revenue - cogs
-
+        row = {"taxable_cash_in": 0, "sales_tax_collected": 0, "gross_customer_receipts": 0, "order_count": 0}
+    taxable_cash_in = round(float(row["taxable_cash_in"] or 0), 2)
+    sales_tax = round(float(row["sales_tax_collected"] or 0), 2)
+    gross = round(float(row["gross_customer_receipts"] or 0), 2)
     return {
-        "start_date": start.isoformat(),
-        "end_date": end.isoformat(),
-        "revenue": round(revenue, 2),
-        "sales_tax_collected": round(float(row["sales_tax_collected"] or 0.0), 2),
-        "gross_customer_receipts": round(float(row["gross_customer_receipts"] or 0.0), 2),
-        "cogs": round(cogs, 2),
-        "gross_profit": round(gross_profit, 2),
-        "missing_cost_lines": int(row["missing_cost_lines"] or 0),
+        "taxable_cash_in": taxable_cash_in,
+        "sales_tax_collected": sales_tax,
+        "gross_customer_receipts": gross,
+        "order_count": int(row["order_count"] or 0),
     }
 
 
+def cash_out_for_period(start, end):
+    rows = []
+    for item in load_expenses().get("cash_out", []):
+        tx_date = parse_date(item.get("transaction_date"))
+        if tx_date and start <= tx_date <= end:
+            rows.append(item)
+    return sorted(rows, key=lambda item: (item.get("transaction_date", ""), item.get("created_at", "")), reverse=True)
+
+
 def compute_sales_tax_monthly(conn, start_month=None, end_month=None, trailing_months=12):
+
     today = date.today()
     current_month = date(today.year, today.month, 1)
 
@@ -276,70 +311,81 @@ def compute_sales_tax_monthly(conn, start_month=None, end_month=None, trailing_m
     }
 
 
+
 @app.route("/")
 def index():
     return send_from_directory(ANALYTICS_DIR, "tax_dashboard.html")
 
 
-@app.route("/api/tax/quarters")
-def get_quarters():
+@app.route("/api/tax/periods")
+def get_periods():
     conn = get_db_connection()
     try:
-        return jsonify(list_quarters_with_data(conn))
+        return jsonify(list_periods_with_data(conn))
     finally:
         conn.close()
 
 
-@app.route("/api/tax/quarter_summary")
-def get_quarter_summary():
-    year = int(request.args.get("year", date.today().year))
-    quarter = int(request.args.get("quarter", ((date.today().month - 1) // 3) + 1))
+@app.route("/api/tax/cash_basis_summary")
+def get_cash_basis_summary():
+    period_type = request.args.get("period_type", "month")
+    period_value = request.args.get("period_value")
+    if period_type not in VALID_PERIODS:
+        return jsonify({"error": "period_type must be month, quarter, or year."}), 400
+    try:
+        start, end = period_start_end(period_type, period_value)
+        period_key = get_period_key(period_type, period_value)
+    except (TypeError, ValueError):
+        return jsonify({"error": "Invalid period value."}), 400
 
     conn = get_db_connection()
     try:
-        totals = compute_quarter_totals(conn, year, quarter)
+        cash_in = compute_cash_in_totals(conn, start, end)
     finally:
         conn.close()
 
-    expenses_payload = load_expenses()
-    quarter_key = get_quarter_key(year, quarter)
-    itemized = expenses_payload["quarters"].get(quarter_key, [])
-    total_other_expenses = round(sum(float(item.get("amount", 0) or 0) for item in itemized), 2)
-
-    taxable_income = round(totals["gross_profit"] - total_other_expenses, 2)
+    cash_out = cash_out_for_period(start, end)
+    total_cash_out = round(sum(float(item.get("amount", 0) or 0) for item in cash_out), 2)
+    taxable_cash_income = round(cash_in["taxable_cash_in"] - total_cash_out, 2)
 
     return jsonify(
         {
-            "year": year,
-            "quarter": quarter,
-            "quarter_key": quarter_key,
+            "period_type": period_type,
+            "period_value": period_key,
             "totals": {
-                **totals,
-                "other_expenses": total_other_expenses,
-                "taxable_income": taxable_income,
+                "start_date": start.isoformat(),
+                "end_date": end.isoformat(),
+                **cash_in,
+                "cash_out": total_cash_out,
+                "taxable_cash_income": taxable_cash_income,
             },
-            "itemized_deductions": itemized,
+            "cash_out_lines": cash_out,
         }
     )
 
 
-@app.route("/api/tax/expenses", methods=["POST"])
-def add_expense():
+@app.route("/api/tax/cash_out", methods=["POST"])
+def add_cash_out():
     payload = request.get_json(silent=True) or {}
-
-    year = int(payload.get("year", 0))
-    quarter = int(payload.get("quarter", 0))
-    category = (payload.get("category") or "Other Expense").strip()
+    tx_date = parse_date(payload.get("transaction_date"))
+    payee = (payload.get("payee") or "").strip()
+    category = (payload.get("category") or "Other Cash Out").strip()
     description = (payload.get("description") or "").strip()
-    amount = float(payload.get("amount", 0) or 0)
 
-    if not year or quarter not in (1, 2, 3, 4):
-        return jsonify({"error": "Valid year and quarter are required."}), 400
+    try:
+        amount = float(payload.get("amount", 0) or 0)
+    except (TypeError, ValueError):
+        amount = 0
+
+    if not tx_date:
+        return jsonify({"error": "A valid transaction date is required."}), 400
     if amount <= 0:
         return jsonify({"error": "Amount must be greater than zero."}), 400
 
-    expense = {
+    line = {
         "id": uuid4().hex,
+        "transaction_date": tx_date.isoformat(),
+        "payee": payee,
         "category": category,
         "description": description,
         "amount": round(amount, 2),
@@ -347,30 +393,19 @@ def add_expense():
     }
 
     expenses_payload = load_expenses()
-    quarter_key = get_quarter_key(year, quarter)
-    expenses_payload["quarters"].setdefault(quarter_key, []).append(expense)
+    expenses_payload.setdefault("cash_out", []).append(line)
     save_expenses(expenses_payload)
+    return jsonify({"ok": True, "cash_out_line": line}), 201
 
-    return jsonify({"ok": True, "expense": expense}), 201
 
-
-@app.route("/api/tax/expenses/<expense_id>", methods=["DELETE"])
-def delete_expense(expense_id):
-    year = int(request.args.get("year", 0))
-    quarter = int(request.args.get("quarter", 0))
-
-    if not year or quarter not in (1, 2, 3, 4):
-        return jsonify({"error": "Valid year and quarter are required."}), 400
-
-    quarter_key = get_quarter_key(year, quarter)
+@app.route("/api/tax/cash_out/<line_id>", methods=["DELETE"])
+def delete_cash_out(line_id):
     expenses_payload = load_expenses()
-    existing = expenses_payload["quarters"].get(quarter_key, [])
-    remaining = [item for item in existing if item.get("id") != expense_id]
-
+    existing = expenses_payload.get("cash_out", [])
+    remaining = [item for item in existing if item.get("id") != line_id]
     if len(remaining) == len(existing):
-        return jsonify({"error": "Expense not found."}), 404
-
-    expenses_payload["quarters"][quarter_key] = remaining
+        return jsonify({"error": "Cash out line not found."}), 404
+    expenses_payload["cash_out"] = remaining
     save_expenses(expenses_payload)
     return jsonify({"ok": True})
 
@@ -393,6 +428,12 @@ def get_sales_tax_monthly():
         conn.close()
 
     return jsonify(payload)
+
+
+# Backwards-compatible aliases for older bookmarks/scripts.
+@app.route("/api/tax/quarters")
+def get_quarters():
+    return jsonify([])
 
 
 if __name__ == "__main__":
